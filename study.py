@@ -87,8 +87,10 @@ class Study(object):
             for i in scan_vals['SEEDRAN']:
                 mask_sec['SEEDRAN'] = str(i)
                 input_name = 'mad6t' + '_' + str(i) + '.ini'
-                with open(os.path.join(dest, input_name), 'w') as f_out:
+                output = os.path.join(dest, input_name)
+                with open(output, 'w') as f_out:
                     self.config.write(f_out)
+                print('Successfully generate input file %s'%output)
             
     def parse_bash_script(self, mfile):
         '''parse the bash input file for the old version sixdesk'''
@@ -163,7 +165,6 @@ def is_numeral(val):
         return False
 
 if __name__ == '__main__':
-#    test = Study()
-#    test.from_env_file('scan_definitions', 'sixdeskenv', 'sysenv')
-#    test.prepare_mad6t_input('./templates/mad6t.ini', './')
-
+    test = Study()
+    test.from_env_file('scan_definitions', 'sixdeskenv', 'sysenv')
+    test.prepare_mad6t_input('./templates/mad6t.ini', './')
