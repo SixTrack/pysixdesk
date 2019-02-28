@@ -1,5 +1,7 @@
 import os
 import sys
+import math
+import itertools
 import configparser
 
 class Study(object):
@@ -7,11 +9,12 @@ class Study(object):
     def __init__(self, name='no name'):
         self.name = name
         self.config = configparser.ConfigParser()
+        self.config.optionxform = str # preserve case
         self.vals = {}
         self.mvals = {}
 
     def from_env_file(self, mfile, *files):
-        '''Set up a study from the initial files of old version , e.g. sixdeskenv,sixenv
+        '''Set up a study from the initial files of old version sixdesk, e.g. sixdeskenv,sixenv
         '''
         self.mvals = self.parse_bash_script(mfile)
         if os.path.isfile('cob_env.sh'):
@@ -49,32 +52,46 @@ class Study(object):
             scan_vars = self.mvals['scan_variables'].split()
             scan_vals = {}
             for a in scan_vars:
-                scan_vals[a] = self.mvals['scan_vals_'+a]
+                val = self.mvals['scan_vals_'+a]
+                val = val.split()
+                val = [num(i) for i in val if not math.isnan(num(i))]
+                if len(val) == 1:
+                    val = [k+1 for k in range(int(val[0]))]
+                scan_vals[a] = val
+            s_i = num(seed_i)
+            s_e = num(seed_e)
+            seeds = [j+s_i for j in range(int(s_e-s_i+1))]
+            scan_vals['SEEDRAN'] = seeds
+
+            mask_sec = self.config['mask']
+            #for element in itertools.product(*scan_vals.values()):
+             #   print(element)
 
             #parameters for one turn sixtrack job
             six_sec = self.config['sixtrack']
             #six_sec['sixtrack_exe'] = self.vals['appName']
-            six_sec['tunex'] = self.vals['tunex']
-            six_sec['tuney'] = self.vals['tuney']
-            six_sec['inttunex'] = self.vals['tunex']
-            six_sec['inttuney'] = self.vals['tuney']
-            six_sec['pmass'] = self.vals['pmass']
-            six_sec['emit_beam'] = self.vals['emit_beam']
-            six_sec['e0'] = self.vals['e0']
-            six_sec['bunch_charge'] = self.vals['bunch_charge']
-            six_sec['chrom_eps'] = self.vals['chrom_eps']
-            six_sec['CHROM'] = self.vals['chrom']
-            six_sec['chromx'] = self.vals['chromx']
-            six_sec['chromy'] = self.vals['chromy']
-
-            input_name = 'test.ini'
-            with open(os.path.join(dest, input_name), 'w') as f_out:
-                self.config.write(f_out)
+            fort3_sec = self.config['fort3']
+            fort3_sec['tunex'] = self.vals['tunex']
+            fort3_sec['tuney'] = self.vals['tuney']
+            fort3_sec['inttunex'] = self.vals['tunex']
+            fort3_sec['inttuney'] = self.vals['tuney']
+            fort3_sec['pmass'] = self.vals['pmass']
+            fort3_sec['emit_beam'] = self.vals['emit_beam']
+            fort3_sec['e0'] = self.vals['e0']
+            fort3_sec['bunch_charge'] = self.vals['bunch_charge']
+            fort3_sec['chrom_eps'] = self.vals['chrom_eps']
+            fort3_sec['CHROM'] = self.vals['chrom']
+            fort3_sec['chromx'] = self.vals['chromx']
+            fort3_sec['chromy'] = self.vals['chromy']
             
-
-
+            for i in scan_vals['SEEDRAN']:
+                mask_sec['SEEDRAN'] = str(i)
+                input_name = 'mad6t' + '_' + str(i) + '.ini'
+                with open(os.path.join(dest, input_name), 'w') as f_out:
+                    self.config.write(f_out)
+            
     def parse_bash_script(self, mfile):
-        '''parse the bash input file for the previous sixdesk'''
+        '''parse the bash input file for the old version sixdesk'''
         mf_in = open(mfile, 'r')
         mf_lines = mf_in.readlines()
         mf_in.close()
@@ -114,7 +131,7 @@ class Study(object):
         os.chmod('mexe.sh', 0o777)
         values = os.popen('./mexe.sh').readlines()
         vals = {}
-        os.remove('mexe.sh')
+        #os.remove('mexe.sh')
         if len(params) == len(values):
             for i in range(len(params)):
                 vals[params[i]] = values[i].replace('\n', '')
@@ -129,8 +146,24 @@ def peel_str(val):
     val = val.replace(' ', '')
     return val
 
+def num(val):
+    if is_numeral(val):
+        try:
+            return int(val)
+        except valueError:
+            return float(val)
+    else:
+        return float('nan')
+
+def is_numeral(val):
+    try:
+        float(val)
+        return True
+    except valueError:
+        return False
+
 if __name__ == '__main__':
-    test = Study()
-    test.from_env_file('scan_definitions', 'sixdeskenv', 'sysenv')
-    test.prepare_mad6t_input('./templates/mad6t.ini', './')
+#    test = Study()
+#    test.from_env_file('scan_definitions', 'sixdeskenv', 'sysenv')
+#    test.prepare_mad6t_input('./templates/mad6t.ini', './')
 
