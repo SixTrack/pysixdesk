@@ -1,13 +1,18 @@
 import os
 import sys
 import math
+import shutil
+import inspect
 import itertools
 import configparser
 
 class Study(object):
 
-    def __init__(self, name='no name'):
+    def __init__(self, name='study', location='.', tem_path=''):
+        '''Constructor'''
         self.name = name
+        self.location = location
+        self.templates = tem_path
         self.config = configparser.ConfigParser()
         self.config.optionxform = str # preserve case
         self.vals = {}
@@ -33,7 +38,7 @@ class Study(object):
         os.remove('cob_env.sh')
         self.vals.update(val1)
 
-    def prepare_mad6t_input(self, basefile, dest):
+    def prepare_mad6t_input(self, basefile):
         '''Prepare the input files for madx and one turn sixtrack job'''
         if len(self.vals) == 0:
             print("You should load configure parameters at first!")
@@ -41,6 +46,8 @@ class Study(object):
             #parameters for madx job
             self.config.read(basefile)
             madx_sec = self.config['madx']
+            madx_sec['source_path'] = self.templates
+            madx_sec['dest_path'] = os.path.join(self.location, 'mad6t_output')
             madx_path = self.vals['MADX_PATH']
             madx_exe = self.vals['MADX']
             madx_sec['madx_exe'] = madx_path + madx_exe
@@ -50,25 +57,27 @@ class Study(object):
             madx_sec['corr_test'] = self.vals['CORR_TEST']
             madx_sec['fort_34'] = self.vals['fort_34']
             scan_vars = self.mvals['scan_variables'].split()
-            scan_vals = {}
+            scan_hols = self.mvals['scan_placeholders'].replace('%','').split()
+            scan_vals = []
             for a in scan_vars:
                 val = self.mvals['scan_vals_'+a]
                 val = val.split()
                 val = [num(i) for i in val if not math.isnan(num(i))]
                 if len(val) == 1:
                     val = [k+1 for k in range(int(val[0]))]
-                scan_vals[a] = val
+                scan_vals.append(val)
             s_i = num(seed_i)
             s_e = num(seed_e)
             seeds = [j+s_i for j in range(int(s_e-s_i+1))]
-            scan_vals['SEEDRAN'] = seeds
+            scan_hols.append('SEEDRAN')
+            scan_vals.append(seeds)
 
             mask_sec = self.config['mask']
-            #for element in itertools.product(*scan_vals.values()):
-             #   print(element)
 
             #parameters for one turn sixtrack job
             six_sec = self.config['sixtrack']
+            six_sec['source_path'] = self.templates
+            six_sec['dest_path'] = os.path.join(self.location, 'mad6t_output')
             #six_sec['sixtrack_exe'] = self.vals['appName']
             fort3_sec = self.config['fort3']
             fort3_sec['tunex'] = self.vals['tunex']
@@ -83,15 +92,21 @@ class Study(object):
             fort3_sec['CHROM'] = self.vals['chrom']
             fort3_sec['chromx'] = self.vals['chromx']
             fort3_sec['chromy'] = self.vals['chromy']
-            
-            for i in scan_vals['SEEDRAN']:
-                mask_sec['SEEDRAN'] = str(i)
-                input_name = 'mad6t' + '_' + str(i) + '.ini'
-                output = os.path.join(dest, input_name)
+
+            for element in itertools.product(*scan_vals):
+                input_name = 'mad6t'
+                for i in range(len(element)):
+                    ky = scan_hols[i]
+                    vl = element[i]
+                    mask_sec[ky] = str(vl)
+                    input_name = input_name + '_' + str(ky) + '_' + str(vl)
+                input_name = input_name + '.ini'
+                mad6t_input = os.path.join(self.location, 'mad6t_input')
+                output = os.path.join(mad6t_input, input_name)
                 with open(output, 'w') as f_out:
                     self.config.write(f_out)
                 print('Successfully generate input file %s'%output)
-            
+
     def parse_bash_script(self, mfile):
         '''parse the bash input file for the old version sixdesk'''
         mf_in = open(mfile, 'r')
@@ -99,7 +114,7 @@ class Study(object):
         mf_in.close()
         if os.path.isfile('mexe.sh'):
             os.remove('mexe.sh')
-        mf_exe = open('mexe.sh', 'x')
+        mf_exe = open('mexe.sh', 'w')
         mf_exe.write('#!/bin/bash\n')
         coms = []
         params = []
@@ -133,13 +148,63 @@ class Study(object):
         os.chmod('mexe.sh', 0o777)
         values = os.popen('./mexe.sh').readlines()
         vals = {}
-        #os.remove('mexe.sh')
+        os.remove('mexe.sh')
         if len(params) == len(values):
             for i in range(len(params)):
                 vals[params[i]] = values[i].replace('\n', '')
         else:
-            print("These should somethings wrong with your input files!")
+            print("There should be something wrong with your input files!")
         return vals
+
+class StudyFactory(object):
+
+    def __init__(self, workspace='./ws'):
+        self.ws = workspace
+        self.studies = []
+        self.templates = os.path.join(self.ws, 'templates')
+        self._setup_ws()
+
+    def _setup_ws(self):
+        '''Setup a workspace'''
+        if not os.path.isdir(self.ws):
+            os.mkdir(self.ws)
+            print('Create new workspace %s!'%self.ws)
+        else:
+            print('The workspace %s already exists!'%self.ws)
+        studies = os.path.join(self.ws, 'studies')
+        if not os.path.isdir(studies):
+            os.mkdir(studies)
+
+    def info(self):
+        '''Print all the studies in the current workspace'''
+        return self.studies
+
+    def new_study(self, name=''):
+        '''Create a new study'''
+        studies = os.path.join(self.ws, 'studies')
+        app_path = os.path.abspath(inspect.getfile(self.__class__))
+        app_path = os.path.dirname(app_path)
+        tem_path = os.path.join(app_path, 'templates')
+        shutil.copytree(tem_path, templates)
+        if len(name) == 0:
+            i = len(self.studies)
+            study_name = 'study_' + str(i)
+        else:
+            study_name = 'study_' + name
+        study = os.path.join(studies, study_name)
+
+        if not os.path.isdir(study):
+            os.mkdir(study)
+            self.location = study
+            os.mkdir(os.path.join(study, 'mad6t_input'))
+            os.mkdir(os.path.join(study, 'mad6t_output'))
+            os.mkdir(os.path.join(study, 'sixtrack_input'))
+            os.mkdir(os.path.join(study, 'sixtrack_output'))
+            self.studies.append(study)
+            return Study(name, study, self.templates)
+        else:
+            print("The study %s already exists, nothing to do!"%study)
+            return None
 
 def peel_str(val):
     val = val.replace('(', '')
@@ -165,6 +230,7 @@ def is_numeral(val):
         return False
 
 if __name__ == '__main__':
-    test = Study()
-    test.from_env_file('scan_definitions', 'sixdeskenv', 'sysenv')
-    test.prepare_mad6t_input('./templates/mad6t.ini', './')
+    fac = StudyFactory('./testspace')
+    test = fac.new_study('lu')
+    #test.from_env_file('scan_definitions', 'sixdeskenv', 'sysenv')
+    #test.prepare_mad6t_input('./templates/mad6t.ini')

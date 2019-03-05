@@ -46,8 +46,9 @@ def madxjob(madx_config, mask_config):
     #Generate the actual madx file from mask file
     patterns = ['%'+a for a in mask_config.keys()]
     values = list(mask_config.values())
+    #TODO copy mask file
     replace(patterns, values, mask_file, madx_file)
-    
+
     #Begin to execute madx job
     command = madxexe + " " + madx_file
     print("Calling madx %s"%madxexe)
@@ -76,7 +77,7 @@ def madxjob(madx_config, mask_config):
     check_madxout('fc.8', 'fort.8')
     check_madxout('fc.16', 'fort.16')
     check_madxout('fc.34', 'fort.34')
-    
+
     #All the outputs are generated successfully,
     #and download the requested files.
     download_output('fort.3.mad', dest_path)
@@ -196,7 +197,7 @@ def sixtrackjob(config, config_re, jobname, **args):
 
     #actually run
     print('Sixtrack job %s is runing...'%jobname)
-    six_output = os.popen(sixtrack_exe) 
+    six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
     output_name = '../' + jobname + '.output'
     six_out = open(output_name, 'w')
