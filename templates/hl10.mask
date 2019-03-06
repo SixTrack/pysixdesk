@@ -940,7 +940,7 @@ if(mylhcbeam>1){
 	kqtf=kqtf.b2;kqtd=kqtd.b2;kqtf.b2:=kqtf;kqtd.b2:=kqtd;
 	ksf=ksf.b2;ksd=ksd.b2;ksf.b2:=ksf;ksd.b2:=ksd;
 };
-
+/*
 match;
 global, q1=qx0, q2=qy0;
 vary,   name=kqtf, step=1.0E-7 ;
@@ -964,7 +964,7 @@ vary,   name=kqtf, step=1.0E-7 ;
 vary,   name=kqtd, step=1.0E-7 ;
 lmdif,  calls=500, tolerance=1.0E-12;
 endmatch;
-
+*/
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 !                 Check corrector strength
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -977,15 +977,6 @@ call, file="slhc/errors2/corr_value.madx";
 
 ON_BB_CHARGE:=1;
 
-/*
-twiss;
- value, table(summ,q1);
- value, table(summ,q2);
- value, table(summ,dq1);
- value, table(summ,dq2);
- sixtrack, radius=0.017;
-*/
-
 if (NRJ<4999.9999) {VRF400:=8. ;LAGRF400.B1=0.5;LAGRF400.B2=0.;};
 if (NRJ>5000.0000) {VRF400:=16.;LAGRF400.B1=0.5;LAGRF400.B2=0.;};
 
@@ -996,24 +987,6 @@ xnom2=table(twiss,IP2,x);pxnom2=table(twiss,IP2,px);ynom2=table(twiss,IP2,y);pyn
 xnom5=table(twiss,IP5,x);pxnom5=table(twiss,IP5,px);ynom5=table(twiss,IP5,y);pynom5=table(twiss,IP5,py);
 xnom8=table(twiss,IP8,x);pxnom8=table(twiss,IP8,px);ynom8=table(twiss,IP8,y);pynom8=table(twiss,IP8,py);
 
-value,xnom1,xnom2,xnom5,xnom8;
-value,ynom1,ynom2,ynom5,ynom8;
-value,pxnom1,pxnom2,pxnom5,pxnom8;
-value,pynom1,pynom2,pynom5,pynom8;
-value, table(summ,q1);
-value, table(summ,q2);
-value, table(summ,dq1);
-value, table(summ,dq2);
-!sixtrack,cavall, mult_auto_off,radius=0.017;
 sixtrack,cavall, radius=0.017;
-
-select, flag=twiss, clear;
-if (this_is_a_mask==1){
-	twiss,file="last_twiss.%SEEDRAN";
-	System,"gzip last_twiss.%SEEDRAN";
-} else {
-	twiss,file="last_twiss.1";
-	System,"gzip last_twiss.1";
-};
 
 stop;

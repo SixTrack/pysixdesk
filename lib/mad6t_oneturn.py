@@ -7,27 +7,17 @@ import gzip
 import shutil
 import configparser
 
-def run(args):
-    num = len(args[1:])
-    if num == 0:
-        print("The input file is missing!")
-        sys.exit(1)
-    elif num == 1:
-        #TODO(xiaohan):Should we use ty-except statement to aviod crash due to wrong input? 
-        input_file = args[1]
-        cf = configparser.ConfigParser()
-        cf.optionxform = str #preserve case
-        cf.read(input_file)
-        madx_config = cf['madx']
-        mask_config = cf['mask']
-        madxjob(madx_config, mask_config)
+def run(input_file):
+    cf = configparser.ConfigParser()
+    cf.optionxform = str #preserve case
+    cf.read(input_file)
+    madx_config = cf['madx']
+    mask_config = cf['mask']
+    madxjob(madx_config, mask_config)
 
-        sixtrack_config = cf['sixtrack']
-        fort3_config = cf._sections['fort3']
-        sixtrackjobs(sixtrack_config, fort3_config)
-    else:
-        print("Too many input arguments!")
-        sys.exit(1)
+    sixtrack_config = cf['sixtrack']
+    fort3_config = cf._sections['fort3']
+    sixtrackjobs(sixtrack_config, fort3_config)
 
 def madxjob(madx_config, mask_config):
     '''MADX job to generate input file for sixtrack'''
@@ -37,17 +27,17 @@ def madxjob(madx_config, mask_config):
     if 'mask' not in mask_name:
         mask_name = mask_name + '.mask'
     mask_file = os.path.join(source_path, mask_name)
+    shutil.copy2(mask_file, mask_name)
     seed = mask_config["SEEDRAN"]
     dest_path = madx_config["dest_path"]
-    if os.path.isdir(dest_path):
+    if not os.path.isdir(dest_path):
         os.mkdir(dest_path)
     madx_file = os.path.join('.', mask_name+'.'+seed)
 
     #Generate the actual madx file from mask file
     patterns = ['%'+a for a in mask_config.keys()]
     values = list(mask_config.values())
-    #TODO copy mask file
-    replace(patterns, values, mask_file, madx_file)
+    replace(patterns, values, mask_name, madx_file)
 
     #Begin to execute madx job
     command = madxexe + " " + madx_file
@@ -80,17 +70,19 @@ def madxjob(madx_config, mask_config):
 
     #All the outputs are generated successfully,
     #and download the requested files.
-    download_output('fort.3.mad', dest_path)
-    download_output('fort.3.aux', dest_path)
-    download_output('fort.2', dest_path)
-    download_output('fort.8', dest_path)
-    download_output('fort.16', dest_path)
-    download_output('fort.34', dest_path)
+    a = ['fort.3.mad', 'fort.3.aux', 'fort.2', 'fort.8', 'fort.16', 'fort.34']
+    download_output(a, dest_path)
     print("All requested files have zipped and downloaded to %s"%dest_path)
 
 def sixtrackjobs(config, fort3_config):
     '''Manage all the one turn sixtrack job'''
     sixtrack_exe = config['sixtrack_exe']
+    source_path = config["source_path"]
+    input_files = config["input_files"]
+    extra_inputs = input_files.split(',')
+    for s in extra_inputs:
+        source = os.path.join(source_path, s)
+        shutil.copy2(source, s)
     print('Calling sixtrack %s'%sixtrack_exe)
     sixtrackjob(config, fort3_config, 'first_oneturn', dp1='.000', dp2='.000')
     sixtrackjob(config, fort3_config, 'second_oneturn')
@@ -142,9 +134,8 @@ def sixtrackjobs(config, fort3_config):
     f_out.close()
     #Download the requested files
     dest_path = config["dest_path"]
-    download_output('sixdesktunes', dest_path, False)
-    download_output('mychrom', dest_path, False)
-    download_output('betavalues', dest_path, False)
+    b = ['sixdesktunes', 'mychrom', 'betavalues']
+    download_output(b, dest_path, False)
 
 def sixtrackjob(config, config_re, jobname, **args):
     '''One turn sixtrack job'''
@@ -175,8 +166,8 @@ def sixtrackjob(config, config_re, jobname, **args):
     values = list(fort3_config.values())
     output = []
     for s in extra_inputs:
-        source = os.path.join(source_path, s)
         dest = s+".t1"
+        source = os.path.join('../', s)
         replace(patterns, values, source, dest)
         output.append(dest)
     if os.path.isfile('../fort.3.mad'):
@@ -222,21 +213,22 @@ def check_madxout(filename, newname):
         print("The file %s isn't generated successfully!" %filename)
         exit(1)
 
-def download_output(filename, dest, zp=True):
+def download_output(filenames, dest, zp=True):
     '''Download the requested files to the given destinaion.
     If zp is true, then zip the files before download.
     '''
-    if os.path.isfile(filename):
-        if not os.path.isdir(dest):
-            os.mkdir(dest, 0o755)
-        if zp:
-            out_name = dest + filename + '.gz'
-            with open(filename, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
+    for filename in filenames:
+        if os.path.isfile(filename):
+            if not os.path.isdir(dest):
+                os.mkdir(dest, 0o755)
+            if zp:
+                out_name = os.path.join(dest, filename + '.gz')
+                with open(filename, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            else:
+                shutil.copy(filename, dest)
         else:
-            shutil.copy(filename, dest)
-    else:
-        print("The file %s doesn't exist, download failed!"%filename)
+            print("The file %s doesn't exist, download failed!"%filename)
 
 def replace(patterns, replacements, source, dest):
     '''Reads a source file and writes the destination file.
@@ -267,4 +259,14 @@ def concatenate_files(source, dest):
     f_out.close()
 
 if __name__ == '__main__':
-    run(sys.argv)
+    args = sys.argv
+    num = len(args[1:])
+    if num == 0:
+        print("The input file is missing!")
+        sys.exit(1)
+    elif num == 1:
+        input_file = args[1]
+        run(input_file)
+    else:
+        print("Too many input arguments!")
+        sys.exit(1)

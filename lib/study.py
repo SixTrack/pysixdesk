@@ -5,16 +5,17 @@ import shutil
 import inspect
 import itertools
 import configparser
+import mad6t_oneturn
 
 class Study(object):
 
-    def __init__(self, name='study', location='.', tem_path=''):
+    def __init__(self, name='study', location='.'):
         '''Constructor'''
         self.name = name
         self.location = location
-        self.templates = tem_path
         self.config = configparser.ConfigParser()
         self.config.optionxform = str # preserve case
+        self.mad6t_joblist = []
         self.vals = {}
         self.mvals = {}
 
@@ -38,74 +39,110 @@ class Study(object):
         os.remove('cob_env.sh')
         self.vals.update(val1)
 
-    def prepare_mad6t_input(self, basefile):
-        '''Prepare the input files for madx and one turn sixtrack job'''
-        if len(self.vals) == 0:
-            print("You should load configure parameters at first!")
+    def submit_mad6t(self, platform = 'local', **args):
+        '''Submit the jobs to cluster or run locally'''
+        clean = False
+        if platform == 'local':
+            if 'place' in args:
+                execution_field = args['place']
+            else:
+                execution_field = 'temp'
+            execution_field = os.path.abspath(execution_field)
+            if not os.path.isdir(execution_field):
+                os.mkdir(execution_field)
+            if os.listdir(execution_field):
+                clean = False
+                print("Caution! The folder %s is not empty!"%execution_field)
+            cur_path = os.getcwd()
+            os.chdir(execution_field)
+            if 'clean' in args:
+                clean = args['clean']
+            for i in self.mad6t_joblist:
+                print("The job %s is running...."%i)
+                mad6t_oneturn.run(i)
+            print("All jobs are completed normally!")
+            os.chdir(cur_path)
+            if clean:
+                shutil.rmtree(execution_field)
+        elif platform.lower() == 'htcondor':
+            #app_path = os.path.abspath(inspect.getfile(self.__class__))
+            #app_path = os.path.dirname(app_path)
+            #sys.path.append(app_path)
+            pass
         else:
-            #parameters for madx job
-            self.config.read(basefile)
-            madx_sec = self.config['madx']
-            madx_sec['source_path'] = self.templates
-            madx_sec['dest_path'] = os.path.join(self.location, 'mad6t_output')
-            madx_path = self.vals['MADX_PATH']
-            madx_exe = self.vals['MADX']
-            madx_sec['madx_exe'] = madx_path + madx_exe
-            seed_i = self.vals['istamad']
-            seed_e = self.vals['iendmad']
-            madx_sec['job_name'] = self.vals['LHCDescrip']
-            madx_sec['corr_test'] = self.vals['CORR_TEST']
-            madx_sec['fort_34'] = self.vals['fort_34']
-            scan_vars = self.mvals['scan_variables'].split()
-            scan_hols = self.mvals['scan_placeholders'].replace('%','').split()
-            scan_vals = []
-            for a in scan_vars:
-                val = self.mvals['scan_vals_'+a]
-                val = val.split()
-                val = [num(i) for i in val if not math.isnan(num(i))]
-                if len(val) == 1:
-                    val = [k+1 for k in range(int(val[0]))]
-                scan_vals.append(val)
-            s_i = num(seed_i)
-            s_e = num(seed_e)
-            seeds = [j+s_i for j in range(int(s_e-s_i+1))]
-            scan_hols.append('SEEDRAN')
-            scan_vals.append(seeds)
+            print("Invlid platfrom!")
 
-            mask_sec = self.config['mask']
+    def prepare_mad6t_input(self):
+        '''Prepare the input files for madx and one turn sixtrack job'''
+        #parameters for madx job
+        basefile = os.path.join(self.location, 'mad6t.ini')#hard code?
+        self.config.read(basefile)
+        madx_sec = self.config['madx']
+        madx_sec['source_path'] = self.location
+        madx_path = self.vals['MADX_PATH']
+        madx_exe = self.vals['MADX']
+        madx_sec['madx_exe'] = os.path.join(madx_path, madx_exe)
+        seed_i = self.vals['istamad']
+        seed_e = self.vals['iendmad']
+        madx_sec['job_name'] = self.vals['LHCDescrip']
+        madx_sec['corr_test'] = self.vals['CORR_TEST']
+        madx_sec['fort_34'] = self.vals['fort_34']
+        scan_vars = self.mvals['scan_variables'].split()
+        scan_hols = self.mvals['scan_placeholders'].replace('%','').split()
+        scan_vals = []
+        for a in scan_vars:
+            val = self.mvals['scan_vals_'+a]
+            val = val.split()
+            val = [num(i) for i in val if not math.isnan(num(i))]
+            if len(val) == 1:
+                val = [k+1 for k in range(int(val[0]))]
+            scan_vals.append(val)
+        s_i = num(seed_i)
+        s_e = num(seed_e)
+        seeds = [j+s_i for j in range(int(s_e-s_i+1))]
+        scan_hols.append('SEEDRAN')
+        scan_vals.append(seeds)
 
-            #parameters for one turn sixtrack job
-            six_sec = self.config['sixtrack']
-            six_sec['source_path'] = self.templates
-            six_sec['dest_path'] = os.path.join(self.location, 'mad6t_output')
-            #six_sec['sixtrack_exe'] = self.vals['appName']
-            fort3_sec = self.config['fort3']
-            fort3_sec['tunex'] = self.vals['tunex']
-            fort3_sec['tuney'] = self.vals['tuney']
-            fort3_sec['inttunex'] = self.vals['tunex']
-            fort3_sec['inttuney'] = self.vals['tuney']
-            fort3_sec['pmass'] = self.vals['pmass']
-            fort3_sec['emit_beam'] = self.vals['emit_beam']
-            fort3_sec['e0'] = self.vals['e0']
-            fort3_sec['bunch_charge'] = self.vals['bunch_charge']
-            fort3_sec['chrom_eps'] = self.vals['chrom_eps']
-            fort3_sec['CHROM'] = self.vals['chrom']
-            fort3_sec['chromx'] = self.vals['chromx']
-            fort3_sec['chromy'] = self.vals['chromy']
+        mask_sec = self.config['mask']
 
-            for element in itertools.product(*scan_vals):
-                input_name = 'mad6t'
-                for i in range(len(element)):
-                    ky = scan_hols[i]
-                    vl = element[i]
-                    mask_sec[ky] = str(vl)
-                    input_name = input_name + '_' + str(ky) + '_' + str(vl)
-                input_name = input_name + '.ini'
-                mad6t_input = os.path.join(self.location, 'mad6t_input')
-                output = os.path.join(mad6t_input, input_name)
-                with open(output, 'w') as f_out:
-                    self.config.write(f_out)
-                print('Successfully generate input file %s'%output)
+        #parameters for one turn sixtrack job
+        six_sec = self.config['sixtrack']
+        six_sec['source_path'] = self.location
+        #six_sec['sixtrack_exe'] = self.vals['appName']
+        fort3_sec = self.config['fort3']
+        fort3_sec['tunex'] = self.vals['tunex']
+        fort3_sec['tuney'] = self.vals['tuney']
+        fort3_sec['inttunex'] = self.vals['tunex']
+        fort3_sec['inttuney'] = self.vals['tuney']
+        fort3_sec['pmass'] = self.vals['pmass']
+        fort3_sec['emit_beam'] = self.vals['emit_beam']
+        fort3_sec['e0'] = self.vals['e0']
+        fort3_sec['bunch_charge'] = self.vals['bunch_charge']
+        fort3_sec['chrom_eps'] = self.vals['chrom_eps']
+        fort3_sec['CHROM'] = self.vals['chrom']
+        fort3_sec['chromx'] = self.vals['chromx']
+        fort3_sec['chromy'] = self.vals['chromy']
+
+        for element in itertools.product(*scan_vals):
+            input_name = 'mad6t'
+            out_name = 'result'
+            for i in range(len(element)):
+                ky = scan_hols[i]
+                vl = element[i]
+                mask_sec[ky] = str(vl)
+                input_name = input_name + '_' + str(ky) + '_' + str(vl)
+                out_name = out_name + '_' + str(ky) + '_' + str(vl)
+            input_name = input_name + '.ini'
+            mad6t_input = os.path.join(self.location, 'mad6t_input')
+            madx_sec['dest_path'] = os.path.join(self.location, \
+                                    'mad6t_output', out_name)
+            six_sec['dest_path'] = os.path.join(self.location, \
+                                    'mad6t_output', out_name)
+            output = os.path.join(mad6t_input, input_name)
+            with open(output, 'w') as f_out:
+                self.config.write(f_out)
+            self.mad6t_joblist.append(output)
+            print('Successfully generate input file %s'%output)
 
     def parse_bash_script(self, mfile):
         '''parse the bash input file for the old version sixdesk'''
@@ -158,7 +195,7 @@ class Study(object):
 
 class StudyFactory(object):
 
-    def __init__(self, workspace='./ws'):
+    def __init__(self, workspace='./sandbox'):
         self.ws = workspace
         self.studies = []
         self.templates = os.path.join(self.ws, 'templates')
@@ -179,13 +216,11 @@ class StudyFactory(object):
         '''Print all the studies in the current workspace'''
         return self.studies
 
-    def new_study(self, name=''):
+    def new_study(self, name='', templates = ''):
         '''Create a new study'''
+        self.ws = os.path.abspath(self.ws)#Get absolute path
         studies = os.path.join(self.ws, 'studies')
-        app_path = os.path.abspath(inspect.getfile(self.__class__))
-        app_path = os.path.dirname(app_path)
-        tem_path = os.path.join(app_path, 'templates')
-        shutil.copytree(tem_path, templates)
+
         if len(name) == 0:
             i = len(self.studies)
             study_name = 'study_' + str(i)
@@ -200,11 +235,27 @@ class StudyFactory(object):
             os.mkdir(os.path.join(study, 'mad6t_output'))
             os.mkdir(os.path.join(study, 'sixtrack_input'))
             os.mkdir(os.path.join(study, 'sixtrack_output'))
+            if len(templates) == 0:
+                app_path = os.path.abspath(inspect.getfile(self.__class__))
+                app_path = os.path.dirname(app_path)
+                app_path = os.path.dirname(app_path)
+                tem_path = os.path.join(app_path, 'templates')
+                templates = tem_path
+
+            if os.path.isdir(templates):
+                for item in os.listdir(templates):
+                    s = os.path.join(templates, item)
+                    d = os.path.join(study, item)
+                    if os.path.isfile(s):
+                        shutil.copy2(s, d)
+            else:
+                print("Invlid templates source path!")
             self.studies.append(study)
-            return Study(name, study, self.templates)
+            print("Create new study %s"%study)
+            return Study(name, study)
         else:
             print("The study %s already exists, nothing to do!"%study)
-            return None
+            sys.exit(0)
 
 def peel_str(val):
     val = val.replace('(', '')
@@ -228,9 +279,3 @@ def is_numeral(val):
         return True
     except valueError:
         return False
-
-if __name__ == '__main__':
-    fac = StudyFactory('./testspace')
-    test = fac.new_study('lu')
-    #test.from_env_file('scan_definitions', 'sixdeskenv', 'sysenv')
-    #test.prepare_mad6t_input('./templates/mad6t.ini')

@@ -2,6 +2,7 @@ import os
 import sys
 import sqlite3
 from abc import ABC, abstractmethod
+
 class DatabaseAdaptor(ABC):
 
     def __init__(self, name = 'no name'):
