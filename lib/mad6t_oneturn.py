@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 import os
-import re
 import sys
 import copy
-import gzip
 import shutil
+import utils
+import fileinput
 import configparser
 
 def run(input_file):
@@ -37,7 +37,7 @@ def madxjob(madx_config, mask_config):
     #Generate the actual madx file from mask file
     patterns = ['%'+a for a in mask_config.keys()]
     values = list(mask_config.values())
-    replace(patterns, values, mask_name, madx_file)
+    utils.replace(patterns, values, mask_name, madx_file)
 
     #Begin to execute madx job
     command = madxexe + " " + madx_file
@@ -54,24 +54,24 @@ def madxjob(madx_config, mask_config):
         print("MADX has completed properly!")
 
     #Check the existence of madx output
-    check_madxout('fc.3', 'fort.3.mad')
+    utils.check('fc.3', 'fort.3.mad')
     if os.path.isfile('fc.3.aper'):
-        with open('fort.3.mad', 'w') as fc3:
+        with open('fort.3.mad', 'a') as fc3:
             fc3aper = fileinput.input('fc.3.aper')
             for line in fc3aper:
                 fc3.write(line)
             fc3.close()
             fc3aper.close()
-    check_madxout('fc.3.aux', 'fort.3.aux')
-    check_madxout('fc.2', 'fort.2')
-    check_madxout('fc.8', 'fort.8')
-    check_madxout('fc.16', 'fort.16')
-    check_madxout('fc.34', 'fort.34')
+    utils.check('fc.3.aux', 'fort.3.aux')
+    utils.check('fc.2', 'fort.2')
+    utils.check('fc.8', 'fort.8')
+    utils.check('fc.16', 'fort.16')
+    utils.check('fc.34', 'fort.34')
 
     #All the outputs are generated successfully,
     #and download the requested files.
     a = ['fort.3.mad', 'fort.3.aux', 'fort.2', 'fort.8', 'fort.16', 'fort.34']
-    download_output(a, dest_path)
+    utils.download_output(a, dest_path)
     print("All requested files have zipped and downloaded to %s"%dest_path)
 
 def sixtrackjobs(config, fort3_config):
@@ -135,7 +135,7 @@ def sixtrackjobs(config, fort3_config):
     #Download the requested files
     dest_path = config["dest_path"]
     b = ['sixdesktunes', 'mychrom', 'betavalues']
-    download_output(b, dest_path, False)
+    utils.download_output(b, dest_path, False)
 
 def sixtrackjob(config, config_re, jobname, **args):
     '''One turn sixtrack job'''
@@ -168,7 +168,7 @@ def sixtrackjob(config, config_re, jobname, **args):
     for s in extra_inputs:
         dest = s+".t1"
         source = os.path.join('../', s)
-        replace(patterns, values, source, dest)
+        utils.replace(patterns, values, source, dest)
         output.append(dest)
     if os.path.isfile('../fort.3.mad'):
         output.insert(1, '../fort.3.mad')
@@ -204,45 +204,6 @@ def sixtrackjob(config, config_re, jobname, **args):
 
     #Get out the temp folder
     os.chdir('../')
-
-def check_madxout(filename, newname):
-    '''Check the existence of the given file and rename it'''
-    if os.path.isfile(filename):
-        os.rename(filename, newname)
-    else:
-        print("The file %s isn't generated successfully!" %filename)
-        exit(1)
-
-def download_output(filenames, dest, zp=True):
-    '''Download the requested files to the given destinaion.
-    If zp is true, then zip the files before download.
-    '''
-    for filename in filenames:
-        if os.path.isfile(filename):
-            if not os.path.isdir(dest):
-                os.mkdir(dest, 0o755)
-            if zp:
-                out_name = os.path.join(dest, filename + '.gz')
-                with open(filename, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-            else:
-                shutil.copy(filename, dest)
-        else:
-            print("The file %s doesn't exist, download failed!"%filename)
-
-def replace(patterns, replacements, source, dest):
-    '''Reads a source file and writes the destination file.
-    In each line, replaces patterns with repleacements.
-    '''
-    fin = open(source, 'r')
-    fout = open(dest, 'w')
-    num = len(patterns)
-    for line in fin:
-        for i in range(num):
-            line = re.sub(patterns[i], str(replacements[i]), line)
-        fout.write(line)
-    fin.close()
-    fout.close()
 
 def concatenate_files(source, dest):
     '''Concatenate the given files'''

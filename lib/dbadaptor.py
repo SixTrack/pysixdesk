@@ -13,7 +13,7 @@ class DatabaseAdaptor(ABC):
         pass
 
     @abstractmethod
-    def fetch_tables(self, command):
+    def fetch_tables(self, connection):
         pass
 
     @abstractmethod
@@ -22,6 +22,18 @@ class DatabaseAdaptor(ABC):
 
     @abstractmethod
     def get_values(self, table, name):
+        pass
+
+    @abstractmethod
+    def insert(self):
+        pass
+
+    @abstractmethod
+    def insertl(self):
+        pass
+
+    @abstractmehtod
+    def delete(self):
         pass
 
 class SQLDatabaseAdaptor(DatabaseAdaptor):
@@ -38,8 +50,6 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
     def fetch_tables(self, conn):
         c = conn.cursor()
         c.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        print(c.fetchone())
-        print(c.fetchone())
         print(c.fetchall())
         return c.fetchall()
 

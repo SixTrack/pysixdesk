@@ -14,10 +14,81 @@ class Study(object):
         self.name = name
         self.location = location
         self.config = configparser.ConfigParser()
-        self.config.optionxform = str # preserve case
+        self.config.optionxform = str #preserve case
         self.mad6t_joblist = []
+        #All the requested parameters for a study
+        self.paths = {}
+        self.madx_input = {}
+        self.madx_output = {}
+        self.sixtrack_oneturn_params = {}
+        self.sixtrack_input = []
+        self.sixtrack_output = []
+        self.tables = {}
         self.vals = {}
         self.mvals = {}
+        self.initial()
+
+    def initial(self):
+        '''initialize a study with some default settings'''
+        self.paths["sixtrack"] = "/afs/cern.ch/project/sixtrack/build/sixtrack"
+        self.paths["madx"] = "/afs/cern.ch/user/m/mad/bin/madx"
+        self.paths["location"] = self.location
+        self.paths["madx_in"] = os.path.join(self.location, "mad6t_input")
+        self.paths["madx_out"] = os.path.join(self.location, "mad6t_output")
+        self.paths["sixtrack_in"] = os.path.join(self.location, "sixtrack_input")
+        self.paths["sixtrack_out"] = os.path.join(self.location, "sixtrack_output")
+
+        self.madx_output = {
+                'fc.2': 'fort.2',
+                'fc.3.aux': 'fort.3.aux',
+                'fc.8': 'fort.8',
+                'fc.16': 'fort.16'}
+        self.sixtrack_oneturn_params = {
+                "turnss": 1,
+                "nss": 1,
+                "ax0s": 0.1,
+                "ax1s": 0.1,
+                "imc": 1,
+                "iclo6": 2,
+                "writebins": 1,
+                "ratios": 1,
+                "Runnam": 'FirstTurn',
+                "idfor": 0,
+                "ibtype": 0,
+                "ition": 0,
+                "CHRO": '/',
+                "TUNE": '/',
+                "POST": 'POST',
+                "POS1": '',
+                "ndafi": 1,
+                "tunex": 62.28,
+                "tuney": 60.31,
+                "inttunex": 62.28,
+                "inttuney": 60.31,
+                "DIFF": '/DIFF',
+                "DIF1": '/',
+                "pmass": 938.272013,
+                "emit_beam": 3.75,
+                "e0": 7000,
+                "bunch_charge": 1.15E11,
+                "CHROM": 0,
+                "chrom_eps": 0.000001,
+                "dp1": 0.000001,
+                "dp2": 0.000001,
+                "chromx": 2,
+                "chromy": 2,
+                "TUNEVAL": '/',
+                "CHROVAL": '/'}
+        self.sixtrack_output_files = ['fort.10']
+
+        self.tables = {
+                "mad6t_run": ['seed', 'mad_in', 'mad_out', 'fort.2', 'fort.3',\
+                        'fort.8', 'fort.16', 'job_stdout', 'job_stderr',\
+                        'job_stdlog', 'mad_out_mtime'],
+                "six_input": list(self.sixtrack_parms.keys()) + ['id_mad6t_run'],
+                "six_beta": ['seed', 'tunex', 'tuney', 'beta11', 'beta12',\
+                        'beta22', 'beta21', 'qx', 'qy', 'id_mad6t_run'],
+                "dymap_results": []}
 
     def from_env_file(self, mfile, *files):
         '''Set up a study from the initial files of old version sixdesk, e.g. sixdeskenv,sixenv
@@ -108,7 +179,6 @@ class Study(object):
         #parameters for one turn sixtrack job
         six_sec = self.config['sixtrack']
         six_sec['source_path'] = self.location
-        #six_sec['sixtrack_exe'] = self.vals['appName']
         fort3_sec = self.config['fort3']
         fort3_sec['tunex'] = self.vals['tunex']
         fort3_sec['tuney'] = self.vals['tuney']
@@ -198,7 +268,6 @@ class StudyFactory(object):
     def __init__(self, workspace='./sandbox'):
         self.ws = workspace
         self.studies = []
-        self.templates = os.path.join(self.ws, 'templates')
         self._setup_ws()
 
     def _setup_ws(self):
@@ -230,7 +299,6 @@ class StudyFactory(object):
 
         if not os.path.isdir(study):
             os.mkdir(study)
-            self.location = study
             os.mkdir(os.path.join(study, 'mad6t_input'))
             os.mkdir(os.path.join(study, 'mad6t_output'))
             os.mkdir(os.path.join(study, 'sixtrack_input'))
@@ -257,11 +325,9 @@ class StudyFactory(object):
             print("The study %s already exists, nothing to do!"%study)
             sys.exit(0)
 
-def peel_str(val):
-    val = val.replace('(', '')
-    val = val.replace(')', '')
-    val = val.replace('\n', '')
-    val = val.replace(' ', '')
+def peel_str(val, query=['(',')','\n',' '], replace=['','','','']):
+    for que,rep in zip(query, replace):
+        val = val.replace(que, rep)
     return val
 
 def num(val):
