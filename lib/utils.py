@@ -5,13 +5,14 @@ import gzip
 import shutil
 
 
-def check(filename, newname):
+def check(file_dict):
     '''Check the existence of the given file and rename it'''
-    if os.path.isfile(filename):
-        os.rename(filename, newname)
-    else:
-        print("The file %s isn't generated successfully!" %filename)
-        sys.exit(1)
+    for key,value in file_dict.items():
+        if os.path.isfile(key):
+            os.rename(key, value)
+        else:
+            print("The file %s isn't generated successfully!" %key)
+            sys.exit(1)
 
 def download_output(filenames, dest, zp=True):
     '''Download the requested files to the given destinaion.
@@ -44,3 +45,32 @@ def replace(patterns, replacements, source, dest):
     fin.close()
     fout.close()
 
+def code(inputs):
+    '''Convert list or directory to special-format string'''
+    output = ''
+    if isinstance(inputs, list):
+        for i in inputs:
+            output = output + str(i) + ','
+        return output[:-1]
+    elif isinstance(inputs, dict):
+        for i,j in inputs.items():
+            output = output + str(i) + ':' + str(j) + ','
+        return output[:-1]
+    else:
+        return str(inputs)
+
+def decode(inputs):
+    '''Convert special-format string to list or directory'''
+    if isinstance(inputs, str):
+        if ':' in inputs:
+            output = {}
+            a = inputs.split(',')
+            for i in a:
+                b = i.split(':')
+                output[b[0]] = b[1]
+        else:
+            output = inputs.split(',')
+        return output
+    else:
+        print("The input is not string!")
+        return []

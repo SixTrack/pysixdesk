@@ -24,28 +24,29 @@ def madxjob(madx_config, mask_config):
     madxexe = madx_config["madx_exe"]
     source_path = madx_config["source_path"]
     mask_name = madx_config["mask_name"]
+    madx_input_name = madx_config["input_name"]
+    output_files = madx_config["output_files"]
+    output_files = utils.decode(output_files)
     if 'mask' not in mask_name:
         mask_name = mask_name + '.mask'
     mask_file = os.path.join(source_path, mask_name)
     shutil.copy2(mask_file, mask_name)
-    seed = mask_config["SEEDRAN"]
     dest_path = madx_config["dest_path"]
     if not os.path.isdir(dest_path):
         os.mkdir(dest_path)
-    madx_file = os.path.join('.', mask_name+'.'+seed)
 
     #Generate the actual madx file from mask file
     patterns = ['%'+a for a in mask_config.keys()]
     values = list(mask_config.values())
-    utils.replace(patterns, values, mask_name, madx_file)
+    utils.replace(patterns, values, mask_name, madx_input_name)
 
     #Begin to execute madx job
-    command = madxexe + " " + madx_file
+    command = madxexe + " " + madx_input_name
     print("Calling madx %s"%madxexe)
     print("MADX job is running...")
     output = os.popen(command)
     outputlines = output.readlines()
-    mad_out = open('mad_out', 'w')
+    mad_out = open('madx_stdout', 'w')
     mad_out.writelines(outputlines)
     if 'finished normally' not in outputlines[-2]:
         print("MADX has not completed properly!")
@@ -54,33 +55,22 @@ def madxjob(madx_config, mask_config):
         print("MADX has completed properly!")
 
     #Check the existence of madx output
-    utils.check('fc.3', 'fort.3.mad')
-    if os.path.isfile('fc.3.aper'):
-        with open('fort.3.mad', 'a') as fc3:
-            fc3aper = fileinput.input('fc.3.aper')
-            for line in fc3aper:
-                fc3.write(line)
-            fc3.close()
-            fc3aper.close()
-    utils.check('fc.3.aux', 'fort.3.aux')
-    utils.check('fc.2', 'fort.2')
-    utils.check('fc.8', 'fort.8')
-    utils.check('fc.16', 'fort.16')
-    utils.check('fc.34', 'fort.34')
-
+    utils.check(output_files)
     #All the outputs are generated successfully,
-    #and download the requested files.
-    a = ['fort.3.mad', 'fort.3.aux', 'fort.2', 'fort.8', 'fort.16', 'fort.34']
-    utils.download_output(a, dest_path)
+
+    #Download the requested files.
+    down_list = list(output_files.values())
+    down_list.append(madx_input_name)
+    down_list.append('madx_stdout')
+    utils.download_output(down_list, dest_path)
     print("All requested files have zipped and downloaded to %s"%dest_path)
 
 def sixtrackjobs(config, fort3_config):
     '''Manage all the one turn sixtrack job'''
     sixtrack_exe = config['sixtrack_exe']
     source_path = config["source_path"]
-    input_files = config["input_files"]
-    extra_inputs = input_files.split(',')
-    for s in extra_inputs:
+    temp_files = utils.decode(config["temp_files"])
+    for s in temp_files:
         source = os.path.join(source_path, s)
         shutil.copy2(source, s)
     print('Calling sixtrack %s'%sixtrack_exe)
@@ -143,8 +133,8 @@ def sixtrackjob(config, config_re, jobname, **args):
     fort3_config = copy.deepcopy(config_re)
     source_path = sixtrack_config["source_path"]
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
-    input_files = sixtrack_config["input_files"]
-    extra_inputs = input_files.split(',')
+    temp_files = utils.decode(sixtrack_config["temp_files"])
+    input_files = utils.decode(sixtrack_config["input_files"])
     fc3aux = open('fort.3.aux', 'r')
     fc3aux_lines = fc3aux.readlines()
     fc3aux_2 = fc3aux_lines[1]
@@ -165,15 +155,17 @@ def sixtrackjob(config, config_re, jobname, **args):
     patterns = ['%'+a for a in keys]
     values = list(fort3_config.values())
     output = []
-    for s in extra_inputs:
+    for s in temp_files:
         dest = s+".t1"
         source = os.path.join('../', s)
         utils.replace(patterns, values, source, dest)
         output.append(dest)
-    if os.path.isfile('../fort.3.mad'):
-        output.insert(1, '../fort.3.mad')
+    temp1 = input_files['fc.3']
+    temp1 = os.path.join('../', temp1)
+    if os.path.isfile(temp1):
+        output.insert(1, temp1)
     else:
-        print("The fort.3.mad file doesn't exist!")
+        print("The %s file doesn't exist!"%temp1)
         sys.exit(1)
     concatenate_files(output, 'fort.3')
 
