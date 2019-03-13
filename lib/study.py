@@ -125,7 +125,7 @@ class Study(object):
                 execution_field = 'temp'
             execution_field = os.path.abspath(execution_field)
             if not os.path.isdir(execution_field):
-                os.mkdir(execution_field)
+                os.makedirs(execution_field)
             if os.listdir(execution_field):
                 clean = False
                 print("Caution! The folder %s is not empty!"%execution_field)

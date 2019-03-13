@@ -22,14 +22,14 @@ source setupEnvironment.sh
 ```
 
 Then you can add scan parameters to the ```lib/config.py``` script.
-Then you can test the program with the follow codes: 
+You can test the program with the following codes: 
 
 ```shell
 from study import Study, StudyFactory
 a = StudyFactory()
 test = a.new_study('test')
 test.prepare_madx_single_input()
-test.submit_mad6t(place='./testspace/run')
+test.submit_mad6t(place='./run')
 ```
-```place='./testspace/run``` is to set the place to run the jobs
+```place='./run``` is to set the place to run the jobs.
 You will find the result in ```sandbox``` directory
