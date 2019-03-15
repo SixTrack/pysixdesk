@@ -10,7 +10,7 @@ import mad6t_oneturn
 
 class Study(object):
 
-    def __init__(self, name='study', location='.'):
+    def __init__(self, name='example_study', location=os.getcwd()):
         '''Constructor'''
         self.name = name
         self.location = location
@@ -30,9 +30,9 @@ class Study(object):
         self.sixtrack_output = []
         self.tables = {}
         #initialize default values
-        Study.initialize(self)
+        Study._defaults(self)
 
-    def initialize(self):
+    def _defaults(self):
         '''initialize a study with some default settings'''
         self.paths["madx_exe"] = "/afs/cern.ch/user/m/mad/bin/madx"
         self.paths["sixtrack_exe"] = "/afs/cern.ch/project/sixtrack/build/sixtrack"
@@ -46,19 +46,6 @@ class Study(object):
         tem_path = os.path.join(app_path, 'templates')
         self.paths["templates"] = tem_path
 
-        os.mkdir(self.paths["madx_in"])
-        os.mkdir(self.paths["madx_out"])
-        os.mkdir(self.paths["sixtrack_in"])
-        os.mkdir(self.paths["sixtrack_out"])
-
-        if os.path.isdir(tem_path):
-             for item in os.listdir(tem_path):
-                 s = os.path.join(tem_path, item)
-                 d = os.path.join(self.location, item)
-                 if os.path.isfile(s):
-                     shutil.copy2(s, d)
-        else:
-            print("Invalid templates folder!")
         self.madx_output = {
                 'fc.2': 'fort.2',
                 'fc.3': 'fort.3.mad',
@@ -114,6 +101,29 @@ class Study(object):
                 "six_beta": ['seed', 'tunex', 'tuney', 'beta11', 'beta12',\
                         'beta22', 'beta21', 'qx', 'qy', 'id_mad6t_run'],
                 "dymap_results": []}
+
+    def structure(self):
+        '''Structure the workspace of this study
+        and copy the necessary templates in the workspace'''
+        if not os.path.isdir(self.paths["madx_in"]):
+            os.mkdir(self.paths["madx_in"])
+        if not os.path.isdir(self.paths["madx_out"]):
+            os.mkdir(self.paths["madx_out"])
+        if not os.path.isdir(self.paths["sixtrack_in"]):
+            os.mkdir(self.paths["sixtrack_in"])
+        if not os.path.isdir(self.paths["sixtrack_out"]):
+            os.mkdir(self.paths["sixtrack_out"])
+
+        tem_path = self.paths["templates"]
+        if os.path.isdir(tem_path):
+             for item in os.listdir(tem_path):
+                 s = os.path.join(tem_path, item)
+                 d = os.path.join(self.location, item)
+                 if os.path.isfile(s):
+                     shutil.copy2(s, d)
+        else:
+            print("Invalid templates folder!")
+
 
     def submit_mad6t(self, platform = 'local', **args):
         '''Submit the jobs to cluster or run locally'''
@@ -195,17 +205,22 @@ class Study(object):
 
     def madx_name_conven(self, prefix, keys, values, suffix = '.madx'):
         '''The convention for naming input file'''
-        mk = prefix
-        num = len(keys) if len(keys)<len(values) else len(values)
-        for i in range(num):
-            mk += '_%s_%s'%(keys[i], str(values[i]))
-        mk += suffix
+        lStatus = True
+        b = ''
+        if len(keys) == len(values):
+            a = ['_'.join(map(str, i)) for i in zip(keys, values)]
+            b = '_'.join(map(str, a))
+        else:
+            print("The input list keys and values must have same length!")
+            lStatus = False
+            #num = len(keys) if len(keys)<len(values) else len(values)
+        mk = prefix + '_' + b + suffix
         return mk
 
 class StudyFactory(object):
 
     def __init__(self, workspace='./sandbox'):
-        self.ws = workspace
+        self.ws = os.path.abspath(workspace)
         self.studies = []
         self._setup_ws()
 
@@ -222,18 +237,18 @@ class StudyFactory(object):
 
     def info(self):
         '''Print all the studies in the current workspace'''
+        print(self.studies)
         return self.studies
 
     def new_study(self, name='', module='config', classname = 'MyStudy'):
         '''Create a new study'''
-        self.ws = os.path.abspath(self.ws)#Get absolute path
         studies = os.path.join(self.ws, 'studies')
 
         if len(name) == 0:
             i = len(self.studies)
-            study_name = 'study_' + str(i)
+            study_name = 'study_%03i'%(i)
         else:
-            study_name = 'study_' + name
+            study_name = name
         study = os.path.join(studies, study_name)
 
         if not os.path.isdir(study):

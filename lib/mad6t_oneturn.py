@@ -55,7 +55,9 @@ def madxjob(madx_config, mask_config):
         print("MADX has completed properly!")
 
     #Check the existence of madx output
-    utils.check(output_files)
+    status = utils.check(output_files)
+    if not status:
+        sys.exit(1) #The required files aren't generated normally,we need to quit
     #All the outputs are generated successfully,
 
     #Download the requested files.
