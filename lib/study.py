@@ -8,12 +8,15 @@ import importlib
 import utils
 import mad6t_oneturn
 
+from importlib.machinery import SourceFileLoader
+
 class Study(object):
 
-    def __init__(self, name='example_study', location=os.getcwd()):
+    def __init__(self, name='example_study', loc=os.getcwd(), parent_ws = None):
         '''Constructor'''
         self.name = name
-        self.location = location
+        self.location = loc
+        self.parent_ws = parent_ws
         self.config = configparser.ConfigParser()
         self.config.optionxform = str #preserve case
         self.mad6t_joblist = []
@@ -41,10 +44,10 @@ class Study(object):
         self.paths["madx_out"] = os.path.join(self.location, "mad6t_output")
         self.paths["sixtrack_in"] = os.path.join(self.location, "sixtrack_input")
         self.paths["sixtrack_out"] = os.path.join(self.location, "sixtrack_output")
-        app_path = os.path.abspath(inspect.getfile(Study))
-        app_path = os.path.dirname(os.path.dirname(app_path))
-        tem_path = os.path.join(app_path, 'templates')
-        self.paths["templates"] = tem_path
+        if self.parent_ws is None:
+            self.paths["templates"] = os.path.join(StudyFactory.app_path(), 'templates')
+        else:
+            self.paths["templates"] = os.path.join(self.parent_ws, 'templates')
 
         self.madx_output = {
                 'fc.2': 'fort.2',
@@ -115,7 +118,7 @@ class Study(object):
             os.mkdir(self.paths["sixtrack_out"])
 
         tem_path = self.paths["templates"]
-        if os.path.isdir(tem_path):
+        if os.path.isdir(tem_path) and os.listdir(tem_path):
              for item in os.listdir(tem_path):
                  s = os.path.join(tem_path, item)
                  d = os.path.join(self.location, item)
@@ -151,8 +154,6 @@ class Study(object):
             if clean:
                 shutil.rmtree(execution_field)
         elif platform.lower() == 'htcondor':
-            #app_path = os.path.abspath(inspect.getfile(self.__class__))
-            #app_path = os.path.dirname(app_path)
             #sys.path.append(app_path)
             pass
         else:
@@ -165,7 +166,12 @@ class Study(object):
         madx_sec['source_path'] = self.paths['location']
         madx_sec['madx_exe'] = self.paths['madx_exe']
         madx_sec['mask_name'] = self.madx_input["mask_name"]
-        madx_sec['output_files'] = utils.code(self.madx_output)
+        status, out_files = utils.encode_strings(self.madx_output)
+        if status:
+            madx_sec['output_files'] = out_files
+        else:
+            print("Wrong setting of madx output files!")
+            sys.exit(1)
 
         self.config['mask'] = {}
         mask_sec = self.config['mask']
@@ -174,9 +180,24 @@ class Study(object):
         six_sec = self.config['sixtrack']
         six_sec['source_path'] = self.paths['location']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-        six_sec['temp_files'] = utils.code(self.oneturn_sixtrack_input['temp'])
-        six_sec['input_files'] = utils.code(self.oneturn_sixtrack_input['input'])
-        six_sec['output_files'] = utils.code(self.oneturn_sixtrack_output)
+        status, temp = utils.encode_strings(self.oneturn_sixtrack_input['temp'])
+        if status:
+            six_sec['temp_files'] = temp
+        else:
+            print("Wrong setting of oneturn sixtrack templates!")
+            sys.exit(1)
+        status, in_files = utils.encode_strings(self.oneturn_sixtrack_input['input'])
+        if status:
+            six_sec['input_files'] = in_files
+        else:
+            print("Wrong setting of oneturn sixtrack input!")
+            sys.exit(1)
+        status, out_six = utils.encode_strings(self.oneturn_sixtrack_output)
+        if status:
+            six_sec['output_files'] = out_six
+        else:
+            print("Wrong setting of oneturn sixtrack outut!")
+            sys.exit(1)
         self.config['fort3'] = self.oneturn_sixtrack_params
 
         keys = sorted(self.madx_params.keys())
@@ -213,7 +234,6 @@ class Study(object):
         else:
             print("The input list keys and values must have same length!")
             lStatus = False
-            #num = len(keys) if len(keys)<len(values) else len(values)
         mk = prefix + '_' + b + suffix
         return mk
 
@@ -234,13 +254,29 @@ class StudyFactory(object):
         studies = os.path.join(self.ws, 'studies')
         if not os.path.isdir(studies):
             os.mkdir(studies)
+        templates = os.path.join(self.ws, 'templates')
+        if not os.path.isdir(templates):
+            os.mkdir(templates)
+
+        app_path = StudyFactory.app_path()
+        tem_path = os.path.join(app_path, 'templates')
+        contents = os.listdir(templates)
+        if not contents:
+            if os.path.isdir(tem_path) and os.listdir(tem_path):
+                 for item in os.listdir(tem_path):
+                     s = os.path.join(tem_path, item)
+                     d = os.path.join(templates, item)
+                     if os.path.isfile(s):
+                         shutil.copy2(s, d)
+            else:
+                print("The templates folder %s is invlid!"%tem_path)
 
     def info(self):
         '''Print all the studies in the current workspace'''
         print(self.studies)
         return self.studies
 
-    def new_study(self, name='', module='config', classname = 'MyStudy'):
+    def new_study(self, name='', module_path=None, classname = 'MyStudy'):
         '''Create a new study'''
         studies = os.path.join(self.ws, 'studies')
 
@@ -250,14 +286,32 @@ class StudyFactory(object):
         else:
             study_name = name
         study = os.path.join(studies, study_name)
+        app_path = StudyFactory.app_path()
+        config_temp = os.path.join(app_path, 'lib', 'config.py')
+
+        if module_path is None:
+            module_path = os.path.join(study, 'config.py')
 
         if not os.path.isdir(study):
             os.mkdir(study)
-            self.studies.append(study)
-            mod = importlib.import_module(module)
-            cls = getattr(mod, classname)
-            print("Create new study %s"%study)
-            return cls(name, study)
+            shutil.copy2(config_temp, module_path)
+            if os.path.isfile(module_path):
+                self.studies.append(study)
+                mod = SourceFileLoader(study_name, module_path).load_module()
+                cls = getattr(mod, classname)
+                print("Create new study %s"%study)
+                return cls(name, study, self.ws)
+            else:
+                print("The configure file 'config.py' isn't found!")
+                sys.exit(1)
         else:
             print("The study %s already exists, nothing to do!"%study)
             sys.exit(0)
+
+    @staticmethod
+    def app_path():
+        '''Get the absolute path of the home directory of pysixdesk'''
+        app_path = os.path.abspath(inspect.getfile(Study))
+        app_path = os.path.dirname(os.path.dirname(app_path))
+        return app_path
+

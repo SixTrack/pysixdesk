@@ -4,8 +4,8 @@ from study import Study
 
 class MyStudy(Study):
 
-    def __init__(self, name='study', location='.'):
-        super(MyStudy, self).__init__(name, location)
+    def __init__(self, name='study', location=os.getcwd(), parent_ws=None):
+        super(MyStudy, self).__init__(name, location, parent_ws)
         '''initialize a study'''
         #All parameters are case-sensitive
         #full path to madx

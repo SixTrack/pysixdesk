@@ -14,7 +14,8 @@ def check(files):
     if isinstance(files, dict):
         for key,value in files.items():
             if os.path.isfile(key):
-                os.rename(key, value)
+                if key != value:
+                    os.rename(key, value)
             else:
                 print("The file %s isn't generated successfully!" %key)
                 lStatus = False
@@ -24,7 +25,7 @@ def check(files):
                 print("The file %s isn't generated successfully!" %key)
                 lStatus = False
     else:
-        print()
+        print("The input must be a list or dict!")
         lStatus = False
     return lStatus
 
@@ -69,21 +70,22 @@ def replace(patterns, replacements, source, dest):
         lStatus = False
     return lStatus
 
-def code(inputs):
+def encode_strings(inputs):
     '''Convert list or directory to special-format string'''
-    output = ''
+    lStatus = True
     if isinstance(inputs, list):
         output = ','.join(map(str, inputs))
-        return output
     elif isinstance(inputs, dict):
         a = [':'.join(map(str, i)) for i in inputs.items()]
         output = ','.join(map(str, a))
-        return output
     else:
-        return str(inputs)
+        lStatus = False
+        output = ''
+    return lStatus, output
 
-def decode(inputs):
+def decode_strings(inputs):
     '''Convert special-format string to list or directory'''
+    lStatus = True
     if isinstance(inputs, str):
         if ':' in inputs:
             output = {}
@@ -93,7 +95,8 @@ def decode(inputs):
                 output[b[0]] = b[1]
         else:
             output = inputs.split(',')
-        return output
     else:
         print("The input is not string!")
-        return []
+        lStatus = False
+        output = []
+    return lStatus, output

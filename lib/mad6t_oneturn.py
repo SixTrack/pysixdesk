@@ -26,7 +26,10 @@ def madxjob(madx_config, mask_config):
     mask_name = madx_config["mask_name"]
     madx_input_name = madx_config["input_name"]
     output_files = madx_config["output_files"]
-    output_files = utils.decode(output_files)
+    status, output_files = utils.decode_strings(output_files)
+    if not status:
+        print("Wrong setting of madx output!")
+        sys.exit(1)
     if 'mask' not in mask_name:
         mask_name = mask_name + '.mask'
     mask_file = os.path.join(source_path, mask_name)
@@ -38,7 +41,10 @@ def madxjob(madx_config, mask_config):
     #Generate the actual madx file from mask file
     patterns = ['%'+a for a in mask_config.keys()]
     values = list(mask_config.values())
-    utils.replace(patterns, values, mask_name, madx_input_name)
+    status = utils.replace(patterns, values, mask_name, madx_input_name)
+    if not status:
+        print("Failed to generate actual madx input file!")
+        sys.exit(1)
 
     #Begin to execute madx job
     command = madxexe + " " + madx_input_name
@@ -64,14 +70,20 @@ def madxjob(madx_config, mask_config):
     down_list = list(output_files.values())
     down_list.append(madx_input_name)
     down_list.append('madx_stdout')
-    utils.download_output(down_list, dest_path)
-    print("All requested files have zipped and downloaded to %s"%dest_path)
+    status = utils.download_output(down_list, dest_path)
+    if not status:
+        sys.exit(1)
+    else:
+        print("All requested files have zipped and downloaded to %s"%dest_path)
 
 def sixtrackjobs(config, fort3_config):
     '''Manage all the one turn sixtrack job'''
     sixtrack_exe = config['sixtrack_exe']
     source_path = config["source_path"]
-    temp_files = utils.decode(config["temp_files"])
+    status, temp_files = utils.decode_strings(config["temp_files"])
+    if not status:
+        print("Wrong setting of oneturn sixtrack templates!")
+        sys.exit(1)
     for s in temp_files:
         source = os.path.join(source_path, s)
         shutil.copy2(source, s)
@@ -127,7 +139,9 @@ def sixtrackjobs(config, fort3_config):
     #Download the requested files
     dest_path = config["dest_path"]
     b = ['sixdesktunes', 'mychrom', 'betavalues']
-    utils.download_output(b, dest_path, False)
+    status = utils.download_output(b, dest_path, False)
+    if not status:
+        sys.exit(1)
 
 def sixtrackjob(config, config_re, jobname, **args):
     '''One turn sixtrack job'''
@@ -135,8 +149,14 @@ def sixtrackjob(config, config_re, jobname, **args):
     fort3_config = copy.deepcopy(config_re)
     source_path = sixtrack_config["source_path"]
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
-    temp_files = utils.decode(sixtrack_config["temp_files"])
-    input_files = utils.decode(sixtrack_config["input_files"])
+    status, temp_files = utils.decode_strings(sixtrack_config["temp_files"])
+    if not status:
+        print("Wrong setting of oneturn sixtrack templates!")
+        sys.exit(1)
+    status, input_files = utils.decode_strings(sixtrack_config["input_files"])
+    if not status:
+        print("Wrong setting of oneturn sixtrack input!")
+        sys.exit(1)
     fc3aux = open('fort.3.aux', 'r')
     fc3aux_lines = fc3aux.readlines()
     fc3aux_2 = fc3aux_lines[1]
@@ -160,7 +180,10 @@ def sixtrackjob(config, config_re, jobname, **args):
     for s in temp_files:
         dest = s+".t1"
         source = os.path.join('../', s)
-        utils.replace(patterns, values, source, dest)
+        status = utils.replace(patterns, values, source, dest)
+        if not status:
+            print("Failed to generate input file for oneturn sixtrack!")
+            sys.exit(1)
         output.append(dest)
     temp1 = input_files['fc.3']
     temp1 = os.path.join('../', temp1)
