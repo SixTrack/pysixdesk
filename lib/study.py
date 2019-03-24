@@ -9,14 +9,15 @@ import utils
 import mad6t_oneturn
 
 from importlib.machinery import SourceFileLoader
+from pysixdb import SixDB
 
 class Study(object):
 
-    def __init__(self, name='example_study', loc=os.getcwd(), parent_ws = None):
+    def __init__(self, name='example_study', loc=os.getcwd()):
         '''Constructor'''
         self.name = name
-        self.location = loc
-        self.parent_ws = parent_ws
+        self.location = os.path.abspath(loc)
+        self.study_path = os.path.join(self.location, self.name)
         self.config = configparser.ConfigParser()
         self.config.optionxform = str #preserve case
         self.mad6t_joblist = []
@@ -37,17 +38,16 @@ class Study(object):
 
     def _defaults(self):
         '''initialize a study with some default settings'''
+        #full path to madx
         self.paths["madx_exe"] = "/afs/cern.ch/user/m/mad/bin/madx"
+        #full path to sixtrack
         self.paths["sixtrack_exe"] = "/afs/cern.ch/project/sixtrack/build/sixtrack"
-        self.paths["location"] = self.location
-        self.paths["madx_in"] = os.path.join(self.location, "mad6t_input")
-        self.paths["madx_out"] = os.path.join(self.location, "mad6t_output")
-        self.paths["sixtrack_in"] = os.path.join(self.location, "sixtrack_input")
-        self.paths["sixtrack_out"] = os.path.join(self.location, "sixtrack_output")
-        if self.parent_ws is None:
-            self.paths["templates"] = os.path.join(StudyFactory.app_path(), 'templates')
-        else:
-            self.paths["templates"] = os.path.join(self.parent_ws, 'templates')
+        self.paths["study_path"] = self.study_path
+        self.paths["madx_in"] = os.path.join(self.study_path, "mad6t_input")
+        self.paths["madx_out"] = os.path.join(self.study_path, "mad6t_output")
+        self.paths["sixtrack_in"] = os.path.join(self.study_path, "sixtrack_input")
+        self.paths["sixtrack_out"] = os.path.join(self.study_path, "sixtrack_output")
+        self.paths["templates"] = self.study_path
 
         self.madx_output = {
                 'fc.2': 'fort.2',
@@ -96,37 +96,55 @@ class Study(object):
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
 
-        self.tables = {
-                "mad6t_run": ['seed', 'mad_in', 'mad_out', 'fort.2', 'fort.3',\
-                        'fort.8', 'fort.16', 'job_stdout', 'job_stderr',\
-                        'job_stdlog', 'mad_out_mtime'],
-                "six_input": list(self.sixtrack_params.keys()) + ['id_mad6t_run'],
-                "six_beta": ['seed', 'tunex', 'tuney', 'beta11', 'beta12',\
-                        'beta22', 'beta21', 'qx', 'qy', 'id_mad6t_run'],
-                "dymap_results": []}
+        self.tables['mad6t_run'] = {
+                'madx_in' : 'blob',
+                'madx_stdout': 'blob',
+                'mtime': 'blob'}
+
 
     def structure(self):
-        '''Structure the workspace of this study
-        and copy the necessary templates in the workspace'''
+        '''Structure the workspace of this study'''
+
+        temp = self.paths["templates"]
+        if not os.path.isdir(temp) or not os.listdir(temp):
+            if not os.path.exists(temp):
+                os.makedirs(temp)
+            app_path = StudyFactory.app_path()
+            tem_path = os.path.join(app_path, 'templates')
+            print(tem_path)
+            if os.path.isdir(tem_path) and os.listdir(tem_path):
+                for item in os.listdir(tem_path):
+                    s = os.path.join(tem_path, item)
+                    d = os.path.join(temp, item)
+                    if os.path.isfile(s):
+                        shutil.copy2(s, d)
+                print("Copy templates from default source templates folder!")
+            else:
+                print("The default source templates folder %s is inavlid!"%tem_path)
+                sys.exit(1)
+
         if not os.path.isdir(self.paths["madx_in"]):
-            os.mkdir(self.paths["madx_in"])
+            os.makedirs(self.paths["madx_in"])
         if not os.path.isdir(self.paths["madx_out"]):
-            os.mkdir(self.paths["madx_out"])
+            os.makedirs(self.paths["madx_out"])
         if not os.path.isdir(self.paths["sixtrack_in"]):
-            os.mkdir(self.paths["sixtrack_in"])
+            os.makedirs(self.paths["sixtrack_in"])
         if not os.path.isdir(self.paths["sixtrack_out"]):
-            os.mkdir(self.paths["sixtrack_out"])
+            os.makedirs(self.paths["sixtrack_out"])
 
-        tem_path = self.paths["templates"]
-        if os.path.isdir(tem_path) and os.listdir(tem_path):
-             for item in os.listdir(tem_path):
-                 s = os.path.join(tem_path, item)
-                 d = os.path.join(self.location, item)
-                 if os.path.isfile(s):
-                     shutil.copy2(s, d)
-        else:
-            print("Invalid templates folder!")
+        #Initialize the database
+        dbname = os.path.join(self.study_path, 'data.db')
+        self.db = SixDB(dbname, True)
+        self.db.create_tables(self.tables)
 
+        cont = os.listdir(temp)
+        require = self.oneturn_sixtrack_input["temp"]
+        require.append(self.madx_input["mask_name"])
+        for re in require:
+            if re not in cont:
+                print("The required file %s isn't found in %s!"%(re, temp))
+                sys.exit(1)
+        print("All required file are ready!")
 
     def submit_mad6t(self, platform = 'local', **args):
         '''Submit the jobs to cluster or run locally'''
@@ -159,11 +177,34 @@ class Study(object):
         else:
             print("Invlid platfrom!")
 
+    def prepare_sixtrack_input(self):
+        '''Prepare the input files for sixtrack job'''
+        self.config.clear()
+        self.config['sixtrack'] = {}
+        six_sec = self.config['sixtrack']
+        six_sec['source_path'] = self.paths['templates']
+        six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+        status, temp = utils.encode_strings(self.sixtrack_input['temp'])
+        if status:
+            six_sec['temp_files'] = temp
+        else:
+            print("Wrong setting of sixtrack templates!")
+            sys.exit(1)
+        status, out_six = utils.encode_strings(self.sixtrack_output)
+        if status:
+            six_sec['output_files'] = out_six
+        else:
+            print("Wrong setting of oneturn sixtrack outut!")
+            sys.exit(1)
+        #TODO:input parameters
+
+
     def prepare_madx_single_input(self):
         '''Prepare the input files for madx and one turn sixtrack job'''
+        self.config.clear()
         self.config['madx'] = {}
         madx_sec = self.config['madx']
-        madx_sec['source_path'] = self.paths['location']
+        madx_sec['source_path'] = self.paths['templates']
         madx_sec['madx_exe'] = self.paths['madx_exe']
         madx_sec['mask_name'] = self.madx_input["mask_name"]
         status, out_files = utils.encode_strings(self.madx_output)
@@ -178,7 +219,7 @@ class Study(object):
 
         self.config['sixtrack'] = {}
         six_sec = self.config['sixtrack']
-        six_sec['source_path'] = self.paths['location']
+        six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         status, temp = utils.encode_strings(self.oneturn_sixtrack_input['temp'])
         if status:
@@ -215,7 +256,7 @@ class Study(object):
             madx_input_name = self.madx_name_conven(prefix, keys, element)
             madx_sec['input_name'] = madx_input_name
             out_name = self.madx_name_conven('Result', keys, element, '')
-            mad6t_input = os.path.join(self.location, 'mad6t_input')
+            mad6t_input = self.paths['madx_in']
             madx_sec['dest_path'] = os.path.join(self.paths['madx_out'], out_name)
             six_sec['dest_path'] = os.path.join(self.paths['madx_out'], out_name)
             output = os.path.join(mad6t_input, input_name)
@@ -223,6 +264,12 @@ class Study(object):
                 self.config.write(f_out)
             self.mad6t_joblist.append(output)
             print('Successfully generate input file %s'%output)
+
+    def transfer_data(self):
+        '''Transfer the result to database'''
+        result_path = self.study_path
+        tables = self.tables
+        self.db.transfer_madx_oneturn_res(result_path, tables)
 
     def madx_name_conven(self, prefix, keys, values, suffix = '.madx'):
         '''The convention for naming input file'''
@@ -254,6 +301,9 @@ class StudyFactory(object):
         studies = os.path.join(self.ws, 'studies')
         if not os.path.isdir(studies):
             os.mkdir(studies)
+        else:
+            self._load()
+            self.info()
         templates = os.path.join(self.ws, 'templates')
         if not os.path.isdir(templates):
             os.mkdir(templates)
@@ -269,44 +319,67 @@ class StudyFactory(object):
                      if os.path.isfile(s):
                          shutil.copy2(s, d)
             else:
-                print("The templates folder %s is invlid!"%tem_path)
+                print("The templates folder %s is invalid!"%tem_path)
+
+    def _load(self):
+        '''Load the information from an exist workspace!'''
+        studies = os.path.join(self.ws, 'studies')
+        for item in os.listdir(studies):
+            if os.path.isdir(item):
+                self.studies.append(item)
 
     def info(self):
         '''Print all the studies in the current workspace'''
         print(self.studies)
         return self.studies
 
-    def new_study(self, name='', module_path=None, classname = 'MyStudy'):
-        '''Create a new study'''
+    def prepare_study(self, name = ''):
+        '''Prepare the config and temp files for a study'''
         studies = os.path.join(self.ws, 'studies')
-
         if len(name) == 0:
             i = len(self.studies)
             study_name = 'study_%03i'%(i)
         else:
             study_name = name
+
         study = os.path.join(studies, study_name)
         app_path = StudyFactory.app_path()
         config_temp = os.path.join(app_path, 'lib', 'config.py')
-
-        if module_path is None:
-            module_path = os.path.join(study, 'config.py')
-
         if not os.path.isdir(study):
-            os.mkdir(study)
-            shutil.copy2(config_temp, module_path)
+            os.makedirs(study)
+
+        tem_path = os.path.join(self.ws, 'templates')
+        if os.path.isdir(tem_path) and os.listdir(tem_path):
+             for item in os.listdir(tem_path):
+                 s = os.path.join(tem_path, item)
+                 d = os.path.join(study, item)
+                 if os.path.isfile(s):
+                     shutil.copy2(s, d)
+        else:
+            print("Invalid templates folder!")
+            sys.exit(1)
+
+    def new_study(self, name, module_path=None, classname='MyStudy'):
+        '''Create a new study with a prepared study path'''
+        loc = os.path.join(self.ws, 'studies')
+        study = os.path.join(loc, name)
+        if os.path.isdir(study):
+            if module_path is None:
+                module_path = os.path.join(study, 'config.py')
+
             if os.path.isfile(module_path):
                 self.studies.append(study)
-                mod = SourceFileLoader(study_name, module_path).load_module()
+                module_name = os.path.abspath(module_path)
+                module_name = module_name.replace('.py', '')
+                mod = SourceFileLoader(module_name, module_path).load_module()
                 cls = getattr(mod, classname)
-                print("Create new study %s"%study)
-                return cls(name, study, self.ws)
+                print("Create a study instance %s"%study)
+                return cls(name, loc)
             else:
                 print("The configure file 'config.py' isn't found!")
                 sys.exit(1)
         else:
-            print("The study %s already exists, nothing to do!"%study)
-            sys.exit(0)
+            print("Invalid study path! The study path should be initialized at first!")
 
     @staticmethod
     def app_path():
