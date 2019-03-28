@@ -108,17 +108,10 @@ def peel_str(val, query=['(',')','\n',' '], replace=['','','','']):
     return val
 
 def num(val):
-    if is_numeral(val):
+    if isinstance(val, str) and val.isnumeric():
         try:
             return int(val)
         except valueError:
             return float(val)
     else:
         return float('nan')
-
-def is_numeral(val):
-    try:
-        float(val)
-        return True
-    except valueError:
-        return False

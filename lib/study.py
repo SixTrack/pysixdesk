@@ -1,12 +1,15 @@
 import os
 import sys
+import time
 import shutil
 import inspect
 import itertools
 import configparser
+import collections
 import importlib
 import utils
 import mad6t_oneturn
+import sixtrack
 
 from importlib.machinery import SourceFileLoader
 from pysixdb import SixDB
@@ -21,6 +24,7 @@ class Study(object):
         self.config = configparser.ConfigParser()
         self.config.optionxform = str #preserve case
         self.mad6t_joblist = []
+        self.sixtrack_joblist = []
         #All the requested parameters for a study
         self.paths = {}
         self.madx_params = {}
@@ -33,6 +37,7 @@ class Study(object):
         self.sixtrack_input = {}
         self.sixtrack_output = []
         self.tables = {}
+        self.boinc_vars = collections.OrderedDict()
         #initialize default values
         Study._defaults(self)
 
@@ -48,6 +53,7 @@ class Study(object):
         self.paths["sixtrack_in"] = os.path.join(self.study_path, "sixtrack_input")
         self.paths["sixtrack_out"] = os.path.join(self.study_path, "sixtrack_output")
         self.paths["templates"] = self.study_path
+        self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
 
         self.madx_output = {
                 'fc.2': 'fort.2',
@@ -96,14 +102,72 @@ class Study(object):
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
 
-        self.tables['mad6t_run'] = {
+        #Default definition of the database tables
+        self.tables['mad6t_task'] = {
+                'input_name': 'text',
+                'input_file': 'blob',
+                'task_status': 'text',
+                'job_id': 'int',
+                'mtime': 'float'}
+        self.tables['mad6t_job'] = {
+                'task_id': 'int',
                 'madx_in' : 'blob',
                 'madx_stdout': 'blob',
-                'mtime': 'blob'}
+                'job_stdout': 'blob',
+                'job_stderr': 'blob',
+                'job_stdlog': 'blob',
+                'count': 'int',
+                'status': 'text',
+                'mtime': 'float'}
+        self.tables['sixtrack_task']={
+                'mad6t_id': 'int',
+                'task_status': 'text',
+                'job_id': 'int',
+                'mtime': 'float'}
+        self.tables['sixtrack_job'] = {
+                'task_id': 'int',
+                'job_stdout': 'blob',
+                'job_stderr': 'blob',
+                'job_stdlog': 'blob',
+                'count': 'int',
+                'status': 'text',
+                'mtime': 'float'}
+        self.tables['result'] = {
+                'betax': 'float',
+                'betay': 'float'}#TODO
 
+        self.boinc_vars['workunitName'] = 'sixdesk'
+        self.boinc_vars['fpopsEstimate'] = 30*2*10e5/2*10e6*6
+        self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate']*1000
+        self.boinc_vars['memBound'] = 100000000
+        self.boinc_vars['diskBound'] = 200000000
+        self.boinc_vars['delayBound'] = 2400000
+        self.boinc_vars['redundancy'] = 2
+        self.boinc_vars['copies'] = 2
+        self.boinc_vars['errors'] = 5
+        self.boinc_vars['numIssues'] = 5
+        self.boinc_vars['resultsWithoutConcensus'] = 3
+        self.boinc_vars['appName'] = 'sixtrack'
+
+    def update_tables(self):
+        '''Update the database tables after the user define the scan parameters
+        and the output files. This method should be called before 'structure()'
+        '''
+        for key in self.madx_params.keys():
+            self.tables['mad6t_task'][key] = 'INT'
+        for key in self.madx_output.values():
+            self.tables['mad6t_task'][key] = 'BLOB'
+
+        for key in self.sixtrack_params.keys():
+            self.tables['sixtrack_task'][key] = 'INT'
+        for key in self.sixtrack_output:
+            self.tables['sixtrack_task'][key] = 'BLOB'
 
     def structure(self):
-        '''Structure the workspace of this study'''
+        '''Structure the workspace of this study.
+        Prepare the input and output folders.
+        Copy the required template files.
+        Initialize the database with the defined tables.'''
 
         temp = self.paths["templates"]
         if not os.path.isdir(temp) or not os.listdir(temp):
@@ -144,9 +208,68 @@ class Study(object):
             if re not in cont:
                 print("The required file %s isn't found in %s!"%(re, temp))
                 sys.exit(1)
-        print("All required file are ready!")
+        print("All required files are ready!")
 
-    def submit_mad6t(self, platform = 'local', **args):
+    def submit_sixtrack(self, **args):
+        '''Sumbit the sixtrack jobs to htctondor. p.s. Now we test locally'''
+        if 'place' in args:
+            execution_field = args['place']
+        else:
+            execution_field = 'temp'
+        execution_field = os.path.abspath(execution_field)
+        if not os.path.isdir(execution_field):
+            os.makedirs(execution_field)
+        if os.listdir(execution_field):
+            print("Caution! The folder %s is not empty!"%execution_field)
+        cur_path = os.getcwd()
+        os.chdir(execution_field)
+        for i in self.sixtrack_joblist:
+            print("The sixtrack job %s is running...."%i)
+            sixtrack.run(i)
+        print("All sxitrack jobs are completed normally!")
+        os.chdir(cur_path)
+
+    def prepare_sixtrack_input(self, server='htcondor'):
+        '''Prepare the input files for sixtrack job'''
+        self.config.clear()
+        self.config['sixtrack'] = {}
+        six_sec = self.config['sixtrack']
+        six_sec['source_path'] = self.paths['templates']
+        six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+        six_sec['boinc_dir'] = self.paths['boinc_spool']
+        if server.lower() == 'htcondor':
+            six_sec['boinc'] = 'false'
+        elif server.lower() == 'boinc':
+            six_sec['boinc'] = 'true'
+        else:
+            print("Unsupported platform!")
+            sys.exit(1)
+        status, temp = utils.encode_strings(self.sixtrack_input['temp'])
+        if status:
+            six_sec['temp_files'] = temp
+        else:
+            print("Wrong setting of sixtrack templates!")
+            sys.exit(1)
+        status, out_six = utils.encode_strings(self.sixtrack_output)
+        if status:
+            six_sec['output_files'] = out_six
+        else:
+            print("Wrong setting of oneturn sixtrack outut!")
+            sys.exit(1)
+
+        self.sixtrack_params = self.oneturn_sixtrack_params
+        self.config['fort3'] = self.sixtrack_params
+
+        self.config['boinc'] = self.boinc_vars
+        input_name = 'test'
+        sixtrack_input = self.paths['sixtrack_in']
+        output = os.path.join(sixtrack_input, input_name)
+        with open(output, 'w') as f_out:
+            self.config.write(f_out)
+        self.sixtrack_joblist.append(output)
+        print('Successfully generate input file %s'%output)
+
+    def submit_mad6t(self, platform='local', **args):
         '''Submit the jobs to cluster or run locally'''
         clean = False
         if platform == 'local':
@@ -166,7 +289,7 @@ class Study(object):
                 clean = args['clean']
             for i in self.mad6t_joblist:
                 print("The job %s is running...."%i)
-                mad6t_oneturn.run(i)
+                run_status = mad6t_oneturn.run(i)#run the job
             print("All jobs are completed normally!")
             os.chdir(cur_path)
             if clean:
@@ -177,27 +300,21 @@ class Study(object):
         else:
             print("Invlid platfrom!")
 
-    def prepare_sixtrack_input(self):
-        '''Prepare the input files for sixtrack job'''
-        self.config.clear()
-        self.config['sixtrack'] = {}
-        six_sec = self.config['sixtrack']
-        six_sec['source_path'] = self.paths['templates']
-        six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-        status, temp = utils.encode_strings(self.sixtrack_input['temp'])
-        if status:
-            six_sec['temp_files'] = temp
+    def collect_mad6t(self):
+        '''Collect the results of madx and oneturn sixtrack job and store in
+        database
+        '''
+        mad6t_path = self.paths['madx_out']
+        if os.path.isdir(mad6t_path) and os.listdir(mad6t_path):
+            for item in os.listdir(mad6t_path):
+                job_path = os.path.join(mad6t_path, item)
+                if os.path.isdir(job_path) and os.listdir(job_path):
+                    job_table = {}
+                    pass
+                else:
+                    print("The job path %s is invalid!"%item)
         else:
-            print("Wrong setting of sixtrack templates!")
-            sys.exit(1)
-        status, out_six = utils.encode_strings(self.sixtrack_output)
-        if status:
-            six_sec['output_files'] = out_six
-        else:
-            print("Wrong setting of oneturn sixtrack outut!")
-            sys.exit(1)
-        #TODO:input parameters
-
+            print("The result path %s is invalid!"%mad6t_path)
 
     def prepare_madx_single_input(self):
         '''Prepare the input files for madx and one turn sixtrack job'''
@@ -247,10 +364,12 @@ class Study(object):
             values.append(self.madx_params[key])
 
         for element in itertools.product(*values):
+            madx_table = {}
             for i in range(len(element)):
                 ky = keys[i]
                 vl = element[i]
                 mask_sec[ky] = str(vl)
+                madx_table[ky] = vl
             input_name = self.madx_name_conven('mad6t', keys, element, '.ini')
             prefix = self.madx_input['mask_name'].split('.')[0]
             madx_input_name = self.madx_name_conven(prefix, keys, element)
@@ -262,8 +381,18 @@ class Study(object):
             output = os.path.join(mad6t_input, input_name)
             with open(output, 'w') as f_out:
                 self.config.write(f_out)
-            self.mad6t_joblist.append(output)
+            madx_table['task_status'] = 'incomplete'
+            madx_table['input_name'] = output
+            madx_table['mtime'] = time.time()
+            status, buf = utils.compress_buf(output)
+            if status:
+                madx_table['input_file'] = buf
+            else:
+                sys.exit(1)
+            self.db.insert('mad6t_task', madx_table)
             print('Successfully generate input file %s'%output)
+            self.mad6t_joblist.append(output)
+            print('Store the input information into database!')
 
     def transfer_data(self):
         '''Transfer the result to database'''

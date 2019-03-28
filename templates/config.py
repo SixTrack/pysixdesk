@@ -29,3 +29,6 @@ class MyStudy(Study):
                 "tunex": [],
                 "tuney": [],}
         self.sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
+
+        #Add the user-defined scan parameters and outputs into database
+        self.update_tables()

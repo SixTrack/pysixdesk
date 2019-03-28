@@ -1,9 +1,9 @@
 import os
+import io
 import re
 import sys
 import gzip
 import shutil
-
 
 def check(files):
     '''Check the existence of the files and rename them if the files is a dict
@@ -100,3 +100,40 @@ def decode_strings(inputs):
         lStatus = False
         output = []
     return lStatus, output
+
+def compress_buf(filename, ty='raw'):
+    '''File compression for storing in database
+    The file type can be raw, gzip'''
+    lStatus = True
+    zbuf = io.BytesIO()
+    if os.path.isfile(filename):
+        if ty is 'raw':
+            with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
+                with open(filename, 'rb') as f_in:
+                    buf = f_in.read()
+                    zfile.write(buf)
+        elif ty is 'gzip':
+            with open(filename, 'rb') as f_in:
+                shutil.copyfileobj(f_in, zbuf)
+        else:
+            lStatus = False
+            print("Unsupported file type %s!"%ty)
+        return lStatus, zbuf.getvalue()
+    else:
+        lStatus = False
+        print("The file %s doesn't exist!")
+        return lStatus, zbuf.getvalue()
+
+def decompress_buf(buf, filename):
+    '''File decompression to retireve from database'''
+    lStatus = True
+    if isinstance(buf, bytes):
+        zbuf = io.BytesIO(buf)
+        with gzip.GzipFile(fileobj=zbuf) as f_in:
+            with open(filename, 'wb') as f_out:
+                f_out.write(f_in.read())
+        return lStatus
+    else:
+        lStatus = False
+        print("The input buf should be bytes!")
+        return lStatus
