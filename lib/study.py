@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import copy
 import shutil
 import inspect
 import itertools
@@ -98,13 +99,13 @@ class Study(object):
                 "chromy": 2,
                 "TUNEVAL": '/',
                 "CHROVAL": '/'}
-        self.oneturn_sixtrack_input['input'] = self.madx_output
+        self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
 
         #Default definition of the database tables
         self.tables['mad6t_task'] = {
-                'input_name': 'text',
+                'job_name': 'text',
                 'input_file': 'blob',
                 'task_status': 'text',
                 'job_id': 'int',
@@ -226,6 +227,7 @@ class Study(object):
         for i in self.sixtrack_joblist:
             print("The sixtrack job %s is running...."%i)
             sixtrack.run(i)
+            print(i)
         print("All sxitrack jobs are completed normally!")
         os.chdir(cur_path)
 
@@ -236,6 +238,8 @@ class Study(object):
         six_sec = self.config['sixtrack']
         six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+        inp = self.sixtrack_input['input']
+        six_sec['input_files']= self.utils_eval(utils.encode_strings, [inp])
         six_sec['boinc_dir'] = self.paths['boinc_spool']
         if server.lower() == 'htcondor':
             six_sec['boinc'] = 'false'
@@ -257,17 +261,61 @@ class Study(object):
             print("Wrong setting of oneturn sixtrack outut!")
             sys.exit(1)
 
-        self.sixtrack_params = self.oneturn_sixtrack_params
-        self.config['fort3'] = self.sixtrack_params
-
-        self.config['boinc'] = self.boinc_vars
-        input_name = 'test'
-        sixtrack_input = self.paths['sixtrack_in']
-        output = os.path.join(sixtrack_input, input_name)
-        with open(output, 'w') as f_out:
-            self.config.write(f_out)
-        self.sixtrack_joblist.append(output)
-        print('Successfully generate input file %s'%output)
+        #self.config['fort3'] = self.sixtrack_params
+        self.config['fort3'] = {}
+        fort3_sec = self.config['fort3']
+        keys = sorted(self.madx_params.keys())
+        madx_vals = self.db.select('mad6t_task', keys, where="task_status='complete'")
+        for element in madx_vals:
+            for i in range(len(element)):
+                ky = keys[i]
+                vl = element[i]
+                fort3_sec[ky] = str(vl)
+        madx_jobnames = self.db.select('mad6t_task', ['job_name'], where="task_status='complete'")
+        cols = list(self.sixtrack_input['input'].values())
+        task_table = {}
+        for item in madx_jobnames:
+            item = item[0]
+            item_path = os.path.join(self.paths['sixtrack_in'], item)
+            if not os.path.isdir(item_path):
+                os.makedirs(item_path)
+            s_keys = sorted(self.sixtrack_params.keys())
+            values = []
+            keys = []
+            for key in s_keys:
+                val = self.sixtrack_params[key]
+                if isinstance(val, list):
+                    keys.append(key)
+                    s_keys.remove(key)
+                    values.append(val)
+                else:
+                    fort3_sec[key] = str(val)
+            for element in itertools.product(*values):
+                for i in range(len(element)):
+                    ky = keys[i]
+                    vl = element[i]
+                    fort3_sec[ky] = str(vl)
+                job_name = self.madx_name_conven('', keys, element, '')
+                input_path = os.path.join(item_path, job_name)
+                dest_path = os.path.join(self.paths['sixtrack_out'], item, job_name)
+                if not os.path.isdir(input_path):
+                    os.makedirs(input_path)
+                six_sec['input_path'] = input_path
+                six_sec['dest_path'] = dest_path
+                where = "job_name='%s'"%(item)
+                madx_outs = self.db.select('mad6t_task', cols, where)
+                num = len(cols)
+                for i in range(num):
+                    out = madx_outs[0][i]
+                    filename = os.path.join(input_path, cols[i])
+                    status = utils.decompress_buf(out, filename)
+                self.config['boinc'] = self.boinc_vars
+                input_name = 'test.ini'
+                output = os.path.join(input_path, input_name)
+                with open(output, 'w') as f_out:
+                    self.config.write(f_out)
+                self.sixtrack_joblist.append(output)
+                print('Successfully generate input file %s'%output)
 
     def submit_mad6t(self, platform='local', **args):
         '''Submit the jobs to cluster or run locally'''
@@ -288,6 +336,7 @@ class Study(object):
             if 'clean' in args:
                 clean = args['clean']
             for i in self.mad6t_joblist:
+                i = os.path.join(self.paths['madx_in'], i+'.ini')
                 print("The job %s is running...."%i)
                 run_status = mad6t_oneturn.run(i)#run the job
             print("All jobs are completed normally!")
@@ -300,7 +349,7 @@ class Study(object):
         else:
             print("Invlid platfrom!")
 
-    def collect_mad6t(self):
+    def collect_mad6t_results(self):
         '''Collect the results of madx and oneturn sixtrack job and store in
         database
         '''
@@ -310,7 +359,43 @@ class Study(object):
                 job_path = os.path.join(mad6t_path, item)
                 if os.path.isdir(job_path) and os.listdir(job_path):
                     job_table = {}
-                    pass
+                    task_table = {}
+                    contents = os.listdir(job_path)
+                    madx_in = [s for s in contents if item in s]
+                    job_table['status'] = 'Success'
+                    if madx_in:
+                        madx_in = os.path.join(job_path, madx_in[0])
+                        job_table['madx_in'] = self.utils_eval(utils.compress_buf,\
+                                [madx_in,'gzip'])
+                    else:
+                        print("The madx_in file for job %s dosen't exist! The job failed!"%item)
+                        job_table['status'] = 'Failed'
+                    madx_out = [s for s in contents if 'madx_stdout' in s]
+                    if madx_out:
+                        madx_out = os.path.join(job_path, madx_out[0])
+                        job_table['madx_stdout'] = self.utils_eval(utils.compress_buf,\
+                                [madx_out,'gzip'])
+                    else:
+                        print("The madx_out file for job %s doesn't exist! The job failed!"%item)
+                        job_table['status'] = 'Failed'
+                    for out in self.madx_output.values():
+                        out_f = [s for s in contents if out in s]
+                        if out_f:
+                            out_f = os.path.join(job_path, out_f[0])
+                            task_table[out] = self.utils_eval(utils.compress_buf,\
+                                    [out_f,'gzip'])
+                        else:
+                            job_table['status'] = 'Failed'
+                            print("The madx output file %s for job %s doesn't exist! The job failed!"%(out, item))
+
+                    task_id = self.mad6t_joblist.index(item) + 1
+                    job_table['task_id'] = task_id
+                    job_table['mtime'] = time.time()
+                    self.db.insert('mad6t_job', job_table)
+                    if job_table['status'] is 'Success':
+                        where = 'rowid = %i'%task_id
+                        task_table['task_status'] = 'complete'
+                        self.db.update('mad6t_task', task_table, where)
                 else:
                     print("The job path %s is invalid!"%item)
         else:
@@ -370,19 +455,28 @@ class Study(object):
                 vl = element[i]
                 mask_sec[ky] = str(vl)
                 madx_table[ky] = vl
-            input_name = self.madx_name_conven('mad6t', keys, element, '.ini')
             prefix = self.madx_input['mask_name'].split('.')[0]
+            job_name = self.madx_name_conven(prefix, keys, element, '')
+            check_jobs = self.db.select('mad6t_task', ['job_name','task_status'])
+            if check_jobs:
+                checks = list(zip(*check_jobs))
+                if job_name in checks[0]:
+                    i = checks[0].index(job_name)
+                    if checks[1][i] == 'complete':
+                        self.mad6t_joblist.append(job_name)
+                        print("The job %s has already completed normally!"%job_name)
+                        continue
+            input_name = job_name + '.ini'
             madx_input_name = self.madx_name_conven(prefix, keys, element)
             madx_sec['input_name'] = madx_input_name
-            out_name = self.madx_name_conven('Result', keys, element, '')
             mad6t_input = self.paths['madx_in']
-            madx_sec['dest_path'] = os.path.join(self.paths['madx_out'], out_name)
-            six_sec['dest_path'] = os.path.join(self.paths['madx_out'], out_name)
+            madx_sec['dest_path'] = os.path.join(self.paths['madx_out'], job_name)
+            six_sec['dest_path'] = os.path.join(self.paths['madx_out'], job_name)
             output = os.path.join(mad6t_input, input_name)
             with open(output, 'w') as f_out:
                 self.config.write(f_out)
             madx_table['task_status'] = 'incomplete'
-            madx_table['input_name'] = output
+            madx_table['job_name'] = job_name
             madx_table['mtime'] = time.time()
             status, buf = utils.compress_buf(output)
             if status:
@@ -391,7 +485,7 @@ class Study(object):
                 sys.exit(1)
             self.db.insert('mad6t_task', madx_table)
             print('Successfully generate input file %s'%output)
-            self.mad6t_joblist.append(output)
+            self.mad6t_joblist.append(job_name)
             print('Store the input information into database!')
 
     def transfer_data(self):
@@ -412,6 +506,16 @@ class Study(object):
             lStatus = False
         mk = prefix + '_' + b + suffix
         return mk
+
+    def utils_eval(self, fun, inputs, action=sys.exit):
+        '''Evaluate the specified function'''
+        output = None
+        status, output = fun(*inputs)
+        if status:
+            return output
+        else:
+            action()
+
 
 class StudyFactory(object):
 

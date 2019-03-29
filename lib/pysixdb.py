@@ -91,9 +91,14 @@ class SixDB(object):
         '''Insert a row of values'''
         self.adaptor.insert(self.conn, table_name, values)
 
-    def select(self, table_name, where=None, orderby=None, **args):
+    def select(self, table_name, columns='*', where=None, orderby=None, **args):
         '''Select values with specified conditions'''
-        self.adaptor.select(self.conn, table_name, where, orderby)
+        r = self.adaptor.select(self.conn, table_name, columns, where, orderby)
+        return r
+
+    def update(self, table_name, values, where=None, **args):
+        '''Update data in a table'''
+        self.adaptor.update(self.conn, table_name, values, where)
 
     def remove(self, table_name, **args):
         '''Reomve rows based on specified conditions'''

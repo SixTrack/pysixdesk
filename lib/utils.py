@@ -35,7 +35,7 @@ def download_output(filenames, dest, zp=True):
     '''
     lStatus = True
     if not os.path.isdir(dest):
-        os.mkdir(dest, 0o755)
+        os.makedirs(dest, 0o755)
 
     for filename in filenames:
         if os.path.isfile(filename):

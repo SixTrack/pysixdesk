@@ -17,20 +17,47 @@ def run(input_file):
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     '''The actual sixtrack job'''
-    fort3_config = copy.deepcopy(config_param)
+    fort3_config = config_param
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     source_path = sixtrack_config["source_path"]
+    input_path = sixtrack_config["input_path"]
+    dest_path = sixtrack_config["dest_path"]
     status, temp_files = utils.decode_strings(sixtrack_config["temp_files"])
-    inputs = sixtrack_config["input"]
-    boinc = sixtrack_config["Boinc"]
-    test_turn = sixtrack_config["test_turn"]
+    status, input_files = utils.decode_strings(sixtrack_config["input_files"])
+    status, output_files = utils.decode_strings(sixtrack_config["output_files"])
+    boinc = sixtrack_config["boinc"]
+    #test_turn = sixtrack_config["test_turn"]
     if not status:
         print("Wrong setting of oneturn sixtrack templates!")
         sys.exit(1)
-    status, input_files = utils.decode_strings(sixtrack_config["input_files"])
     if not status:
         print("Wrong setting of oneturn sixtrack input!")
         sys.exit(1)
+    for infile in input_files.values():
+        infi = os.path.join(input_path, infile)
+        print(infi)
+        if os.path.isfile(infi):
+            shutil.copy2(infi, infile)
+        else:
+            print("The required file %s isn't found!"%infile)
+            sys.exit(1)
+
+    for infile in temp_files:
+        infi = os.path.join(source_path, infile)
+        print(infi)
+        if os.path.isfile(infi):
+            shutil.copy2(infi, infile)
+        else:
+            print("The required file %s isn't found!"%infile)
+            sys.exit(1)
+
+    fc3aux = open('fort.3.aux', 'r')
+    fc3aux_lines = fc3aux.readlines()
+    fc3aux_2 = fc3aux_lines[1]
+    c = fc3aux_2.split()
+    lhc_length = c[4]
+    fort3_config['length']=lhc_length
+    #fort3_config.update(args)
 
     #Create a temp folder to excute sixtrack
     if os.path.isdir('junk'):
@@ -52,8 +79,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         print("There isn't the required input files for sixtrack!")
         sys.exit(1)
 
-    if boinc.lowercase() is 'true':
-        fort3_config['turn'] = test_turn
+    #if boinc.lowercase() is 'true':
+    #    fort3_config['turn'] = test_turn
     keys = list(fort3_config.keys())
     patterns = ['%'+a for a in keys]
     values = [fort3_config[key] for key in keys]
@@ -76,6 +103,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     concatenate_files(output, 'fort.3')
 
     #actually run
+    jobname = 'test'
     print('Sixtrack job %s is runing...'%jobname)
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
@@ -90,8 +118,11 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         result_name = '../fort.10'
         shutil.move('fort.10', result_name)
         print('Sixtrack job %s has completed normally!'%jobname)
+    os.chdir('../') #get out of junk folder
+    down_list = output_files
+    status = utils.download_output(down_list, dest_path)
 
-    if boinc.lowercase() is 'true':
+    if boinc.lower() is 'true':
         print('The job passes the test and will be sumbitted to BOINC!')
         os.chdir('../')#get out of junk folder
         fort3_config['turn'] = config_param['turn']
@@ -122,3 +153,17 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
                 sys.exit(1)
         ziph.close()
         #TODO
+
+def concatenate_files(source, dest):
+    '''Concatenate the given files'''
+    f_out = open(dest, 'w')
+    if type(source) is list:
+        for s_in in source:
+            f_in = open(s_in, 'r')
+            f_out.writelines(f_in.readlines())
+            f_in.close()
+    else:
+        f_in = open(source, 'r')
+        f_out.writelines(f_in.readlines())
+        f_in.close()
+    f_out.close()

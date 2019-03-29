@@ -1,6 +1,7 @@
 import os
 import sys
 import sqlite3
+import collections
 from abc import ABC, abstractmethod
 
 class DatabaseAdaptor(ABC):
@@ -26,6 +27,10 @@ class DatabaseAdaptor(ABC):
 
     @abstractmethod
     def select(self):
+        pass
+
+    @abstractmethod
+    def update(self):
         pass
 
     @abstractmethod
@@ -78,7 +83,7 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         c.execute(sql_cmd, vals)
         conn.commit()
 
-    def select(self, conn, name, cols='*', where=None, orderby=None, **args):
+    def select(self, conn, table_name, cols='*', where=None, orderby=None, **args):
         '''Select values with conditions
         @conn A connection of database
         @table_name(str) The table name
@@ -88,7 +93,9 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         @**args Some other conditions
         '''
         c = conn.cursor()
-        cols = ','.join(cols)
+        if isinstance(cols, collections.Iterable):
+            cols = [i.replace('.', '_') for i in cols]
+            cols = ','.join(cols)
         sql = 'SELECT %s FROM %s'%(cols, table_name)
         if where is not None:
             sql += ' WHERE %s'%where
@@ -97,6 +104,29 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         c.execute(sql)
         data = list(c)
         return data
+
+    def update(self, conn, table_name, values, where=None):
+        '''Update data in a table
+        @conn A connection of database
+        @table_name(str) The table name
+        @values(dict) The column names with new values
+        @where(str) Selection condition
+        '''
+        c = conn.cursor()
+        sql = 'UPDATE %s SET %s '
+        keys = values.keys()
+        vals = [values[key] for key in keys]
+        keys = [i.replace('.', '_') for i in keys]
+        ques = ('?',)*len(keys)
+        sets = ['='.join(it) for it in zip(keys, ques)]
+        sets = ','.join(sets)
+        if where is not None:
+            sql = sql + 'WHERE ' + where + ';'
+        else:
+            sql = sql + ';'
+        sql_cmd = sql%(table_name, sets)
+        c.execute(sql_cmd, vals)
+        conn.commit()
 
     def delete(self, conn, table_name, **conditions):
         pass
