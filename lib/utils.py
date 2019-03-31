@@ -137,3 +137,29 @@ def decompress_buf(buf, filename):
         lStatus = False
         print("The input buf should be bytes!")
         return lStatus
+
+def evlt(fun, inputs, action=sys.exit):
+    '''Evaluate the specified function'''
+    outputs = fun(*inputs)
+    if isinstance(outputs, tuple):
+        num = len(outputs)
+    else:
+        num = 1
+    if outputs is None:
+        num = 0
+
+    if num == 0:
+        pass
+    elif num == 1:
+        status = outputs
+        if not status:
+            action()
+    elif num == 2:
+        status = outputs[0]
+        output = outputs[1]
+        if status:
+            return output
+        else:
+            action()
+    else:
+        pass

@@ -14,6 +14,10 @@ class DatabaseAdaptor(ABC):
         pass
 
     @abstractmethod
+    def setting(self, settings):
+        pass
+
+    @abstractmethod
     def create_table(self, conn, tables):
         pass
 
@@ -49,15 +53,41 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         conn = sqlite3.connect(name)
         return conn
 
-    def create_table(self, conn, name, columns):
+    def setting(self, conn, settings):
+        '''Execute the settings of the database via pragma command'''
+        c = conn.cursor()
+        for key, value in settings.items():
+            sql = 'PRAGMA %s=%s'%(key, str(value))
+            c.execute(sql)
+        conn.commit()
+
+    def create_table(self, conn, name, columns, keys, recreate):
         '''Create a new table'''
         c = conn.cursor()
-        sql = 'CREATE TABLE IF NOT EXISTS ' + name + '('
+        if recreate:
+            c.execute("DROP TABLE IF EXISTS %s"%name)
+        sql = 'CREATE TABLE IF NOT EXISTS %s (%s)'
         col = [' '.join(map(str, i)) for i in columns.items()]
         col = [j.replace('.', '_') for j in col]
         cols = ','.join(map(str, col))
-        sql = sql + cols + ')'
-        c.execute(sql)
+        fill = cols
+        if 'primary' in keys.keys():
+            prim = keys['primary']
+            if prim:
+                prim_key = ','.join(map(str,prim))
+                prim_sql = ', PRIMARY KEY(%s)'%prim_key
+                fill += prim_sql
+        if 'foreign' in keys.keys():
+            fore = keys['foreign']
+            if fore:
+                for k in fore.keys():
+                    fore_k = ','.join(fore[k][0])
+                    ref_k = ','.join(fore[k][1])
+                    fore_sql = ', FOREIGN KEY(%s) REFERENCES %s(%s) ON UPDATE\
+                                CASCADE ON DELETE CASCADE'%(fore_k, k, ref_k)
+                    fill += fore_sql
+        sql_cmd = sql%(name, fill)
+        c.execute(sql_cmd)
         conn.commit()
 
     def fetch_tables(self, conn):
@@ -121,14 +151,19 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         sets = ['='.join(it) for it in zip(keys, ques)]
         sets = ','.join(sets)
         if where is not None:
-            sql = sql + 'WHERE ' + where + ';'
-        else:
-            sql = sql + ';'
+            sql = sql + 'WHERE ' + where
         sql_cmd = sql%(table_name, sets)
         c.execute(sql_cmd, vals)
         conn.commit()
 
-    def delete(self, conn, table_name, **conditions):
+    def delete(self, conn, table_name, where=None):
+        '''Update data in a table
+        @conn A connection of database
+        @table_name(str) The table name
+        @where(str) Selection condition
+        '''
+        c = conn.cursor()
+        sql = 'DELETE FROM %s'
         pass
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
@@ -137,6 +172,9 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
         DatabaseAdaptor.__init__(self, name)
 
     def new_connection(self, name):
+        pass
+
+    def setting(self, conn, settings):
         pass
 
     def create_table(self, conn, tables):
@@ -153,11 +191,3 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
     def delete(self):
         pass
-
-if __name__ == '__main__':
-    a=SQLDatabaseAdaptor('test')
-    conn = a.new_connection('test')
-    b={'name':'text','age':'INT'}
-    a.create_table(conn, 'tab', b)
-    print(a.fetch_tables(conn))
-    #b=MySQLDatabaseAdaptor('test')

@@ -35,7 +35,6 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         sys.exit(1)
     for infile in input_files.values():
         infi = os.path.join(input_path, infile)
-        print(infi)
         if os.path.isfile(infi):
             shutil.copy2(infi, infile)
         else:
