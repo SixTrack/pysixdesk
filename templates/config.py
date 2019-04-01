@@ -1,17 +1,16 @@
+'''The template of the config file
+This is a template file of preparing parameters for madx and sixtracking jobs.
+'''
 import os
 import sys
 from study import Study
 
 class MyStudy(Study):
 
-    def __init__(self, name='study', location=os.getcwd(), parent_ws=None):
-        super(MyStudy, self).__init__(name, location, parent_ws)
+    def __init__(self, name='study', location=os.getcwd()):
+        super(MyStudy, self).__init__(name, location)
         '''initialize a study'''
         #All parameters are case-sensitive
-        #full path to madx
-        self.paths["madx"] = "/afs/cern.ch/user/m/mad/bin/madx"
-        #full path to sixtrack
-        self.paths["sixtrack"] = "/afs/cern.ch/project/sixtrack/build/sixtrack"
         #the name of mask file
         self.madx_input["mask_name"] = 'hl10.mask'
         self.madx_params = {
@@ -29,4 +28,4 @@ class MyStudy(Study):
                 "chromy": [],
                 "tunex": [],
                 "tuney": [],}
-        self.sixtrack_input = []
+        self.sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']

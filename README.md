@@ -29,18 +29,30 @@ import sys
 sys.path.append(<path to pysixdesk/lib>)
 ```
 
-Then you can add scan parameters to the ```lib/config.py``` script.
-You can test the program with the following codes: 
-
+Then you can create a '''StudyFactory''' instance to initialize a workspace for studies
 ```shell
 from study import Study, StudyFactory
-a = StudyFactory()
+a = StudyFactory(location)
+```
+where ```location``` is the path of the workspace, the default value is
+```sandbox```. Before creating a new study,
+you should prepare the study directory with the following function:
+```shell
+a.prepare_study('test')
+```
+This function will create a directory named ```test``` in the subfolder
+```studies ``` of the workspace and copy the required files and ```config.py```
+file.
+You can edit the ```config.py``` file to add scan parameters. 
+Then you can test the program with the following codes: 
+
+```shell
 test = a.new_study('test')
 test.structure()
 test.prepare_madx_single_input()
 test.submit_mad6t(place='./run')
 ```
 ```place='./run``` is to set the place to run the jobs.
-You will find the result in ```sandbox``` directory
+You will find the result in ```location``` directory
 
 Note: Please don't do operations in the pysixdesk folder!
