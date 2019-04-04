@@ -101,41 +101,48 @@ def decode_strings(inputs):
         output = []
     return lStatus, output
 
-def compress_buf(filename, ty='raw'):
-    '''File compression for storing in database
-    The file type can be raw, gzip'''
+def compress_buf(data, source='file'):
+    '''Data compression for storing in database
+    The data source can be file,gzip,str'''
     lStatus = True
     zbuf = io.BytesIO()
-    if os.path.isfile(filename):
-        if ty is 'raw':
-            with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
-                with open(filename, 'rb') as f_in:
-                    buf = f_in.read()
-                    zfile.write(buf)
-        elif ty is 'gzip':
-            with open(filename, 'rb') as f_in:
-                shutil.copyfileobj(f_in, zbuf)
-        else:
-            lStatus = False
-            print("Unsupported file type %s!"%ty)
-        return lStatus, zbuf.getvalue()
+    if source is 'file' and os.path.isfile(data):
+        with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
+            with open(data, 'rb') as f_in:
+                buf = f_in.read()
+                zfile.write(buf)
+    elif source is 'gzip' and os.path.isfile(data):
+        with open(data, 'rb') as f_in:
+            shutil.copyfileobj(f_in, zbuf)
+    elif source is 'str' and isinstance(data, str):
+        buf = data.encode()
+        with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
+            zfile.write(buf)
     else:
         lStatus = False
-        print("The file %s doesn't exist!")
-        return lStatus, zbuf.getvalue()
+        print("Invalid data source!")
+    return lStatus, zbuf.getvalue()
 
-def decompress_buf(buf, filename):
-    '''File decompression to retireve from database'''
+def decompress_buf(buf, out, des='file'):
+    '''Data decompression to retireve from database'''
     lStatus = True
     if isinstance(buf, bytes):
         zbuf = io.BytesIO(buf)
-        with gzip.GzipFile(fileobj=zbuf) as f_in:
-            with open(filename, 'wb') as f_out:
-                f_out.write(f_in.read())
-        return lStatus
+        if des is 'file':
+            with gzip.GzipFile(fileobj=zbuf) as f_in:
+                with open(out, 'wb') as f_out:
+                    f_out.write(f_in.read())
+        elif des is 'buf':
+            with gzip.GzipFile(fileobj=zbuf) as f_in:
+                out = f_in.read()
+                out = out.decode()
+        else:
+            lStatus = False
+            print("Unknow output type!")
+        return lStatus, out
     else:
         lStatus = False
-        print("The input buf should be bytes!")
+        print("Invalid input data!")
         return lStatus
 
 def evlt(fun, inputs, action=sys.exit):

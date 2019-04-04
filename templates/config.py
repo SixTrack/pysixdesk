@@ -13,7 +13,7 @@ class MyStudy(Study):
         '''initialize a study'''
         #All parameters are case-sensitive
         #the name of mask file
-        self.madx_input["mask_name"] = 'hl10.mask'
+        self.madx_input["mask_file"] = 'hl10.mask'
         self.madx_params = {
                 "SEEDRAN": [1],#all seeds in the study
                 "QP": list(range(1,1+1)),#all chromaticity in the study

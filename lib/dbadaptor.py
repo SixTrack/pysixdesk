@@ -18,7 +18,11 @@ class DatabaseAdaptor(ABC):
         pass
 
     @abstractmethod
-    def create_table(self, conn, tables):
+    def create_table(self, conn, table):
+        pass
+
+    @abstractmethod
+    def drop_table(self, conn, table):
         pass
 
     @abstractmethod
@@ -90,6 +94,13 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         c.execute(sql_cmd)
         conn.commit()
 
+    def drop_table(self, conn, table_name):
+        '''Drop an exist table'''
+        c = conn.cursor()
+        sql = 'DROP TABLE IF EXISTS %s'%table_name
+        c.execute(sql)
+        conn.commit()
+
     def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
         c = conn.cursor()
@@ -111,6 +122,24 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         ques = ','.join(('?',)*len(keys))
         sql_cmd = sql%(table_name, cols, ques)
         c.execute(sql_cmd, vals)
+        conn.commit()
+
+    def insertm(self, conn, table_name, values):
+        '''Insert multiple rows once
+        @conn A connection of database
+        @table_name(str) The table name
+        @values(dict) The values required to insert into database
+        '''
+        c = conn.cursor()
+        sql = 'INSERT INTO %s (%s) VALUES (%s)'
+        keys = list(values.keys())
+        vals = [values[key] for key in keys]
+        keys = [i.replace('.', '_') for i in keys]
+        cols = ','.join(keys)
+        ques = ','.join(('?',)*len(keys))
+        sql_cmd = sql%(table_name, cols, ques)
+        vals = list(zip(*vals))
+        c.executemany(sql_cmd, vals)
         conn.commit()
 
     def select(self, conn, table_name, cols='*', where=None, orderby=None, **args):
@@ -156,15 +185,16 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         c.execute(sql_cmd, vals)
         conn.commit()
 
-    def delete(self, conn, table_name, where=None):
+    def delete(self, conn, table_name, where):
         '''Update data in a table
         @conn A connection of database
         @table_name(str) The table name
-        @where(str) Selection condition
+        @where(str) Selection condition which is mandatory here!
         '''
         c = conn.cursor()
-        sql = 'DELETE FROM %s'
-        pass
+        sql = 'DELETE FROM %s WHERE %s'%(table_name, where)
+        c.execute(sql)
+        conn.commit()
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
@@ -178,6 +208,9 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
         pass
 
     def create_table(self, conn, tables):
+        pass
+
+    def drop_table(self, conn, table_name):
         pass
 
     def fetch_tables(self, command):

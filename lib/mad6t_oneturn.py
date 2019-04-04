@@ -1,16 +1,28 @@
 #!/usr/bin/python3
 import os
+import io
 import sys
 import copy
 import shutil
 import utils
-import fileinput
 import configparser
 
-def run(input_file):
+from pysixdb import SixDB
+
+def run(wu_id, db_name):
+    db = SixDB(db_name)
+    wu_id = str(wu_id)
+    where = 'wu_id=%s'%wu_id
+    outputs = db.select('mad6t_wu', ['input_file'], where)
+    db.close()
+    if not outputs[0]:
+        print("There isn't input file for madx job %s!"%wu_id)
+        sys.exit(1)
+    input_buf = outputs[0][0]
+    input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
     cf = configparser.ConfigParser()
     cf.optionxform = str #preserve case
-    cf.read(input_file)
+    cf.read_string(input_file)
     madx_config = cf['madx']
     mask_config = cf['mask']
     madx_status = madxjob(madx_config, mask_config)
@@ -28,8 +40,7 @@ def madxjob(madx_config, mask_config):
     madx_status = 1
     madxexe = madx_config["madx_exe"]
     source_path = madx_config["source_path"]
-    mask_name = madx_config["mask_name"]
-    madx_input_name = madx_config["input_name"]
+    mask_name = madx_config["mask_file"]
     output_files = madx_config["output_files"]
     status, output_files = utils.decode_strings(output_files)
     if not status:
@@ -47,14 +58,15 @@ def madxjob(madx_config, mask_config):
     #Generate the actual madx file from mask file
     patterns = ['%'+a for a in mask_config.keys()]
     values = list(mask_config.values())
-    status = utils.replace(patterns, values, mask_name, madx_input_name)
+    madx_in = 'madx_in'
+    status = utils.replace(patterns, values, mask_name, madx_in)
     if not status:
         print("Failed to generate actual madx input file!")
         madx_status = 0
         return madx_status
 
     #Begin to execute madx job
-    command = madxexe + " " + madx_input_name
+    command = madxexe + " " + madx_in
     print("Calling madx %s"%madxexe)
     print("MADX job is running...")
     output = os.popen(command)
@@ -77,7 +89,7 @@ def madxjob(madx_config, mask_config):
 
     #Download the requested files.
     down_list = list(output_files.values())
-    down_list.append(madx_input_name)
+    down_list.append(madx_in)
     down_list.append('madx_stdout')
     status = utils.download_output(down_list, dest_path)
     if not status:
@@ -269,12 +281,13 @@ def concatenate_files(source, dest):
 if __name__ == '__main__':
     args = sys.argv
     num = len(args[1:])
-    if num == 0:
+    if num == 0 or num == 1:
         print("The input file is missing!")
         sys.exit(1)
-    elif num == 1:
-        input_file = args[1]
-        run(input_file)
+    elif num == 2:
+        wu_id = args[1]
+        db_name = args[2]
+        run(wu_id, db_name)
     else:
         print("Too many input arguments!")
         sys.exit(1)
