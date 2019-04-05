@@ -291,8 +291,17 @@ class Study(object):
             self.db.insert('boinc_vars', self.boinc_vars)
         print("All required files are ready!")
 
-    def info(self):
-        '''Print the status information of this study'''
+    def update_db(self):
+        '''Update the database'''
+        pass
+
+    def info(self, job=0, where=None):
+        '''Print the status information of this study
+        job
+        0: print madx, oneturn sixtrack and sixtrack jobs
+        1: print madx, oneturn sixtrack job
+        2: print sixtrack job
+        wehre: the filter condition, e.g. "status='complete'" '''
         loc = self.study_path
         conts = os.listdir(loc)
         if self.dbname not in conts:
@@ -300,18 +309,30 @@ class Study(object):
         else:
             dbname = os.path.join(loc, self.dbname)
             db = SixDB(dbname, self.db_settings)
-            mad6t_task = db.select('mad6t_wu', ['job_name', 'status'])
-            print('madx and one turn sixtrack jobs:')
-            for i in mad6t_task:
-                print(i)
-            six = db.select('sixtrack_wu', ['job_name', 'status'])
-            print('Sixtrack jobs:')
-            for j in six:
-                print(j)
+            if job==0 or job==1:
+                query_info = ['wu_id', 'job_name', 'status']
+                wus = db.select('mad6t_wu', query_info, where)
+                print('madx and one turn sixtrack jobs:')
+                print(query_info)
+                for i in wus:
+                    print(i)
+            if job==0 or job==2:
+                query_info = ['wu_id', 'job_name', 'status']
+                six = db.select('sixtrack_wu', query_info, where)
+                print('Sixtrack jobs:')
+                print(query_info)
+                for j in six:
+                    print(j)
             db.close()
 
-    def submit_sixtrack(self, **args):
+    def submit_sixtrack(self, platform='local', **args):
         '''Sumbit the sixtrack jobs to htctondor. p.s. Now we test locally'''
+        if platform.lower() == 'htcondor':
+            sub = os.path.join(self.paths['sixtrack_in'], 'htcondor_run.sub')
+            cmd = 'condor_submit %s'%sub
+            os.system(cmd)
+            return
+
         if 'place' in args:
             execution_field = args['place']
         else:
@@ -323,44 +344,74 @@ class Study(object):
             print("Caution! The folder %s is not empty!"%execution_field)
         cur_path = os.getcwd()
         os.chdir(execution_field)
-        for i in self.sixtrack_joblist:
-            print("The sixtrack job %s is running...."%i)
-            sixtrack.run(i)
+        #for i in self.sixtrack_joblist:
+        #    print("The sixtrack job %s is running...."%i)
+        db = os.path.join(self.paths['sixtrack_in'], 'sub.db')
+        sixtrack.run(1, db)
         print("All sxitrack jobs are completed normally!")
         os.chdir(cur_path)
 
-    def collect_sixtrack(self):
+    def collect_sixtrack(self, platform='local', clean='False'):
         '''Collect the results of sixtrack jobs'''
-        six_out = self.paths['sixtrack_out']
-        job_table = {}
-        if os.path.isdir(six_out) and os.listdir(six_out):
-            for item in os.listdir(six_out):
-                item = os.path.join(six_out, item)
-                if os.path.isdir(item) and os.listdir(item):
-                    for conts in os.listdir(item):
-                        conts = os.path.join(item, conts)
-                        if os.path.isdir(conts) and os.listdir(conts):
-                            results = os.listdir(conts)
-                            for res in self.sixtrack_output:
-                                a = [s for s in results if res in s]
-                                if a:
-                                    a = os.path.join(conts, a[0])
-                                else:
-                                    print("The result %s isn't found!"%res)
+        self.config.clear()
+        self.config['info'] = {}
+        info_sec = self.config['info']
+        self.config['db_setting'] = self.db_settings
 
-    def prepare_sixtrack_input(self, server='htcondor'):
+        info_sec['db'] = os.path.join(self.study_path, self.dbname)
+        info_sec['path'] = self.paths['sixtrack_out']
+        info_sec['outs'] = utils.evlt(utils.encode_strings, [self.sixtrack_output])
+        info_sec['clean'] = clean
+        task_input = os.path.join(self.paths['gather'], 'sixtrack.ini')
+        task_index = os.path.join(self.paths['gather'], 'sixtrack.list')
+        sub_temp = os.path.join(self.paths['templates'], self.htc_temp)
+        task_sub = os.path.join(self.paths['gather'], 'htcondor_run.sub')
+        with open(task_input, 'w') as f_out:
+            self.config.write(f_out)
+        with open(task_index, 'w') as f_out:
+            f_out.write('1')
+        if platform is 'local':
+            gather.run(1, task_input)
+        elif platform is 'htcondor':
+            info = {}
+            app_path = StudyFactory.app_path()
+            info['%exe'] = os.path.join(app_path, 'lib', 'gather.py')
+            info['%input'] = 'sixtrack.ini'
+            info['%joblist'] = task_index
+            info['%dirname'] = self.paths['gather']
+            path = os.path.join(self.paths['gather'], '1')
+            if not os.path.isdir(path):
+                os.makedirs(path)
+            tran_input =[]
+            tran_input.append(os.path.join(app_path, 'lib', 'utils.py'))
+            tran_input.append(os.path.join(app_path, 'lib', 'pysixdb.py'))
+            tran_input.append(os.path.join(app_path, 'lib', 'dbadaptor.py'))
+            tran_input.append(task_input)
+            info['%func'] = utils.evlt(utils.encode_strings, [tran_input])
+            with open(sub_temp, 'r') as f_in:
+                with open(task_sub, 'w') as f_out:
+                    conts = f_in.read()
+                    for key, value in info.items():
+                        conts = conts.replace(key, value)
+                    f_out.write(conts)
+            command = 'condor_submit %s'%task_sub
+            os.system(command)
+
+    def prepare_sixtrack_input(self, platform='htcondor'):
         '''Prepare the input files for sixtrack job'''
         self.config.clear()
         self.config['sixtrack'] = {}
         six_sec = self.config['sixtrack']
+        self.config['fort3'] = {}
+        fort3_sec = self.config['fort3']
         six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         inp = self.sixtrack_input['input']
-        six_sec['input_files']= utils.evlt(utils.encode_strings, [inp])
+        six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
         six_sec['boinc_dir'] = self.paths['boinc_spool']
-        if server.lower() == 'htcondor':
+        if platform.lower() == 'htcondor':
             six_sec['boinc'] = 'false'
-        elif server.lower() == 'boinc':
+        elif platform.lower() == 'boinc':
             six_sec['boinc'] = 'true'
         else:
             print("Unsupported platform!")
@@ -370,71 +421,139 @@ class Study(object):
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
 
-        self.config['fort3'] = {}
-        fort3_sec = self.config['fort3']
-        keys = sorted(self.madx_params.keys())
-        madx_vals = self.db.select('mad6t_wu', keys, where="task_status='complete'")
-        for element in madx_vals:
-            for i in range(len(element)):
+        madx_keys = sorted(self.madx_params.keys())
+        madx_vals = self.db.select('mad6t_wu', ['wu_id']+madx_keys)
+        if not madx_vals:
+            print("The mad6t_wu table is empty!")
+            return
+        madx_vals = list(zip(*madx_vals))
+        madx_ids = list(madx_vals[0])
+        madx_params = madx_vals[1:]
+        keys = sorted(self.sixtrack_params.keys())
+        values = []
+        for key in keys:
+            val = self.sixtrack_params[key]
+            if not isinstance(val, collections.Iterable) or isinstance(val, str):
+                val = [val]#wrap with list for a single element
+            values.append(val)
+
+        keys.append('mad6t_id')
+        values.append(madx_ids)
+        outputs = self.db.select('sixtrack_wu', keys)
+        namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'])
+        wu_id = len(namevsid)
+        for element in itertools.product(*values):
+            job_table = {}
+            if element in outputs:
+                i = outputs.index(element)
+                nm = namevsid[i][1]
+                print("The sixtrack job %s is already in the database!"%nm)
+                continue
+            for i in range(len(element)-1):
                 ky = keys[i]
                 vl = element[i]
                 fort3_sec[ky] = str(vl)
-        madx_namevsid = self.db.select('mad6t_wu', ['job_name', 'rowid'], where="task_status='complete'")
-        [madx_jobnames,jobid] = zip(*madx_namevsid)
-        cols = list(self.sixtrack_input['input'].values())
-        task_table = {}
-        for item in madx_jobnames:
-            task_table['mad6t_name'] = item
-            item_path = os.path.join(self.paths['sixtrack_in'], item)
-            if not os.path.isdir(item_path):
-                os.makedirs(item_path)
-            s_keys = sorted(self.sixtrack_params.keys())
-            values = []
-            keys = []
-            for key in s_keys:
-                val = self.sixtrack_params[key]
-                if isinstance(val, list):
-                    keys.append(key)
-                    s_keys.remove(key)
-                    values.append(val)
-                else:
-                    fort3_sec[key] = str(val)
-                    task_table[key] = val
-            for element in itertools.product(*values):
-                for i in range(len(element)):
-                    ky = keys[i]
-                    vl = element[i]
-                    fort3_sec[ky] = str(vl)
-                    task_table[ky] = val
-                job_name = self.name_conven('', keys, element, '')
-                task_table['sixtrack_name'] = item + job_name
-                input_path = os.path.join(item_path, job_name)
-                dest_path = os.path.join(self.paths['sixtrack_out'], item, job_name)
-                if not os.path.isdir(input_path):
-                    os.makedirs(input_path)
-                six_sec['input_path'] = input_path
-                six_sec['dest_path'] = dest_path
-                where = "job_name='%s'"%(item)
-                madx_outs = self.db.select('mad6t_task', cols, where)
-                num = len(cols)
-                for i in range(num):
-                    out = madx_outs[0][i]
-                    filename = os.path.join(input_path, cols[i])
-                    utils.evlt(utils.decompress_buf, [out, filename])
-                self.config['boinc'] = self.boinc_vars
-                input_name = 'test.ini'
-                output = os.path.join(input_path, input_name)
-                with open(output, 'w') as f_out:
-                    self.config.write(f_out)
-                print('Successfully generate input file %s'%output)
-                self.sixtrack_joblist.append(output)
-                task_table['input_file'] = utils.evlt(utils.compress_buf, [output])
-                task_table['task_status'] = 'incomplete'
-                task_table['mtime'] = time.time()
-                try:
-                    self.db.insert('sixtrack_task', task_table)
-                except:
-                    print("Fail to insert sixtrack task!")
+                job_table[ky] = vl
+            vl = element[len(element)-1]
+            j = madx_ids.index(vl)
+            prms = madx_params[j]
+            for k in range(len(prms)):
+                ky = madx_keys[k]
+                vl = prms[k]
+                fort3_sec[ky] = str(vl)
+            cols = list(self.sixtrack_input['input'].values())
+            job_table['mad6t_id'] = j + 1 #in db id begin from 1
+            wu_id += 1
+            job_table['wu_id'] = wu_id
+            job_name = 'sixtrack_job_%i'%wu_id
+            job_table['job_name'] = job_name
+            #input_path = os.path.join(item_path, job_name)
+            dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
+            if not os.path.isdir(dest_path):
+                os.makedirs(dest_path)
+            #six_sec['input_path'] = input_path
+            six_sec['dest_path'] = dest_path
+            self.config['boinc'] = self.boinc_vars
+            f_out = io.StringIO()
+            self.config.write(f_out)
+            out = f_out.getvalue()
+            job_table['input_file'] = utils.evlt(utils.compress_buf, [out,'str'])
+            job_table['status'] = 'incomplete'
+            job_table['mtime'] = time.time()
+            self.db.insert('sixtrack_wu', job_table)
+            print('Store sixtrack job %s into database!'%job_name)
+            #self.sixtrack_joblist.append(output)
+
+        where = "status='complete'"
+        madx_outs = self.db.select('mad6t_wu', ['wu_id', 'task_id'], where)
+        if not madx_outs:
+            print("There isn't complete madx job!")
+            return
+        madx_outs = list(zip(*madx_outs))
+        if len(madx_outs[0]) == 1:
+            where = "status='incomplete' and mad6t_id=%s"%str(madx_outs[0][0])
+        else:
+            where = "status='incomplete' and mad6t_id in %s"%str(madx_outs[0])
+        #sixtrack_outs = self.db.select('sixtrack_wu', ['wu_id', 'input_file'], where)
+        outputs = self.db.select('sixtrack_wu', ['wu_id', 'mad6t_id', 'input_file'], where)
+        if not outputs:
+            print("There isn't available job to submit!")
+            return
+        sub_name = os.path.join(self.paths['sixtrack_in'], 'sub.db')
+        sub_main = os.path.join(self.study_path, self.dbname)
+        if os.path.exists(sub_name):
+            os.remove(sub_name)#remove the old one
+        shutil.copy2(sub_main, sub_name)
+        sub_db = SixDB(sub_name, self.db_settings)
+        sub_db.drop_table('sixtrack_task')
+        sub_db.drop_table('result')
+        sub_db.drop_table('sixtrack_wu')
+        sub_db.drop_table('oneturn_sixtrack_wu')
+        sub_db.drop_table('env')
+        sub_db.drop_table('templates')
+        sub_db.create_table('sixtrack_wu', {'wu_id':'int', 'mad6t_id':'int', 'input_file':'blob'})
+        incom_job = {}
+        outputs = list(zip(*outputs))
+        incom_job['wu_id'] = outputs[0]
+        incom_job['mad6t_id'] = outputs[1]
+        incom_job['input_file'] = outputs[2]
+        sub_db.insertm('sixtrack_wu', incom_job)
+        wu_ids = sub_db.select('sixtrack_wu', ['wu_id'])
+        job_list = os.path.join(self.paths['sixtrack_in'], 'job_id.list')
+        if os.path.exists(job_list):
+            os.remove(job_list)
+        with open(job_list, 'w') as f_out:
+            for i in wu_ids:
+                f_out.write(str(i[0]))
+                f_out.write('\n')
+                out_f = os.path.join(self.paths['sixtrack_out'], str(i[0]))
+                if not os.path.isdir(out_f):
+                    os.makedirs(out_f)
+        sub_db.close()
+        print("The submitted database %s is ready!"%sub_name)
+        sub_temp = os.path.join(self.paths['templates'], self.htc_temp)
+        sub_file = os.path.join(self.paths['sixtrack_in'], self.htc_temp)
+        if os.path.exists(sub_file):
+            os.remove(sub_file)#remove the old one
+        rep = {}
+        app_path = StudyFactory.app_path()
+        tran_input =[]
+        tran_input.append(os.path.join(app_path, 'lib', 'utils.py'))
+        tran_input.append(os.path.join(app_path, 'lib', 'pysixdb.py'))
+        tran_input.append(os.path.join(app_path, 'lib', 'dbadaptor.py'))
+        tran_input.append(sub_name)
+        rep['%func'] = utils.evlt(utils.encode_strings, [tran_input])
+        rep['%exe'] = os.path.join(app_path, 'lib', 'sixtrack.py')
+        rep['%dirname'] = self.paths['sixtrack_out']
+        rep['%joblist'] = job_list
+        rep['%input'] = 'sub.db'
+        with open(sub_temp, 'r') as f_in:
+            with open(sub_file, 'w') as f_out:
+                conts = f_in.read()
+                for key, value in rep.items():
+                    conts = conts.replace(key, value)
+                f_out.write(conts)
+        print("The htcondor description file is ready!")
 
     def submit_mad6t(self, platform='local', **args):
         '''Submit the jobs to cluster or run locally'''
@@ -515,59 +634,6 @@ class Study(object):
             command = 'condor_submit %s'%task_sub
             os.system(command)
 
-    def prepare_madx_single_db(self):
-        '''Prepare the input database for madx and one turn sixtrack job'''
-        keys = sorted(self.madx_params.keys())
-        values = []
-        for key in keys:
-            values.append(self.madx_params[key])
-
-        check_params = self.db.select('mad6t_wu', list(keys))
-        check_jobs = self.db.select('mad6t_wu', ['wu_id','job_name','status'])
-
-        wu_id = len(check_jobs)
-        for element in itertools.product(*values):
-            madx_table = collections.OrderedDict()
-            if element in check_params:
-                i = check_params.index(element)
-                name = check_jobs[i][1]
-                print("The job %s is already in data.db!"%name)
-                continue
-            for i in range(len(element)):
-                ky = keys[i]
-                vl = element[i]
-                madx_table[ky] = vl
-            prefix = self.madx_input['mask_file'].split('.')[0]
-            job_name = self.name_conven(prefix, keys, element, '')
-            wu_id +=1
-            madx_table['wu_id'] = wu_id
-            madx_table['status'] = 'incomplete'
-            madx_table['job_name'] = job_name
-            madx_table['mtime'] = time.time()
-            self.db.insert('mad6t_wu', madx_table)
-            #self.mad6t_joblist.append(job_name)
-            print('Store new job %s into database!'%job_name)
-        self.db.insert('oneturn_sixtrack_wu', self.oneturn_sixtrack_params)
-        sub_name = os.path.join(self.paths['madx_in'], 'sub.db')
-        dbname = os.path.join(self.study_path, self.dbname)
-        shutil.copy2(dbname, sub_name)
-        sub_db = SixDB(sub_name, self.db_settings)
-        sub_db.drop_table('result')
-        sub_db.drop_table('sixtrack_wu')
-        sub_db.drop_table('sixtrack_task')
-        sub_db.drop_table('boinc_vars')
-        sub_db.drop_table('mad6t_task')
-        where = "status='complete'"
-        sub_db.remove('mad6t_wu', where)#remove the completed jobs
-        wu_ids = sub_db.select('mad6t_wu', ['wu_id'])
-        job_list = os.path.join(self.paths['madx_in'], 'job_id.list')
-        with open(job_list, 'w') as f_out:
-            for i in wu_ids:
-                f_out.write(str(i[0]))
-                f_out.write('\n')
-        sub_db.close()
-        print("The submitted database %s is ready!"%sub_name)
-
     def prepare_madx_single_input(self):
         '''Prepare the input files for madx and one turn sixtrack job'''
         self.config.clear()
@@ -632,66 +698,57 @@ class Study(object):
             #self.mad6t_joblist.append(job_name)
             print('Store job %s into database!'%job_name)
 
-        #dbname = os.path.join(self.study_path, self.dbname)
-        #shutil.copy2(dbname, sub_name)
-        #sub_db.drop_table('result')
-        #sub_db.drop_table('sixtrack_wu')
-        #sub_db.drop_table('sixtrack_task')
-        #sub_db.drop_table('boinc_vars')
-        #sub_db.drop_table('mad6t_task')
-        #where = "status='complete'"
-        #sub_db.remove('mad6t_wu', where)#remove the completed jobs
         where = "status='incomplete'"
         outputs = self.db.select('mad6t_wu', ['wu_id', 'input_file'], where)
         if not outputs:
             print("There isn't incomplete job!")
-        else:
-            sub_name = os.path.join(self.paths['madx_in'], 'sub.db')
-            if os.path.exists(sub_name):
-                os.remove(sub_name)#remove the old one
-            sub_db = SixDB(sub_name, self.db_settings, create=True)
-            sub_db.create_table('mad6t_wu', {'wu_id':'int','input_file':'blob'})
-            incom_job = {}
-            outputs = list(zip(*outputs))
-            incom_job['wu_id'] = outputs[0]
-            incom_job['input_file'] = outputs[1]
-            sub_db.insertm('mad6t_wu', incom_job)
-            wu_ids = sub_db.select('mad6t_wu', ['wu_id'])
-            job_list = os.path.join(self.paths['madx_in'], 'job_id.list')
-            if os.path.exists(job_list):
-                os.remove(job_list)
-            with open(job_list, 'w') as f_out:
-                for i in wu_ids:
-                    f_out.write(str(i[0]))
-                    f_out.write('\n')
-                    out_f = os.path.join(self.paths['madx_out'], str(i[0]))
-                    if not os.path.isdir(out_f):
-                        os.makedirs(out_f)
-            sub_db.close()
-            print("The submitted database %s is ready!"%sub_name)
-            sub_temp = os.path.join(self.paths['templates'], self.htc_temp)
-            sub_file = os.path.join(self.paths['madx_in'], self.htc_temp)
-            if os.path.exists(sub_file):
-                os.remove(sub_file)#remove the old one
-            rep = {}
-            app_path = StudyFactory.app_path()
-            tran_input =[]
-            tran_input.append(os.path.join(app_path, 'lib', 'utils.py'))
-            tran_input.append(os.path.join(app_path, 'lib', 'pysixdb.py'))
-            tran_input.append(os.path.join(app_path, 'lib', 'dbadaptor.py'))
-            tran_input.append(sub_name)
-            rep['%func'] = utils.evlt(utils.encode_strings, [tran_input])
-            rep['%exe'] = os.path.join(app_path, 'lib', 'mad6t_oneturn.py')
-            rep['%dirname'] = self.paths['madx_out']
-            rep['%joblist'] = job_list
-            rep['%input'] = 'sub.db'
-            with open(sub_temp, 'r') as f_in:
-                with open(sub_file, 'w') as f_out:
-                    conts = f_in.read()
-                    for key, value in rep.items():
-                        conts = conts.replace(key, value)
-                    f_out.write(conts)
-            print("The htcondor description file is ready!")
+            return
+        sub_name = os.path.join(self.paths['madx_in'], 'sub.db')
+        if os.path.exists(sub_name):
+            os.remove(sub_name)#remove the old one
+        sub_db = SixDB(sub_name, self.db_settings, create=True)
+        sub_db.create_table('mad6t_wu', {'wu_id':'int','input_file':'blob'})
+        incom_job = {}
+        outputs = list(zip(*outputs))
+        incom_job['wu_id'] = outputs[0]
+        incom_job['input_file'] = outputs[1]
+        sub_db.insertm('mad6t_wu', incom_job)
+        wu_ids = sub_db.select('mad6t_wu', ['wu_id'])
+        job_list = os.path.join(self.paths['madx_in'], 'job_id.list')
+        if os.path.exists(job_list):
+            os.remove(job_list)
+        with open(job_list, 'w') as f_out:
+            for i in wu_ids:
+                f_out.write(str(i[0]))
+                f_out.write('\n')
+                out_f = os.path.join(self.paths['madx_out'], str(i[0]))
+                if not os.path.isdir(out_f):
+                    os.makedirs(out_f)
+        sub_db.close()
+        print("The submitted database %s is ready!"%sub_name)
+        sub_temp = os.path.join(self.paths['templates'], self.htc_temp)
+        sub_file = os.path.join(self.paths['madx_in'], self.htc_temp)
+        if os.path.exists(sub_file):
+            os.remove(sub_file)#remove the old one
+        rep = {}
+        app_path = StudyFactory.app_path()
+        tran_input =[]
+        tran_input.append(os.path.join(app_path, 'lib', 'utils.py'))
+        tran_input.append(os.path.join(app_path, 'lib', 'pysixdb.py'))
+        tran_input.append(os.path.join(app_path, 'lib', 'dbadaptor.py'))
+        tran_input.append(sub_name)
+        rep['%func'] = utils.evlt(utils.encode_strings, [tran_input])
+        rep['%exe'] = os.path.join(app_path, 'lib', 'mad6t_oneturn.py')
+        rep['%dirname'] = self.paths['madx_out']
+        rep['%joblist'] = job_list
+        rep['%input'] = 'sub.db'
+        with open(sub_temp, 'r') as f_in:
+            with open(sub_file, 'w') as f_out:
+                conts = f_in.read()
+                for key, value in rep.items():
+                    conts = conts.replace(key, value)
+                f_out.write(conts)
+        print("The htcondor description file is ready!")
 
     def name_conven(self, prefix, keys, values, suffix=''):
         '''The convention for naming input file'''

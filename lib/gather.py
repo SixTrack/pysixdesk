@@ -69,6 +69,7 @@ def mad6t_results(cf):
                 where = "wu_id=%s"%item
                 job_count = db.select('mad6t_task', ['task_id'], where)
                 task_table['count'] = len(job_count) + 1
+                task_table['wu_id'] = item
                 task_table['task_id'] = len(task_count) + 1
                 task_table['task_name'] = ''
                 task_table['mtime'] = time.time()
@@ -88,15 +89,55 @@ def mad6t_results(cf):
         print("The result path %s is invalid!"%mad6t_path)
         sys.exit(0)
 
-def sixtrack_results(six_path, file_list):
+def sixtrack_results(cf):
     '''Gather the results of sixtrack jobs and store in database'''
+    info_sec = cf['info']
+    six_path = info_sec['path']
     if os.path.isdir(six_path) and os.listdir(six_path):
         set_sec = cf['db_setting']
-        info_sec = cf['info']
         db_name = info_sec['db']
         db = SixDB(db_name, set_sec)
-        mad6t_path = info_sec['path']
-        file_list = inf_sec['outputs']
+        file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
+
+        for item in os.listdir(six_path):
+            job_path = os.path.join(six_path, item)
+            job_table = {}
+            task_table = {}
+            task_table['status'] = 'Success'
+            if os.path.isdir(job_path) and os.listdir(job_path):
+                contents = os.listdir(job_path)
+                for out in file_list:
+                    out_f = [s for s in contents if out in s]
+                    if out_f:
+                        out_f = os.path.join(job_path, out_f[0])
+                        task_table[out] = utils.evlt(utils.compress_buf,\
+                                [out_f,'gzip'])
+                    else:
+                        task_table['status'] = 'Failed'
+                        print("The sixtrack output file %s for job %s doesn't exist! The job failed!"%(out, item))
+                task_count = db.select('sixtrack_task', ['task_id'])
+                where = "wu_id=%s"%item
+                job_count = db.select('sixtrack_task', ['task_id'], where)
+                task_table['wu_id'] = item
+                task_table['count'] = len(job_count) + 1
+                task_table['task_id'] = len(task_count) + 1
+                task_table['task_name'] = ''
+                task_table['mtime'] = time.time()
+                db.insert('sixtrack_task', task_table)
+                if task_table['status'] == 'Success':
+                    where = "wu_id=%s"%item
+                    job_table['status'] = 'complete'
+                    job_table['task_id'] = task_table['task_id']
+                    db.update('sixtrack_wu', job_table, where)
+                    print("Successfully update sixtrack job %s!"%item)
+            else:
+                task_table['status'] = 'Failed'
+                db.insert('sixtrack_task', task_table)
+                print("This is a failed job!")
+        db.close()
+    else:
+        print("The result path %s is invalid!"%six_path)
+        sys.exit(0)
 
 if __name__ == '__main__':
     args = sys.argv

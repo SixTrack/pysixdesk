@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import os
 import sys
 import copy
@@ -6,11 +7,45 @@ import shutil
 import zipfile
 import configparser
 
-def run(input_file):
+from pysixdb import SixDB
+
+def run(wu_id, db_name):
+    db = SixDB(db_name)
+    wu_id = str(wu_id)
+    where = 'wu_id=%s'%wu_id
+    outputs = db.select('sixtrack_wu', ['input_file', 'mad6t_id'], where)
+    #db.close()
+    if not outputs:
+        print("There isn't input file for madx job %s!"%wu_id)
+        db.close()
+        sys.exit(1)
+    mad6t_id = outputs[0][1]
+    input_buf = outputs[0][0]
+    input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
     cf = configparser.ConfigParser()
     cf.optionxform = str #preserve case
-    cf.read(input_file)
+    cf.read_string(input_file)
     sixtrack_config = cf['sixtrack']
+    inp = sixtrack_config["input_files"]
+    input_files = utils.evlt(utils.decode_strings, [inp])
+    where = 'wu_id=%s'%str(mad6t_id)
+    task_id = db.select('mad6t_wu', ['task_id'], where)
+    if not task_id:
+        print("Can't find the preprocess task_id for this job!")
+        sys.exit(1)
+    inputs = list(input_files.values())
+    task_id = task_id[0][0]
+    where = 'task_id=%s'%str(task_id)
+    input_buf = db.select('mad6t_task', inputs, where)
+    db.close()
+    if not input_buf:
+        print("The required file %s isn't found!"%infile)
+        sys.exit(1)
+
+    for infile in inputs:
+        i = inputs.index(infile)
+        buf = input_buf[0][i]
+        utils.evlt(utils.decompress_buf, [buf, infile])
     fort3_config = cf['fort3']
     boinc_vars = cf['boinc']
     sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
@@ -20,27 +55,16 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     fort3_config = config_param
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     source_path = sixtrack_config["source_path"]
-    input_path = sixtrack_config["input_path"]
+    #input_path = sixtrack_config["input_path"]
     dest_path = sixtrack_config["dest_path"]
-    status, temp_files = utils.decode_strings(sixtrack_config["temp_files"])
-    status, input_files = utils.decode_strings(sixtrack_config["input_files"])
-    status, output_files = utils.decode_strings(sixtrack_config["output_files"])
+    inp = sixtrack_config["temp_files"]
+    temp_files = utils.evlt(utils.decode_strings, [inp])
+    inp = sixtrack_config["output_files"]
+    output_files = utils.evlt(utils.decode_strings, [inp])
+    inp = sixtrack_config["input_files"]
+    input_files = utils.evlt(utils.decode_strings, [inp])
     boinc = sixtrack_config["boinc"]
     #test_turn = sixtrack_config["test_turn"]
-    if not status:
-        print("Wrong setting of oneturn sixtrack templates!")
-        sys.exit(1)
-    if not status:
-        print("Wrong setting of oneturn sixtrack input!")
-        sys.exit(1)
-    for infile in input_files.values():
-        infi = os.path.join(input_path, infile)
-        if os.path.isfile(infi):
-            shutil.copy2(infi, infile)
-        else:
-            print("The required file %s isn't found!"%infile)
-            sys.exit(1)
-
     for infile in temp_files:
         infi = os.path.join(source_path, infile)
         print(infi)
@@ -166,3 +190,17 @@ def concatenate_files(source, dest):
         f_out.writelines(f_in.readlines())
         f_in.close()
     f_out.close()
+
+if __name__ == '__main__':
+    args = sys.argv
+    num = len(args[1:])
+    if num == 0 or num == 1:
+        print("The input file is missing!")
+        sys.exit(1)
+    elif num == 2:
+        wu_id = args[1]
+        db_name = args[2]
+        run(wu_id, db_name)
+    else:
+        print("Too many input arguments!")
+        sys.exit(1)
