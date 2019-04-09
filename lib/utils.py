@@ -1,9 +1,9 @@
 import os
+import io
 import re
 import sys
 import gzip
 import shutil
-
 
 def check(files):
     '''Check the existence of the files and rename them if the files is a dict
@@ -35,7 +35,7 @@ def download_output(filenames, dest, zp=True):
     '''
     lStatus = True
     if not os.path.isdir(dest):
-        os.mkdir(dest, 0o755)
+        os.makedirs(dest, 0o755)
 
     for filename in filenames:
         if os.path.isfile(filename):
@@ -100,3 +100,73 @@ def decode_strings(inputs):
         lStatus = False
         output = []
     return lStatus, output
+
+def compress_buf(data, source='file'):
+    '''Data compression for storing in database
+    The data source can be file,gzip,str'''
+    lStatus = True
+    zbuf = io.BytesIO()
+    if source is 'file' and os.path.isfile(data):
+        with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
+            with open(data, 'rb') as f_in:
+                buf = f_in.read()
+                zfile.write(buf)
+    elif source is 'gzip' and os.path.isfile(data):
+        with open(data, 'rb') as f_in:
+            shutil.copyfileobj(f_in, zbuf)
+    elif source is 'str' and isinstance(data, str):
+        buf = data.encode()
+        with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
+            zfile.write(buf)
+    else:
+        lStatus = False
+        print("Invalid data source!")
+    return lStatus, zbuf.getvalue()
+
+def decompress_buf(buf, out, des='file'):
+    '''Data decompression to retireve from database'''
+    lStatus = True
+    if isinstance(buf, bytes):
+        zbuf = io.BytesIO(buf)
+        if des is 'file':
+            with gzip.GzipFile(fileobj=zbuf) as f_in:
+                with open(out, 'wb') as f_out:
+                    f_out.write(f_in.read())
+        elif des is 'buf':
+            with gzip.GzipFile(fileobj=zbuf) as f_in:
+                out = f_in.read()
+                out = out.decode()
+        else:
+            lStatus = False
+            print("Unknow output type!")
+        return lStatus, out
+    else:
+        lStatus = False
+        print("Invalid input data!")
+        return lStatus
+
+def evlt(fun, inputs, action=sys.exit):
+    '''Evaluate the specified function'''
+    outputs = fun(*inputs)
+    if isinstance(outputs, tuple):
+        num = len(outputs)
+    else:
+        num = 1
+    if outputs is None:
+        num = 0
+
+    if num == 0:
+        pass
+    elif num == 1:
+        status = outputs
+        if not status:
+            action()
+    elif num == 2:
+        status = outputs[0]
+        output = outputs[1]
+        if status:
+            return output
+        else:
+            action()
+    else:
+        pass
