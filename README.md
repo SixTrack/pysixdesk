@@ -52,7 +52,7 @@ test.update_db()#only need for a new study or when parameters changed
 test.prepare_preprocess_input()
 test.submit_preprocess(place='./run')
 ```
-```place='./run``` is to set the place to run the jobs.
+```place='./run``` is to set the place to run the jobs locally.
 You will find the result in ```location``` directory
 If you want to submit jobs to htcondor, you should specify the platform in last
 function:
@@ -63,6 +63,17 @@ After the jobs are finished, you can call the collect function to collect the
 results and store into database:
 ```shell
 test.collect_preprocess_results()
+Same with submit function, you can specify the 'platform' argument to submit a
+collection job to HTCondor:
+```shell
+test.collect_preprocess_results('htcondor')
+```
+```
+For sixtrack jobs there are same functions:
+```shell
+test.prepare_sixtrack_input()
+test.submit_sixtrack()
+test.collect_sixtrack_results()
 ```
 
 Note: Please don't do operations in the pysixdesk folder!
