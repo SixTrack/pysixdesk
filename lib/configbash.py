@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 import math
 from study import Study
 
@@ -49,9 +50,12 @@ class BashStudy(Study):
         for i in range(len(scan_vals)):
             self.madx_params[scan_hols[i]] = scan_vals[i]
 
-        self.madx_input["mask_name"] = 'hl10.mask'
+        self.madx_input["mask_file"] = 'hl10.mask'
         self.oneturn_sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
         self.oneturn_sixtrack_output = ['mychrom', 'betavalues', 'sixdesktunes']
+        self.sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
+        self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
+        self.update_tables()
 
     def parse_bash_script(self, mfile):
         '''parse the bash input file for the old version sixdesk'''

@@ -105,7 +105,7 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         '''Fetch all the table names in the database'''
         c = conn.cursor()
         c.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        return c.fetchall()
+        return list(c)
 
     def insert(self, conn, table_name, values):
         '''Insert a row of values

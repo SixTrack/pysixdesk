@@ -13,10 +13,10 @@ def run(wu_id, db_name):
     db = SixDB(db_name)
     wu_id = str(wu_id)
     where = 'wu_id=%s'%wu_id
-    outputs = db.select('mad6t_wu', ['input_file'], where)
+    outputs = db.select('preprocess_wu', ['input_file'], where)
     db.close()
     if not outputs[0]:
-        print("There isn't input file for madx job %s!"%wu_id)
+        print("There isn't input file for preprocess job %s!"%wu_id)
         sys.exit(1)
     input_buf = outputs[0][0]
     input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
@@ -36,7 +36,7 @@ def run(wu_id, db_name):
         return madx_status
 
 def madxjob(madx_config, mask_config):
-    '''MADX job to generate input file for sixtrack'''
+    '''MADX job to generate input files for sixtrack'''
     madx_status = 1
     madxexe = madx_config["madx_exe"]
     source_path = madx_config["source_path"]

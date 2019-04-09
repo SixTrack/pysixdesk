@@ -13,7 +13,7 @@ def run(wu_id, infile):
     if os.path.isfile(infile):
         cf.read(infile)
         if str(wu_id) == '0':
-            mad6t_results(cf)
+            preprocess_results(cf)
         elif str(wu_id) == '1':
             sixtrack_results(cf)
         else:
@@ -21,20 +21,20 @@ def run(wu_id, infile):
     else:
         print("The input file %s doesn't exist!"%infile)
 
-def mad6t_results(cf):
+def preprocess_results(cf):
     '''Gather the results of madx and oneturn sixtrack jobs and store in
     database
     '''
     info_sec = cf['info']
-    mad6t_path = info_sec['path']
-    if os.path.isdir(mad6t_path) and os.listdir(mad6t_path):
+    preprocess_path = info_sec['path']
+    if os.path.isdir(preprocess_path) and os.listdir(preprocess_path):
         set_sec = cf['db_setting']
         db_name = info_sec['db']
         db = SixDB(db_name, set_sec)
         file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
 
-        for item in os.listdir(mad6t_path):
-            job_path = os.path.join(mad6t_path, item)
+        for item in os.listdir(preprocess_path):
+            job_path = os.path.join(preprocess_path, item)
             job_table = {}
             task_table = {}
             task_table['status'] = 'Success'
@@ -65,28 +65,28 @@ def mad6t_results(cf):
                     else:
                         task_table['status'] = 'Failed'
                         print("The madx output file %s for job %s doesn't exist! The job failed!"%(out, item))
-                task_count = db.select('mad6t_task', ['task_id'])
+                task_count = db.select('preprocess_task', ['task_id'])
                 where = "wu_id=%s"%item
-                job_count = db.select('mad6t_task', ['task_id'], where)
+                job_count = db.select('preprocess_task', ['task_id'], where)
                 task_table['count'] = len(job_count) + 1
                 task_table['wu_id'] = item
                 task_table['task_id'] = len(task_count) + 1
                 task_table['task_name'] = ''
                 task_table['mtime'] = time.time()
-                db.insert('mad6t_task', task_table)
+                db.insert('preprocess_task', task_table)
                 if task_table['status'] == 'Success':
                     where = "wu_id=%s"%item
                     job_table['status'] = 'complete'
                     job_table['task_id'] = task_table['task_id']
-                    db.update('mad6t_wu', job_table, where)
+                    db.update('preprocess_wu', job_table, where)
                     print("Successfully update madx job %s!"%item)
             else:
                 task_table['status'] = 'Failed'
-                db.insert('mad6t_task', task_table)
+                db.insert('preprocess_task', task_table)
                 print("This is a failed job!")
         db.close()
     else:
-        print("The result path %s is invalid!"%mad6t_path)
+        print("The result path %s is invalid!"%preprocess_path)
         sys.exit(0)
 
 def sixtrack_results(cf):

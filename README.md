@@ -48,11 +48,21 @@ Then you can test the program with the following codes:
 
 ```shell
 test = a.new_study('test')
-test.structure()
-test.prepare_madx_single_input()
-test.submit_mad6t(place='./run')
+test.update_db()#only need for a new study or when parameters changed
+test.prepare_preprocess_input()
+test.submit_preprocess(place='./run')
 ```
 ```place='./run``` is to set the place to run the jobs.
 You will find the result in ```location``` directory
+If you want to submit jobs to htcondor, you should specify the platform in last
+function:
+```shell
+test.submit_preprocess('htcondor')
+```
+After the jobs are finished, you can call the collect function to collect the
+results and store into database:
+```shell
+test.collect_preprocess_results()
+```
 
 Note: Please don't do operations in the pysixdesk folder!

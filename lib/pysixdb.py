@@ -35,6 +35,11 @@ class SixDB(object):
         '''Execute the settings of the database'''
         self.adaptor.setting(self.conn, settings)
 
+    def fetch_tables(self):
+        '''Get all the table names in the database'''
+        r = self.adaptor.fetch_tables(self.conn)
+        return r
+
     def create_table(self, table_name, table_info, key_info={}, recreate=False):
         '''Create a new table or recreate an existing table'''
         self.adaptor.create_table(self.conn, table_name, table_info, key_info,\
@@ -75,4 +80,5 @@ class SixDB(object):
 
     def close(self):
         '''Disconnect the database'''
+        self.conn.commit()
         self.conn.close()

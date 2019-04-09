@@ -13,13 +13,14 @@ def run(wu_id, db_name):
     db = SixDB(db_name)
     wu_id = str(wu_id)
     where = 'wu_id=%s'%wu_id
-    outputs = db.select('sixtrack_wu', ['input_file', 'mad6t_id'], where)
+    outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc'], where)
     #db.close()
     if not outputs:
         print("There isn't input file for madx job %s!"%wu_id)
         db.close()
         sys.exit(1)
-    mad6t_id = outputs[0][1]
+    preprocess_id = outputs[0][1]
+    boinc = outputs[0][2]
     input_buf = outputs[0][0]
     input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
     cf = configparser.ConfigParser()
@@ -28,15 +29,15 @@ def run(wu_id, db_name):
     sixtrack_config = cf['sixtrack']
     inp = sixtrack_config["input_files"]
     input_files = utils.evlt(utils.decode_strings, [inp])
-    where = 'wu_id=%s'%str(mad6t_id)
-    task_id = db.select('mad6t_wu', ['task_id'], where)
+    where = 'wu_id=%s'%str(preprocess_id)
+    task_id = db.select('preprocess_wu', ['task_id'], where)
     if not task_id:
         print("Can't find the preprocess task_id for this job!")
         sys.exit(1)
     inputs = list(input_files.values())
     task_id = task_id[0][0]
     where = 'task_id=%s'%str(task_id)
-    input_buf = db.select('mad6t_task', inputs, where)
+    input_buf = db.select('preprocess_task', inputs, where)
     db.close()
     if not input_buf:
         print("The required file %s isn't found!"%infile)
@@ -48,6 +49,7 @@ def run(wu_id, db_name):
         utils.evlt(utils.decompress_buf, [buf, infile])
     fort3_config = cf['fort3']
     boinc_vars = cf['boinc']
+    sixtrack_config['boinc'] = boinc
     sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
@@ -67,7 +69,6 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     #test_turn = sixtrack_config["test_turn"]
     for infile in temp_files:
         infi = os.path.join(source_path, infile)
-        print(infi)
         if os.path.isfile(infi):
             shutil.copy2(infi, infile)
         else:
@@ -80,7 +81,6 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     c = fc3aux_2.split()
     lhc_length = c[4]
     fort3_config['length']=lhc_length
-    #fort3_config.update(args)
 
     #Create a temp folder to excute sixtrack
     if os.path.isdir('junk'):
