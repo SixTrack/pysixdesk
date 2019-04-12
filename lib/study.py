@@ -30,18 +30,18 @@ class Study(object):
         self.sixtrack_joblist = []
         #All the requested parameters for a study
         self.paths = {}
-        self.madx_params = {}
+        self.madx_params = collections.OrderedDict()
         self.madx_input = {}
         self.madx_output = {}
-        self.oneturn_sixtrack_params = {}
+        self.oneturn_sixtrack_params = collections.OrderedDict()
         self.oneturn_sixtrack_input = {}
-        self.oneturn_sixtrack_output = {}
-        self.sixtrack_params = {}
+        self.oneturn_sixtrack_output = []
+        self.sixtrack_params = collections.OrderedDict()
         self.sixtrack_input = {}
         self.sixtrack_output = []
         self.tables = {}
         self.table_keys = {}
-        self.pragma = {}
+        self.pragma = collections.OrderedDict()
         self.boinc_vars = collections.OrderedDict()
         #initialize default values
         Study._defaults(self)
@@ -70,111 +70,171 @@ class Study(object):
                 'fc.8': 'fort.8',
                 'fc.16': 'fort.16',
                 'fc.34': 'fort.34'}
-        self.oneturn_sixtrack_params = {
-                "turnss": 1,
-                "nss": 1,
-                "ax0s": 0.1,
-                "ax1s": 0.1,
-                "imc": 1,
-                "iclo6": 2,
-                "writebins": 1,
-                "ratios": 1,
-                "Runnam": 'FirstTurn',
-                "idfor": 0,
-                "ibtype": 0,
-                "ition": 0,
-                "CHRO": '/',
-                "TUNE": '/',
-                "POST": 'POST',
-                "POS1": '',
-                "ndafi": 1,
-                "tunex": 62.28,
-                "tuney": 60.31,
-                "inttunex": 62.28,
-                "inttuney": 60.31,
-                "DIFF": '/DIFF',
-                "DIF1": '/',
-                "pmass": 938.272013,
-                "emit_beam": 3.75,
-                "e0": 7000,
-                "bunch_charge": 1.15E11,
-                "CHROM": 0,
-                "chrom_eps": 0.000001,
-                "dp1": 0.000001,
-                "dp2": 0.000001,
-                "chromx": 2,
-                "chromy": 2,
-                "TUNEVAL": '/',
-                "CHROVAL": '/'}
+        self.oneturn_sixtrack_params = collections.OrderedDict([
+                ("turnss", 1),
+                ("nss", 1),
+                ("ax0s", 0.1),
+                ("ax1s", 0.1),
+                ("imc", 1),
+                ("iclo6", 2),
+                ("writebins", 1),
+                ("ratios", 1),
+                ("Runnam", 'FirstTurn'),
+                ("idfor", 0),
+                ("ibtype", 0),
+                ("ition", 0),
+                ("CHRO", '/'),
+                ("TUNE", '/'),
+                ("POST", 'POST'),
+                ("POS1", ''),
+                ("ndafi", 1),
+                ("tunex", 62.28),
+                ("tuney", 60.31),
+                ("inttunex", 62.28),
+                ("inttuney", 60.31),
+                ("DIFF", '/DIFF'),
+                ("DIF1", '/'),
+                ("pmass", 938.272013),
+                ("emit_beam", 3.75),
+                ("e0", 7000),
+                ("bunch_charge", 1.15E11),
+                ("CHROM", 0),
+                ("chrom_eps", 0.000001),
+                ("dp1", 0.000001),
+                ("dp2", 0.000001),
+                ("chromx", 2),
+                ("chromy", 2),
+                ("TUNEVAL", '/'),
+                ("CHROVAL", '/')])
         self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
 
         self.dbname = 'data.db'
         #Default definition of the database tables
-        self.tables['templates'] = {}
-        self.tables['env'] = {}
-        self.tables['preprocess_wu'] = {
-                'wu_id': 'int',
-                'job_name': 'text',
-                'input_file': 'blob',
-                'status': 'text',
-                'task_id': 'int',
-                'mtime': 'float'}
+        self.tables['templates'] = collections.OrderedDict()
+        self.tables['env'] = collections.OrderedDict()
+        self.tables['preprocess_wu'] = collections.OrderedDict([
+                ('wu_id', 'int'),
+                ('job_name', 'text'),
+                ('input_file', 'blob'),
+                ('status', 'text'),
+                ('task_id', 'int'),
+                ('mtime', 'float')])
         self.table_keys['preprocess_wu'] = {
                 'primary': ['wu_id'],
                 'foreign': {},
                 }
-        self.tables['preprocess_task'] = {
-                'task_id': 'int',
-                'wu_id': 'int',
-                'task_name': 'text',
-                'madx_in' : 'blob',
-                'madx_stdout': 'blob',
-                'job_stdout': 'blob',
-                'job_stderr': 'blob',
-                'job_stdlog': 'blob',
-                'count': 'int',
-                'status': 'text',
-                'mtime': 'float'}
+        self.tables['preprocess_task'] = collections.OrderedDict([
+                ('task_id', 'int'),
+                ('wu_id', 'int'),
+                ('task_name', 'text'),
+                ('madx_in' , 'blob'),
+                ('madx_stdout', 'blob'),
+                ('job_stdout', 'blob'),
+                ('job_stderr', 'blob'),
+                ('job_stdlog', 'blob'),
+                ('count', 'int'),
+                ('status', 'text'),
+                ('mtime', 'float')])
         self.table_keys['preprocess_task'] = {
                 'primary': ['task_id'],
                 'foreign': {'preprocess_wu': [['wu_id'], ['wu_id']]},
                 }
-        self.tables['oneturn_sixtrack_wu'] = {}
+        self.tables['oneturn_sixtrack_wu'] = collections.OrderedDict()
         self.tables['preprocess_optics'] = {
                 'task_id': 'int',
                 'wu_id': 'int'}
-        self.tables['sixtrack_wu']={
-                'wu_id': 'int',
-                'preprocess_id': 'int',
-                'job_name': 'text',
-                'input_file': 'blob',
-                'status': 'text',
-                'task_id': 'int',
-                'mtime': 'float'}
+        self.tables['sixtrack_wu']=collections.OrderedDict([
+                ('wu_id', 'int'),
+                ('preprocess_id', 'int'),
+                ('job_name', 'text'),
+                ('input_file', 'blob'),
+                ('status', 'text'),
+                ('task_id', 'int'),
+                ('mtime', 'float')])
         self.table_keys['sixtrack_wu'] = {
                 'primary': ['wu_id'],
                 'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
                 }
-        self.tables['sixtrack_task'] = {
-                'task_id': 'int',
-                'wu_id': 'int',
-                'task_name': 'text',
-                'job_stdout': 'blob',
-                'job_stderr': 'blob',
-                'job_stdlog': 'blob',
-                'count': 'int',
-                'status': 'text',
-                'mtime': 'float'}
+        self.tables['sixtrack_task'] = collections.OrderedDict([
+                ('task_id', 'int'),
+                ('wu_id', 'int'),
+                ('task_name', 'text'),
+                ('job_stdout', 'blob'),
+                ('job_stderr', 'blob'),
+                ('job_stdlog', 'blob'),
+                ('count', 'int'),
+                ('status', 'text'),
+                ('mtime', 'float')])
         self.table_keys['sixtrack_task'] = {
                 'primary': ['task_id'],
                 'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
                 }
-        self.tables['boinc_vars'] = {}
-        self.tables['result'] = {
-                'betax': 'float',
-                'betay': 'float'}#TODO
+        self.tables['Six_Res'] = collections.OrderedDict([
+                ('six_input_id', 'int'),
+                ('row_num', 'int'),
+                ('turn_max', 'int'),
+                ('sflag', 'int'),
+                ('qx', 'float'),
+                ('qy', 'float'),
+                ('betx', 'float'),
+                ('bety', 'float'),
+                ('sigx1', 'float'),
+                ('sigy1', 'float'),
+                ('deltap', 'float'),
+                ('dist', 'float'),
+                ('distp', 'float'),
+                ('qx_det', 'float'),
+                ('qx_spread', 'float'),
+                ('qy_det', 'float'),
+                ('qy_spread', 'float'),
+                ('resxfact', 'float'),
+                ('resyfact', 'float'),
+                ('resorder', 'int'),
+                ('smearx', 'float'),
+                ('smeary', 'float'),
+                ('smeart', 'float'),
+                ('sturns1', 'int'),
+                ('sturns2', 'int'),
+                ('sseed', 'float'),
+                ('qs', 'float'),
+                ('sigx2', 'float'),
+                ('sigy2', 'float'),
+                ('sigxmin', 'float'),
+                ('sigxavg', 'float'),
+                ('sigxmax', 'float'),
+                ('sigymin', 'float'),
+                ('sigyavg', 'float'),
+                ('sigymax', 'float'),
+                ('sigxminld', 'float'),
+                ('sigxavgld', 'float'),
+                ('sigxmaxld', 'float'),
+                ('sigyminld', 'float'),
+                ('sigyavgld', 'float'),
+                ('sigymaxld', 'float'),
+                ('sigxminnld', 'float'),
+                ('sigxavgnld', 'float'),
+                ('sigxmaxnld', 'float'),
+                ('sigyminnld', 'float'),
+                ('sigyavgnld', 'float'),
+                ('sigymaxnld', 'float'),
+                ('emitx', 'float'),
+                ('emity', 'float'),
+                ('betx2', 'float'),
+                ('bety2', 'float'),
+                ('qpx', 'float'),
+                ('qpy', 'float'),
+                ('version', 'float'),
+                ('cx', 'float'),
+                ('cy', 'float'),
+                ('csigma', 'float'),
+                ('xp', 'float'),
+                ('yp', 'float'),
+                ('delta', 'float'),
+                ('dnms', 'float'),
+                ('trttime', 'float'),
+                ('mtime','float')])
         self.db_settings = {
                 'synchronous': 'off',
                 'foreign_keys': 'on',
@@ -183,6 +243,7 @@ class Study(object):
                 'temp_store': 'memory',
                 'count_changes': 'off'}
 
+        self.tables['boinc_vars'] = collections.OrderedDict()
         self.boinc_vars['workunitName'] = 'sixdesk'
         self.boinc_vars['fpopsEstimate'] = 30*2*10e5/2*10e6*6
         self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate']*1000
@@ -320,12 +381,12 @@ class Study(object):
         six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
         self.config['fort3'] = self.oneturn_sixtrack_params
 
-        keys = sorted(self.madx_params.keys())
+        keys = list(self.madx_params.keys())
         values = []
         for key in keys:
             values.append(self.madx_params[key])
 
-        check_params = self.db.select('preprocess_wu', list(keys))
+        check_params = self.db.select('preprocess_wu', keys)
         check_jobs = self.db.select('preprocess_wu', ['wu_id','job_name','status'])
 
         wu_id = len(check_params)
@@ -375,7 +436,7 @@ class Study(object):
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
 
-        madx_keys = sorted(self.madx_params.keys())
+        madx_keys = list(self.madx_params.keys())
         madx_vals = self.db.select('preprocess_wu', ['wu_id']+madx_keys)
         if not madx_vals:
             print("The preprocess_wu table is empty!")
@@ -383,7 +444,7 @@ class Study(object):
         madx_vals = list(zip(*madx_vals))
         madx_ids = list(madx_vals[0])
         madx_params = madx_vals[1:]
-        keys = sorted(self.sixtrack_params.keys())
+        keys = list(self.sixtrack_params.keys())
         values = []
         for key in keys:
             val = self.sixtrack_params[key]
@@ -397,7 +458,7 @@ class Study(object):
         namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'])
         wu_id = len(namevsid)
         for element in itertools.product(*values):
-            job_table = {}
+            job_table = collections.OrderedDict()
             if element in outputs:
                 i = outputs.index(element)
                 nm = namevsid[i][1]
@@ -830,8 +891,6 @@ class StudyFactory(object):
             study_name = name
 
         study = os.path.join(studies, study_name)
-        app_path = StudyFactory.app_path()
-        config_temp = os.path.join(app_path, 'lib', 'config.py')
         if not os.path.isdir(study):
             os.makedirs(study)
 
