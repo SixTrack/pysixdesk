@@ -16,7 +16,7 @@ def run(wu_id, db_name):
     outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc'], where)
     #db.close()
     if not outputs:
-        print("There isn't input file for madx job %s!"%wu_id)
+        print("There isn't input file for sixtrack job %s!"%wu_id)
         db.close()
         sys.exit(1)
     preprocess_id = outputs[0][1]

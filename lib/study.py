@@ -15,6 +15,7 @@ import gather
 import sixtrack
 
 from importlib.machinery import SourceFileLoader
+from subprocess import Popen, PIPE
 from pysixdb import SixDB
 
 class Study(object):
@@ -171,7 +172,7 @@ class Study(object):
                 'primary': ['task_id'],
                 'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
                 }
-        self.tables['Six_Res'] = collections.OrderedDict([
+        self.tables['six_results'] = collections.OrderedDict([
                 ('six_input_id', 'int'),
                 ('row_num', 'int'),
                 ('turn_max', 'int'),
@@ -235,6 +236,10 @@ class Study(object):
                 ('dnms', 'float'),
                 ('trttime', 'float'),
                 ('mtime','float')])
+        self.table_keys['six_results'] = {
+                'primary': ['six_input_id', 'row_num'],
+                'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},
+                }
         self.db_settings = {
                 'synchronous': 'off',
                 'foreign_keys': 'on',
@@ -469,12 +474,11 @@ class Study(object):
                 vl = element[i]
                 fort3_sec[ky] = str(vl)
                 job_table[ky] = vl
-            vl = element[len(element)-1]
+            vl = element[len(element)-1]#the last one is madx_id(wu_id)
             j = madx_ids.index(vl)
-            prms = madx_params[j]
-            for k in range(len(prms)):
+            for k in range(len(madx_params)):
                 ky = madx_keys[k]
-                vl = prms[k]
+                vl = madx_params[k][j]
                 fort3_sec[ky] = str(vl)
             cols = list(self.sixtrack_input['input'].values())
             job_table['preprocess_id'] = j + 1 #in db id begin from 1
@@ -482,11 +486,7 @@ class Study(object):
             job_table['wu_id'] = wu_id
             job_name = 'sixtrack_job_%i'%wu_id
             job_table['job_name'] = job_name
-            #input_path = os.path.join(item_path, job_name)
             dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
-            if not os.path.isdir(dest_path):
-                os.makedirs(dest_path)
-            #six_sec['input_path'] = input_path
             six_sec['dest_path'] = dest_path
             self.config['boinc'] = self.boinc_vars
             f_out = io.StringIO()
@@ -497,45 +497,62 @@ class Study(object):
             job_table['mtime'] = time.time()
             self.db.insert('sixtrack_wu', job_table)
             print('Store sixtrack job %s into database!'%job_name)
-            #self.sixtrack_joblist.append(output)
 
-
-    def info(self, job=0, where=None):
+    def info(self, job=2, where=None):
         '''Print the status information of this study.
         job=
-        0: print madx, oneturn sixtrack and sixtrack jobs
-        1: print madx, oneturn sixtrack job
-        2: print sixtrack job
+        0: print madx, oneturn sixtrack job
+        1: print sixtrack job
+        2: print madx, oneturn sixtrack and sixtrack jobs
         wehre: the filter condition for database query, e.g. "status='complete'" '''
         loc = self.study_path
         conts = os.listdir(loc)
         if self.dbname not in conts:
             print("This study directory is empty!")
         else:
-            #dbname = os.path.join(loc, self.dbname)
-            #db = SixDB(dbname, self.db_settings)
-            if job==0 or job==1:
-                query_info = ['wu_id', 'job_name', 'status']
+            query_info = ['wu_id', 'job_name', 'status']
+            if job==0 or job==2:
                 wus = self.db.select('preprocess_wu', query_info, where)
                 print('madx and one turn sixtrack jobs:')
                 print(query_info)
                 for i in wus:
                     print(i)
-            if job==0 or job==2:
-                query_info = ['wu_id', 'job_name', 'status']
+            if job==1 or job==2:
                 six = self.db.select('sixtrack_wu', query_info, where)
                 print('Sixtrack jobs:')
                 print(query_info)
                 for j in six:
                     print(j)
-            #db.close()
 
     def submit_sixtrack(self, platform='local', **args):
         '''Sumbit the sixtrack jobs to htctondor. p.s. Now we test locally'''
         if platform.lower() == 'htcondor':
+            trials = 5
             sub = os.path.join(self.paths['sixtrack_in'], 'htcondor_run.sub')
-            cmd = 'condor_submit %s'%sub
-            os.system(cmd)
+            joblist = os.path.join(self.paths['sixtrack_in'], 'job_id.list')
+            if not os.path.isfile(joblist):
+                print("There isn't sixtrack job for submission!")
+                return
+            scont = 1
+            while scont <= trials:
+                process = Popen(['condor_submit', sub], stdout=PIPE,\
+                        stderr=PIPE, universal_newlines=True)
+                stdout, stderr = process.communicate()
+                if stderr:
+                    print(stdout)
+                    print(stderr)
+                    scont += 1
+                else:
+                    print(stdout)
+                    table = {}
+                    table['status'] = 'submitted'
+                    with open(joblist, 'r') as f:
+                        ids = f.read().split()
+                    for i in ids:
+                        where = 'wu_id=%s'%i
+                        self.db.update('sixtrack_wu', table, where)
+                    os.remove(joblist)#remove joblist after successful submission
+                    break
             return
 
         if 'place' in args:
@@ -549,11 +566,16 @@ class Study(object):
             print("Caution! The folder %s is not empty!"%execution_field)
         cur_path = os.getcwd()
         os.chdir(execution_field)
-        #for i in self.sixtrack_joblist:
-        #    print("The sixtrack job %s is running...."%i)
+        joblist = os.path.join(self.paths['sixtrack_in'], 'job_id.list')
+        with open(joblist, 'r') as f:
+            ids = f.read().split()
         db = os.path.join(self.paths['sixtrack_in'], 'sub.db')
-        sixtrack.run(1, db)
+        for i in ids:
+            sixtrack.run(i, db)
+            where = 'wu_id=%s'%i
+            self.db.update('sixtrack_wu', table, where)
         print("All sxitrack jobs are completed normally!")
+        os.remove(joblist)#remove job list after successful submission
         os.chdir(cur_path)
 
     def collect_sixtrack(self, platform='local', clean='False'):
@@ -562,6 +584,7 @@ class Study(object):
         self.config['info'] = {}
         info_sec = self.config['info']
         self.config['db_setting'] = self.db_settings
+        self.config['f10'] = self.tables['six_results']
 
         info_sec['db'] = os.path.join(self.study_path, self.dbname)
         info_sec['path'] = self.paths['sixtrack_out']
@@ -639,9 +662,9 @@ class Study(object):
         incom_job['wu_id'] = outputs[0]
         incom_job['preprocess_id'] = outputs[1]
         incom_job['input_file'] = outputs[2]
-        incom_job['boinc'] = 'false'
+        incom_job['boinc'] = ['false']*len(outputs[0])
         if platform.lower() == 'boinc':
-            incom_job['boinc'] = 'true'
+            incom_job['boinc'] = ['true']*len(outputs[0])
         sub_db.insertm('sixtrack_wu', incom_job)
         wu_ids = sub_db.select('sixtrack_wu', ['wu_id'])
         job_list = os.path.join(self.paths['sixtrack_in'], 'job_id.list')
@@ -652,8 +675,10 @@ class Study(object):
                 f_out.write(str(i[0]))
                 f_out.write('\n')
                 out_f = os.path.join(self.paths['sixtrack_out'], str(i[0]))
-                if not os.path.isdir(out_f):
-                    os.makedirs(out_f)
+                if os.path.exists(out_f):
+                    shutil.rmtree(out_f)
+                os.makedirs(out_f)
+        os.chmod(job_list, 0o444)#change the permission to readonly
         sub_db.close()
         print("The submitted database %s is ready!"%sub_name)
         sub_temp = os.path.join(self.paths['templates'], self.htc_temp)
@@ -698,16 +723,58 @@ class Study(object):
             os.chdir(execution_field)
             if 'clean' in args:
                 clean = args['clean']
+            joblist = os.path.join(self.paths['preprocess_in'], 'job_id.list')
             subdb = os.path.join(self.paths['preprocess_in'], 'sub.db')
-            run_status = preprocess_oneturn.run(1, subdb)
-            print("The job is running...")
+            with open(joblist, 'r') as f:
+                ids = f.read().split()
+            for i in ids:
+                print("The preprocess job %s is running..."%i)
+                run_status = preprocess_oneturn.run(i, subdb)
+                where = 'wu_id=%s'%i
+                self.db.update('preprocess_wu', table, where)
+            os.remove(joblist)#remove job list after successful submission
             os.chdir(cur_path)
             if clean:
                 shutil.rmtree(execution_field)
         elif platform.lower() == 'htcondor':
             sub = os.path.join(self.paths['preprocess_in'], 'htcondor_run.sub')
-            cmd = 'condor_submit %s'%sub
-            os.system(cmd)
+            joblist = os.path.join(self.paths['preprocess_in'], 'job_id.list')
+            if not os.path.isfile(joblist):
+                print("There isn't preprocess_job for submission!")
+                return
+            #with open(joblist, 'r') as f:
+            #    ids = f.read().split()
+            #where = "wu_id in %s and status='complete' or status='submitted'"%str(ids)
+            #ids_dup = self.db.select('preprocess_wu', ['wu_id'], where)
+            #if ids_dup:
+            #    print("The jobs %s are already completed or submitted!"%ids_dup)
+            #    ids = [s for s in ids if s not in ids_dup]
+            #    os.remove(joblist)
+            #    with open(joblist, 'w') as f:
+            #        for i in ids:
+            #            f.write(i)
+            #            f.write('\n')
+            trials = 5
+            scont = 1
+            while scont <= trials:
+                process = Popen(['condor_submit', sub], stdout=PIPE,\
+                        stderr=PIPE, universal_newlines=True)
+                stdout, stderr = process.communicate()
+                if stderr:
+                    print(stdout)
+                    print(stderr)
+                    scont += 1
+                else:
+                    print(stdout)
+                    table = {}
+                    table['status'] = 'submitted'
+                    with open(joblist, 'r') as f:
+                        ids = f.read().split()
+                    for i in ids:
+                        where = 'wu_id=%s'%i
+                        self.db.update('preprocess_wu', table, where)
+                    os.remove(joblist)#remove job list after successful submission
+                    break
         else:
             print("Invlid platfrom!")
 
@@ -785,8 +852,10 @@ class Study(object):
                 f_out.write(str(i[0]))
                 f_out.write('\n')
                 out_f = os.path.join(self.paths['preprocess_out'], str(i[0]))
-                if not os.path.isdir(out_f):
-                    os.makedirs(out_f)
+                if os.path.isdir(out_f):
+                    shutil.rmtree(out_f)
+                os.makedirs(out_f)
+        os.chmod(job_list, 0o444)#change the permission to readonly
         sub_db.close()
         print("The submitted database %s is ready!"%sub_name)
         sub_temp = os.path.join(self.paths['templates'], self.htc_temp)
