@@ -162,6 +162,7 @@ class Study(object):
                 ('task_id', 'int'),
                 ('wu_id', 'int'),
                 ('task_name', 'text'),
+                ('fort3', 'blob'),
                 ('job_stdout', 'blob'),
                 ('job_stderr', 'blob'),
                 ('job_stdlog', 'blob'),
@@ -567,11 +568,16 @@ class Study(object):
         cur_path = os.getcwd()
         os.chdir(execution_field)
         joblist = os.path.join(self.paths['sixtrack_in'], 'job_id.list')
+        if not os.path.isfile(joblist):
+            print("There isn't sixtrack job for submission!")
+            return
         with open(joblist, 'r') as f:
             ids = f.read().split()
         db = os.path.join(self.paths['sixtrack_in'], 'sub.db')
         for i in ids:
             sixtrack.run(i, db)
+            table = {}
+            table['status'] = 'submitted'
             where = 'wu_id=%s'%i
             self.db.update('sixtrack_wu', table, where)
         print("All sxitrack jobs are completed normally!")

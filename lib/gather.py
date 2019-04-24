@@ -45,14 +45,6 @@ def preprocess_results(cf):
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
             contents = os.listdir(job_path)
-            #if len(contents) == 3:
-            #    status = True
-            #    for con in contents:
-            #        if 'htcondor' not in con:
-            #            status = False
-            #    if status:
-            #        print("The preprocess job %s is still running!"%item)
-            #        sys.exit(0)
             madx_in = [s for s in contents if 'madx_in' in s]
             if madx_in:
                 madx_in = os.path.join(job_path, madx_in[0])
@@ -140,14 +132,6 @@ def sixtrack_results(cf):
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
             contents = os.listdir(job_path)
-            #if len(contents) == 3:
-            #    status = True
-            #    for con in contents:
-            #        if 'htcondor' not in con:
-            #            status = False
-            #    if status:
-            #        print("The sixtrack job %s is still running!"%item)
-            #        sys.exit(0)
             task_count = db.select('sixtrack_task', ['task_id'])
             where = "wu_id=%s"%item
             job_count = db.select('sixtrack_task', ['task_id'], where)
@@ -155,6 +139,11 @@ def sixtrack_results(cf):
             task_table['count'] = len(job_count) + 1
             task_id = len(task_count) + 1
             task_table['task_id'] = task_id
+            fort3_in = [s for s in contents if 'fort.3' in s]
+            if fort3_in:
+                fort3_in = os.path.join(job_path, fort3_in[0])
+                task_table['fort3'] = utils.evlt(utils.compress_buf,\
+                        [fort3_in,'gzip'])
             job_stdout = [s for s in contents if re.match('htcondor\..+\.out',s)]
             if job_stdout:
                 job_stdout = os.path.join(job_path, job_stdout[0])

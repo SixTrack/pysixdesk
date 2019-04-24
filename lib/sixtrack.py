@@ -50,6 +50,7 @@ def run(wu_id, db_name):
     fort3_config = cf['fort3']
     boinc_vars = cf['boinc']
     sixtrack_config['boinc'] = boinc
+    sixtrack_config['wu_id'] = wu_id
     sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
@@ -126,8 +127,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     concatenate_files(output, 'fort.3')
 
     #actually run
-    jobname = 'test'
-    print('Sixtrack job %s is runing...'%jobname)
+    wu_id = sixtrack_config['wu_id']
+    print('Sixtrack job %s is runing...'%wu_id)
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
     output_name = os.path.join('../', 'sixtrack.output')
@@ -140,9 +141,11 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     else:
         result_name = '../fort.10'
         shutil.move('fort.10', result_name)
+        shutil.move('fort.3','../fort.3')
         print('Sixtrack job %s has completed normally!'%jobname)
     os.chdir('../') #get out of junk folder
     down_list = output_files
+    down_list.append('fort.3')
     status = utils.download_output(down_list, dest_path)
 
     if boinc.lower() is 'true':
