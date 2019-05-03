@@ -162,12 +162,9 @@ def sixtrackjobs(config, fort3_config):
     if fort3_config['CHROM'] == '0':
         beta_out[6] = chrom1
         beta_out[7] = chrom2
-    for a in beta_out:
-        f_out.write(str(a))
-        if a != beta_out[-1]:
-            f_out.write(' ')
-        else:
-            f_out.write('\n')
+    lines = ' '.join(map(str, beta_out))
+    f_out.write(lines)
+    f_out.write('\n')
     f_out.close()
     #Download the requested files
     dest_path = config["dest_path"]

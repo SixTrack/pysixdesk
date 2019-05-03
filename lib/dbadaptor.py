@@ -146,13 +146,14 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         '''Select values with conditions
         @conn A connection of database
         @table_name(str) The table name
-        @cols(list) The column names
+        @cols(list or str) The column names
         @where(str) Selection condition
         @orderby(list) Order condition
         @**args Some other conditions
         '''
         c = conn.cursor()
-        if isinstance(cols, collections.Iterable):
+        if (isinstance(cols, collections.Iterable) and
+                not isinstance(cols, str)):
             cols = [i.replace('.', '_') for i in cols]
             cols = ','.join(cols)
         sql = 'SELECT %s FROM %s'%(cols, table_name)

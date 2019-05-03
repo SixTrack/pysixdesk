@@ -35,6 +35,7 @@ def preprocess_results(cf):
     contents = os.listdir(preprocess_path)
     set_sec = cf['db_setting']
     db_name = info_sec['db']
+    oneturn = cf['oneturn']
     db = SixDB(db_name, set_sec)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
 
@@ -42,8 +43,19 @@ def preprocess_results(cf):
         job_path = os.path.join(preprocess_path, item)
         job_table = {}
         task_table = {}
+        oneturn_table = {}
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
+            task_count = db.select('preprocess_task', ['task_id'])
+            where = "wu_id=%s"%item
+            job_count = db.select('preprocess_task', ['task_id'], where)
+            task_table['count'] = len(job_count) + 1
+            task_table['wu_id'] = item
+            task_id = len(task_count) + 1
+            task_table['task_id'] = task_id
+            task_table['task_name'] = 'preprocess_job_%s_%i'%(item, task_id)
+            task_table['mtime'] = time.time()
+
             contents = os.listdir(job_path)
             madx_in = [s for s in contents if 'madx_in' in s]
             if madx_in:
@@ -76,6 +88,32 @@ def preprocess_results(cf):
                 job_stdlog = os.path.join(job_path, job_stdlog[0])
                 task_table['job_stdlog'] = utils.evlt(utils.compress_buf,\
                         [job_stdlog])
+            betavalue = [s for s in contents if 'betavalues' in s]
+            chrom = [s for s in contents if 'chrom' in s]
+            tunes = [s for s in contents if 'sixdesktunes' in s]
+            if betavalue and chrom and tunes:
+                betavalue = os.path.join(job_path, betavalue[0])
+                chrom = os.path.join(job_path, chrom[0])
+                tunes = os.path.join(job_path, tunes[0])
+                mtime = os.path.getmtime(betavalue)
+                with open(betavalue, 'r') as f_in:
+                    line = f_in.read()
+                    lines_beta = line.split()
+                with open(chrom, 'r') as f_in:
+                    line = f_in.read()
+                    lines_chrom = line.split()
+                with open(tunes, 'r') as f_in:
+                    line = f_in.read()
+                    lines_tunes = line.split()
+                lines = lines_beta + lines_chrom + lines_tunes
+                if len(lines) != 21:
+                    print(lines)
+                    print('Error in one turn result of preprocess job %s!'%item)
+                    task_table['status'] = 'Failed'
+                    data = [task_id, item]+21*['None']+[mtime]
+                else:
+                    data = [task_id, item]+lines+[mtime]
+            oneturn_table = dict(zip(oneturn.keys(), data))
             for out in file_list.values():
                 out_f = [s for s in contents if out in s]
                 if out_f:
@@ -85,15 +123,8 @@ def preprocess_results(cf):
                 else:
                     task_table['status'] = 'Failed'
                     print("The madx output file %s for job %s doesn't exist! The job failed!"%(out, item))
-            task_count = db.select('preprocess_task', ['task_id'])
-            where = "wu_id=%s"%item
-            job_count = db.select('preprocess_task', ['task_id'], where)
-            task_table['count'] = len(job_count) + 1
-            task_table['wu_id'] = item
-            task_table['task_id'] = len(task_count) + 1
-            task_table['task_name'] = ''
-            task_table['mtime'] = time.time()
             db.insert('preprocess_task', task_table)
+            db.insert('oneturn_sixtrack_result', oneturn_table)
             if task_table['status'] == 'Success':
                 where = "wu_id=%s"%item
                 job_table['status'] = 'complete'
@@ -176,9 +207,8 @@ def sixtrack_results(cf):
                                         print(line)
                                         print('Error in %s'%out_f)
                                         task_table['status'] = 'Failed'
-                                        f10['six_input_id'] = task_id
-                                        f10['row_num'] = countl
-                                        f10['mtime'] = mtime
+                                        line = [task_id, countl]+60*['None']+[mtime]
+                                        f10_data.append(line)
                                     else:
                                         line = [task_id, countl]+line+[mtime]
                                         f10_data.append(line)
