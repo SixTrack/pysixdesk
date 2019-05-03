@@ -120,7 +120,7 @@ class Study(object):
         self.tables['templates'] = collections.OrderedDict()
         self.tables['env'] = collections.OrderedDict()
         self.tables['submit'] = collections.OrderedDict([
-                ('id', 'int'),
+                ('sub_id', 'int'),
                 ('jobtype', 'text'),
                 ('job_id', 'int'),#wu_id
                 ('batch_name', 'text'),
@@ -176,6 +176,13 @@ class Study(object):
                 ('yp', 'float'),
                 ('z', 'float'),
                 ('zp', 'float'),
+                ('chromx_s', 'float'),
+                ('chromy_s', 'float'),
+                ('chrom_eps', 'float'),
+                ('tunex1', 'float'),
+                ('tuney1', 'float'),
+                ('tunex2', 'float'),
+                ('tuney2', 'float'),
                 ('mtim', 'float')])
         self.tables['sixtrack_wu']=collections.OrderedDict([
                 ('wu_id', 'int'),
@@ -378,7 +385,8 @@ class Study(object):
             try:
                 mod = SourceFileLoader(module_name, cluster_module).load_module()
                 cls = getattr(mod, classname)
-                self.submission = cls(self)#pass study to submission class
+                #pass temp path to submission class
+                self.submission = cls(self.paths['templates'])
             except:
                 print(traceback.print_exc())
                 print("Failed to initialize submission module!")
@@ -661,6 +669,12 @@ class Study(object):
         info_sec = self.config['info']
         self.config['db_setting'] = self.db_settings
         info_sec['db'] = os.path.join(self.study_path, self.dbname)
+        app_path = StudyFactory.app_path()
+        cluster_module = self.cluster_module
+        if cluster_module is None:
+            cluster_module = os.path.join(app_path, 'lib', 'submission.py')
+        info_sec['cluster_module'] = str(cluster_module)
+        info_sec['cluster_name'] = self.cluster_name
         info_sec['clean'] = clean
         if typ == 0:
             self.config['oneturn'] = self.tables['oneturn_sixtrack_result']

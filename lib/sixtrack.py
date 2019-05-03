@@ -159,7 +159,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             dest = s + '.temp'
             status = utils.replace(patterns, values, s, dest)
             if not status:
-                print("Failed to generate input file for oneturn sixtrack!")
+                print("Failed to generate input file for sixtrack!")
                 sys.exit(1)
             output.append(dest)
         temp1 = input_files['fc.3']

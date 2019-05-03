@@ -10,9 +10,9 @@ from subprocess import Popen, PIPE
 
 class Cluster(ABC):
 
-    def __init__(self, study):
+    def __init__(self):
         '''Constructor'''
-        self.study = study
+        pass
 
     @abstractmethod
     def prepare(self):
@@ -23,7 +23,7 @@ class Cluster(ABC):
         pass
 
     @abstractmethod
-    def status(self):
+    def check(self):
         pass
 
     @abstractmethod
@@ -33,9 +33,10 @@ class Cluster(ABC):
 class HTCondor(Cluster):
     '''The HTCondor management system'''
 
-    def __init__(self, study):
+    def __init__(self, temp_path=None):
         '''Constructor'''
-        super(HTCondor, self).__init__(study)
+        self.temp = temp_path
+        self.sub_name = 'htcondor_run.sub'
 
     def prepare(self, wu_ids, trans, exe, exe_args, input_path, output_path):
         '''Prepare the submission file
@@ -65,8 +66,10 @@ class HTCondor(Cluster):
         rep['%dirname'] = output_path
         rep['%joblist'] = job_list
         rep['%input'] = exe_args
-        sub_temp = os.path.join(self.study.paths['templates'], 'htcondor_run.sub')
-        sub_file = os.path.join(input_path, 'htcondor_run.sub')
+        if self.temp is None:
+            self.temp = os.path.basename(input_path)
+        sub_temp = os.path.join(self.temp, self.sub_name)
+        sub_file = os.path.join(input_path, self.sub_name)
         if os.path.exists(sub_file):
             os.remove(sub_file)#remove the old one
         with open(sub_temp, 'r') as f_in:
@@ -77,16 +80,20 @@ class HTCondor(Cluster):
                 f_out.write(conts)
         print("The htcondor description file is ready!")
 
-    def submit(self, input_path, job_name, trials=5, **args):
+    def submit(self, input_path, job_name, trials=5, *args, **kwargs):
         '''Submit the job to the cluster'''
-        sub = os.path.join(input_path, 'htcondor_run.sub')
+        sub = os.path.join(input_path, self.sub_name)
         joblist = os.path.join(input_path, 'job_id.list')
         if not os.path.isfile(joblist):
             print("There isn't %s job for submission!"%job_name)
             return False
         scont = 1
         while scont <= trials:
-            process = Popen(['condor_submit', sub], stdout=PIPE,\
+            args = list(args)
+            for ky, vl in kwargs:
+                args = args + ['-'+ky, vl]
+            args.append(sub)
+            process = Popen(['condor_submit', *args], stdout=PIPE,\
                     stderr=PIPE, universal_newlines=True)
             stdout, stderr = process.communicate()
             if stderr:
@@ -98,9 +105,28 @@ class HTCondor(Cluster):
                 return True
         return False
 
-    def status(self, **args):
-        pass
+    def check(self, *args, **kwargs):
+        '''Check the job status'''
+        for ky, vl in kwargs:
+            args = args + ['-'+ky, vl]
+        process = Popen(['condor_q', *args], stdout=PIPE,\
+                stderr=PIPE, universal_newlines=True)
+        stdout, stderr = process.communicate()
+        if stderr:
+            print(stdout)
+            print(stderr)
+        else:
+            print(stdout)
 
-    def remove(self, jobid):
+    def remove(self, **args):
         '''Cancel the submitted jobs'''
-        pass
+        for ky, vl in kwargs:
+            args = args + ['-'+ky, vl]
+        process = Popen(['condor_rm', sub], stdout=PIPE,\
+                stderr=PIPE, universal_newlines=True)
+        stdout, stderr = process.communicate()
+        if stderr:
+            print(stdout)
+            print(stderr)
+        else:
+            print(stdout)

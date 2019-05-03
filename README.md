@@ -50,30 +50,30 @@ Then you can test the program with the following codes:
 test = a.new_study('test')
 test.update_db()#only need for a new study or when parameters are changed
 test.prepare_preprocess_input()
-test.submit_preprocess(place='./run')
+test.submit(0, 5, place='./run')#0 stand for preprocess job, 5 is trial number 
 ```
 ```place='./run``` is to set the place to run the jobs locally.
 You will find the result in ```location``` directory
 If you want to submit jobs to HTCondor, you should specify platform for the last
 function:
 ```shell
-test.submit_preprocess('htcondor')
+test.submit(0, 5, 'htcondor')
 ```
 After the jobs are finished, you can call the collect function to collect the
 results and store into database:
 ```shell
-test.collect_preprocess_results()
+test.collect_result(0, 5)
 ```
 Same with submit function, you can specify the 'platform' argument to submit a
 collection job to HTCondor:
 ```shell
-test.collect_preprocess_results('htcondor')
+test.collect_result(0, 5, 'htcondor')
 ```
 For sixtrack jobs there are same functions:
 ```shell
 test.prepare_sixtrack_input()
-test.submit_sixtrack()
-test.collect_sixtrack_results()
+test.submit(1, 5)
+test.collect_result(1, 5)
 ```
 
 Note: Please don't do operations in the pysixdesk folder!

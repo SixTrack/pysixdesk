@@ -6,24 +6,39 @@ import time
 import gzip
 import shutil
 import utils
+import traceback
 import configparser
 
 from pysixdb import SixDB
+from importlib.machinery import SourceFileLoader
 
 def run(wu_id, infile):
     cf = configparser.ConfigParser()
     if os.path.isfile(infile):
         cf.read(infile)
+        info_sec = cf['info']
+        cluster_module = info_sec['cluster_module']
+        classname = info_sec['cluster_name']
+        try:
+            module_name = os.path.abspath(cluster_module)
+            module_name = module_name.replace('.py', '')
+            mod = SourceFileLoader(module_name, cluster_module).load_module()
+            cls = getattr(mod, classname)
+            cluster = cls()
+        except:
+            print(traceback.print_exc())
+            print("Failed to instantiate cluster object!")
+            return
         if str(wu_id) == '0':
-            preprocess_results(cf)
+            preprocess_results(cf, cluster)
         elif str(wu_id) == '1':
-            sixtrack_results(cf)
+            sixtrack_results(cf, cluster)
         else:
             print("Unknown task!")
     else:
         print("The input file %s doesn't exist!"%infile)
 
-def preprocess_results(cf):
+def preprocess_results(cf, cluster):
     '''Gather the results of madx and oneturn sixtrack jobs and store in
     database
     '''
@@ -38,6 +53,9 @@ def preprocess_results(cf):
     oneturn = cf['oneturn']
     db = SixDB(db_name, set_sec)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
+    where = "status='submitted' and jobtype='preprocess'"
+    #job_ids = db.select('submit', [batch_name, proc_id, sub_id], where)
+    #cluster.check()
 
     for item in os.listdir(preprocess_path):
         job_path = os.path.join(preprocess_path, item)
@@ -113,7 +131,7 @@ def preprocess_results(cf):
                     data = [task_id, item]+21*['None']+[mtime]
                 else:
                     data = [task_id, item]+lines+[mtime]
-            oneturn_table = dict(zip(oneturn.keys(), data))
+                oneturn_table = dict(zip(oneturn.keys(), data))
             for out in file_list.values():
                 out_f = [s for s in contents if out in s]
                 if out_f:
@@ -142,7 +160,7 @@ def preprocess_results(cf):
         #shutil.rmtree(job_path)
     db.close()
 
-def sixtrack_results(cf):
+def sixtrack_results(cf, cluster):
     '''Gather the results of sixtrack jobs and store in database'''
     info_sec = cf['info']
     six_path = info_sec['path']
