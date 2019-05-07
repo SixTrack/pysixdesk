@@ -17,7 +17,7 @@ def run(wu_id, db_name):
     db.close()
     if not outputs[0]:
         print("There isn't input file for preprocess job %s!"%wu_id)
-        sys.exit(1)
+        return 0
     input_buf = outputs[0][0]
     input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
     cf = configparser.ConfigParser()

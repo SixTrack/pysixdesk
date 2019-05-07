@@ -10,9 +10,7 @@ import configparser
 import collections
 import importlib
 import utils
-import preprocess
 import gather
-import sixtrack
 import traceback
 
 from importlib.machinery import SourceFileLoader
@@ -119,19 +117,12 @@ class Study(object):
         #Default definition of the database tables
         self.tables['templates'] = collections.OrderedDict()
         self.tables['env'] = collections.OrderedDict()
-        self.tables['submit'] = collections.OrderedDict([
-                ('sub_id', 'int'),
-                ('jobtype', 'text'),
-                ('job_id', 'int'),#wu_id
-                ('batch_name', 'text'),
-                ('clusterid', 'int'),
-                ('procid', 'int'),
-                ('status', 'text'),#The last check status
-                ('ctime', 'int')]) #The last check time
         self.tables['preprocess_wu'] = collections.OrderedDict([
                 ('wu_id', 'int'),
                 ('job_name', 'text'),
                 ('input_file', 'blob'),
+                ('batch_name', 'text'),
+                ('unique_id', 'text'),
                 ('status', 'text'),
                 ('task_id', 'int'),
                 ('mtime', 'float')])
@@ -189,6 +180,8 @@ class Study(object):
                 ('preprocess_id', 'int'),
                 ('job_name', 'text'),
                 ('input_file', 'blob'),
+                ('batch_name', 'text'),
+                ('unique_id', 'text'),
                 ('status', 'text'),
                 ('task_id', 'int'),
                 ('mtime', 'float')])
@@ -469,7 +462,7 @@ class Study(object):
             if element in check_params:
                 i = check_params.index(element)
                 name = check_jobs[i][1]
-                print("The job %s is already in data.db!"%name)
+                print("The job %s is already in the database!"%name)
                 continue
             for i in range(len(element)):
                 ky = keys[i]
@@ -492,7 +485,6 @@ class Study(object):
             madx_table['job_name'] = job_name
             madx_table['mtime'] = time.time()
             self.db.insert('preprocess_wu', madx_table)
-            #self.preprocess_joblist.append(job_name)
             print('Store preprocess job %s into database!'%job_name)
 
         self.config.clear()
@@ -553,7 +545,7 @@ class Study(object):
             job_table['preprocess_id'] = j + 1 #in db id begin from 1
             wu_id += 1
             job_table['wu_id'] = wu_id
-            job_name = 'sixtrack_job_%i'%wu_id
+            job_name = 'sixtrack_job_%i_%i'%(j+1, wu_id)
             job_table['job_name'] = job_name
             dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
             six_sec['dest_path'] = dest_path
@@ -579,21 +571,21 @@ class Study(object):
         if self.dbname not in conts:
             print("This study directory is empty!")
         else:
-            query_info = ['wu_id', 'job_name', 'status']
+            query= ['wu_id', 'job_name', 'status', 'unique_id']
             if job==0 or job==2:
-                wus = self.db.select('preprocess_wu', query_info, where)
+                wus = self.db.select('preprocess_wu', query, where)
                 print('madx and one turn sixtrack jobs:')
-                print(query_info)
+                print(query)
                 for i in wus:
                     print(i)
             if job==1 or job==2:
-                six = self.db.select('sixtrack_wu', query_info, where)
+                six = self.db.select('sixtrack_wu', query, where)
                 print('Sixtrack jobs:')
-                print(query_info)
+                print(query)
                 for j in six:
                     print(j)
 
-    def submit(self, typ, trials=5, platform='local', **args):
+    def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
         @type(0 or 1) The job type, 0 is preprocess job, 1 is sixtrack job
         @trials The maximum number of trials of submission'''
@@ -614,53 +606,25 @@ class Study(object):
             print("Unknow job type %s"%typ)
             return
 
-        if platform.lower() == 'htcondor':
-            status = self.submission.submit(input_path, jobname, trials)
-            if status:
-                print("Submit %s job successfully!"%jobname)
-                joblist = os.path.join(input_path, 'job_id.list')
-                table = {}
-                table['status'] = 'submitted'
-                with open(joblist, 'r') as f:
-                    ids = f.read().split()
-                for i in ids:
-                    where = 'wu_id=%s'%i
-                    self.db.update(table_name, table, where)
-                os.remove(joblist)#remove job list after successful submission
-            else:
-                print("Failed to submit %s job!"%jobname)
-            return
-
-        if 'place' in args:
-            execution_field = args['place']
-        else:
-            execution_field = 'temp'
-        execution_field = os.path.abspath(execution_field)
-        if not os.path.isdir(execution_field):
-            os.makedirs(execution_field)
-        if os.listdir(execution_field):
-            print("Caution! The folder %s is not empty!"%execution_field)
-        cur_path = os.getcwd()
-        os.chdir(execution_field)
-        joblist = os.path.join(input_path, 'job_id.list')
-        if not os.path.isfile(joblist):
-            print("There isn't %s job for submission!"%jobname)
-            return
-        with open(joblist, 'r') as f:
-            ids = f.read().split()
-        db = os.path.join(input_path, 'sub.db')
-        for i in ids:
-            if typ == 0:
-                preprocess.run(i, db)
-            elif typ == 1:
-                sixtrack.run(i, db)
+        batch_name = os.path.join(self.study_path, jobname)
+        where = "batch_name like '%s_%%'"%batch_name
+        que_out = self.db.select(table_name, 'batch_name', where, DISTINCT=True)
+        ibatch = len(que_out)
+        ibatch += 1
+        batch_name = batch_name+'_'+str(ibatch)
+        status, out = self.submission.submit(input_path, batch_name,
+                trials, *args, *kwargs)
+        if status:
+            print("Submit %s job successfully!"%jobname)
             table = {}
             table['status'] = 'submitted'
-            where = 'wu_id=%s'%i
-            self.db.update(table_name, table, where)
-        print("All %s jobs are completed normally!"%jobname)
-        os.remove(joblist)#remove job list after successful submission
-        os.chdir(cur_path)
+            for ky, vl in out.items():
+                where = 'wu_id=%s'%ky
+                table['unique_id'] = vl
+                table['batch_name'] = batch_name
+                self.db.update(table_name, table, where)
+        else:
+            print("Failed to submit %s job!"%jobname)
 
     def collect_result(self, typ, trials=5, platform='local', clean='False'):
         '''Collect the results of preprocess or  sixtrack jobs'''
@@ -713,7 +677,7 @@ class Study(object):
                     out_path)
             self.submission.submit(in_path, job_name, trials)
 
-    def prepare_sixtrack_input(self, boinc=False):
+    def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
         where = "status='complete'"
         preprocess_outs = self.db.select('preprocess_wu', ['wu_id', 'task_id'], where)
@@ -780,9 +744,9 @@ class Study(object):
         out_path = self.paths['sixtrack_out']
         exe = os.path.join(app_path, 'lib', 'sixtrack.py')
         self.submission.prepare(wu_ids, tran_input, exe, 'sub.db', in_path,
-                    out_path)
+                    out_path, *args, **kwargs)
 
-    def prepare_preprocess_input(self):
+    def prepare_preprocess_input(self, *args, **kwargs):
         '''Prepare the input files for madx and one turn sixtrack job'''
         where = "status='incomplete'"
         outputs = self.db.select('preprocess_wu', ['wu_id', 'input_file'], where)
@@ -813,7 +777,7 @@ class Study(object):
         out_path = self.paths['preprocess_out']
         exe = os.path.join(app_path, 'lib', 'preprocess.py')
         self.submission.prepare(wu_ids, trans, exe, 'sub.db', in_path,
-                out_path)
+                out_path, *args, **kwargs)
 
     def pre_calc(self, **args):
         '''Further calculations for the specified parameters'''
@@ -905,7 +869,7 @@ class StudyFactory(object):
              for item in os.listdir(tem_path):
                  s = os.path.join(tem_path, item)
                  d = os.path.join(study, item)
-                 if os.path.isfile(s):
+                 if os.path.isfile(s) and not os.path.isfile(d):#Don't override
                      shutil.copy2(s, d)
         else:
             print("Invalid templates folder!")

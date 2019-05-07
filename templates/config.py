@@ -23,8 +23,8 @@ class MyStudy(Study):
         self.oneturn_sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
         self.oneturn_sixtrack_output = ['mychrom', 'betavalues', 'sixdesktunes']
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
-        self.sixtrack_params['amp0'] = [8, 10]
-        self.sixtrack_params['kang'] = list(range(1, 1+1))
+        self.sixtrack_params['amp'] = [8, 10]#The amplitude
+        self.sixtrack_params['kang'] = list(range(1, 1+1))#The angle
         self.sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
 
@@ -39,11 +39,11 @@ class MyStudy(Study):
         '''Further calculations for the specified parameters'''
         #The angle should be calculated before amplitude
         self.formulas('kang', 'angle', paramdict, pre_id)
-        self.formulas('amp0', 'ax0s', paramdict, pre_id)
-        #self.formulas('amp1', 'ax1s', paramdict, pre_id)
+        self.formulas('amp', 'ax0s', paramdict, pre_id)
 
     def formulas(self, source, dest, paramdict, pre_id):
-        '''The formulas for the further calculations
+        '''The formulas for the further calculations,
+        this function should be customized by the user!
         @source The source parameter name
         @dest  The destination parameter name
         @paramdict The parameter dictionary, the source parameter in the dict

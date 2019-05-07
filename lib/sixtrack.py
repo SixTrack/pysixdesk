@@ -18,7 +18,7 @@ def run(wu_id, db_name):
     if not outputs:
         print("There isn't input file for sixtrack job %s!"%wu_id)
         db.close()
-        sys.exit(1)
+        return 0
     preprocess_id = outputs[0][1]
     boinc = outputs[0][2]
     input_buf = outputs[0][0]
@@ -33,7 +33,7 @@ def run(wu_id, db_name):
     task_id = db.select('preprocess_wu', ['task_id'], where)
     if not task_id:
         print("Can't find the preprocess task_id for this job!")
-        sys.exit(1)
+        return 0
     inputs = list(input_files.values())
     task_id = task_id[0][0]
     where = 'task_id=%s'%str(task_id)
@@ -41,7 +41,7 @@ def run(wu_id, db_name):
     db.close()
     if not input_buf:
         print("The required file %s isn't found!"%infile)
-        sys.exit(1)
+        return 0
 
     for infile in inputs:
         i = inputs.index(infile)
@@ -51,14 +51,15 @@ def run(wu_id, db_name):
     boinc_vars = cf['boinc']
     sixtrack_config['boinc'] = boinc
     sixtrack_config['wu_id'] = wu_id
-    sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
+    status = sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
+    return status
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     '''The actual sixtrack job'''
+    six_status = 1
     fort3_config = config_param
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     source_path = sixtrack_config["source_path"]
-    #input_path = sixtrack_config["input_path"]
     dest_path = sixtrack_config["dest_path"]
     inp = sixtrack_config["temp_files"]
     temp_files = utils.evlt(utils.decode_strings, [inp])
@@ -74,7 +75,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             shutil.copy2(infi, infile)
         else:
             print("The required file %s isn't found!"%infile)
-            sys.exit(1)
+            six_status = 0
+            return six_status
 
     fc3aux = open('fort.3.aux', 'r')
     fc3aux_lines = fc3aux.readlines()
@@ -101,7 +103,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             os.symlink('../fort.8', 'fort.8')
     else:
         print("There isn't the required input files for sixtrack!")
-        sys.exit(1)
+        six_status = 0
+        return six_status
 
     #if boinc.lowercase() is 'true':
     #    fort3_config['turn'] = test_turn
@@ -115,7 +118,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         status = utils.replace(patterns, values, source, dest)
         if not status:
             print("Failed to generate input file for oneturn sixtrack!")
-            sys.exit(1)
+            six_status = 0
+            return six_status
         output.append(dest)
     temp1 = input_files['fc.3']
     temp1 = os.path.join('../', temp1)
@@ -123,7 +127,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         output.insert(1, temp1)
     else:
         print("The %s file doesn't exist!"%temp1)
-        sys.exit(1)
+        six_status = 0
+        return six_status
     concatenate_files(output, 'fort.3')
 
     #actually run
@@ -137,7 +142,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     if not os.path.isfile('fort.10'):
         print("The sixtrack job %s for chromaticity FAILED!"%wu_id)
         print("Check the file %s which contains the SixTrack fort.6 output."%output_name)
-        sys.exit(1)
+        six_status = 0
+        return six_status
     else:
         result_name = '../fort.10'
         shutil.move('fort.10', result_name)
@@ -160,14 +166,16 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             status = utils.replace(patterns, values, s, dest)
             if not status:
                 print("Failed to generate input file for sixtrack!")
-                sys.exit(1)
+                six_status = 0
+                return six_status
             output.append(dest)
         temp1 = input_files['fc.3']
         if os.path.isfile(temp1):
             output.insert(1, temp1)
         else:
             print("The %s file doesn't exist!"%temp1)
-            sys.exit(1)
+            six_status = 0
+            return six_status
         concatenate_files(output, 'fort.3')
 
         ziph = zipfile.ZipFile('test.zip', 'w', zipfile.ZIP_DEFLATED)
@@ -176,9 +184,11 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
                 ziph.write(infile)
             else:
                 print("The required file %s isn't found!"%infile)
-                sys.exit(1)
+                six_status = 0
+                return six_status
         ziph.close()
         #TODO
+    return six_status
 
 def concatenate_files(source, dest):
     '''Concatenate the given files'''

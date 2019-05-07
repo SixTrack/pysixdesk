@@ -27,7 +27,7 @@ def run(wu_id, infile):
             cluster = cls()
         except:
             print(traceback.print_exc())
-            print("Failed to instantiate cluster object!")
+            print("Failed to instantiate cluster module %s!"%cluster_module)
             return
         if str(wu_id) == '0':
             preprocess_results(cf, cluster)
@@ -45,19 +45,30 @@ def preprocess_results(cf, cluster):
     info_sec = cf['info']
     preprocess_path = info_sec['path']
     if not os.path.isdir(preprocess_path) or not os.listdir(preprocess_path):
-        print("The result path %s is invalid!"%preprocess_path)
-        sys.exit(0)
+        print("There isn't result in path %s!"%preprocess_path)
+        return
     contents = os.listdir(preprocess_path)
     set_sec = cf['db_setting']
     db_name = info_sec['db']
     oneturn = cf['oneturn']
     db = SixDB(db_name, set_sec)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
-    where = "status='submitted' and jobtype='preprocess'"
-    #job_ids = db.select('submit', [batch_name, proc_id, sub_id], where)
-    #cluster.check()
+    where = "status='submitted'"
+    job_ids = db.select('preprocess_wu', ['wu_id', 'unique_id'], where)
+    job_ids = [(str(i), str(j)) for i, j in job_ids]
+    job_index = dict(job_ids)
 
     for item in os.listdir(preprocess_path):
+        if not item in job_index.keys():
+            print("Unknown preprocess job id %s!"%item)
+            continue
+        else:
+            status = cluster.check_format(job_index[item])
+            if status is None:
+                continue
+            elif status:
+                print("The preprocess job %s isn't completed yet!"%item)
+                continue
         job_path = os.path.join(preprocess_path, item)
         job_table = {}
         task_table = {}
@@ -157,7 +168,7 @@ def preprocess_results(cf, cluster):
             task_table['status'] = 'Failed'
             db.insert('preprocess_task', task_table)
             print("This is a failed job!")
-        #shutil.rmtree(job_path)
+        shutil.rmtree(job_path)
     db.close()
 
 def sixtrack_results(cf, cluster):
@@ -165,15 +176,28 @@ def sixtrack_results(cf, cluster):
     info_sec = cf['info']
     six_path = info_sec['path']
     if not os.path.isdir(six_path) or not os.listdir(six_path):
-        print("The result path %s is invalid!"%six_path)
-        sys.exit(0)
-
+        print("There isn't result in path %s!"%six_path)
+        return
     set_sec = cf['db_setting']
     f10_sec = cf['f10']
     db_name = info_sec['db']
     db = SixDB(db_name, set_sec)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
+    where = "status='submitted'"
+    job_ids = db.select('sixtrack_wu', ['wu_id', 'unique_id'], where)
+    job_ids = [(str(i), str(j)) for i, j in job_ids]
+    job_index = dict(job_ids)
     for item in os.listdir(six_path):
+        if not item in job_index.keys():
+            print("Unknown sixtrack job id %s!"%item)
+            continue
+        else:
+            status = cluster.check_format(job_index[item])
+            if status is None:
+                continue
+            elif status:
+                print("The sixtrack job %s isn't completed yet!"%item)
+                continue
         job_path = os.path.join(six_path, item)
         job_table = {}
         task_table = {}
@@ -230,6 +254,7 @@ def sixtrack_results(cf, cluster):
                                     else:
                                         line = [task_id, countl]+line+[mtime]
                                         f10_data.append(line)
+                            f10_table = dict(zip(f10_sec.keys(), zip(*f10_data)))
                         except:
                             task_table['status'] = 'Failed'
                             print("There is something wrong with the output "
@@ -238,13 +263,12 @@ def sixtrack_results(cf, cluster):
                             [out_f, 'gzip'])
                 else:
                     task_table['status'] = 'Failed'
-                    print("The sixtrack output file %s for job %s doesn't"
+                    print("The sixtrack output file %s for job %s doesn't "
                             "exist! The job failed!"%(out, item))
             task_table['task_name'] = ''
             task_table['mtime'] = time.time()
             db.insert('sixtrack_task', task_table)
-            f10 = dict(zip(f10_sec.keys(), zip(*f10_data)))
-            db.insertm('six_results', f10)
+            db.insertm('six_results', f10_table)
             if task_table['status'] == 'Success':
                 where = "wu_id=%s"%item
                 job_table['status'] = 'complete'
@@ -259,6 +283,7 @@ def sixtrack_results(cf, cluster):
             task_table['status'] = 'Failed'
             db.insert('sixtrack_task', task_table)
             print("This is an empty job path!")
+        shutil.rmtree(job_path)
     db.close()
 
 if __name__ == '__main__':

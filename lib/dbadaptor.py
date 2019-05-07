@@ -113,6 +113,8 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         @table_name(str) The table name
         @values(dict) The values required to insert into database
         '''
+        if len(values) == 0:
+            return
         c = conn.cursor()
         sql = 'INSERT INTO %s (%s) VALUES (%s)'
         keys = list(values.keys())
@@ -130,6 +132,8 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         @table_name(str) The table name
         @values(dict) The values required to insert into database
         '''
+        if len(values) == 0:
+            return
         c = conn.cursor()
         sql = 'INSERT INTO %s (%s) VALUES (%s)'
         keys = list(values.keys())
@@ -151,12 +155,17 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         @orderby(list) Order condition
         @**args Some other conditions
         '''
+
+        if len(cols) == 0:
+            return []
         c = conn.cursor()
         if (isinstance(cols, collections.Iterable) and
                 not isinstance(cols, str)):
             cols = [i.replace('.', '_') for i in cols]
             cols = ','.join(cols)
         sql = 'SELECT %s FROM %s'%(cols, table_name)
+        if 'DISTINCT' in args.keys() and args['DISTINCT']:
+            sql = 'SELECT DISTINCT %s FROM %s'%(cols, table_name)
         if where is not None:
             sql += ' WHERE %s'%where
         if orderby is not None:
@@ -172,6 +181,9 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         @values(dict) The column names with new values
         @where(str) Selection condition
         '''
+
+        if len(values) == 0:
+            return
         c = conn.cursor()
         sql = 'UPDATE %s SET %s '
         keys = values.keys()
