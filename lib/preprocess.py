@@ -71,8 +71,8 @@ def madxjob(madx_config, mask_config):
     print("MADX job is running...")
     output = os.popen(command)
     outputlines = output.readlines()
-    mad_out = open('madx_stdout', 'w')
-    mad_out.writelines(outputlines)
+    with open('madx_stdout', 'w') as mad_out:
+        mad_out.writelines(outputlines)
     if 'finished normally' not in outputlines[-2]:
         print("MADX has not completed properly!")
         madx_status = 0
@@ -245,8 +245,8 @@ def sixtrackjob(config, config_re, jobname, **args):
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
     output_name = '../' + jobname + '.output'
-    six_out = open(output_name, 'w')
-    six_out.writelines(outputlines)
+    with open(output_name, 'w') as six_out:
+        six_out.writelines(outputlines)
     if not os.path.isfile('fort.10'):
         print("The %s sixtrack job for chromaticity FAILED!"%jobname)
         print("Check the file %s which contains the SixTrack fort.6 output."%output_name)

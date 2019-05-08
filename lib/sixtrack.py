@@ -68,6 +68,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     inp = sixtrack_config["input_files"]
     input_files = utils.evlt(utils.decode_strings, [inp])
     boinc = sixtrack_config["boinc"]
+    boinc_dir = sixtrack_config["boinc_dir"]
     #test_turn = sixtrack_config["test_turn"]
     for infile in temp_files:
         infi = os.path.join(source_path, infile)
@@ -137,8 +138,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
     output_name = os.path.join('../', 'sixtrack.output')
-    six_out = open(output_name, 'w')
-    six_out.writelines(outputlines)
+    with open(output_name, 'w') as six_out:
+        six_out.writelines(outputlines)
     if not os.path.isfile('fort.10'):
         print("The sixtrack job %s for chromaticity FAILED!"%wu_id)
         print("Check the file %s which contains the SixTrack fort.6 output."%output_name)
@@ -178,6 +179,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             return six_status
         concatenate_files(output, 'fort.3')
 
+        #zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         ziph = zipfile.ZipFile('test.zip', 'w', zipfile.ZIP_DEFLATED)
         for infile in inputs:
             if infile in os.listdir('.'):
@@ -187,6 +189,11 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
                 six_status = 0
                 return six_status
         ziph.close()
+
+        with open('test.desc', 'w') as f_out:
+            pars = '\n'.join(boinc_vars.values)
+            f_out.write(pars)
+        #process = Popen('cp', ['test.zip', 'test.desc', boinc_dir])
         #TODO
     return six_status
 

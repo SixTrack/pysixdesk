@@ -293,6 +293,7 @@ class Study(object):
         self.boinc_vars['numIssues'] = 5
         self.boinc_vars['resultsWithoutConcensus'] = 3
         self.boinc_vars['appName'] = 'sixtrack'
+        self.boinc_vars['appVer'] = 50205
 
     def _structure(self):
         '''Structure the workspace of this study.
@@ -399,7 +400,7 @@ class Study(object):
         for re in require:
             if re not in cont:
                 print("The required file %s isn't found in %s!"%(re, temp))
-                sys.exit(1)
+                return
         outputs = self.db.select('templates', self.tables['templates'].keys())
         if not outputs:
             tab = {}
@@ -487,6 +488,7 @@ class Study(object):
             self.db.insert('preprocess_wu', madx_table)
             print('Store preprocess job %s into database!'%job_name)
 
+        #prepare sixtrack paramters in database
         self.config.clear()
         self.config['sixtrack'] = {}
         six_sec = self.config['sixtrack']
@@ -525,6 +527,12 @@ class Study(object):
         wu_id = len(namevsid)
         for element in itertools.product(*values):
             job_table = collections.OrderedDict()
+            a=[]
+            for i in element:
+                if isinstance(i, collections.Iterable):
+                    i = str(i)
+                a.append(i)
+            element = tuple(a)
             if element in outputs:
                 i = outputs.index(element)
                 nm = namevsid[i][1]
@@ -534,6 +542,8 @@ class Study(object):
                 ky = keys[i]
                 vl = element[i]
                 fort3_sec[ky] = str(vl)
+                if isinstance(vl, collections.Iterable):
+                    vl = str(vl)
                 job_table[ky] = vl
             vl = element[len(element)-1]#the last one is madx_id(wu_id)
             j = madx_ids.index(vl)
@@ -689,7 +699,6 @@ class Study(object):
             where = "status='incomplete' and preprocess_id=%s"%str(preprocess_outs[0][0])
         else:
             where = "status='incomplete' and preprocess_id in %s"%str(preprocess_outs[0])
-        #sixtrack_outs = self.db.select('sixtrack_wu', ['wu_id', 'input_file'], where)
         outputs = self.db.select('sixtrack_wu', ['wu_id', 'preprocess_id', 'input_file'], where)
         if not outputs:
             print("There isn't available sixtrack job to submit!")
@@ -711,24 +720,33 @@ class Study(object):
         sub_db.create_table('sixtrack_wu', tables)
         incom_job = {}
         outputs = list(zip(*outputs))
+        wu_ids = []
+        pre_ids = []
         input_buf_new = []
-        for pre_id, buf in zip(outputs[1], outputs[2]):
+        for wu_id, pre_id, buf in zip(outputs[0], outputs[1], outputs[2]):
             in_fil = utils.evlt(utils.decompress_buf, [buf, None, 'buf'])
             self.config.clear()
             self.config.read_string(in_fil)
             paramsdict = self.config['fort3']
-            self.pre_calc(paramsdict, pre_id)#further calculation
-            f_out = io.StringIO()
-            self.config.write(f_out)
-            out = f_out.getvalue()
-            buf_new = utils.evlt(utils.compress_buf, [out,'str'])
-            input_buf_new.append(buf_new)
-        incom_job['wu_id'] = outputs[0]
-        incom_job['preprocess_id'] = outputs[1]
+            status = self.pre_calc(paramsdict, pre_id)#further calculation
+            if status:
+                f_out = io.StringIO()
+                self.config.write(f_out)
+                out = f_out.getvalue()
+                buf_new = utils.evlt(utils.compress_buf, [out,'str'])
+                input_buf_new.append(buf_new)
+                wu_ids.append(wu_id)
+                pre_ids.append(pre_id)
+        if not wu_ids:
+            print("There isn't available sixtrack job to submit due to failed "
+                    "furter calculation!")
+            return
+        incom_job['wu_id'] = wu_ids
+        incom_job['preprocess_id'] = pre_ids
         incom_job['input_file'] = input_buf_new
-        incom_job['boinc'] = ['false']*len(outputs[0])
+        incom_job['boinc'] = ['false']*len(wu_ids)
         if boinc:
-            incom_job['boinc'] = ['true']*len(outputs[0])
+            incom_job['boinc'] = ['true']*len(wu_ids)
         sub_db.insertm('sixtrack_wu', incom_job)
         wu_ids = sub_db.select('sixtrack_wu', ['wu_id'])
         wu_ids = list(zip(*wu_ids))[0]
@@ -872,7 +890,8 @@ class StudyFactory(object):
                  if os.path.isfile(s) and not os.path.isfile(d):#Don't override
                      shutil.copy2(s, d)
         else:
-            print("Invalid templates folder!")
+            print("Failed to prepare the study folder, the source templates "
+                    "folder is invalid!")
             sys.exit(1)
 
     def new_study(self, name, module_path=None, classname='MyStudy'):
@@ -892,10 +911,11 @@ class StudyFactory(object):
                 print("Create a study instance %s"%study)
                 return cls(name, loc)
             else:
-                print("The configure file 'config.py' isn't found!")
+                print("The config module file %s isn't found!"%module_path)
                 sys.exit(1)
         else:
             print("Invalid study path! The study path should be initialized at first!")
+            sys.exit(1)
 
     @staticmethod
     def app_path():

@@ -3,6 +3,7 @@ This is a template file of preparing parameters for madx and sixtracking jobs.
 '''
 import os
 import sys
+import ast
 import copy
 from study import Study
 from math import sqrt, pi, sin, cos
@@ -23,7 +24,8 @@ class MyStudy(Study):
         self.oneturn_sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
         self.oneturn_sixtrack_output = ['mychrom', 'betavalues', 'sixdesktunes']
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
-        self.sixtrack_params['amp'] = [8, 10]#The amplitude
+        amp = [8,10,12]#The amplitude
+        self.sixtrack_params['amp'] = list(zip(amp,amp[1:]))#Take pairs
         self.sixtrack_params['kang'] = list(range(1, 1+1))#The angle
         self.sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
@@ -38,8 +40,10 @@ class MyStudy(Study):
     def pre_calc(self, paramdict, pre_id):
         '''Further calculations for the specified parameters'''
         #The angle should be calculated before amplitude
-        self.formulas('kang', 'angle', paramdict, pre_id)
-        self.formulas('amp', 'ax0s', paramdict, pre_id)
+        status = []
+        status.append(self.formulas('kang', 'angle', paramdict, pre_id))
+        status.append(self.formulas('amp', ['ax0s','ax1s'], paramdict, pre_id))
+        return all(status)
 
     def formulas(self, source, dest, paramdict, pre_id):
         '''The formulas for the further calculations,
@@ -48,40 +52,55 @@ class MyStudy(Study):
         @dest  The destination parameter name
         @paramdict The parameter dictionary, the source parameter in the dict
         will be replaced by destination parameter after calculation
-        @pre_id The identified preprocess job id'''
+        @pre_id The identified preprocess job id
+        @return The status'''
         if source not in paramdict.keys():
             print("Invalid parameter name %s!"%source)
-            sys.exit(1)
+            return 0
         value = paramdict.pop(source)
         try:
-            value = float(value)
+            value = ast.literal_eval(value)
         except ValueError:
             print("Invalid source value for job %s!"%pre_id)
-            sys.exit(1)
+            return 0
         except:
             print("Unexpected error!\n", traceback.print_exc())
-            sys.exit(1)
-        if dest == 'ax0s' or dest == 'ax1s':
+            return 0
+        if source == 'amp':
             if 'angle' not in paramdict.keys():
-                print("The angle should be calculated at first!")
-                sys.exit(1)
-            values = self.getval(pre_id, ['betax'])
-            beta_x = values[0]
-            kang = paramdict['angle']
-            kang = float(kang)
-            tt = abs(sin(pi/2*kang)/cos(pi/2*kang))
-            ratio = 0.0 if tt<1.0E-15 else tt**2
-            emit = self.env['emit']
-            gamma = self.env['gamma']
-            factor = sqrt(emit/gamma)
-            ax0t = factor*(sqrt(beta_x)+sqrt(beta_x*ratio)*cos(pi/2*kang))
-            value1 = ax0t*value
-        elif dest == 'angle':
-            kmax = self.env['kmax']
-            value1 = value/(kmax+1)
+                print("The angle should be calculated before amplitude!")
+                return 0
+            try:
+                values = self.getval(pre_id, ['betax'])
+                beta_x = values[0]
+                kang = paramdict['angle']
+                kang = float(kang)
+                tt = abs(sin(pi/2*kang)/cos(pi/2*kang))
+                ratio = 0.0 if tt<1.0E-15 else tt**2
+                emit = self.env['emit']
+                gamma = self.env['gamma']
+                factor = sqrt(emit/gamma)
+                ax0t = factor*(sqrt(beta_x)+sqrt(beta_x*ratio)*cos(pi/2*kang))
+                value0 = ax0t*value[0]
+                value1 = ax0t*value[1]
+                paramdict[dest[0]] = str(value0)
+                paramdict[dest[1]] = str(value1)
+                return 1
+            except:
+                print("Unexpected error!\n", traceback.print_exc())
+                return 0
+        elif source == 'kang':
+            try:
+                kmax = self.env['kmax']
+                value1 = value/(kmax+1)
+                paramdict[dest] = str(value1)
+                return 1
+            except:
+                print("Unexpected error!\n", traceback.print_exc())
+                return 0
         else:
             print("There isn't a formula for parameter %s!"%dest)
-        paramdict[dest] = str(value1)
+            return 0
 
     def getval(self, pre_id, reqlist):
         '''Get required values from oneturn sixtrack results'''
