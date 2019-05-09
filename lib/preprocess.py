@@ -17,7 +17,7 @@ def run(wu_id, db_name):
     db.close()
     if not outputs[0]:
         print("There isn't input file for preprocess job %s!"%wu_id)
-        sys.exit(1)
+        return 0
     input_buf = outputs[0][0]
     input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
     cf = configparser.ConfigParser()
@@ -71,8 +71,8 @@ def madxjob(madx_config, mask_config):
     print("MADX job is running...")
     output = os.popen(command)
     outputlines = output.readlines()
-    mad_out = open('madx_stdout', 'w')
-    mad_out.writelines(outputlines)
+    with open('madx_stdout', 'w') as mad_out:
+        mad_out.writelines(outputlines)
     if 'finished normally' not in outputlines[-2]:
         print("MADX has not completed properly!")
         madx_status = 0
@@ -162,12 +162,9 @@ def sixtrackjobs(config, fort3_config):
     if fort3_config['CHROM'] == '0':
         beta_out[6] = chrom1
         beta_out[7] = chrom2
-    for a in beta_out:
-        f_out.write(str(a))
-        if a != beta_out[-1]:
-            f_out.write(' ')
-        else:
-            f_out.write('\n')
+    lines = ' '.join(map(str, beta_out))
+    f_out.write(lines)
+    f_out.write('\n')
     f_out.close()
     #Download the requested files
     dest_path = config["dest_path"]
@@ -248,8 +245,8 @@ def sixtrackjob(config, config_re, jobname, **args):
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
     output_name = '../' + jobname + '.output'
-    six_out = open(output_name, 'w')
-    six_out.writelines(outputlines)
+    with open(output_name, 'w') as six_out:
+        six_out.writelines(outputlines)
     if not os.path.isfile('fort.10'):
         print("The %s sixtrack job for chromaticity FAILED!"%jobname)
         print("Check the file %s which contains the SixTrack fort.6 output."%output_name)

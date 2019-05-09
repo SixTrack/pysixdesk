@@ -67,7 +67,8 @@ class SixDB(object):
 
     def select(self, table_name, columns='*', where=None, orderby=None, **args):
         '''Select values with specified conditions'''
-        r = self.adaptor.select(self.conn, table_name, columns, where, orderby)
+        r = self.adaptor.select(self.conn, table_name, columns, where, orderby,
+                **args)
         return r
 
     def update(self, table_name, values, where=None):
