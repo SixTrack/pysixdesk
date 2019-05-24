@@ -50,23 +50,23 @@ This can be accomplished adding the path to the `pysixdesk` package to the `PYTH
 export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib
 ```
 or to add it to the `sys.path` list, eg:
-```shell
+```python
 import sys
-sys.path.append(<path to pysixdesk/lib>)
+sys.path.append(<path_to_pysixdesk>/lib)
 ```
 The former option can be made permanent for every python terminal in any linux terminal copying the above definition into the ```.bashrc``` file.
 
 ## Simple use
 
 Then you can create a '''StudyFactory''' instance to initialize a workspace for studies
-```shell
+```python
 from study import Study, StudyFactory
 a = StudyFactory(location)
 ```
 where ```location``` is the path of the workspace, the default value is
 ```sandbox```. Before creating a new study,
 you should prepare the study directory with the following function:
-```shell
+```python
 a.prepare_study('test')
 ```
 This function will create a directory named ```test``` in the subfolder
@@ -75,7 +75,7 @@ file.
 You can edit the ```config.py``` file to add scan parameters. 
 Then you can test the program with the following codes: 
 
-```shell
+```python
 test = a.new_study('test')
 test.update_db()#only need for a new study or when parameters are changed
 test.prepare_preprocess_input()
@@ -87,16 +87,16 @@ defined in the ```submission.py``` module and specifiy it in the config.py scrip
 
 After the jobs are finished, you can call the collect function to collect the
 results and store into database:
-```shell
+```python
 test.collect_result(0, 5)
 ```
 And you can specify the 'platform' argument to submit a
 collection job to HTCondor:
-```shell
+```python
 test.collect_result(0, 5, 'htcondor')
 ```
 For sixtrack jobs there are same functions:
-```shell
+```python
 test.prepare_sixtrack_input()
 test.submit(1, 5)
 test.collect_result(1, 5)
