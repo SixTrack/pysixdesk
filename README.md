@@ -3,31 +3,59 @@
 <img src="CERN-logo.png" align="right">
 
 pySixDesk is a python interface to manage and control the work flow of SixTrack jobs.
+It comes as a python library that can be imported into a python terminal.
+In addition, python wrapping scripts are at user disposal, such that specific commands can be issued directly from the login terminal.
+The interface is meant to ease management of studies involving large parameter scans; the interface covers input generation, job submission and management, analysis.
+
+The interface requires python3 - tool developed with `python3.6.3`.
 
 ## Authors
 
 X.&nbsp;Lu (CSNS, CERN),
 A.&nbsp;Mereghetti (CERN).
 
-## Simple usage
+## Environment
 
-Clone pysixdesk to your home path in lxplus.
-```shell
+The native environment of pySixDesk is CERN's `lxplus` login service. Hence, pySixDesk embeds built-in commands for:
+   * `AFS` and `openAFS` for disk storage;
+   * `kerberos`, for login and user identification;
+   * `htcondor`, as batch service native at CERN;
+   * `BOINC`, as additional batch service for long-term, large simulation campaigns;
+   * `sqlite`, for the database monitoring the progress of jobs and storing data;
+   * `python3`, as main language.
+   
+In case of using pySixDesk on a local machine, please make sure that all these packages are available;
+
+## How to use
+pySixDesk is a library of utilities and it does not provide a user workspace.
+Hence, please keep separated the library from your own workspace.
+
+pySixDesk is still under development. Hence, the best is to download it as a git package:
+   1. got to https://github.com/SixTrack/pysixdesk and fork the project;
+   1. clone it to your local file system:
+   ```shell
 git clone https://github.com/SixTrack/pysixdesk.git
 ```
-Add the pysixdesk to the python path. Edit the ```.bashrc``` script
-and add the following command in the end:
+
+In case you need to perform some development, it is common practice with git repositories to:
+   1. add the `upstream` main project: ```git remote add upstream git@github.com:SixTrack/pysixdesk.git```
+   1. develop on a new branch: ```git checkout -b <myBranch>```
+   1. when the development is over, create a pull request via the web-interface of `github.com`.
+
+### Shell set-up
+Add the pysixdesk to the python path. Edit the ```.bashrc``` script and add the following command in the end:
 ```shell
 export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib
 ```
 ```$pysixdesk_path``` is the full path to pysixdesk.
 
-If you want to use pysixdesk from python teminal, and you need to add the 
-pysixdesk path to the system path:
+If you want to use pysixdesk from python teminal, and you need to add the pysixdesk path to the system path:
 ```shell
 import sys
 sys.path.append(<path to pysixdesk/lib>)
 ```
+
+## Simple use
 
 Then you can create a '''StudyFactory''' instance to initialize a workspace for studies
 ```shell
@@ -72,5 +100,3 @@ test.prepare_sixtrack_input()
 test.submit(1, 5)
 test.collect_result(1, 5)
 ```
-
-Note: Please don't do operations in the pysixdesk folder!
