@@ -22,7 +22,7 @@ The native environment of pySixDesk is CERN's `lxplus` login service. Hence, pyS
    * `htcondor`, as batch service native at CERN;
    * `BOINC`, as additional batch service for long-term, large simulation campaigns;
    * `sqlite`, for the database monitoring the progress of jobs and storing data;
-   * `python3`, as main language.
+   * `python3`, as main language. On `lxplus`, it can be loaded via `scl enable rh-python36 bash` (please see https://cern.service-now.com/service-portal/article.do?n=KB0000730 for more information).
    
 In case of using pySixDesk on a local machine, please make sure that all these packages are available;
 
@@ -43,17 +43,18 @@ In case you need to perform some development, it is common practice with git rep
    1. when the development is over, create a pull request via the web-interface of `github.com`.
 
 ### Shell set-up
-Add the pysixdesk to the python path. Edit the ```.bashrc``` script and add the following command in the end:
+It is recommended to use pySixDesk from the python shell.
+In order to use the library, it is essential to declare in the python terminal the path where the `pysixdesk` package can be found.
+This can be accomplished adding the path to the `pysixdesk` package to the `PYTHONPATH` environment variable (```$pysixdesk_path``` is the full path to pysixdesk), eg:
 ```shell
 export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib
 ```
-```$pysixdesk_path``` is the full path to pysixdesk.
-
-If you want to use pysixdesk from python teminal, and you need to add the pysixdesk path to the system path:
+or to add it to the `sys.path` list, eg:
 ```shell
 import sys
 sys.path.append(<path to pysixdesk/lib>)
 ```
+The former option can be made permanent for every python terminal in any linux terminal copying the above definition into the ```.bashrc``` file.
 
 ## Simple use
 
