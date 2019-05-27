@@ -93,7 +93,7 @@ test.update_db() # only need for a new study or when parameters are changed
 ```python
 test.prepare_preprocess_input()
 test.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
-test.collect_result(0, 5, platform='htcondor') # the 'platform' argument submits a collection job to HTCondor
+test.collect_result(0, 5, platform='htcondor') # 'platform'=... submits a collection job to HTCondor
 ```
    1. prepare and submit actual sixtrack jobs, and collect results:
 ```python
