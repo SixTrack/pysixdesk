@@ -49,9 +49,7 @@ In case you need to perform some development, it is common practice with git rep
 ### Shell set-up
 It is recommended to use pySixDesk from the python shell.
 Please remember to use python3.
-On `lxplus`, python3 is not available by default at login, but it can be easily loaded via the command:
-`scl enable rh-python36 bash`
-(please see https://cern.service-now.com/service-portal/article.do?n=KB0000730 for more information)
+On `lxplus`, python3 is available as `python3` command, since the default `python` command uses version `2.7.5`.
 
 In order to use the library, it is essential to declare in your live python environment the path where the `pysixdesk` package can be found.
 This can be accomplished adding the path to the `pysixdesk` package to the `PYTHONPATH` environment variable (in the following, `$pysixdesk_path` is the full path to pysixdesk), eg:
@@ -67,7 +65,7 @@ The former option can be made permanent for every python terminal in any linux t
 The only drawback to this approach is that every terminal will be affected by this setting.
 It is probably more convenient to create an alias like the following one in you ```.bashrc``` file:
 ```shell
-alias loadPySixDesk="scl enable rh-python36 bash; export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib"
+alias loadPySixDesk="export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib"
 ```
 
 ## Simple use
