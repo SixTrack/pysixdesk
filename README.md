@@ -42,8 +42,8 @@ git clone https://github.com/SixTrack/pysixdesk.git
 ```
 
 In case you need to perform some development, it is common practice with git repositories to track your changes under a branch in your git fork and, once you are happy with the changes, make a request to apply them also upstream, such that every other user can profit from your contribution:
-   1. add the `upstream` main project: ```git remote add upstream git@github.com:SixTrack/pysixdesk.git```
-   1. develop on a new branch: ```git checkout -b <myBranch>```
+   1. add the `upstream` main project: `git remote add upstream git@github.com:SixTrack/pysixdesk.git`
+   1. develop on a new branch: `git checkout -b <myBranch>`
    1. when the development is over, create a pull request via the web-interface of `github.com`.
 
 ### Shell set-up
@@ -54,7 +54,7 @@ On `lxplus`, python3 is not available by default at login, but it can be easily 
 (please see https://cern.service-now.com/service-portal/article.do?n=KB0000730 for more information)
 
 In order to use the library, it is essential to declare in your live python environment the path where the `pysixdesk` package can be found.
-This can be accomplished adding the path to the `pysixdesk` package to the `PYTHONPATH` environment variable (in the following, ```$pysixdesk_path``` is the full path to pysixdesk), eg:
+This can be accomplished adding the path to the `pysixdesk` package to the `PYTHONPATH` environment variable (in the following, `$pysixdesk_path` is the full path to pysixdesk), eg:
 ```shell
 export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib
 ```
@@ -71,47 +71,33 @@ alias loadPySixDesk="scl enable rh-python36 bash; export PYTHONPATH=$PYTHONPATH:
 ```
 
 ## Simple use
+This short guide will explain how to set up a quick toy study.
+By default the jobs will be submitted to HTCondor. If you want to use a different management system, you need to create a new cluster class with the interface (Cluster) defined in the `submission.py` module and specifiy it in the `config.py` script.
 
-Then you can create a '''StudyFactory''' instance to initialize a workspace for studies
+   1. prepare the workspace. To do so, you have to create an instance of the parent class `StudyFactory`, which handles the workspace. If no argument is given to the constructor, the default location `./sandbox` is used:
 ```python
 from study import Study, StudyFactory
-a = StudyFactory(location)
+a = StudyFactory( workspace='./myTest' )
 ```
-where ```location``` is the path of the workspace, the default value is
-```sandbox```. Before creating a new study,
-you should prepare the study directory with the following function:
+   1. prepare necessary folders (e.g. `./myTest/studies/test`) and copy template files (including `config.py`) for a study.
 ```python
-a.prepare_study('test')
+a.prepare_study( name='test' )
 ```
-This function will create a directory named ```test``` in the subfolder
-```studies ``` of the workspace and copy the required files and ```config.py```
-file.
-You can edit the ```config.py``` file to add scan parameters. 
-Then you can test the program with the following codes: 
-
+   1. edit the `config.py` file to add scan parameters;
+   1. load definition of study in `config.py` and create/update database:
 ```python
 test = a.new_study('test')
-test.update_db()#only need for a new study or when parameters are changed
+test.update_db() # only need for a new study or when parameters are changed
+```
+   1. prepare and submit MADX jobs and sixtrack one turn jobs, and collect results:
+```python
 test.prepare_preprocess_input()
-test.submit(0, 5)#0 stand for preprocess job, 5 is trial number 
+test.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
+test.collect_result(0, 5, platform='htcondor') # the 'platform' argument submits a collection job to HTCondor
 ```
-By default the jobs will be submitted to HTCondor. If you want to use a different
-management system, you need to create a new cluster class with the interface (Cluster)
-defined in the ```submission.py``` module and specifiy it in the config.py script.
-
-After the jobs are finished, you can call the collect function to collect the
-results and store into database:
-```python
-test.collect_result(0, 5)
-```
-And you can specify the 'platform' argument to submit a
-collection job to HTCondor:
-```python
-test.collect_result(0, 5, 'htcondor')
-```
-For sixtrack jobs there are same functions:
+   1. prepare and submit actual sixtrack jobs, and collect results:
 ```python
 test.prepare_sixtrack_input()
-test.submit(1, 5)
-test.collect_result(1, 5)
+test.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
+test.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
 ```
