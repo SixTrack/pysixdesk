@@ -8,7 +8,7 @@ It allows to set up and manage job submission, gather results and analyse them.
 pySixDesk comes as a python library; hence, it can be imported into a python terminal or into custom-made python scripts.
 The library also comes with python wrapper scripts, such that specific commands can be issued directly from the login terminal.
 
-The interface requires python3, and it is being developed with `python3.6.3`.
+The interface requires python3, and it is being developed with `python3.6.8`.
 
 ## Authors
 
