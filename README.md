@@ -2,12 +2,13 @@
 
 <img src="CERN-logo.png" align="right">
 
-pySixDesk is a python interface to manage and control the work flow of SixTrack jobs.
-It comes as a python library that can be imported into a python terminal.
-In addition, python wrapping scripts are at user disposal, such that specific commands can be issued directly from the login terminal.
-The interface is meant to ease management of studies involving large parameter scans; the interface covers input generation, job submission and management, analysis.
+pySixDesk is a python interface for SixTrack jobs for large parameter scans.
+It allows to set up and manage job submission, gather results and analyse them.
 
-The interface requires python3 - tool developed with `python3.6.3`.
+pySixDesk comes as a python library; hence, it can be imported into a python terminal or into custom-made python scripts.
+The library also comes with python wrapper scripts, such that specific commands can be issued directly from the login terminal.
+
+The interface requires python3, and it is being developed with `python3.6.3`.
 
 ## Authors
 
@@ -16,36 +17,44 @@ A.&nbsp;Mereghetti (CERN).
 
 ## Environment
 
-The native environment of pySixDesk is CERN's `lxplus` login service. Hence, pySixDesk embeds built-in commands for:
+The native environment of pySixDesk is CERN's `lxplus` login service; the guidelines in the following will assume that this is the case.
+pySixDesk embeds built-in commands for:
    * `AFS` and `openAFS` for disk storage;
    * `kerberos`, for login and user identification;
    * `htcondor`, as batch service native at CERN;
    * `BOINC`, as additional batch service for long-term, large simulation campaigns;
    * `sqlite`, for the database monitoring the progress of jobs and storing data;
-   * `python3`, as main language. On `lxplus`, it can be loaded via `scl enable rh-python36 bash` (please see https://cern.service-now.com/service-portal/article.do?n=KB0000730 for more information).
+   * `python3`, as main language.
    
 In case of using pySixDesk on a local machine, please make sure that all these packages are available;
 
 ## How to use
+
 pySixDesk is a library of utilities and it does not provide a user workspace.
 Hence, please keep separated the library from your own workspace.
 
+### How to download
 pySixDesk is still under development. Hence, the best is to download it as a git package:
-   1. got to https://github.com/SixTrack/pysixdesk and fork the project;
+   1. go to https://github.com/SixTrack/pysixdesk and fork the project;
    1. clone it to your local file system:
    ```shell
 git clone https://github.com/SixTrack/pysixdesk.git
 ```
 
-In case you need to perform some development, it is common practice with git repositories to:
+In case you need to perform some development, it is common practice with git repositories to track your changes under a branch in your git fork and, once you are happy with the changes, make a request to apply them also upstream, such that every other user can profit from your contribution:
    1. add the `upstream` main project: ```git remote add upstream git@github.com:SixTrack/pysixdesk.git```
    1. develop on a new branch: ```git checkout -b <myBranch>```
    1. when the development is over, create a pull request via the web-interface of `github.com`.
 
 ### Shell set-up
 It is recommended to use pySixDesk from the python shell.
-In order to use the library, it is essential to declare in the python terminal the path where the `pysixdesk` package can be found.
-This can be accomplished adding the path to the `pysixdesk` package to the `PYTHONPATH` environment variable (```$pysixdesk_path``` is the full path to pysixdesk), eg:
+Please remember to use python3.
+On `lxplus`, python3 is not available by default at login, but it can be easily loaded via the command:
+`scl enable rh-python36 bash`
+(please see https://cern.service-now.com/service-portal/article.do?n=KB0000730 for more information)
+
+In order to use the library, it is essential to declare in your live python environment the path where the `pysixdesk` package can be found.
+This can be accomplished adding the path to the `pysixdesk` package to the `PYTHONPATH` environment variable (in the following, ```$pysixdesk_path``` is the full path to pysixdesk), eg:
 ```shell
 export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib
 ```
@@ -55,6 +64,11 @@ import sys
 sys.path.append(<path_to_pysixdesk>/lib)
 ```
 The former option can be made permanent for every python terminal in any linux terminal copying the above definition into the ```.bashrc``` file.
+The only drawback to this approach is that every terminal will be affected by this setting.
+It is probably more convenient to create an alias like the following one in you ```.bashrc``` file:
+```shell
+alias loadPySixDesk="scl enable rh-python36 bash; export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib"
+```
 
 ## Simple use
 
