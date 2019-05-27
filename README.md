@@ -75,29 +75,39 @@ This short guide will explain how to set up a quick toy study.
 By default the jobs will be submitted to HTCondor. If you want to use a different management system, you need to create a new cluster class with the interface (Cluster) defined in the `submission.py` module and specifiy it in the `config.py` script.
 
    1. prepare the workspace. To do so, you have to create an instance of the parent class `StudyFactory`, which handles the workspace. If no argument is given to the constructor, the default location `./sandbox` is used:
-```python
-from study import Study, StudyFactory
-a = StudyFactory( workspace='./myTest' )
-```
+   
+      ```python
+      from study import Study, StudyFactory
+      a = StudyFactory( workspace='./myTest' )
+      ```
+   
    1. prepare necessary folders (e.g. `./myTest/studies/test`) and copy template files (including `config.py`) for a study.
-```python
-a.prepare_study( name='test' )
-```
+   
+      ```python
+      a.prepare_study( name='test' )
+      ```
+   
    1. edit the `config.py` file to add scan parameters;
+   
    1. load definition of study in `config.py` and create/update database:
-```python
-test = a.new_study('test')
-test.update_db() # only need for a new study or when parameters are changed
-```
+   
+      ```python
+      test = a.new_study('test')
+      test.update_db() # only need for a new study or when parameters are changed
+      ```
+
    1. prepare and submit MADX jobs and sixtrack one turn jobs, and collect results:
-```python
-test.prepare_preprocess_input()
-test.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
-test.collect_result(0, 5, platform='htcondor') # 'platform'=... submits a collection job to HTCondor
-```
+   
+      ```python
+      test.prepare_preprocess_input()
+      test.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
+      test.collect_result(0, 5, platform='htcondor') # 'platform'=... submits a collection job to HTCondor
+      ```
+
    1. prepare and submit actual sixtrack jobs, and collect results:
-```python
-test.prepare_sixtrack_input()
-test.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
-test.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
-```
+
+      ```python
+      test.prepare_sixtrack_input()
+      test.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
+      test.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
+      ```
