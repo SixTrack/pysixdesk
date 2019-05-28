@@ -8,7 +8,7 @@ It allows to set up and manage job submission, gather results and analyse them.
 pySixDesk comes as a python library; hence, it can be imported into a python terminal or into custom-made python scripts.
 The library also comes with python wrapper scripts, such that specific commands can be issued directly from the login terminal.
 
-The interface requires python3, and it is being developed with `python3.6.3`.
+The interface requires python3, and it is being developed with `python3.6.8`.
 
 ## Authors
 
@@ -49,9 +49,7 @@ In case you need to perform some development, it is common practice with git rep
 ### Shell set-up
 It is recommended to use pySixDesk from the python shell.
 Please remember to use python3.
-On `lxplus`, python3 is not available by default at login, but it can be easily loaded via the command:
-`scl enable rh-python36 bash`
-(please see https://cern.service-now.com/service-portal/article.do?n=KB0000730 for more information)
+On `lxplus`, python3 is available as `python3` command, since the default `python` command uses version `2.7.5`.
 
 In order to use the library, it is essential to declare in your live python environment the path where the `pysixdesk` package can be found.
 This can be accomplished adding the path to the `pysixdesk` package to the `PYTHONPATH` environment variable (in the following, `$pysixdesk_path` is the full path to pysixdesk), eg:
@@ -67,24 +65,25 @@ The former option can be made permanent for every python terminal in any linux t
 The only drawback to this approach is that every terminal will be affected by this setting.
 It is probably more convenient to create an alias like the following one in you ```.bashrc``` file:
 ```shell
-alias loadPySixDesk="scl enable rh-python36 bash; export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib"
+alias loadPySixDesk="export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib"
 ```
 
 ## Simple use
 This short guide will explain how to set up a quick toy study.
 By default the jobs will be submitted to HTCondor. If you want to use a different management system, you need to create a new cluster class with the interface (Cluster) defined in the `submission.py` module and specifiy it in the `config.py` script.
 
-   1. prepare the workspace. To do so, you have to create an instance of the parent class `StudyFactory`, which handles the workspace. If no argument is given to the constructor, the default location `./sandbox` is used:
+   1. prepare the workspace. To do so, you have to create an instance of the parent class `StudyFactory`, which handles the workspace. If no argument is given, the default location `./sandbox` is used:
    
       ```python
-      from study import Study, StudyFactory
-      a = StudyFactory( workspace='./myTest' )
+      from study import Study
+      from workspace import WorkSpace
+      myWS = WorkSpace( './myWS' )
       ```
    
-   1. prepare necessary folders (e.g. `./myTest/studies/test`) and copy template files (including `config.py`) for a study.
+   1. prepare necessary folders (e.g. `./myTest/studies/test`) and copy template files (including `config.py`) for a study. If not argument is given, the default study name is `test` (if no studies are present) or `study_???` (with `???` being a zero-padded index of the study, calculated from the existing ones):
    
       ```python
-      a.prepare_study( name='test' )
+      myWS.initStudy('myStudy')
       ```
    
    1. edit the `config.py` file to add scan parameters;
@@ -92,22 +91,22 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
    1. load definition of study in `config.py` and create/update database:
    
       ```python
-      test = a.new_study('test')
-      test.update_db() # only need for a new study or when parameters are changed
+      myStudy = myWS.load_study('myStudy')
+      myStudy.update_db() # only need for a new study or when parameters are changed
       ```
 
    1. prepare and submit MADX jobs and sixtrack one turn jobs, and collect results:
    
       ```python
-      test.prepare_preprocess_input()
-      test.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
-      test.collect_result(0, 5, platform='htcondor') # 'platform'=... submits a collection job to HTCondor
+      myStudy.prepare_preprocess_input()
+      myStudy.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
+      myStudy.collect_result(0, 5, platform='htcondor') # 'platform'=... submits a collection job to HTCondor
       ```
 
    1. prepare and submit actual sixtrack jobs, and collect results:
 
       ```python
-      test.prepare_sixtrack_input()
-      test.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
-      test.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
+      myStudy.prepare_sixtrack_input()
+      myStudy.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
+      myStudy.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
       ```

@@ -50,7 +50,6 @@ class HTCondor(Cluster):
         @output_path(str) The output folder
         @*args and **kwargs Other necessary arguments'''
 
-        app_path = study.StudyFactory.app_path()
         job_list = os.path.join(input_path, 'job_id.list')
         if os.path.exists(job_list):
             os.remove(job_list)

@@ -304,8 +304,7 @@ class Study(object):
         if not os.path.isdir(temp) or not os.listdir(temp):
             if not os.path.exists(temp):
                 os.makedirs(temp)
-            app_path = StudyFactory.app_path()
-            tem_path = os.path.join(app_path, 'templates')
+            tem_path = os.path.join(utils.PYSIXDESK_ABSPATH, 'templates')
             if os.path.isdir(tem_path) and os.listdir(tem_path):
                 for item in os.listdir(tem_path):
                     s = os.path.join(tem_path, item)
@@ -370,9 +369,8 @@ class Study(object):
         #Initialize the submission object
         cluster_module = self.cluster_module
         classname = self.cluster_name
-        app_path = StudyFactory.app_path()
         if cluster_module is None:
-            cluster_module = os.path.join(app_path, 'lib', 'submission.py')
+            cluster_module = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
         if os.path.isfile(cluster_module):
             module_name = os.path.abspath(cluster_module)
             module_name = module_name.replace('.py', '')
@@ -599,17 +597,16 @@ class Study(object):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
         @type(0 or 1) The job type, 0 is preprocess job, 1 is sixtrack job
         @trials The maximum number of trials of submission'''
-        app_path = StudyFactory.app_path()
         if typ == 0:
             input_path = self.paths['preprocess_in']
             output_path = self.paths['preprocess_out']
-            exe = os.path.join(app_path, 'lib', 'preprocess.py')
+            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
             jobname = 'preprocess'
             table_name = 'preprocess_wu'
         elif typ == 1:
             input_path = self.paths['sixtrack_in']
             output_path = self.paths['sixtrack_out']
-            exe = os.path.join(app_path, 'lib', 'sixtrack.py')
+            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
             jobname = 'sixtrack'
             table_name = 'sixtrack_wu'
         else:
@@ -643,10 +640,9 @@ class Study(object):
         info_sec = self.config['info']
         self.config['db_setting'] = self.db_settings
         info_sec['db'] = os.path.join(self.study_path, self.dbname)
-        app_path = StudyFactory.app_path()
         cluster_module = self.cluster_module
         if cluster_module is None:
-            cluster_module = os.path.join(app_path, 'lib', 'submission.py')
+            cluster_module = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
         info_sec['cluster_module'] = str(cluster_module)
         info_sec['cluster_name'] = self.cluster_name
         info_sec['clean'] = clean
@@ -677,11 +673,11 @@ class Study(object):
             gather.run(typ, task_input)
         elif platform is 'htcondor':
             tran_input =[]
-            tran_input.append(os.path.join(app_path, 'lib', 'utils.py'))
-            tran_input.append(os.path.join(app_path, 'lib', 'pysixdb.py'))
-            tran_input.append(os.path.join(app_path, 'lib', 'dbadaptor.py'))
+            tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
+            tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
+            tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
             tran_input.append(task_input)
-            exe = os.path.join(app_path, 'lib', 'gather.py')
+            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')
             wu_ids = [typ]
             self.submission.prepare(wu_ids, tran_input, exe, in_name, in_path,
                     out_path)
@@ -752,15 +748,14 @@ class Study(object):
         wu_ids = list(zip(*wu_ids))[0]
         sub_db.close()
         print("The submitted database %s is ready!"%sub_name)
-        app_path = StudyFactory.app_path()
         tran_input =[]
-        tran_input.append(os.path.join(app_path, 'lib', 'utils.py'))
-        tran_input.append(os.path.join(app_path, 'lib', 'pysixdb.py'))
-        tran_input.append(os.path.join(app_path, 'lib', 'dbadaptor.py'))
+        tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
+        tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
+        tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
         tran_input.append(sub_name)
         in_path = self.paths['sixtrack_in']
         out_path = self.paths['sixtrack_out']
-        exe = os.path.join(app_path, 'lib', 'sixtrack.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
         self.submission.prepare(wu_ids, tran_input, exe, 'sub.db', in_path,
                     out_path, *args, **kwargs)
 
@@ -785,15 +780,14 @@ class Study(object):
         wu_ids = list(zip(*wu_ids))[0]
         sub_db.close()
         print("The submitted database %s is ready!"%sub_name)
-        app_path = StudyFactory.app_path()
         trans =[]
-        trans.append(os.path.join(app_path, 'lib', 'utils.py'))
-        trans.append(os.path.join(app_path, 'lib', 'pysixdb.py'))
-        trans.append(os.path.join(app_path, 'lib', 'dbadaptor.py'))
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
         trans.append(sub_name)
         in_path = self.paths['preprocess_in']
         out_path = self.paths['preprocess_out']
-        exe = os.path.join(app_path, 'lib', 'preprocess.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
         self.submission.prepare(wu_ids, trans, exe, 'sub.db', in_path,
                 out_path, *args, **kwargs)
 
@@ -818,108 +812,3 @@ class Study(object):
         '''The destructor'''
         self.db.close()
         print('Database is closed!')
-
-class StudyFactory(object):
-
-    def __init__(self, workspace='./sandbox'):
-        self.ws = os.path.abspath(workspace)
-        self.studies = []
-        self._setup_ws()
-
-    def _setup_ws(self):
-        '''Setup a workspace'''
-        if not os.path.isdir(self.ws):
-            os.mkdir(self.ws)
-            print('Create new workspace %s!'%self.ws)
-        else:
-            print('The workspace %s already exists!'%self.ws)
-        studies = os.path.join(self.ws, 'studies')
-        if not os.path.isdir(studies):
-            os.mkdir(studies)
-        else:
-            self._load()
-            self.info()
-        templates = os.path.join(self.ws, 'templates')
-        if not os.path.isdir(templates):
-            os.mkdir(templates)
-
-        app_path = StudyFactory.app_path()
-        tem_path = os.path.join(app_path, 'templates')
-        contents = os.listdir(templates)
-        if not contents:
-            if os.path.isdir(tem_path) and os.listdir(tem_path):
-                 for item in os.listdir(tem_path):
-                     s = os.path.join(tem_path, item)
-                     d = os.path.join(templates, item)
-                     if os.path.isfile(s):
-                         shutil.copy2(s, d)
-            else:
-                print("The templates folder %s is invalid!"%tem_path)
-
-    def _load(self):
-        '''Load the information from an exist workspace!'''
-        studies = os.path.join(self.ws, 'studies')
-        for item in os.listdir(studies):
-            item_path = os.path.join(studies, item)
-            if os.path.isdir(item_path):
-                self.studies.append(item)
-
-    def info(self):
-        '''Print all the studies in the current workspace'''
-        print(self.studies)
-        return self.studies
-
-    def prepare_study(self, name = ''):
-        '''Prepare the config and temp files for a study'''
-        studies = os.path.join(self.ws, 'studies')
-        if len(name) == 0:
-            i = len(self.studies)
-            study_name = 'study_%03i'%(i)
-        else:
-            study_name = name
-
-        study = os.path.join(studies, study_name)
-        if not os.path.isdir(study):
-            os.makedirs(study)
-
-        tem_path = os.path.join(self.ws, 'templates')
-        if os.path.isdir(tem_path) and os.listdir(tem_path):
-             for item in os.listdir(tem_path):
-                 s = os.path.join(tem_path, item)
-                 d = os.path.join(study, item)
-                 if os.path.isfile(s) and not os.path.isfile(d):#Don't override
-                     shutil.copy2(s, d)
-        else:
-            print("Failed to prepare the study folder, the source templates "
-                    "folder is invalid!")
-            sys.exit(1)
-
-    def new_study(self, name, module_path=None, classname='MyStudy'):
-        '''Create a new study with a prepared study path'''
-        loc = os.path.join(self.ws, 'studies')
-        study = os.path.join(loc, name)
-        if os.path.isdir(study):
-            if module_path is None:
-                module_path = os.path.join(study, 'config.py')
-
-            if os.path.isfile(module_path):
-                self.studies.append(study)
-                module_name = os.path.abspath(module_path)
-                module_name = module_name.replace('.py', '')
-                mod = SourceFileLoader(module_name, module_path).load_module()
-                cls = getattr(mod, classname)
-                print("Create a study instance %s"%study)
-                return cls(name, loc)
-            else:
-                print("The config module file %s isn't found!"%module_path)
-                sys.exit(1)
-        else:
-            print("Invalid study path! The study path should be initialized at first!")
-            sys.exit(1)
-
-    @staticmethod
-    def app_path():
-        '''Get the absolute path of the home directory of pysixdesk'''
-        app_path = os.path.abspath(inspect.getfile(Study))
-        app_path = os.path.dirname(os.path.dirname(app_path))
-        return app_path
