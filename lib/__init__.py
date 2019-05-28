@@ -1,3 +1,4 @@
-from study import Study, StudyFactory
+from study import Study
+from workspace import WorkSpace
 
-__all__ = ['Study', 'StudyFactory']
+__all__ = ['Study', 'WorkSpace']

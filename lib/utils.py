@@ -5,6 +5,8 @@ import sys
 import gzip
 import shutil
 
+PYSIXDESK_ABSPATH=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def check(files):
     '''Check the existence of the files and rename them if the files is a dict
     which looks like {'file1_oldName': 'file1_newName',
