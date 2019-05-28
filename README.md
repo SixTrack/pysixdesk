@@ -72,17 +72,18 @@ alias loadPySixDesk="export PYTHONPATH=$PYTHONPATH:$pysixdesk_path/lib"
 This short guide will explain how to set up a quick toy study.
 By default the jobs will be submitted to HTCondor. If you want to use a different management system, you need to create a new cluster class with the interface (Cluster) defined in the `submission.py` module and specifiy it in the `config.py` script.
 
-   1. prepare the workspace. To do so, you have to create an instance of the parent class `StudyFactory`, which handles the workspace. If no argument is given to the constructor, the default location `./sandbox` is used:
+   1. prepare the workspace. To do so, you have to create an instance of the parent class `StudyFactory`, which handles the workspace. If no argument is given, the default location `./sandbox` is used:
    
       ```python
-      from study import Study, StudyFactory
-      a = StudyFactory( workspace='./myTest' )
+      from study import Study
+      from workspace import WorkSpace
+      myWS = WorkSpace( './myWS' )
       ```
    
-   1. prepare necessary folders (e.g. `./myTest/studies/test`) and copy template files (including `config.py`) for a study.
+   1. prepare necessary folders (e.g. `./myTest/studies/test`) and copy template files (including `config.py`) for a study. If not argument is given, the default study name is `test` (if no studies are present) or `study_???` (with `???` being a zero-padded index of the study, calculated from the existing ones):
    
       ```python
-      a.prepare_study( name='test' )
+      myWS.initStudy(studyName='myStudy')
       ```
    
    1. edit the `config.py` file to add scan parameters;
@@ -90,22 +91,22 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
    1. load definition of study in `config.py` and create/update database:
    
       ```python
-      test = a.new_study('test')
-      test.update_db() # only need for a new study or when parameters are changed
+      myStudy = myWS.loadStudy('myStudy')
+      myStudy.update_db() # only need for a new study or when parameters are changed
       ```
 
    1. prepare and submit MADX jobs and sixtrack one turn jobs, and collect results:
    
       ```python
-      test.prepare_preprocess_input()
-      test.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
-      test.collect_result(0, 5, platform='htcondor') # 'platform'=... submits a collection job to HTCondor
+      myStudy.prepare_preprocess_input()
+      myStudy.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
+      myStudy.collect_result(0, 5, platform='htcondor') # 'platform'=... submits a collection job to HTCondor
       ```
 
    1. prepare and submit actual sixtrack jobs, and collect results:
 
       ```python
-      test.prepare_sixtrack_input()
-      test.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
-      test.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
+      myStudy.prepare_sixtrack_input()
+      myStudy.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
+      myStudy.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
       ```
