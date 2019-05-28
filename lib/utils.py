@@ -5,7 +5,7 @@ import sys
 import gzip
 import shutil
 
-pySixDeskAbsPath=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PYSIXDESK_ABSPATH=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def check(files):
     '''Check the existence of the files and rename them if the files is a dict

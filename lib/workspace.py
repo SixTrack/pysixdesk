@@ -26,149 +26,159 @@ class WorkSpace(object):
         self.name = workspace_name
         self.paths = {}
         self.studies = []
-        self._updateListExistingStudies()
+        self._update_list_existing_studies()
 
-    # check methods
-    
-    def _checkName(self):
+    def _check_name(self):
         if ( len(self.name)==0 ):
             print("...undefined workspace! Please create one first")
             return False
         
-    def _checkStudyName(self,studyName):
-        iStudyName=studyName
-        if (iStudyName is None):
+    def _check_study_name(self,study_name):
+        input_study_name=study_name
+        if (input_study_name is None):
             if (len(self.studies)>0):
-                iStudyName='study_%03i'%(len(self.studies))
+                input_study_name='study_%03i'%(len(self.studies))
             else:
-                iStudyName='test'
-        elif (not isinstance(iStudyName, str)):
+                input_study_name='test'
+        elif (not isinstance(input_study_name, str)):
             print('invalid string for study name.')
             exit(1)
-        return iStudyName
+        return input_study_name
         
-    # path methods
-    
-    def _inflatePaths(self,log=True,sanityCheck=True):
+    def _inflate_paths(self,log=True,sanity_check=True):
         '''assemble structural full-paths of current workspace'''
-        if sanityCheck: self._checkName()
+        if sanity_check: self._check_name()
         if log: print('Inflating paths of workspace %s ...'%(self.name))
         self.paths['workspace']=os.path.abspath(self.name)
-        self.paths['studies']=os.path.join(self.paths['workspace'], 'studies')
-        self.paths['templates']=os.path.join(self.paths['workspace'], 'templates')
+        self.paths['studies']=os.path.join(self.paths['workspace'],
+                                           'studies')
+        self.paths['templates']=os.path.join(self.paths['workspace'],
+                                             'templates')
         
-    def _inflateStudyPath(self,studyName,log=True,sanityCheck=True):
-        if sanityCheck:
-            iStudyName=self._checkStudyName(studyName)
-            self._inflatePaths(log=log)
+    def _inflate_study_path(self,study_name,log=True,sanity_check=True):
+        if sanity_check:
+            input_study_name=self._check_study_name(study_name)
+            self._inflate_paths(log=log)
         else:
-            iStudyName=studyName
-        if log: print('Inflating path to study %s ...'%(iStudyName))
-        return os.path.join(self.paths['studies'], studyName)
+            input_study_name=study_name
+        if log: print('Inflating path to study %s ...'%(input_study_name))
+        return os.path.join(self.paths['studies'], study_name)
 
-    # init methods
-
-    def _initDirs(self,log=True,sanityCheck=True):
-        '''Initialise directories of current workspace, including copy of template files'''
-        if sanityCheck: self._inflatePaths(log=log)
+    def _init_dirs(self,log=True,sanity_check=True):
+        '''Initialise directories of current workspace, including copy of
+           template files'''
+        if sanity_check: self._inflate_paths(log=log)
         
         if log: print('Checking directories of workspace %s ...'%(self.name))
         for key in self.paths.keys():
             if not os.path.isdir(self.paths[key]):
                 os.mkdir(self.paths[key])
-                if log: print('...created %s directory: %s'%(key,self.paths[key]))
+                if log: print('...created %s directory: %s'%(
+                        key,self.paths[key]))
             else:
-                if log: print('...%s directory already exists: %s'%(key,self.paths[key]))
+                if log: print('...%s directory already exists: %s'%(
+                        key,self.paths[key]))
 
-        if log: print ('Checking template files in %s...'%(self.paths['templates']))
-        tem_path = os.path.join(utils.pySixDeskAbsPath, 'templates')
+        if log: print ('Checking template files in %s...'%(
+                self.paths['templates']))
+        tem_path = os.path.join(utils.PYSIXDESK_ABSPATH, 'templates')
         for item in os.listdir(tem_path):
-            s = os.path.join(tem_path, item)
-            d = os.path.join(self.paths['templates'], item)
-            if os.path.isfile(s) and not os.path.isfile(d):
-                shutil.copy2(s, d)
-                if log: print('...copied template file %s from %s .'%(item,utils.pySixDeskAbsPath))
+            sour = os.path.join(tem_path, item)
+            dest = os.path.join(self.paths['templates'], item)
+            if os.path.isfile(sour) and not os.path.isfile(dest):
+                shutil.copy2(sour, dest)
+                if log: print('...copied template file %s from %s .'%(
+                        item,utils.PYSIXDESK_ABSPATH))
             else:
                 if log: print('...template file %s present.'%(item))
         if log: print('...done.\n')
 
-    def _updateListExistingStudies(self,log=True,sanityCheck=True):
-        '''Update and report list of existing studies in the current workspace'''
-        if sanityCheck: self._initDirs(log=log)
-        if log: print ('Loading list of studies in %s...'%(self.paths['studies']))
+    def _update_list_existing_studies(self,log=True,sanity_check=True):
+        '''Update and report list of studies in the current workspace'''
+        if sanity_check: self._init_dirs(log=log)
+        if log: print ('Loading list of studies in %s...'%(
+                self.paths['studies']))
         for item in os.listdir(self.paths['studies']):
             if os.path.isdir(os.path.join(self.paths['studies'], item)):
                 if (item not in self.studies):
                     self.studies.append(item)
         if (len(self.studies)==0):
-            if log: print('...workspace %s contains no studies at the moment'%(self.name))
+            if log: print('...workspace %s contains no studies at the moment'%(
+                    self.name))
         else:
             if (len(self.studies)==1):
-                if log: print('...workspace %s contains %i study:'%(self.name,len(self.studies)))
+                if log: print('...workspace %s contains %i study:'%(
+                        self.name,len(self.studies)))
             else:
-                if log: print('...workspace %s contains %i studies:'%(self.name,len(self.studies)))
+                if log: print('...workspace %s contains %i studies:'%(
+                        self.name,len(self.studies)))
             print( self.studies )
         if log: print('...done.\n')
 
-    def initStudy(self, studyName=None, log=True, sanityCheck=True):
+    def init_study(self, study_name=None, log=True, sanity_check=True):
         '''Initialise the directory hosting a study'''
 
         # sanity checks
-        if sanityCheck:
-            self._updateListExistingStudies(log=log)
-            iStudyName=self._checkStudyName(studyName=studyName)
+        if sanity_check:
+            self._update_list_existing_studies(log=log)
+            input_study_name=self._check_study_name(study_name=study_name)
         else:
-            iStudyName=iStudyName
+            input_study_name=input_study_name
         
-        if log: print('Initialising study %s in workspace %s...'%(iStudyName,self.paths['workspace']))
+        if log: print('Initialising study %s in workspace %s...'%(
+                input_study_name,self.paths['workspace']))
 
         # study directory
-        studyPath = self._inflateStudyPath(iStudyName,log=log)
-        if not os.path.isdir(studyPath):
-            os.makedirs(studyPath)
-            if log: print('...created directory %s'%(studyPath))
+        study_path = self._inflate_study_path(input_study_name,log=log)
+        if not os.path.isdir(study_path):
+            os.makedirs(study_path)
+            if log: print('...created directory %s'%(study_path))
         else:
-            if log: print('...%s directory already exists'%(studyPath))
+            if log: print('...%s directory already exists'%(study_path))
 
         # template files
         for item in os.listdir(self.paths['templates']):
-            s = os.path.join(self.paths['templates'], item)
-            d = os.path.join(studyPath, item)
-            if os.path.isfile(s) and not os.path.isfile(d):
-                shutil.copy2(s, d)
-                if log: print('...copied template file %s from %s .'%(item,self.paths['templates']))
+            sour = os.path.join(self.paths['templates'], item)
+            dest = os.path.join(study_path, item)
+            if os.path.isfile(sour) and not os.path.isfile(dest):
+                shutil.copy2(sour, dest)
+                if log: print('...copied template file %s from %s .'%(
+                        item,self.paths['templates']))
             else:
                 if log: print('...template file %s present.'%(item))
 
         # update list of existing studies
-        self._updateListExistingStudies(log=log)
+        self._update_list_existing_studies(log=log)
     
-    def loadStudy(self, studyName, modulePath=None, className='MyStudy', log=True, sanityCheck=True):
+    def load_study(self, study_name, module_path=None, class_name='MyStudy',
+                   log=True, sanity_check=True):
         '''Load a study'''
         
         # sanity checks
-        if sanityCheck:
-            self._updateListExistingStudies(log=log)
-            iStudyName=self._checkStudyName(studyName=studyName)
+        if sanity_check:
+            self._update_list_existing_studies(log=log)
+            input_study_name=self._check_study_name(study_name=study_name)
         else:
-            iStudyName=iStudyName
-        if (studyName not in self.studies):
-            print("Study %s not present in workspace %s"%(studyName,self.paths['workspace']))
-            print("Please create one with the initStudy() method of the class WorkSpace")
+            input_study_name=input_study_name
+        if (study_name not in self.studies):
+            print("Study %s not present in workspace %s"%(
+                study_name,self.paths['workspace']))
+            print("Please create one with the init_study()")
             exit(1)
 
         # other sanity checks:
-        studyPath = self._inflateStudyPath(iStudyName,log=log)
-        if modulePath is None:
-            modulePath = os.path.join(studyPath, 'config.py')
-        if not os.path.isfile(modulePath):
-            print("The config file %s isn't found!"%modulePath)
+        study_path = self._inflate_study_path(input_study_name,log=log)
+        if module_path is None:
+            module_path = os.path.join(study_path, 'config.py')
+        if not os.path.isfile(module_path):
+            print("The config file %s isn't found!"%module_path)
             exit(1)
             
-        if log: print('Loading study %s in workspace %s ...'%(studyName,self.paths['workspace']))
-        moduleName = os.path.abspath(modulePath)
-        moduleName = moduleName.replace('.py', '')
-        mod = SourceFileLoader(moduleName, modulePath).load_module()
-        cls = getattr(mod, className)
-        if log: print("Study %s loaded from %s \n"%(studyName,studyPath))
-        return cls(studyName, self.paths['studies'])
+        if log: print('Loading study %s in workspace %s ...'%(
+                study_name,self.paths['workspace']))
+        module_name = os.path.abspath(module_path)
+        module_name = module_name.replace('.py', '')
+        mod = SourceFileLoader(module_name, module_path).load_module()
+        cls = getattr(mod, class_name)
+        if log: print("Study %s loaded from %s \n"%(study_name,study_path))
+        return cls(study_name, self.paths['studies'])

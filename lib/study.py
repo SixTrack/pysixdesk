@@ -304,7 +304,7 @@ class Study(object):
         if not os.path.isdir(temp) or not os.listdir(temp):
             if not os.path.exists(temp):
                 os.makedirs(temp)
-            tem_path = os.path.join(utils.pySixDeskAbsPath, 'templates')
+            tem_path = os.path.join(utils.PYSIXDESK_ABSPATH, 'templates')
             if os.path.isdir(tem_path) and os.listdir(tem_path):
                 for item in os.listdir(tem_path):
                     s = os.path.join(tem_path, item)
@@ -370,7 +370,7 @@ class Study(object):
         cluster_module = self.cluster_module
         classname = self.cluster_name
         if cluster_module is None:
-            cluster_module = os.path.join(utils.pySixDeskAbsPath, 'lib', 'submission.py')
+            cluster_module = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
         if os.path.isfile(cluster_module):
             module_name = os.path.abspath(cluster_module)
             module_name = module_name.replace('.py', '')
@@ -600,13 +600,13 @@ class Study(object):
         if typ == 0:
             input_path = self.paths['preprocess_in']
             output_path = self.paths['preprocess_out']
-            exe = os.path.join(utils.pySixDeskAbsPath, 'lib', 'preprocess.py')
+            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
             jobname = 'preprocess'
             table_name = 'preprocess_wu'
         elif typ == 1:
             input_path = self.paths['sixtrack_in']
             output_path = self.paths['sixtrack_out']
-            exe = os.path.join(utils.pySixDeskAbsPath, 'lib', 'sixtrack.py')
+            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
             jobname = 'sixtrack'
             table_name = 'sixtrack_wu'
         else:
@@ -642,7 +642,7 @@ class Study(object):
         info_sec['db'] = os.path.join(self.study_path, self.dbname)
         cluster_module = self.cluster_module
         if cluster_module is None:
-            cluster_module = os.path.join(utils.pySixDeskAbsPath, 'lib', 'submission.py')
+            cluster_module = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
         info_sec['cluster_module'] = str(cluster_module)
         info_sec['cluster_name'] = self.cluster_name
         info_sec['clean'] = clean
@@ -673,11 +673,11 @@ class Study(object):
             gather.run(typ, task_input)
         elif platform is 'htcondor':
             tran_input =[]
-            tran_input.append(os.path.join(utils.pySixDeskAbsPath, 'lib', 'utils.py'))
-            tran_input.append(os.path.join(utils.pySixDeskAbsPath, 'lib', 'pysixdb.py'))
-            tran_input.append(os.path.join(utils.pySixDeskAbsPath, 'lib', 'dbadaptor.py'))
+            tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
+            tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
+            tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
             tran_input.append(task_input)
-            exe = os.path.join(utils.pySixDeskAbsPath, 'lib', 'gather.py')
+            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')
             wu_ids = [typ]
             self.submission.prepare(wu_ids, tran_input, exe, in_name, in_path,
                     out_path)
@@ -749,13 +749,13 @@ class Study(object):
         sub_db.close()
         print("The submitted database %s is ready!"%sub_name)
         tran_input =[]
-        tran_input.append(os.path.join(utils.pySixDeskAbsPath, 'lib', 'utils.py'))
-        tran_input.append(os.path.join(utils.pySixDeskAbsPath, 'lib', 'pysixdb.py'))
-        tran_input.append(os.path.join(utils.pySixDeskAbsPath, 'lib', 'dbadaptor.py'))
+        tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
+        tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
+        tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
         tran_input.append(sub_name)
         in_path = self.paths['sixtrack_in']
         out_path = self.paths['sixtrack_out']
-        exe = os.path.join(utils.pySixDeskAbsPath, 'lib', 'sixtrack.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
         self.submission.prepare(wu_ids, tran_input, exe, 'sub.db', in_path,
                     out_path, *args, **kwargs)
 
@@ -781,13 +781,13 @@ class Study(object):
         sub_db.close()
         print("The submitted database %s is ready!"%sub_name)
         trans =[]
-        trans.append(os.path.join(utils.pySixDeskAbsPath, 'lib', 'utils.py'))
-        trans.append(os.path.join(utils.pySixDeskAbsPath, 'lib', 'pysixdb.py'))
-        trans.append(os.path.join(utils.pySixDeskAbsPath, 'lib', 'dbadaptor.py'))
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
         trans.append(sub_name)
         in_path = self.paths['preprocess_in']
         out_path = self.paths['preprocess_out']
-        exe = os.path.join(utils.pySixDeskAbsPath, 'lib', 'preprocess.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
         self.submission.prepare(wu_ids, trans, exe, 'sub.db', in_path,
                 out_path, *args, **kwargs)
 
