@@ -6,10 +6,9 @@ import gzip
 import shutil
 from datetime import datetime
 
-#Gobal variable
+#Gobal variables
 MES_TYPE = dict([[0,'Message'], [1, 'Warning'], [2, 'Error']])
-
-PYSIXDESK_ABSPATH=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def check(files):
     '''Check the existence of the files and rename them if the files is a dict
@@ -157,7 +156,7 @@ def decompress_buf(buf, out, des='file'):
         print("Invalid input data!")
         return status
 
-def message(meslevel, ty, content, log=False, level=1, **kwargs):
+def message(meslevel, ty, content, level=1, log_file=None, **kwargs):
     '''Print the different type message to the destination'''
     if meslevel <= level:
         now = datetime.now()
@@ -167,8 +166,7 @@ def message(meslevel, ty, content, log=False, level=1, **kwargs):
         else:
             mes_type = 'Unknow'
         message = "%s %s: %s"%(date_time, mes_type, content)
-        if log and 'log_file' in kwargs.keys():
-            log_file = kwargs['log_file']
+        if log_file is not None:
             with open(log_file, 'a') as f_out:
                 f_out.write(message)
                 f_out.write('\n')

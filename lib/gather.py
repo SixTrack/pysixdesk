@@ -19,33 +19,45 @@ def run(wu_id, infile):
         info_sec = cf['info']
         cluster_module = info_sec['cluster_module']
         classname = info_sec['cluster_name']
+        mes_level = int(info_sec['mes_level'])
+        log_file = info_sec['log_file']
+        if len(log_file) == 0:
+            log_file = None
         try:
             module_name = os.path.abspath(cluster_module)
             module_name = module_name.replace('.py', '')
             mod = SourceFileLoader(module_name, cluster_module).load_module()
             cls = getattr(mod, classname)
-            cluster = cls()
+            cluster = cls(mes_level, log_file)
         except:
-            print(traceback.print_exc())
-            print("Failed to instantiate cluster module %s!"%cluster_module)
+            utils.message(0, 2, traceback.print_exc(), mes_level, log_file)
+            content = "Failed to instantiate cluster module %s!"%cluster_module
+            utils.message(0, 2, content, mes_level, log_file)
             return
         if str(wu_id) == '0':
             preprocess_results(cf, cluster)
         elif str(wu_id) == '1':
             sixtrack_results(cf, cluster)
         else:
-            print("Unknown task!")
+            content = "Unknown task!"
+            utils.message(0, 2, content, mes_level, log_file)
     else:
-        print("The input file %s doesn't exist!"%infile)
+        content = "The input file %s doesn't exist!"%infile
+        utils.message(0, 2, content, mes_level, log_file)
 
 def preprocess_results(cf, cluster):
     '''Gather the results of madx and oneturn sixtrack jobs and store in
     database
     '''
     info_sec = cf['info']
+    mes_level = int(info_sec['mes_level'])
+    log_file = info_sec['log_file']
+    if len(log_file) == 0:
+        log_file = None
     preprocess_path = info_sec['path']
     if not os.path.isdir(preprocess_path) or not os.listdir(preprocess_path):
-        print("There isn't result in path %s!"%preprocess_path)
+        content = "There isn't result in path %s!"%preprocess_path
+        utils.message(0, 1, content, mes_level, log_file)
         return
     contents = os.listdir(preprocess_path)
     set_sec = cf['db_setting']
@@ -60,14 +72,16 @@ def preprocess_results(cf, cluster):
 
     for item in os.listdir(preprocess_path):
         if not item in job_index.keys():
-            print("Unknown preprocess job id %s!"%item)
+            content = "Unknown preprocess job id %s!"%item
+            utils.message(0, 2, content, mes_level, log_file)
             continue
         else:
             status = cluster.check_format(job_index[item])
             if status is None:
                 continue
             elif status:
-                print("The preprocess job %s isn't completed yet!"%item)
+                content = "The preprocess job %s isn't completed yet!"%item
+                utils.message(0, 1, content, mes_level, log_file)
                 continue
         job_path = os.path.join(preprocess_path, item)
         job_table = {}
@@ -92,7 +106,8 @@ def preprocess_results(cf, cluster):
                 task_table['madx_in'] = utils.evlt(utils.compress_buf,\
                         [madx_in,'gzip'])
             else:
-                print("The madx_in file for job %s dosen't exist! The job failed!"%item)
+                content = "The madx_in file for job %s dosen't exist! The job failed!"%item
+                utils.message(0, 2, content, mes_level, log_file)
                 task_table['status'] = 'Failed'
             madx_out = [s for s in contents if 'madx_stdout' in s]
             if madx_out:
@@ -100,7 +115,8 @@ def preprocess_results(cf, cluster):
                 task_table['madx_stdout'] = utils.evlt(utils.compress_buf,\
                         [madx_out,'gzip'])
             else:
-                print("The madx_out file for job %s doesn't exist! The job failed!"%item)
+                content = "The madx_out file for job %s doesn't exist! The job failed!"%item
+                utils.message(0, 2, content, mes_level, log_file)
                 task_table['status'] = 'Failed'
             job_stdout = [s for s in contents if re.match('htcondor\..+\.out',s)]
             if job_stdout:
@@ -136,8 +152,9 @@ def preprocess_results(cf, cluster):
                     lines_tunes = line.split()
                 lines = lines_beta + lines_chrom + lines_tunes
                 if len(lines) != 21:
-                    print(lines)
-                    print('Error in one turn result of preprocess job %s!'%item)
+                    utils.message(0, 0, lines, mes_level, log_file)
+                    content = 'Error in one turn result of preprocess job %s!'%item
+                    utils.message(0, 2, content, mes_level, log_file)
                     task_table['status'] = 'Failed'
                     data = [task_id, item]+21*['None']+[mtime]
                 else:
@@ -151,7 +168,8 @@ def preprocess_results(cf, cluster):
                             [out_f,'gzip'])
                 else:
                     task_table['status'] = 'Failed'
-                    print("The madx output file %s for job %s doesn't exist! The job failed!"%(out, item))
+                    content = "The madx output file %s for job %s doesn't exist! The job failed!"%(out, item)
+                    utils.message(0, 2, content, mes_level, log_file)
             db.insert('preprocess_task', task_table)
             db.insert('oneturn_sixtrack_result', oneturn_table)
             if task_table['status'] == 'Success':
@@ -159,7 +177,8 @@ def preprocess_results(cf, cluster):
                 job_table['status'] = 'complete'
                 job_table['task_id'] = task_table['task_id']
                 db.update('preprocess_wu', job_table, where)
-                print("Preprocess job %s has completed normally!"%item)
+                content = "Preprocess job %s has completed normally!"%item
+                utils.message(0, 0, content, mes_level, log_file)
             else:
                 where = "wu_id=%s"%item
                 job_table['status'] = 'incomplete'
@@ -167,16 +186,22 @@ def preprocess_results(cf, cluster):
         else:
             task_table['status'] = 'Failed'
             db.insert('preprocess_task', task_table)
-            print("This is a failed job!")
+            content = "This is a failed job!"
+            utils.message(0, 1, content, mes_level, log_file)
         shutil.rmtree(job_path)
     db.close()
 
 def sixtrack_results(cf, cluster):
     '''Gather the results of sixtrack jobs and store in database'''
     info_sec = cf['info']
+    mes_level = int(info_sec['mes_level'])
+    log_file = info_sec['log_file']
+    if len(log_file) == 0:
+        log_file = None
     six_path = info_sec['path']
     if not os.path.isdir(six_path) or not os.listdir(six_path):
-        print("There isn't result in path %s!"%six_path)
+        content = "There isn't result in path %s!"%six_path
+        utils.message(0, 1, content, mes_level, log_file)
         return
     set_sec = cf['db_setting']
     f10_sec = cf['f10']
@@ -189,14 +214,16 @@ def sixtrack_results(cf, cluster):
     job_index = dict(job_ids)
     for item in os.listdir(six_path):
         if not item in job_index.keys():
-            print("Unknown sixtrack job id %s!"%item)
+            content = "Unknown sixtrack job id %s!"%item
+            utils.message(0, 2, content, mes_level, log_file)
             continue
         else:
             status = cluster.check_format(job_index[item])
             if status is None:
                 continue
             elif status:
-                print("The sixtrack job %s isn't completed yet!"%item)
+                content = "The sixtrack job %s isn't completed yet!"%item
+                utils.message(0, 1, content, mes_level, log_file)
                 continue
         job_path = os.path.join(six_path, item)
         job_table = {}
@@ -246,8 +273,9 @@ def sixtrack_results(cf, cluster):
                                     line = lines.split()
                                     countl += 1
                                     if len(line)!=60:
-                                        print(line)
-                                        print('Error in %s'%out_f)
+                                        utils.message(0, 0, line, mes_level, log_file)
+                                        content = 'Error in %s'%out_f
+                                        utils.message(0, 0, content, mes_level, log_file)
                                         task_table['status'] = 'Failed'
                                         line = [task_id, countl]+60*['None']+[mtime]
                                         f10_data.append(line)
@@ -257,14 +285,16 @@ def sixtrack_results(cf, cluster):
                             f10_table = dict(zip(f10_sec.keys(), zip(*f10_data)))
                         except:
                             task_table['status'] = 'Failed'
-                            print("There is something wrong with the output "
-                                    "file %s for job %s!"%(out, item))
+                            content = "There is something wrong with the output "\
+                                    "file %s for job %s!"%(out, item)
+                            utils.message(0, 2, content, mes_level, log_file)
                     task_table[out] = utils.evlt(utils.compress_buf,\
                             [out_f, 'gzip'])
                 else:
                     task_table['status'] = 'Failed'
-                    print("The sixtrack output file %s for job %s doesn't "
-                            "exist! The job failed!"%(out, item))
+                    content = "The sixtrack output file %s for job %s doesn't "\
+                            "exist! The job failed!"%(out, item)
+                    utils.message(0, 1, content, mes_level, log_file)
             task_table['task_name'] = ''
             task_table['mtime'] = time.time()
             db.insert('sixtrack_task', task_table)
@@ -274,7 +304,8 @@ def sixtrack_results(cf, cluster):
                 job_table['status'] = 'complete'
                 job_table['task_id'] = task_table['task_id']
                 db.update('sixtrack_wu', job_table, where)
-                print("Sixtrack job %s has completed normally!"%item)
+                content = "Sixtrack job %s has completed normally!"%item
+                utils.message(0, 0, content, mes_level, log_file)
             else:
                 where = "wu_id=%s"%item
                 job_table['status'] = 'incomplete'
@@ -282,7 +313,8 @@ def sixtrack_results(cf, cluster):
         else:
             task_table['status'] = 'Failed'
             db.insert('sixtrack_task', task_table)
-            print("This is an empty job path!")
+            content = "This is an empty job path!"
+            utils.message(0, 1, content, mes_level, log_file)
         shutil.rmtree(job_path)
     db.close()
 

@@ -15,6 +15,10 @@ class MyStudy(Study):
         '''initialize a study'''
         self.cluster_module = None #default
         self.cluster_name = 'HTCondor'
+
+        #echo message to the terminal, if not None, echo to log_file
+        self.log_file = None
+        self.mes_level = 1 #message level
         #All parameters are case-sensitive
         #the name of mask file
         self.madx_input["mask_file"] = 'hl10.mask'
