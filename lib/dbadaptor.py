@@ -1,7 +1,7 @@
 import os
 import sys
 import sqlite3
-import pymysql
+#import pymysql
 import collections
 from abc import ABC, abstractmethod
 

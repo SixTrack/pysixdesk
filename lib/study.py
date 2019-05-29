@@ -728,7 +728,7 @@ class Study(object):
             utils.message('Warning', content, self.mes_level, self.log_file)
             return
         sub_name = os.path.join(self.paths['sixtrack_in'], 'sub.db')
-        sub_main = os.path.join(self.study_path, self.dbname)
+        sub_main = self.db_info['db_name']
         if os.path.exists(sub_name):
             os.remove(sub_name)#remove the old one
         shutil.copy2(sub_main, sub_name)
