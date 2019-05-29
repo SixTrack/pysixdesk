@@ -83,7 +83,7 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
    1. prepare necessary folders (e.g. `./myTest/studies/test`) and copy template files (including `config.py`) for a study. If not argument is given, the default study name is `test` (if no studies are present) or `study_???` (with `???` being a zero-padded index of the study, calculated from the existing ones):
    
       ```python
-      myWS.initStudy('myStudy')
+      myWS.init_study('myStudy')
       ```
    
    1. edit the `config.py` file to add scan parameters;
