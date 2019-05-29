@@ -84,7 +84,7 @@ class HTCondor(Cluster):
                     conts = conts.replace(key, value)
                 f_out.write(conts)
         content = "The htcondor description file is ready!"
-        utils.message(0, 0, content, self.mes_level, self.log_file)
+        utils.message('Message', content, self.mes_level, self.log_file)
 
     def submit(self, input_path, job_name, trials=5, *args, **kwargs):
         '''Submit the job to the cluster
@@ -95,7 +95,7 @@ class HTCondor(Cluster):
         joblist = os.path.join(input_path, 'job_id.list')
         if not os.path.isfile(joblist):
             content = "There isn't %s job for submission!"%job_name
-            utils.message(0, 1, content, self.mes_level, self.log_file)
+            utils.message('Warning', content, self.mes_level, self.log_file)
             return False, None
         scont = 1
         while scont <= trials:
@@ -109,11 +109,11 @@ class HTCondor(Cluster):
                     stderr=PIPE, universal_newlines=True)
             stdout, stderr = process.communicate()
             if stderr:
-                utils.message(0, 0, stdout, self.mes_level, self.log_file)
-                utils.message(0, 2, stderr, self.mes_level, self.log_file)
+                utils.message('Message', stdout, self.mes_level, self.log_file)
+                utils.message('Error', stderr, self.mes_level, self.log_file)
                 scont += 1
             else:
-                utils.message(0, 0, stdout, self.mes_level, self.log_file)
+                utils.message('Message', stdout, self.mes_level, self.log_file)
                 outs = stdout.split()
                 [cluster_id, proc_st] = outs[0].split('.')
                 [cluster_id, proc_ed] = outs[-1].split('.')
@@ -127,7 +127,7 @@ class HTCondor(Cluster):
                     uniq_ids = [str(cl_id)+'.'+str(pr_id) for pr_id in proc_ls]
                     if len(wu_ids) != len(uniq_ids):
                         content = "There are something wrong during submitting!"
-                        utils.message(0, 0, content, self.mes_level, self.log_file)
+                        utils.message('Error', content, self.mes_level, self.log_file)
                         return False, None
                     else:
                         comb = list(zip(wu_ids, uniq_ids))
@@ -136,8 +136,8 @@ class HTCondor(Cluster):
                         return True, out
                 except:
                     content = traceback.print_exc()
-                    utils.message(0, 0, content, self.mes_level, self.log_file)
-                    utils.message(0, 0, outs, self.mes_level, self.log_file)
+                    utils.message('Error', content, self.mes_level, self.log_file)
+                    utils.message('Error', outs, self.mes_level, self.log_file)
                     return False, None
         return False, None
 
@@ -152,8 +152,8 @@ class HTCondor(Cluster):
                 stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:
-            utils.message(0, 0, stdout, self.mes_level, self.log_file)
-            utils.message(0, 2, stderr, self.mes_level, self.log_file)
+            utils.message('Message', stdout, self.mes_level, self.log_file)
+            utils.message('Error', stderr, self.mes_level, self.log_file)
             return None
         else:
             st = stdout.split()
@@ -163,14 +163,14 @@ class HTCondor(Cluster):
                     return st
                 except:
                     content = traceback.print_exc()
-                    utils.message(0, 2, content, self.mes_level, self.log_file)
+                    utils.message('Error', content, self.mes_level, self.log_file)
                     return None
             elif len(st) == 0:
                 return 0
             else:
                 content = "Unexpected output, job id %s isn't unique!"
-                utils.message(0, 2, content, self.mes_level, self.log_file)
-                utils.message(0, 0, stdout, self.mes_level, self.log_file)
+                utils.message('Error', content, self.mes_level, self.log_file)
+                utils.message('Message', stdout, self.mes_level, self.log_file)
                 return None
 
     def check(self, *args, **kwargs):
@@ -181,11 +181,11 @@ class HTCondor(Cluster):
                 stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:
-            utils.message(0, 0, stdout, self.mes_level, self.log_file)
-            utils.message(0, 2, stderr, self.mes_level, self.log_file)
+            utils.message('Message', stdout, self.mes_level, self.log_file)
+            utils.message('Error', stderr, self.mes_level, self.log_file)
             return None
         else:
-            utils.message(0, 0, stdout, self.mes_level, self.log_file)
+            utils.message('Message', stdout, self.mes_level, self.log_file)
             return stdout
 
     def remove(self, **args):
@@ -196,7 +196,7 @@ class HTCondor(Cluster):
                 stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:
-            utils.message(0, 0, stdout, self.mes_level, self.log_file)
-            utils.message(0, 2, stderr, self.mes_level, self.log_file)
+            utils.message('Message', stdout, self.mes_level, self.log_file)
+            utils.message('Error', stderr, self.mes_level, self.log_file)
         else:
-            utils.message(0, 0, stdout, self.mes_level, self.log_file)
+            utils.message('Message', stdout, self.mes_level, self.log_file)

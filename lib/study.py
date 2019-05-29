@@ -12,6 +12,7 @@ import importlib
 import utils
 import gather
 import traceback
+import dbtypedict
 
 from importlib.machinery import SourceFileLoader
 from subprocess import Popen, PIPE
@@ -316,10 +317,10 @@ class Study(object):
                     if os.path.isfile(s):
                         shutil.copy2(s, d)
                 content = "Copy templates from default source templates folder!"
-                utils.message(0, 0, content, self.mes_level, self.log_file)
+                utils.message('Message', content, self.mes_level, self.log_file)
             else:
                 content = "The default source templates folder %s is inavlid!"%tem_path
-                utils.message(0, 2, content, self.mes_level, self.log_file)
+                utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
 
         if not os.path.isdir(self.paths["preprocess_in"]):
@@ -387,13 +388,13 @@ class Study(object):
                 self.submission = cls(self.mes_level, self.log_file, self.paths['templates'])
             except:
                 content = traceback.print_exc()
-                utils.message(0, 2, content, self.mes_level, self.log_file)
+                utils.message('Error', content, self.mes_level, self.log_file)
                 content = "Failed to initialize submission module!"
-                utils.message(0, 2, content, self.mes_level, self.log_file)
+                utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
         else:
             content = "The submission module %s doesn't exist!"%cluster_module
-            utils.message(0, 2, content, self.mes_level, self.log_file)
+            utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
 
 
@@ -407,7 +408,7 @@ class Study(object):
         for re in require:
             if re not in cont:
                 content = "The required file %s isn't found in %s!"%(re, temp)
-                utils.message(0, 2, content, self.mes_level, self.log_file)
+                utils.message('Error', content, self.mes_level, self.log_file)
                 return
         outputs = self.db.select('templates', self.tables['templates'].keys())
         if not outputs:
@@ -472,7 +473,7 @@ class Study(object):
                 i = check_params.index(element)
                 name = check_jobs[i][1]
                 content = "The job %s is already in the database!"%name
-                utils.message(0, 1, content, self.mes_level, self.log_file)
+                utils.message('Warning', content, self.mes_level, self.log_file)
                 continue
             for i in range(len(element)):
                 ky = keys[i]
@@ -496,7 +497,7 @@ class Study(object):
             madx_table['mtime'] = time.time()
             self.db.insert('preprocess_wu', madx_table)
             content = 'Store preprocess job %s into database!'%job_name
-            utils.message(0, 0, content, self.mes_level, self.log_file)
+            utils.message('Message', content, self.mes_level, self.log_file)
 
         #prepare sixtrack paramters in database
         self.config.clear()
@@ -518,7 +519,7 @@ class Study(object):
         madx_vals = self.db.select('preprocess_wu', ['wu_id']+madx_keys)
         if not madx_vals:
             content = "The preprocess_wu table is empty!"
-            utils.message(0, 1, content, self.mes_level, self.log_file)
+            utils.message('Warning', content, self.mes_level, self.log_file)
             return
         madx_vals = list(zip(*madx_vals))
         madx_ids = list(madx_vals[0])
@@ -548,7 +549,7 @@ class Study(object):
                 i = outputs.index(element)
                 nm = namevsid[i][1]
                 content = "The sixtrack job %s is already in the database!"%nm
-                utils.message(0, 1, content, self.mes_level, self.log_file)
+                utils.message('Warning', content, self.mes_level, self.log_file)
                 continue
             for i in range(len(element)-1):
                 ky = keys[i]
@@ -580,7 +581,7 @@ class Study(object):
             job_table['mtime'] = time.time()
             self.db.insert('sixtrack_wu', job_table)
             content = 'Store sixtrack job %s into database!'%job_name
-            utils.message(0, 0, content, self.mes_level, self.log_file)
+            utils.message('Message', content, self.mes_level, self.log_file)
 
     def info(self, job=2, where=None):
         '''Print the status information of this study.
@@ -593,7 +594,7 @@ class Study(object):
         conts = os.listdir(loc)
         if self.dbname not in conts:
             content = "This study directory is empty!"
-            utils.message(0, 1, content, self.mes_level, self.log_file)
+            utils.message('Warning', content, self.mes_level, self.log_file)
         else:
             query= ['wu_id', 'job_name', 'status', 'unique_id']
             if job==0 or job==2:
@@ -627,7 +628,7 @@ class Study(object):
             table_name = 'sixtrack_wu'
         else:
             content = "Unknow job type %s"%typ
-            utils.message(0, 2, content, self.mes_level, self.log_file)
+            utils.message('Error', content, self.mes_level, self.log_file)
             return
 
         batch_name = os.path.join(self.study_path, jobname)
@@ -640,7 +641,7 @@ class Study(object):
                 trials, *args, *kwargs)
         if status:
             content = "Submit %s job successfully!"%jobname
-            utils.message(0, 0, content, self.mes_level, self.log_file)
+            utils.message('Message', content, self.mes_level, self.log_file)
             table = {}
             table['status'] = 'submitted'
             for ky, vl in out.items():
@@ -650,7 +651,7 @@ class Study(object):
                 self.db.update(table_name, table, where)
         else:
             content = "Failed to submit %s job!"%jobname
-            utils.message(0, 1, content, self.mes_level, self.log_file)
+            utils.message('Warning', content, self.mes_level, self.log_file)
 
     def collect_result(self, typ, trials=5, platform='local', clean='False'):
         '''Collect the results of preprocess or  sixtrack jobs'''
@@ -686,7 +687,7 @@ class Study(object):
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
         else:
             content = "Unkown job type %s"%typ
-            utils.message(0, 2, content, self.mes_level, self.log_file)
+            utils.message('Error', content, self.mes_level, self.log_file)
 
         in_path = os.path.join(self.paths['gather'], str(typ))
         out_path = in_path
@@ -714,7 +715,7 @@ class Study(object):
         preprocess_outs = self.db.select('preprocess_wu', ['wu_id', 'task_id'], where)
         if not preprocess_outs:
             content = "There isn't complete madx job!"
-            utils.message(0, 1, content, self.mes_level, self.log_file)
+            utils.message('Warning', content, self.mes_level, self.log_file)
             return
         preprocess_outs = list(zip(*preprocess_outs))
         if len(preprocess_outs[0]) == 1:
@@ -724,7 +725,7 @@ class Study(object):
         outputs = self.db.select('sixtrack_wu', ['wu_id', 'preprocess_id', 'input_file'], where)
         if not outputs:
             content = "There isn't available sixtrack job to submit!"
-            utils.message(0, 1, content, self.mes_level, self.log_file)
+            utils.message('Warning', content, self.mes_level, self.log_file)
             return
         sub_name = os.path.join(self.paths['sixtrack_in'], 'sub.db')
         sub_main = os.path.join(self.study_path, self.dbname)
@@ -765,7 +766,7 @@ class Study(object):
         if not wu_ids:
             content = "There isn't available sixtrack job to submit due to "\
                     + "failed furter calculation!"
-            utils.message(0, 2, content, self.mes_level, self.log_file)
+            utils.message('Error', content, self.mes_level, self.log_file)
             return
         incom_job['wu_id'] = wu_ids
         incom_job['preprocess_id'] = pre_ids
@@ -778,7 +779,7 @@ class Study(object):
         wu_ids = list(zip(*wu_ids))[0]
         sub_db.close()
         content = "The submitted database %s is ready!"%sub_name
-        utils.message(0, 0, content, self.mes_level, self.log_file)
+        utils.message('Message', content, self.mes_level, self.log_file)
         tran_input =[]
         tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
         tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
@@ -796,7 +797,7 @@ class Study(object):
         outputs = self.db.select('preprocess_wu', ['wu_id', 'input_file'], where)
         if not outputs:
             content = "There isn't incomplete preprocess job!"
-            utils.message(0, 1, content, self.mes_level, self.log_file)
+            utils.message('Warning', content, self.mes_level, self.log_file)
             return
         sub_name = os.path.join(self.paths['preprocess_in'], 'sub.db')
         if os.path.exists(sub_name):
@@ -814,7 +815,7 @@ class Study(object):
         wu_ids = list(zip(*wu_ids))[0]
         sub_db.close()
         content = "The submitted database %s is ready!"%sub_name
-        utils.message(0, 0, content, self.mes_level, self.log_file)
+        utils.message('Message', content, self.mes_level, self.log_file)
         trans =[]
         trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
         trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
@@ -838,7 +839,7 @@ class Study(object):
             b = '_'.join(map(str, a))
         else:
             content = "The input list keys and values must have same length!"
-            utils.message(0, 2, content, self.mes_level, self.log_file)
+            utils.message('Error', content, self.mes_level, self.log_file)
         mk = prefix + '_' + b + suffix
         return mk
 
@@ -846,4 +847,4 @@ class Study(object):
         '''The destructor'''
         self.db.close()
         content = 'Database is closed!'
-        utils.message(0, 0, content, self.mes_level, self.log_file)
+        utils.message('Message', content, self.mes_level, self.log_file)

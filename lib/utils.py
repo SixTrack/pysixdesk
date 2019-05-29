@@ -7,7 +7,7 @@ import shutil
 from datetime import datetime
 
 #Gobal variables
-MES_TYPE = dict([[0,'Message'], [1, 'Warning'], [2, 'Error']])
+MES_TYPE = dict([['Progress', 0], ['Warning', 1], ['Message', 2], ['Error', 3]])
 PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def check(files):
@@ -156,15 +156,16 @@ def decompress_buf(buf, out, des='file'):
         print("Invalid input data!")
         return status
 
-def message(meslevel, ty, content, level=1, log_file=None, **kwargs):
+def message(mes_type, content, level=1, log_file=None):
     '''Print the different type message to the destination'''
-    if meslevel <= level:
+    if mes_type in MES_TYPE.keys():
+        mes_level = MES_TYPE[mes_type]
+    else:
+        mes_type = 'Unknow'
+        mes_level = 1
+    if mes_level >= level:
         now = datetime.now()
-        date_time = now.strftime("%a %d/%b/%Y %H:%M:%S")
-        if ty in MES_TYPE.keys():
-            mes_type = MES_TYPE[ty]
-        else:
-            mes_type = 'Unknow'
+        date_time = now.strftime("%Y/%b/%d %H:%M:%S")
         message = "%s %s: %s"%(date_time, mes_type, content)
         if log_file is not None:
             with open(log_file, 'a') as f_out:
