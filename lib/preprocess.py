@@ -10,7 +10,9 @@ import configparser
 from pysixdb import SixDB
 
 def run(wu_id, db_name):
-    db = SixDB(db_name)
+    db_info = {}
+    db_info['db_name'] = db_name
+    db = SixDB(db_info)
     wu_id = str(wu_id)
     where = 'wu_id=%s'%wu_id
     outputs = db.select('preprocess_wu', ['input_file'], where)

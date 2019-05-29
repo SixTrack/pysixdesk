@@ -29,6 +29,7 @@ class Study(object):
         self.submission = None
         self.preprocess_joblist = []
         self.sixtrack_joblist = []
+        self.db_info = {}
         #All the requested parameters for a study
         self.paths = {}
         self.env = {}
@@ -115,7 +116,8 @@ class Study(object):
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
 
-        self.dbname = 'data.db'
+        self.db_info['db_name'] = os.path.join(self.study_path, 'data.db')
+        self.db_info['db_type'] = 'sql'
         #Default definition of the database tables
         self.tables['templates'] = collections.OrderedDict()
         self.tables['env'] = collections.OrderedDict()
@@ -332,8 +334,8 @@ class Study(object):
             os.makedirs(self.paths["gather"])
 
         #Initialize the database
-        dbname = os.path.join(self.study_path, self.dbname)
-        self.db = SixDB(dbname, self.db_settings, True)
+        #dbname = os.path.join(self.study_path, self.dbname)
+        self.db = SixDB(self.db_info, self.db_settings, True)
 
     def customize(self):
         '''Update the column names of database tables  and initialize the
@@ -656,7 +658,7 @@ class Study(object):
         self.config['info'] = {}
         info_sec = self.config['info']
         self.config['db_setting'] = self.db_settings
-        info_sec['db'] = os.path.join(self.study_path, self.dbname)
+        self.config['db_info'] = self.db_info
         info_sec['mes_level'] = str(self.mes_level)
         if self.log_file is None:
             info_sec['log_file'] = ''
@@ -729,7 +731,9 @@ class Study(object):
         if os.path.exists(sub_name):
             os.remove(sub_name)#remove the old one
         shutil.copy2(sub_main, sub_name)
-        sub_db = SixDB(sub_name, self.db_settings)
+        db_info = {}
+        db_info['db_name'] = sub_name
+        sub_db = SixDB(db_info, self.db_settings)
         sub_db.drop_table('sixtrack_task')
         sub_db.drop_table('result')
         sub_db.drop_table('sixtrack_wu')
@@ -797,7 +801,9 @@ class Study(object):
         sub_name = os.path.join(self.paths['preprocess_in'], 'sub.db')
         if os.path.exists(sub_name):
             os.remove(sub_name)#remove the old one
-        sub_db = SixDB(sub_name, self.db_settings, create=True)
+        db_info = {}
+        db_info['db_name'] = sub_name
+        sub_db = SixDB(db_info, self.db_settings, create=True)
         sub_db.create_table('preprocess_wu', {'wu_id':'int','input_file':'blob'})
         incom_job = {}
         outputs = list(zip(*outputs))

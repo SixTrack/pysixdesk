@@ -61,9 +61,9 @@ def preprocess_results(cf, cluster):
         return
     contents = os.listdir(preprocess_path)
     set_sec = cf['db_setting']
-    db_name = info_sec['db']
+    db_info = cf['db_info']
     oneturn = cf['oneturn']
-    db = SixDB(db_name, set_sec)
+    db = SixDB(db_info, set_sec)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
     where = "status='submitted'"
     job_ids = db.select('preprocess_wu', ['wu_id', 'unique_id'], where)
@@ -205,8 +205,8 @@ def sixtrack_results(cf, cluster):
         return
     set_sec = cf['db_setting']
     f10_sec = cf['f10']
-    db_name = info_sec['db']
-    db = SixDB(db_name, set_sec)
+    db_info = cf['db_info']
+    db = SixDB(db_info, set_sec)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
     where = "status='submitted'"
     job_ids = db.select('sixtrack_wu', ['wu_id', 'unique_id'], where)

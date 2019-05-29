@@ -7,27 +7,39 @@ import dbadaptor
 
 class SixDB(object):
 
-    def __init__(self, name, settings=None, create=False, dbtype='sql'):
-        self.name = name #absolute path of the database in a study folder
-        self.dbtype = dbtype
+    def __init__(self, db_info, settings=None, create=False):
+        '''Constructor.
+        db_info(dict): contain the information of the database,
+                       such as db_name, type, user, password, host and so on
+        For sqlite db only db_name is needed which should be an absolute path,
+        For MySQL db db_info should contain db_name(just name), user,
+        password, host, port and other optional arguments.
+        '''
         self.settings = settings
-        if not create and not os.path.exists(name):
-            print("The database %s doesn't exist!"%name)
-            sys.exit(1)
-        else:
-            self._setup()
+        self.create = create
+        self._setup(db_info)
 
-    def _setup(self):
-        '''Setup the database with the given tables'''
-        if self.dbtype.lower() == 'sql':
+    def _setup(self, db_info):
+        '''Setup the database'''
+        if 'db_type' not in db_info.keys():
+            dbtype = 'sql'
+        else:
+            dbtype = db_info['db_type']
+        if dbtype.lower() == 'sql':
             self.adaptor = dbadaptor.SQLDatabaseAdaptor()
-        elif self.dbtype.lower() == 'mysql':
+            name = db_info['db_name']
+            if not self.create and not os.path.exists(name):
+                print("The database %s doesn't exist!"%name)
+                sys.exit(1)
+        elif dbtype.lower() == 'mysql':
             self.adaptor = dbadaptor.MySQLDatabaseAdaptor()
+            if self.create:
+                self.adaptor.create_db(**db_info)
         else:
             print("Unkonw database type!")
             sys.exit(0)
 
-        self.conn = self.adaptor.new_connection(self.name)
+        self.conn = self.adaptor.new_connection(**db_info)
         if self.settings is not None:
             self.setting(self.settings)
 
