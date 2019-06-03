@@ -5,6 +5,7 @@ import os
 import sys
 import ast
 import copy
+import traceback
 from study import Study
 from math import sqrt, pi, sin, cos
 
