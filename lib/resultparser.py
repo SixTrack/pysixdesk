@@ -59,13 +59,13 @@ def parse_preprocess(item, job_path, file_list, job_count, task_id, task_table,
         chrom = os.path.join(job_path, chrom[0])
         tunes = os.path.join(job_path, tunes[0])
         mtime = os.path.getmtime(betavalue)
-        with open(betavalue, 'r') as f_in:
+        with gzip.open(betavalue, 'rt') as f_in:
             line = f_in.read()
             lines_beta = line.split()
-        with open(chrom, 'r') as f_in:
+        with gzip.open(chrom, 'rt') as f_in:
             line = f_in.read()
             lines_chrom = line.split()
-        with open(tunes, 'r') as f_in:
+        with gzip.open(tunes, 'rt') as f_in:
             line = f_in.read()
             lines_tunes = line.split()
         lines = lines_beta + lines_chrom + lines_tunes
@@ -126,7 +126,7 @@ def parse_sixtrack(item, job_path, file_list, count, task_id, task_table,
                 try:
                     mtime = os.path.getmtime(out_f)
                     f10_data = []
-                    with gzip.open(out_f, 'r') as f_in:
+                    with gzip.open(out_f, 'rt') as f_in:
                         for lines in f_in:
                             line = lines.split()
                             countl += 1

@@ -6,17 +6,26 @@ import utils
 import shutil
 import zipfile
 import configparser
+import resultparser as rp
 
 from pysixdb import SixDB
 
-def run(wu_id, db_name):
+def run(wu_id, input_info):
+    cf = configparser.ConfigParser()
+    cf.optionxform = str #preserve case
+    cf.read(input_info)
     db_info = {}
-    db_info['db_name'] = db_name
+    db_info.update(cf['db_info'])
+    dbtype = db_info['db_type']
     db = SixDB(db_info)
     wu_id = str(wu_id)
     where = 'wu_id=%s'%wu_id
     outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc'], where)
-    #db.close()
+    task_count = db.select('sixtrack_task', ['task_id'])
+    where = "wu_id=%s"%wu_id
+    job_count = db.select('sixtrack_task', ['task_id'], where)
+    count = len(job_count) + 1
+    six_task_id = len(task_count) + 1
     if not outputs:
         print("There isn't input file for sixtrack job %s!"%wu_id)
         db.close()
@@ -25,8 +34,7 @@ def run(wu_id, db_name):
     boinc = outputs[0][2]
     input_buf = outputs[0][0]
     input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
-    cf = configparser.ConfigParser()
-    cf.optionxform = str #preserve case
+    cf.clear()
     cf.read_string(input_file)
     sixtrack_config = cf['sixtrack']
     inp = sixtrack_config["input_files"]
@@ -42,9 +50,8 @@ def run(wu_id, db_name):
     input_buf = db.select('preprocess_task', inputs, where)
     db.close()
     if not input_buf:
-        print("The required file %s isn't found!"%infile)
+        print("The required files aren't found!")
         return 0
-
     for infile in inputs:
         i = inputs.index(infile)
         buf = input_buf[0][i]
@@ -53,7 +60,58 @@ def run(wu_id, db_name):
     boinc_vars = cf['boinc']
     sixtrack_config['boinc'] = boinc
     sixtrack_config['wu_id'] = wu_id
-    status = sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
+    six_status = sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
+    status = False
+    if six_status:
+        if dbtype.lower() == 'sql':
+            dest_path = sixtrack_config["dest_path"]
+        else:
+            dest_path = './result'
+        if not os.path.isdir(dest_path):
+            os.makedirs(dest_path)
+        inp = sixtrack_config["output_files"]
+        output_files = utils.evlt(utils.decode_strings, [inp])
+        down_list = list(output_files)
+        down_list.append('fort.3')
+        status = utils.download_output(down_list, dest_path)
+
+    if dbtype.lower() == 'sql':
+        return status
+
+    f10_sec = cf['f10']
+    job_table = {}
+    task_table = {}
+    f10_table = {}
+    task_table['status'] = 'Success'
+    db = SixDB(db_info)
+    if status:
+        job_path = dest_path
+        rp.parse_sixtrack(wu_id, job_path, output_files, count, six_task_id,
+                task_table, f10_table, f10_sec.keys())
+        db.insert('sixtrack_task', task_table)
+        db.insertm('six_results', f10_table)
+        if task_table['status'] == 'Success':
+            where = "wu_id=%s"%wu_id
+            job_table['status'] = 'complete'
+            job_table['task_id'] = task_table['task_id']
+            db.update('sixtrack_wu', job_table, where)
+            content = "Sixtrack job %s has completed normally!"%wu_id
+            utils.message('Message', content)
+        else:
+            where = "wu_id=%s"%wu_id
+            job_table['status'] = 'incomplete'
+            db.update('sixtrack_wu', job_table, where)
+    else:
+        task_table['status'] = 'Failed'
+        task_table['task_id'] = task_id
+        task_table['count'] = count
+        db.insert('sixtrack_task', task_table)
+        where = "wu_id=%s"%wu_id
+        job_table['status'] = 'incomplete'
+        db.update('sixtrack_wu', job_table, where)
+        content = "The sixtrack job failed!"
+        utils.message('Warning', content)
+    db.close()
     return status
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
@@ -153,9 +211,9 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         shutil.move('fort.3','../fort.3')
         print('Sixtrack job %s has completed normally!'%wu_id)
     os.chdir('../') #get out of junk folder
-    down_list = output_files
-    down_list.append('fort.3')
-    status = utils.download_output(down_list, dest_path)
+    #down_list = output_files
+    #down_list.append('fort.3')
+    #status = utils.download_output(down_list, dest_path)
 
     if boinc.lower() is 'true':
         print('The job passes the test and will be sumbitted to BOINC!')

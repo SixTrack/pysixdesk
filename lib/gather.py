@@ -18,10 +18,17 @@ def run(wu_id, infile):
     if os.path.isfile(infile):
         cf.read(infile)
         info_sec = cf['info']
-        cluster_module = info_sec['cluster_module']
-        classname = info_sec['cluster_name']
         mes_level = int(info_sec['mes_level'])
         log_file = info_sec['log_file']
+        db_info = cf['db_info']
+        dbtype = db_info['db_type']
+        if dbtype.lower() == 'mysql':
+            content = "Don't need to gather results manually with MySQL db!"
+            utils.message('Message', content, mes_level, log_file)
+            sys.exit(0)
+
+        cluster_module = info_sec['cluster_module']
+        classname = info_sec['cluster_name']
         if len(log_file) == 0:
             log_file = None
         try:
@@ -64,7 +71,7 @@ def preprocess_results(cf, cluster):
     set_sec = cf['db_setting']
     db_info = cf['db_info']
     oneturn = cf['oneturn']
-    db = SixDB(db_info, set_sec)
+    db = SixDB(db_info, set_sec, False, mes_level, log_file)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
     where = "status='submitted'"
     job_ids = db.select('preprocess_wu', ['wu_id', 'unique_id'], where)
@@ -135,7 +142,7 @@ def sixtrack_results(cf, cluster):
     set_sec = cf['db_setting']
     f10_sec = cf['f10']
     db_info = cf['db_info']
-    db = SixDB(db_info, set_sec)
+    db = SixDB(db_info, set_sec, False, mes_level, log_file)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
     where = "status='submitted'"
     job_ids = db.select('sixtrack_wu', ['wu_id', 'unique_id'], where)

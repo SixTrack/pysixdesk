@@ -1,14 +1,17 @@
 import os
 import sys
+import utils
 import sqlite3
-#import pymysql
+import pymysql
 import collections
+import traceback
 from abc import ABC, abstractmethod
 
 class DatabaseAdaptor(ABC):
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, mes_level, log_file):
+        self.mes_level = mes_level
+        self.log_file = log_file
 
     @abstractmethod
     def new_connection(self, name):
@@ -160,8 +163,10 @@ class DatabaseAdaptor(ABC):
 
 class SQLDatabaseAdaptor(DatabaseAdaptor):
 
-    def __init__(self, name = 'no name'):
-        DatabaseAdaptor.__init__(self, name)
+    def __init__(self, mes_level=1, log_file=None):
+        DatabaseAdaptor.__init__(self, mes_level, log_file)
+        self.mes_level = mes_level
+        self.log_file = log_file
 
     def new_connection(self, db_name, **args):
         '''Create a new connection'''
@@ -198,28 +203,40 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
-    def __init__(self, name='no name'):
-        DatabaseAdaptor.__init__(self, name)
+    def __init__(self, mes_level=1, log_file=None):
+        DatabaseAdaptor.__init__(self, mes_level, log_file)
+        self.mes_level = mes_level
+        self.log_file = log_file
 
     def create_db(self, host, user, passwd, db_name, **args):
         '''Create a new database'''
-        conn = pymysql.connect(host, user, passwd, **args)
-        c = conn.cursor()
-        sql = "SELECT schema_name FROM information_schema.schemata\
-                WHERE schema_name='%s'"%db_name
-        c.execute(sql)
+        try:
+            conn = pymysql.connect(host, user, passwd, **args)
+            c = conn.cursor()
+            sql = "SELECT schema_name FROM information_schema.schemata\
+                    WHERE schema_name='%s'"%db_name
+            c.execute(sql)
+        except:
+            content = traceback.print_exc()
+            utils.message('Error', content, self.mes_level, self.log_file)
+            sys.exit(1)
+
         if not list(c):
             try:
                 sql = "CREATE DATABASE %s"%db_name
                 c.execute(sql)
                 conn.commit()
             except:
-                print("Failed to create new db %s!"%db_name)
+                content = traceback.print_exc()
+                utils.message('Error', content, self.mes_level, self.log_file)
+                content = "Failed to create new db %s!"%db_name
+                utils.message('Error', content, self.mes_level, self.log_file)
                 conn.rollback()
             finally:
                 conn.close()
         else:
-            print("The db %s already exist!"%db_name)
+            content = "The db %s already exist!"%db_name
+            utils.message('Warning', content, self.mes_level, self.log_file)
 
     def new_connection(self, host, user, passwd, db_name, **args):
         '''Connect to an exist database'''
@@ -227,7 +244,10 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
             conn = pymysql.connect(host, user, passwd, db_name, **args)
             return conn
         except:
-            print("Failed to connect to databae %s!"%db_name)
+            content = traceback.print_exc()
+            utils.message('Error', content, self.mes_level, self.log_file)
+            content = "Failed to connect to databae %s!"%db_name
+            utils.message('Error', content, self.mes_level, self.log_file)
             return
 
     def setting(self, conn, settings):

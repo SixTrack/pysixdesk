@@ -21,7 +21,6 @@ class MyStudy(Study):
         self.log_file = None
         self.mes_level = 1 #message level
         #Add database informations
-        #self.db_info['db_name']
         #self.db_info['db_type'] = 'sql'
         #The follow information is needed when the db type is mysql
         self.db_info['host'] = '127.0.0.1'
