@@ -98,14 +98,10 @@ def preprocess_results(cf, cluster):
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
             task_count = db.select('preprocess_task', ['task_id'])
-            where = "wu_id=%s"%item
-            job_count = db.select('preprocess_task', ['task_id'], where)
-            count = len(job_count) + 1
             task_id = len(task_count) + 1
             #parse the results
-            rp.parse_preprocess(item, job_path, file_list, count, task_id,
-                    task_table, oneturn_table, oneturn.keys(), mes_level,
-                    log_file)
+            rp.parse_preprocess(item, job_path, file_list, task_id, task_table,
+                    oneturn_table, oneturn.keys(), mes_level, log_file)
             db.insert('preprocess_task', task_table)
             db.insert('oneturn_sixtrack_result', oneturn_table)
             if task_table['status'] == 'Success':
@@ -168,13 +164,10 @@ def sixtrack_results(cf, cluster):
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
             task_count = db.select('sixtrack_task', ['task_id'])
-            where = "wu_id=%s"%item
-            job_count = db.select('sixtrack_task', ['task_id'], where)
-            #parse the result
-            count = len(job_count) + 1
             task_id = len(task_count) + 1
-            rp.parse_sixtrack(item, job_path, file_list, count, task_id,
-                    task_table, f10_table, f10_sec.keys(), mes_level, log_file)
+            #parse the result
+            rp.parse_sixtrack(item, job_path, file_list, task_id, task_table,
+                    f10_table, f10_sec.keys(), mes_level, log_file)
             db.insert('sixtrack_task', task_table)
             db.insertm('six_results', f10_table)
             if task_table['status'] == 'Success':

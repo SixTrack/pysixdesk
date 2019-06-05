@@ -21,11 +21,6 @@ def run(wu_id, input_info):
     wu_id = str(wu_id)
     where = 'wu_id=%s'%wu_id
     outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc'], where)
-    task_count = db.select('sixtrack_task', ['task_id'])
-    where = "wu_id=%s"%wu_id
-    job_count = db.select('sixtrack_task', ['task_id'], where)
-    count = len(job_count) + 1
-    six_task_id = len(task_count) + 1
     if not outputs:
         print("There isn't input file for sixtrack job %s!"%wu_id)
         db.close()
@@ -60,52 +55,48 @@ def run(wu_id, input_info):
     boinc_vars = cf['boinc']
     sixtrack_config['boinc'] = boinc
     sixtrack_config['wu_id'] = wu_id
-    six_status = sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
-    status = False
-    if six_status:
-        if dbtype.lower() == 'sql':
-            dest_path = sixtrack_config["dest_path"]
-        else:
-            dest_path = './result'
-        if not os.path.isdir(dest_path):
-            os.makedirs(dest_path)
-        inp = sixtrack_config["output_files"]
-        output_files = utils.evlt(utils.decode_strings, [inp])
-        down_list = list(output_files)
-        down_list.append('fort.3')
-        status = utils.download_output(down_list, dest_path)
+    status = sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
+    if dbtype.lower() == 'sql':
+        dest_path = sixtrack_config["dest_path"]
+    else:
+        dest_path = './result'
+    if not os.path.isdir(dest_path):
+        os.makedirs(dest_path)
+    inp = sixtrack_config["output_files"]
+    output_files = utils.evlt(utils.decode_strings, [inp])
+    down_list = list(output_files)
+    down_list.append('fort.3')
+    status = utils.download_output(down_list, dest_path)
+    if status:
+        print("All requested results have stored in %s"%dest_path)
+    else:
+        print("Job failed!")
 
     if dbtype.lower() == 'sql':
         return status
 
+    #Reconnect after job finished
+    db = SixDB(db_info)
     f10_sec = cf['f10']
     job_table = {}
     task_table = {}
     f10_table = {}
     task_table['status'] = 'Success'
-    db = SixDB(db_info)
-    if status:
-        job_path = dest_path
-        rp.parse_sixtrack(wu_id, job_path, output_files, count, six_task_id,
-                task_table, f10_table, f10_sec.keys())
-        db.insert('sixtrack_task', task_table)
-        db.insertm('six_results', f10_table)
-        if task_table['status'] == 'Success':
-            where = "wu_id=%s"%wu_id
-            job_table['status'] = 'complete'
-            job_table['task_id'] = task_table['task_id']
-            db.update('sixtrack_wu', job_table, where)
-            content = "Sixtrack job %s has completed normally!"%wu_id
-            utils.message('Message', content)
-        else:
-            where = "wu_id=%s"%wu_id
-            job_table['status'] = 'incomplete'
-            db.update('sixtrack_wu', job_table, where)
+    task_count = db.select('sixtrack_task', ['task_id'])
+    six_task_id = len(task_count) + 1
+    job_path = dest_path
+    rp.parse_sixtrack(wu_id, job_path, output_files, six_task_id, task_table,
+            f10_table, f10_sec.keys())
+    db.insert('sixtrack_task', task_table)
+    db.insertm('six_results', f10_table)
+    if task_table['status'] == 'Success':
+        where = "wu_id=%s"%wu_id
+        job_table['status'] = 'complete'
+        job_table['task_id'] = task_table['task_id']
+        db.update('sixtrack_wu', job_table, where)
+        content = "Sixtrack job %s has completed normally!"%wu_id
+        utils.message('Message', content)
     else:
-        task_table['status'] = 'Failed'
-        task_table['task_id'] = task_id
-        task_table['count'] = count
-        db.insert('sixtrack_task', task_table)
         where = "wu_id=%s"%wu_id
         job_table['status'] = 'incomplete'
         db.update('sixtrack_wu', job_table, where)

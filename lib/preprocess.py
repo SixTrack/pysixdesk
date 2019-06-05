@@ -32,93 +32,72 @@ def run(wu_id, input_info):
     madx_config = cf['madx']
     mask_config = cf['mask']
     oneturn = cf['oneturn']
-    madx_status = madxjob(madx_config, mask_config)
+    status = madxjob(madx_config, mask_config)
 
-    if not madx_status and dbtype.lower() == 'sql':
+    if not status and dbtype.lower() == 'sql':
         content = "The madx job failed!"
         utils.message('Warning', content)
-        return madx_status
+        return status
 
+    otpt = madx_config["output_files"]
+    output_files = utils.evlt(utils.decode_strings, [otpt])
+    if status:
+        sixtrack_config = cf['sixtrack']
+        fort3_config = cf._sections['fort3']
+        status = sixtrackjobs(sixtrack_config, fort3_config)
+
+    if dbtype.lower() == 'mysql':
+        dest_path = './result'
+    else:
+        dest_path = madx_config["dest_path"]
+    if not os.path.isdir(dest_path):
+        os.makedirs(dest_path)
+
+    #Download the requested files.
+    down_list = list(output_files.values())
+    down_list.append('madx_in')
+    down_list.append('madx_stdout')
+    down_list.append('sixdesktunes')
+    down_list.append('mychrom')
+    down_list.append('betavalues')
+    status = utils.download_output(down_list, dest_path)
+    if status:
+        print("All requested results have stored in %s"%dest_path)
+    else:
+        print("Job failed!")
+
+    if dbtype.lower() == 'sql':
+        return status
+
+    #reconnect after jobs finished
+    db = SixDB(db_info)
     job_table = {}
     task_table = {}
     oneturn_table = {}
     task_table['status'] = 'Success'
-    if madx_status:
-        sixtrack_config = cf['sixtrack']
-        fort3_config = cf._sections['fort3']
-        six_status = sixtrackjobs(sixtrack_config, fort3_config)
-        status = False
-        if six_status:
-            if dbtype.lower() == 'mysql':
-                dest_path = './result'
-            else:
-                dest_path = madx_config["dest_path"]
-            if not os.path.isdir(dest_path):
-                os.makedirs(dest_path)
-            otpt = madx_config["output_files"]
-            output_files = utils.evlt(utils.decode_strings, [otpt])
-            down_list = list(output_files.values())
-            #Download the requested files.
-            down_list.append('madx_in')
-            down_list.append('madx_stdout')
-            down_list.append('sixdesktunes')
-            down_list.append('mychrom')
-            down_list.append('betavalues')
-            status = utils.download_output(down_list, dest_path)
-            print("All requested results have stored in %s"%dest_path)
+    task_count = db.select('preprocess_task', ['task_id'])
+    task_id = len(task_count) + 1
 
-        if dbtype.lower() == 'sql':
-            return status
-        #reconnect after jobs finished
-        db = SixDB(db_info)
-        task_count = db.select('preprocess_task', ['task_id'])
+    job_path = dest_path
+    rp.parse_preprocess(wu_id, job_path, output_files, task_id, task_table,
+            oneturn_table, oneturn.keys())
+    db.insert('preprocess_task', task_table)
+    db.insert('oneturn_sixtrack_result', oneturn_table)
+    if task_table['status'] == 'Success':
         where = "wu_id=%s"%wu_id
-        job_count = db.select('preprocess_task', ['task_id'], where)
-        count = len(job_count) + 1
-        task_id = len(task_count) + 1
-        if status:
-            if dbtype.lower() == 'mysql':
-                job_path = dest_path
-                rp.parse_preprocess(wu_id, job_path, output_files, count,
-                        task_id, task_table, oneturn_table, oneturn.keys())
-                db.insert('preprocess_task', task_table)
-                db.insert('oneturn_sixtrack_result', oneturn_table)
-                if task_table['status'] == 'Success':
-                    where = "wu_id=%s"%wu_id
-                    job_table['status'] = 'complete'
-                    job_table['task_id'] = task_table['task_id']
-                    db.update('preprocess_wu', job_table, where)
-                    content = "Preprocess job %s has completed normally!"%wu_id
-                    utils.message('Message', content)
-                else:
-                    where = "wu_id=%s"%wu_id
-                    job_table['status'] = 'incomplete'
-                    db.update('preprocess_wu', job_table, where)
-        else:
-            task_table['status'] = 'Failed'
-            task_table['task_id'] = task_id
-            task_table['count'] = count
-            db.insert('preprocess_task', task_table)
-            where = "wu_id=%s"%wu_id
-            job_table['status'] = 'incomplete'
-            db.update('preprocess_wu', job_table, where)
-            content = "This is a failed job!"
-            utils.message('Warning', content)
-        db.close()
-        return status
+        job_table['status'] = 'complete'
+        job_table['task_id'] = task_table['task_id']
+        db.update('preprocess_wu', job_table, where)
+        content = "Preprocess job %s has completed normally!"%wu_id
+        utils.message('Message', content)
     else:
-        db = SixDB(db_info)
-        task_table['status'] = 'Failed'
-        task_table['task_id'] = task_id
-        task_table['count'] = count
-        db.insert('preprocess_task', task_table)
         where = "wu_id=%s"%wu_id
         job_table['status'] = 'incomplete'
         db.update('preprocess_wu', job_table, where)
-        content = "The madx job failed!"
+        content = "This is a failed job!"
         utils.message('Warning', content)
-        db.close()
-        return madx_status
+    db.close()
+    return status
 
 def madxjob(madx_config, mask_config):
     '''MADX job to generate input files for sixtrack'''

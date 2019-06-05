@@ -8,13 +8,11 @@ import shutil
 
 '''Parse the results of preprocess jobs and sixtrack jobs'''
 
-def parse_preprocess(item, job_path, file_list, job_count, task_id, task_table,
+def parse_preprocess(item, job_path, file_list, task_id, task_table,
         oneturn_table, oneturn_param_names, mes_level=1, log_file=None):
     '''Parse the results of preprocess jobs'''
-    task_table['count'] = job_count
     task_table['wu_id'] = item
     task_table['task_id'] = task_id
-    task_table['task_name'] = 'preprocess_job_%s_%i'%(item, task_id)
     task_table['mtime'] = time.time()
 
     contents = os.listdir(job_path)
@@ -89,12 +87,10 @@ def parse_preprocess(item, job_path, file_list, job_count, task_id, task_table,
             content = "The madx output file %s for job %s doesn't exist! The job failed!"%(out, item)
             utils.message('Error', content, mes_level, log_file)
 
-def parse_sixtrack(item, job_path, file_list, count, task_id, task_table,
+def parse_sixtrack(item, job_path, file_list, task_id, task_table,
         f10_table, f10_names, mes_level=1, log_file=None):
     task_table['wu_id'] = item
-    task_table['count'] = count
     task_table['task_id'] = task_id
-    task_table['task_name'] = ''
     task_table['mtime'] = time.time()
     contents = os.listdir(job_path)
     fort3_in = [s for s in contents if 'fort.3' in s]

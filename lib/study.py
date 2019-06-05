@@ -139,13 +139,11 @@ class Study(object):
         self.tables['preprocess_task'] = collections.OrderedDict([
                 ('task_id', 'int'),
                 ('wu_id', 'int'),
-                ('task_name', 'text'),
                 ('madx_in' , 'blob'),
                 ('madx_stdout', 'blob'),
                 ('job_stdout', 'blob'),
                 ('job_stderr', 'blob'),
                 ('job_stdlog', 'blob'),
-                ('count', 'int'),
                 ('status', 'text'),
                 ('mtime', 'float')])
         self.table_keys['preprocess_task'] = {
@@ -199,12 +197,10 @@ class Study(object):
         self.tables['sixtrack_task'] = collections.OrderedDict([
                 ('task_id', 'int'),
                 ('wu_id', 'int'),
-                ('task_name', 'text'),
                 ('fort3', 'blob'),
                 ('job_stdout', 'blob'),
                 ('job_stderr', 'blob'),
                 ('job_stdlog', 'blob'),
-                ('count', 'int'),
                 ('status', 'text'),
                 ('mtime', 'float')])
         self.table_keys['sixtrack_task'] = {
@@ -346,8 +342,12 @@ class Study(object):
             self.db_info['db_name'] = os.path.join(self.study_path, 'data.db')
         elif db_type.lower() == 'mysql':
             self.type_dict = dbtypedict.MySQLDict()
-            #self.db_info['db_name'] = self.study_path.replace('/', '_')
-            self.db_info['db_name'] = 'test'
+            stp = self.study_path
+            studies = os.path.dirname(stp)
+            wu_path = os.path.dirname(studies)
+            wu_name = os.path.basename(wu_path)
+            st_name = os.path.basename(self.study_path)
+            self.db_info['db_name'] = wu_name + '_' + st_name
         else:
             content = "Unknown database type!"
             utils.message('Error', content, self.mes_level, self.log_file)
@@ -607,25 +607,19 @@ class Study(object):
         1: print sixtrack job
         2: print madx, oneturn sixtrack and sixtrack jobs
         wehre: the filter condition for database query, e.g. "status='complete'" '''
-        loc = self.study_path
-        conts = os.listdir(loc)
-        if self.dbname not in conts:
-            content = "This study directory is empty!"
-            utils.message('Warning', content, self.mes_level, self.log_file)
-        else:
-            query= ['wu_id', 'job_name', 'status', 'unique_id']
-            if job==0 or job==2:
-                wus = self.db.select('preprocess_wu', query, where)
-                print('madx and one turn sixtrack jobs:')
-                print(query)
-                for i in wus:
-                    print(i)
-            if job==1 or job==2:
-                six = self.db.select('sixtrack_wu', query, where)
-                print('Sixtrack jobs:')
-                print(query)
-                for j in six:
-                    print(j)
+        query= ['wu_id', 'job_name', 'status', 'unique_id']
+        if job==0 or job==2:
+            wus = self.db.select('preprocess_wu', query, where)
+            print('madx and one turn sixtrack jobs:')
+            print(query)
+            for i in wus:
+                print(i)
+        if job==1 or job==2:
+            six = self.db.select('sixtrack_wu', query, where)
+            print('Sixtrack jobs:')
+            print(query)
+            for j in six:
+                print(j)
 
     def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
