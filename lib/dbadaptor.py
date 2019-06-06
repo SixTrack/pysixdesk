@@ -27,6 +27,10 @@ class DatabaseAdaptor(ABC):
         if recreate:
             c.execute("DROP TABLE IF EXISTS %s"%name)
         sql = 'CREATE TABLE IF NOT EXISTS %s (%s)'
+        if 'autoincrement' in keys.keys():
+            auto_keys = keys['autoincrement']
+            for ky in auto_keys:
+                columns[ky] = columns[ky] + ' AUTO_INCREMENT'
         col = [' '.join(map(str, i)) for i in columns.items()]
         col = [j.replace('.', '_') for j in col]
         cols = ','.join(map(str, col))
@@ -183,6 +187,18 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
             c.execute(sql)
         conn.commit()
 
+    def create_table(self, conn, name, columns, keys, recreate):
+        '''Create a new table'''
+        if 'autoincrement' in keys.keys():
+            auto_keys = keys.pop('autoincrement')
+            if 'primary' in keys.keys():
+                prim_keys = keys['primary']
+                for ky in auto_keys:
+                    if ky in prim_keys and columns[ky] != 'INTEGER':
+                        columns[ky] = 'INTEGER'
+        super(SQLDatabaseAdaptor, self).create_table(conn, name, columns, keys,
+                recreate)
+
     def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
         c = conn.cursor()
@@ -252,6 +268,11 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
     def setting(self, conn, settings):
         pass
+
+    def create_table(self, conn, name, columns, keys, recreate):
+        '''Create a new table'''
+        super(MySQLDatabaseAdaptor, self).create_table(conn, name, columns,
+                keys, recreate)
 
     def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''

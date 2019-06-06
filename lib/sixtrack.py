@@ -82,17 +82,20 @@ def run(wu_id, input_info):
     task_table = {}
     f10_table = {}
     task_table['status'] = 'Success'
-    task_count = db.select('sixtrack_task', ['task_id'])
-    six_task_id = len(task_count) + 1
     job_path = dest_path
-    rp.parse_sixtrack(wu_id, job_path, output_files, six_task_id, task_table,
-            f10_table, f10_sec.keys())
+    rp.parse_sixtrack(wu_id, job_path, output_files, task_table,
+            f10_table, list(f10_sec.keys()))
     db.insert('sixtrack_task', task_table)
+    where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
+    task_id = db.select('sixtrack_task', ['task_id'], where)
+    task_id = task_id[0][0]
+    f10_table['task_id'] = task_id
     db.insertm('six_results', f10_table)
     if task_table['status'] == 'Success':
-        where = "wu_id=%s"%wu_id
         job_table['status'] = 'complete'
-        job_table['task_id'] = task_table['task_id']
+        job_table['task_id'] = task_id
+        job_table['mtime'] = str(time.time())
+        where = "wu_id=%s"%wu_id
         db.update('sixtrack_wu', job_table, where)
         content = "Sixtrack job %s has completed normally!"%wu_id
         utils.message('Message', content)

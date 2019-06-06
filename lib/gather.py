@@ -20,17 +20,17 @@ def run(wu_id, infile):
         info_sec = cf['info']
         mes_level = int(info_sec['mes_level'])
         log_file = info_sec['log_file']
+        if len(log_file) == 0:
+            log_file = None
         db_info = cf['db_info']
         dbtype = db_info['db_type']
         if dbtype.lower() == 'mysql':
-            content = "Don't need to gather results manually with MySQL db!"
+            content = "There is no need to gather results manually with MySQL db!"
             utils.message('Message', content, mes_level, log_file)
             sys.exit(0)
 
         cluster_module = info_sec['cluster_module']
         classname = info_sec['cluster_name']
-        if len(log_file) == 0:
-            log_file = None
         try:
             module_name = os.path.abspath(cluster_module)
             module_name = module_name.replace('.py', '')
@@ -97,17 +97,20 @@ def preprocess_results(cf, cluster):
         oneturn_table = {}
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
-            task_count = db.select('preprocess_task', ['task_id'])
-            task_id = len(task_count) + 1
             #parse the results
-            rp.parse_preprocess(item, job_path, file_list, task_id, task_table,
-                    oneturn_table, oneturn.keys(), mes_level, log_file)
+            rp.parse_preprocess(item, job_path, file_list, task_table,
+                    oneturn_table, list(oneturn.keys()), mes_level, log_file)
             db.insert('preprocess_task', task_table)
+            where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], item)
+            task_id = db.select('preprocess_task', ['task_id'], where)
+            task_id = task_id[0][0]
+            oneturn_table['task_id'] = task_id
             db.insert('oneturn_sixtrack_result', oneturn_table)
             if task_table['status'] == 'Success':
-                where = "wu_id=%s"%item
                 job_table['status'] = 'complete'
-                job_table['task_id'] = task_table['task_id']
+                job_table['task_id'] = task_id
+                job_table['mtime'] = str(time.time())
+                where = "wu_id=%s"%item
                 db.update('preprocess_wu', job_table, where)
                 content = "Preprocess job %s has completed normally!"%item
                 utils.message('Message', content, mes_level, log_file)
@@ -163,17 +166,20 @@ def sixtrack_results(cf, cluster):
         f10_table = {}
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
-            task_count = db.select('sixtrack_task', ['task_id'])
-            task_id = len(task_count) + 1
             #parse the result
-            rp.parse_sixtrack(item, job_path, file_list, task_id, task_table,
-                    f10_table, f10_sec.keys(), mes_level, log_file)
+            rp.parse_sixtrack(item, job_path, file_list, task_table, f10_table,
+                    list(f10_sec.keys()), mes_level, log_file)
             db.insert('sixtrack_task', task_table)
+            where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
+            task_id = db.select('sixtrack_task', ['task_id'], where)
+            task_id = task_id[0][0]
+            f10_table['task_id'] = task_id
             db.insertm('six_results', f10_table)
             if task_table['status'] == 'Success':
-                where = "wu_id=%s"%item
                 job_table['status'] = 'complete'
-                job_table['task_id'] = task_table['task_id']
+                job_table['task_id'] = task_id
+                job_table['mtime'] = str(time.time())
+                where = "wu_id=%s"%item
                 db.update('sixtrack_wu', job_table, where)
                 content = "Sixtrack job %s has completed normally!"%item
                 utils.message('Message', content, mes_level, log_file)

@@ -2,6 +2,7 @@
 import os
 import io
 import sys
+import time
 import copy
 import shutil
 import utils
@@ -41,6 +42,7 @@ def run(wu_id, input_info):
 
     otpt = madx_config["output_files"]
     output_files = utils.evlt(utils.decode_strings, [otpt])
+
     if status:
         sixtrack_config = cf['sixtrack']
         fort3_config = cf._sections['fort3']
@@ -61,11 +63,11 @@ def run(wu_id, input_info):
     down_list.append('mychrom')
     down_list.append('betavalues')
     status = utils.download_output(down_list, dest_path)
+
     if status:
         print("All requested results have stored in %s"%dest_path)
     else:
         print("Job failed!")
-
     if dbtype.lower() == 'sql':
         return status
 
@@ -75,18 +77,20 @@ def run(wu_id, input_info):
     task_table = {}
     oneturn_table = {}
     task_table['status'] = 'Success'
-    task_count = db.select('preprocess_task', ['task_id'])
-    task_id = len(task_count) + 1
-
     job_path = dest_path
-    rp.parse_preprocess(wu_id, job_path, output_files, task_id, task_table,
-            oneturn_table, oneturn.keys())
+    rp.parse_preprocess(wu_id, job_path, output_files, task_table,
+            oneturn_table, list(oneturn.keys()))
     db.insert('preprocess_task', task_table)
+    where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
+    task_id = db.select('preprocess_task', ['task_id'], where)
+    task_id = task_id[0][0]
+    oneturn_table['task_id'] = task_id
     db.insert('oneturn_sixtrack_result', oneturn_table)
     if task_table['status'] == 'Success':
         where = "wu_id=%s"%wu_id
         job_table['status'] = 'complete'
-        job_table['task_id'] = task_table['task_id']
+        job_table['task_id'] = task_id
+        job_table['mtime'] = str(time.time())
         db.update('preprocess_wu', job_table, where)
         content = "Preprocess job %s has completed normally!"%wu_id
         utils.message('Message', content)

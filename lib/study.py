@@ -124,20 +124,21 @@ class Study(object):
         self.tables['templates'] = collections.OrderedDict()
         self.tables['env'] = collections.OrderedDict()
         self.tables['preprocess_wu'] = collections.OrderedDict([
-                ('wu_id', 'int'),
+                ('wu_id', 'INTEGER'),
                 ('job_name', 'text'),
                 ('input_file', 'blob'),
                 ('batch_name', 'text'),
                 ('unique_id', 'text'),
                 ('status', 'text'),
                 ('task_id', 'int'),
-                ('mtime', 'float')])
+                ('mtime', 'text')])
         self.table_keys['preprocess_wu'] = {
                 'primary': ['wu_id'],
+                'autoincrement': ['wu_id'],
                 'foreign': {},
                 }
         self.tables['preprocess_task'] = collections.OrderedDict([
-                ('task_id', 'int'),
+                ('task_id', 'INTEGER'),
                 ('wu_id', 'int'),
                 ('madx_in' , 'blob'),
                 ('madx_stdout', 'blob'),
@@ -145,15 +146,13 @@ class Study(object):
                 ('job_stderr', 'blob'),
                 ('job_stdlog', 'blob'),
                 ('status', 'text'),
-                ('mtime', 'float')])
+                ('mtime', 'text')])
         self.table_keys['preprocess_task'] = {
                 'primary': ['task_id'],
+                'autoincrement': ['task_id'],
                 'foreign': {'preprocess_wu': [['wu_id'], ['wu_id']]},
                 }
         self.tables['oneturn_sixtrack_wu'] = collections.OrderedDict()
-        self.tables['preprocess_optics'] = {
-                'task_id': 'int',
-                'wu_id': 'int'}
         self.tables['oneturn_sixtrack_result'] = collections.OrderedDict([
                 ('task_id', 'int'),
                 ('wu_id', 'int'),
@@ -178,9 +177,9 @@ class Study(object):
                 ('tuney1', 'float'),
                 ('tunex2', 'float'),
                 ('tuney2', 'float'),
-                ('mtim', 'float')])
+                ('mtime', 'text')])
         self.tables['sixtrack_wu']=collections.OrderedDict([
-                ('wu_id', 'int'),
+                ('wu_id', 'INTEGER'),
                 ('preprocess_id', 'int'),
                 ('job_name', 'text'),
                 ('input_file', 'blob'),
@@ -189,22 +188,24 @@ class Study(object):
                 ('status', 'text'),
                 ('task_id', 'int'),
                 ('boinc', 'text'),
-                ('mtime', 'float')])
+                ('mtime', 'text')])
         self.table_keys['sixtrack_wu'] = {
                 'primary': ['wu_id'],
+                'autoincrement': ['wu_id'],
                 'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
                 }
         self.tables['sixtrack_task'] = collections.OrderedDict([
-                ('task_id', 'int'),
+                ('task_id', 'INTEGER'),
                 ('wu_id', 'int'),
                 ('fort3', 'blob'),
                 ('job_stdout', 'blob'),
                 ('job_stderr', 'blob'),
                 ('job_stdlog', 'blob'),
                 ('status', 'text'),
-                ('mtime', 'float')])
+                ('mtime', 'text')])
         self.table_keys['sixtrack_task'] = {
                 'primary': ['task_id'],
+                'autoincrement': ['task_id'],
                 'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
                 }
         self.tables['six_results'] = collections.OrderedDict([
@@ -270,7 +271,7 @@ class Study(object):
                 ('delta', 'float'),
                 ('dnms', 'float'),
                 ('trttime', 'float'),
-                ('mtime','float')])
+                ('mtime','text')])
         self.table_keys['six_results'] = {
                 'primary': ['six_input_id', 'row_num'],
                 'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},
@@ -510,7 +511,7 @@ class Study(object):
             madx_table['input_file'] = utils.evlt(utils.compress_buf, [out,'str'])
             madx_table['status'] = 'incomplete'
             madx_table['job_name'] = job_name
-            madx_table['mtime'] = time.time()
+            madx_table['mtime'] = str(time.time())
             self.db.insert('preprocess_wu', madx_table)
             content = 'Store preprocess job %s into database!'%job_name
             utils.message('Message', content, self.mes_level, self.log_file)
@@ -595,7 +596,7 @@ class Study(object):
             out = f_out.getvalue()
             job_table['input_file'] = utils.evlt(utils.compress_buf, [out,'str'])
             job_table['status'] = 'incomplete'
-            job_table['mtime'] = time.time()
+            job_table['mtime'] = str(time.time())
             self.db.insert('sixtrack_wu', job_table)
             content = 'Store sixtrack job %s into database!'%job_name
             utils.message('Message', content, self.mes_level, self.log_file)
@@ -651,11 +652,10 @@ class Study(object):
         status, out = self.submission.submit(input_path, batch_name,
                 trials, *args, **kwargs)
         if status:
-            table = {}
             content = "Submit %s job successfully!"%jobname
             utils.message('Message', content, self.mes_level, self.log_file)
-            if self.db_info['db_type'].lower() == 'sql':
-                table['status'] = 'submitted'
+            table = {}
+            table['status'] = 'submitted'
             for ky, vl in out.items():
                 where = 'wu_id=%s'%ky
                 table['unique_id'] = vl
