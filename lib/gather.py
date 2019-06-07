@@ -170,10 +170,10 @@ def sixtrack_results(cf, cluster):
             rp.parse_sixtrack(item, job_path, file_list, task_table, f10_table,
                     list(f10_sec.keys()), mes_level, log_file)
             db.insert('sixtrack_task', task_table)
-            where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
+            where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], item)
             task_id = db.select('sixtrack_task', ['task_id'], where)
             task_id = task_id[0][0]
-            f10_table['task_id'] = task_id
+            f10_table['six_input_id'] = [task_id,]*len(f10_table['mtime'])
             db.insertm('six_results', f10_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'

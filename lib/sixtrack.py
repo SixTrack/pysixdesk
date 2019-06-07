@@ -3,7 +3,9 @@ import os
 import sys
 import copy
 import utils
+import time
 import shutil
+import traceback
 import zipfile
 import configparser
 import resultparser as rp
@@ -75,38 +77,49 @@ def run(wu_id, input_info):
     if dbtype.lower() == 'sql':
         return status
 
-    #Reconnect after job finished
-    db = SixDB(db_info)
-    f10_sec = cf['f10']
-    job_table = {}
-    task_table = {}
-    f10_table = {}
-    task_table['status'] = 'Success'
-    job_path = dest_path
-    rp.parse_sixtrack(wu_id, job_path, output_files, task_table,
-            f10_table, list(f10_sec.keys()))
-    db.insert('sixtrack_task', task_table)
-    where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
-    task_id = db.select('sixtrack_task', ['task_id'], where)
-    task_id = task_id[0][0]
-    f10_table['task_id'] = task_id
-    db.insertm('six_results', f10_table)
-    if task_table['status'] == 'Success':
-        job_table['status'] = 'complete'
-        job_table['task_id'] = task_id
-        job_table['mtime'] = str(time.time())
-        where = "wu_id=%s"%wu_id
-        db.update('sixtrack_wu', job_table, where)
-        content = "Sixtrack job %s has completed normally!"%wu_id
-        utils.message('Message', content)
-    else:
+    try:
+        #Reconnect after job finished
+        db = SixDB(db_info)
+        f10_sec = cf['f10']
+        job_table = {}
+        task_table = {}
+        f10_table = {}
+        task_table['status'] = 'Success'
+        job_path = dest_path
+        rp.parse_sixtrack(wu_id, job_path, output_files, task_table,
+                f10_table, list(f10_sec.keys()))
+        db.insert('sixtrack_task', task_table)
+        where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
+        task_id = db.select('sixtrack_task', ['task_id'], where)
+        task_id = task_id[0][0]
+        f10_table['six_input_id'] = [task_id,]*len(f10_table['mtime'])
+        db.insertm('six_results', f10_table)
+        if task_table['status'] == 'Success':
+            job_table['status'] = 'complete'
+            job_table['task_id'] = task_id
+            job_table['mtime'] = str(time.time())
+            where = "wu_id=%s"%wu_id
+            db.update('sixtrack_wu', job_table, where)
+            content = "Sixtrack job %s has completed normally!"%wu_id
+            utils.message('Message', content)
+        else:
+            where = "wu_id=%s"%wu_id
+            job_table['status'] = 'incomplete'
+            job_table['mtime'] = str(time.time())
+            db.update('sixtrack_wu', job_table, where)
+            content = "The sixtrack job failed!"
+            utils.message('Warning', content)
+        return status
+    except:
         where = "wu_id=%s"%wu_id
         job_table['status'] = 'incomplete'
+        job_table['mtime'] = str(time.time())
         db.update('sixtrack_wu', job_table, where)
-        content = "The sixtrack job failed!"
-        utils.message('Warning', content)
-    db.close()
-    return status
+        content = traceback.print_exc()
+        utils.message('Error', content)
+        return False
+    finally:
+        db.close()
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     '''The actual sixtrack job'''

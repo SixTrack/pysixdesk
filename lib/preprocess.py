@@ -5,6 +5,7 @@ import sys
 import time
 import copy
 import shutil
+import traceback
 import utils
 import configparser
 import resultparser as rp
@@ -72,36 +73,47 @@ def run(wu_id, input_info):
         return status
 
     #reconnect after jobs finished
-    db = SixDB(db_info)
-    job_table = {}
-    task_table = {}
-    oneturn_table = {}
-    task_table['status'] = 'Success'
-    job_path = dest_path
-    rp.parse_preprocess(wu_id, job_path, output_files, task_table,
-            oneturn_table, list(oneturn.keys()))
-    db.insert('preprocess_task', task_table)
-    where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
-    task_id = db.select('preprocess_task', ['task_id'], where)
-    task_id = task_id[0][0]
-    oneturn_table['task_id'] = task_id
-    db.insert('oneturn_sixtrack_result', oneturn_table)
-    if task_table['status'] == 'Success':
-        where = "wu_id=%s"%wu_id
-        job_table['status'] = 'complete'
-        job_table['task_id'] = task_id
-        job_table['mtime'] = str(time.time())
-        db.update('preprocess_wu', job_table, where)
-        content = "Preprocess job %s has completed normally!"%wu_id
-        utils.message('Message', content)
-    else:
+    try:
+        db = SixDB(db_info)
+        job_table = {}
+        task_table = {}
+        oneturn_table = {}
+        task_table['status'] = 'Success'
+        job_path = dest_path
+        rp.parse_preprocess(wu_id, job_path, output_files, task_table,
+                oneturn_table, list(oneturn.keys()))
+        db.insert('preprocess_task', task_table)
+        where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
+        task_id = db.select('preprocess_task', ['task_id'], where)
+        task_id = task_id[0][0]
+        oneturn_table['task_id'] = task_id
+        db.insert('oneturn_sixtrack_result', oneturn_table)
+        if task_table['status'] == 'Success':
+            where = "wu_id=%s"%wu_id
+            job_table['status'] = 'complete'
+            job_table['task_id'] = task_id
+            job_table['mtime'] = str(time.time())
+            db.update('preprocess_wu', job_table, where)
+            content = "Preprocess job %s has completed normally!"%wu_id
+            utils.message('Message', content)
+        else:
+            where = "wu_id=%s"%wu_id
+            job_table['status'] = 'incomplete'
+            job_table['mtime'] = str(time.time())
+            db.update('preprocess_wu', job_table, where)
+            content = "This is a failed job!"
+            utils.message('Warning', content)
+        return status
+    except:
         where = "wu_id=%s"%wu_id
         job_table['status'] = 'incomplete'
+        job_table['mtime'] = str(time.time())
         db.update('preprocess_wu', job_table, where)
-        content = "This is a failed job!"
-        utils.message('Warning', content)
-    db.close()
-    return status
+        content = traceback.print_exc()
+        utils.message('Error', content)
+        return False
+    finally:
+        db.close()
 
 def madxjob(madx_config, mask_config):
     '''MADX job to generate input files for sixtrack'''
