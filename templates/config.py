@@ -16,16 +16,18 @@ class MyStudy(Study):
         '''initialize a study'''
         self.cluster_module = None #default
         self.cluster_name = 'HTCondor'
+        self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
 
         #Echo message to the terminal, if not None, echo to log_file
         self.log_file = None
         self.mes_level = 1 #message level
         #Add database informations
         #self.db_info['db_type'] = 'sql'
+        self.db_info['db_type'] = 'mysql'
         #The follow information is needed when the db type is mysql
-        self.db_info['host'] = '127.0.0.1'
-        self.db_info['port'] = '3306'
-        self.db_info['user'] = 'pysixdesk'
+        self.db_info['host'] = 'dbod-gc023'
+        self.db_info['port'] = '5500'
+        self.db_info['user'] = 'admin'
         self.db_info['passwd'] = 'pysixdesk'
 
         #All parameters are case-sensitive

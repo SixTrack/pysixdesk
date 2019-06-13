@@ -5,6 +5,7 @@ import time
 import copy
 import shutil
 import inspect
+import getpass
 import itertools
 import configparser
 import collections
@@ -28,8 +29,6 @@ class Study(object):
         self.config = configparser.ConfigParser()
         self.config.optionxform = str #preserve case
         self.submission = None
-        self.preprocess_joblist = []
-        self.sixtrack_joblist = []
         self.db_info = {}
         self.type_dict = None
         #All the requested parameters for a study
@@ -65,7 +64,8 @@ class Study(object):
         self.paths["sixtrack_out"] = os.path.join(self.study_path, "sixtrack_output")
         self.paths["gather"] = os.path.join(self.study_path, "gather")
         self.paths["templates"] = self.study_path
-        self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
+        #self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
+        self.env['test_turn'] = 1000
         self.cluster_module = None
         self.cluster_name = 'HTCondor'
         self.log_file = None
@@ -118,7 +118,6 @@ class Study(object):
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
 
-        #self.db_info['db_name'] = os.path.join(self.study_path, 'data.db')
         self.db_info['db_type'] = 'sql'
         #Default definition of the database tables
         self.tables['templates'] = collections.OrderedDict()
@@ -337,17 +336,18 @@ class Study(object):
         '''Update the column names of database tables  and initialize the
         submission module after the user define the necessary variables.
         '''
+        stp = self.study_path
+        studies = os.path.dirname(stp)
+        wu_path = os.path.dirname(studies)
+        wu_name = os.path.basename(wu_path)
+        st_name = os.path.basename(stp)
+
         db_type = self.db_info['db_type']
         if db_type.lower() == 'sql':
             self.type_dict = dbtypedict.SQLiteDict()
             self.db_info['db_name'] = os.path.join(self.study_path, 'data.db')
         elif db_type.lower() == 'mysql':
             self.type_dict = dbtypedict.MySQLDict()
-            stp = self.study_path
-            studies = os.path.dirname(stp)
-            wu_path = os.path.dirname(studies)
-            wu_name = os.path.basename(wu_path)
-            st_name = os.path.basename(self.study_path)
             self.db_info['db_name'] = wu_name + '_' + st_name
         else:
             content = "Unknown database type!"
@@ -376,11 +376,17 @@ class Study(object):
 
         for key in self.paths.keys():
             self.tables['env'][key] = 'TEXT'
-        for key in self.env.keys():
-            self.tables['env'][key] = 'INT'
+        for key, val in self.env.items():
+            self.tables['env'][key] = self.type_dict[val]
 
         for key, val in self.boinc_vars.items():
             self.tables['boinc_vars'][key] = self.type_dict[val]
+
+        user_name = getpass.getuser()
+        dir_name = user_name + '_' + wu_name + '_' + st_name
+        boinc_spool = self.paths['boinc_spool']
+        self.env['boinc_work'] = os.path.join(boinc_spool, dir_name, 'work')
+        self.env['boinc_results'] = os.path.join(boinc_spool, dir_name, 'results')
 
         #Initialize the database
         self.db = SixDB(self.db_info, self.db_settings, True, self.mes_level,
@@ -445,9 +451,13 @@ class Study(object):
         envs.update(self.env)
         if not outputs:
             self.db.insert('env', envs)
+        else:
+            self.db.update('env', envs)
         outputs = self.db.select('boinc_vars', self.boinc_vars.keys())
         if not outputs:
             self.db.insert('boinc_vars', self.boinc_vars)
+        else:
+            self.db.update('boinc_vars', self.boinc_vars)
 
         self.config.clear()
         self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
@@ -532,6 +542,7 @@ class Study(object):
         six_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
+        six_sec['test_turn'] = str(self.env['test_turn'])
 
         madx_keys = list(self.madx_params.keys())
         madx_vals = self.db.select('preprocess_wu', ['wu_id']+madx_keys)
@@ -586,7 +597,7 @@ class Study(object):
             job_table['preprocess_id'] = j + 1 #in db id begin from 1
             wu_id += 1
             job_table['wu_id'] = wu_id
-            job_name = 'sixtrack_job_%i_%i'%(j+1, wu_id)
+            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i'%(j+1, wu_id)
             job_table['job_name'] = job_name
             dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
             six_sec['dest_path'] = dest_path
@@ -731,7 +742,8 @@ class Study(object):
             where = "status='incomplete' and preprocess_id=%s"%str(preprocess_outs[0][0])
         else:
             where = "status='incomplete' and preprocess_id in %s"%str(preprocess_outs[0])
-        outputs = self.db.select('sixtrack_wu', ['wu_id', 'preprocess_id', 'input_file'], where)
+        outputs = self.db.select('sixtrack_wu', ['wu_id', 'preprocess_id',
+            'input_file', 'job_name'], where)
         if not outputs:
             content = "There isn't available sixtrack job to submit!"
             utils.message('Warning', content, self.mes_level, self.log_file)
@@ -739,8 +751,10 @@ class Study(object):
         outputs = list(zip(*outputs))
         wu_ids = []
         pre_ids = []
+        job_names = []
         input_buf_new = []
-        for wu_id, pre_id, buf in zip(outputs[0], outputs[1], outputs[2]):
+        for wu_id, pre_id, buf, job_name in zip(outputs[0], outputs[1],
+                outputs[2], outputs[3]):
             in_fil = utils.evlt(utils.decompress_buf, [buf, None, 'buf'])
             self.config.clear()
             self.config.read_string(in_fil)
@@ -754,6 +768,7 @@ class Study(object):
                 input_buf_new.append(buf_new)
                 wu_ids.append(wu_id)
                 pre_ids.append(pre_id)
+                job_names.append(job_name)
         if not wu_ids:
             content = "There isn't available sixtrack job to submit due to "\
                     + "failed furter calculation!"
@@ -776,7 +791,6 @@ class Study(object):
             sub_db.drop_table('result')
             sub_db.drop_table('sixtrack_wu')
             sub_db.drop_table('oneturn_sixtrack_wu')
-            sub_db.drop_table('env')
             sub_db.drop_table('templates')
             tables = {'wu_id':'int', 'preprocess_id':'int', 'input_file':'blob',
                     'boinc': 'text'}
@@ -785,6 +799,7 @@ class Study(object):
             incom_job['wu_id'] = wu_ids
             incom_job['preprocess_id'] = pre_ids
             incom_job['input_file'] = input_buf_new
+            incom_job['job_name'] = job_names
             incom_job['boinc'] = ['false']*len(wu_ids)
             if boinc:
                 incom_job['boinc'] = ['true']*len(wu_ids)
@@ -793,18 +808,24 @@ class Study(object):
             wu_ids = list(zip(*wu_ids))[0]
             sub_db.close()
             db_info['db_name'] = 'sub.db'
+            content = "The submitted db %s is ready!"%self.db_info['db_name']
+            utils.message('Message', content, self.mes_level, self.log_file)
             tran_input.append(sub_name)
         else:
             job_table = {}
             job_table['boinc'] = str(boinc)
-            self.db.update('sixtrack_wu', job_table)
+            if len(wu_ids) == 1:
+                where = "wu_id=%s"%wu_ids[0]
+            else:
+                where = "wu_id in %s"%str(tuple(wu_ids))
+            self.db.update('sixtrack_wu', job_table, where)
+        if boinc:
+            self.init_boinc_dir()
         input_info = os.path.join(self.paths['sixtrack_in'], 'db.ini')
         self.config.clear()
         self.config['db_info'] = db_info
         with open(input_info, 'w') as f_out:
             self.config.write(f_out)
-        content = "The submitted db %s is ready!"%self.db_info['db_name']
-        utils.message('Message', content, self.mes_level, self.log_file)
         tran_input.append(input_info)
         in_path = self.paths['sixtrack_in']
         out_path = self.paths['sixtrack_out']
@@ -839,17 +860,15 @@ class Study(object):
             sub_db.insertm('preprocess_wu', incom_job)
             sub_db.close()
             db_info['db_name'] = 'sub.db'
+            content = "The submitted database %s is ready!"%db_info['db_name']
+            utils.message('Message', content, self.mes_level, self.log_file)
             trans.append(sub_name)
-        elif db_info['db_type'].lower() == 'mysql':
-            #db_info['db_name'] = self.db_info['db_name']
-            pass
+
         input_info = os.path.join(self.paths['preprocess_in'], 'db.ini')
         self.config.clear()
         self.config['db_info'] = db_info
         with open(input_info, 'w') as f_out:
             self.config.write(f_out)
-        content = "The submitted database %s is ready!"%db_info['db_name']
-        utils.message('Message', content, self.mes_level, self.log_file)
         trans.append(input_info)
         in_path = self.paths['preprocess_in']
         out_path = self.paths['preprocess_out']
@@ -860,6 +879,25 @@ class Study(object):
     def pre_calc(self, **args):
         '''Further calculations for the specified parameters'''
         pass
+
+    def init_boinc_dir(self):
+        '''Initialise the boinc directory'''
+        user_name = getpass.getuser()
+        work_path = self.env['boinc_work']
+        results_path = self.env['boinc_results']
+        boinc_dir = os.path.dirname(work_path)
+        owner = os.path.join(boinc_dir, 'owner')
+        if not os.path.isdir(boinc_dir):
+            os.mkdir(boinc_dir)
+            os.system('fs setacl -dir %s -acl %s rlidwka boinc:users rl'\
+                    %(boinc_dir, user_name))
+        if not os.path.isfile(owner):
+            with open(owner, 'w') as f_out:
+                f_out.write(user_name)
+        if not os.path.isdir(work_path):
+            os.mkdir(work_path)
+        if not os.path.isdir(results_path):
+            os.mkdir(results_path)
 
     def name_conven(self, prefix, keys, values, suffix=''):
         '''The convention for naming input file'''
