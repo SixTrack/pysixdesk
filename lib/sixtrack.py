@@ -295,7 +295,6 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         else:
             print("Submit to %s successfully!"%boinc_work)
             print(stdout)
-            os.system('ll %s'%boinc_work)
             six_status = 1
     return six_status
 
