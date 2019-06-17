@@ -101,7 +101,7 @@ def preprocess_results(cf, cluster):
             rp.parse_preprocess(item, job_path, file_list, task_table,
                     oneturn_table, list(oneturn.keys()), mes_level, log_file)
             db.insert('preprocess_task', task_table)
-            where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], item)
+            where = "mtime=%s and wu_id=%s"%(task_table['mtime'], item)
             task_id = db.select('preprocess_task', ['task_id'], where)
             task_id = task_id[0][0]
             oneturn_table['task_id'] = task_id
@@ -109,7 +109,7 @@ def preprocess_results(cf, cluster):
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['task_id'] = task_id
-                job_table['mtime'] = str(time.time())
+                job_table['mtime'] = int(time.time()*1E7)
                 where = "wu_id=%s"%item
                 db.update('preprocess_wu', job_table, where)
                 content = "Preprocess job %s has completed normally!"%item
@@ -170,7 +170,7 @@ def sixtrack_results(cf, cluster):
             rp.parse_sixtrack(item, job_path, file_list, task_table, f10_table,
                     list(f10_sec.keys()), mes_level, log_file)
             db.insert('sixtrack_task', task_table)
-            where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], item)
+            where = "mtime=%s and wu_id=%s"%(task_table['mtime'], item)
             task_id = db.select('sixtrack_task', ['task_id'], where)
             task_id = task_id[0][0]
             f10_table['six_input_id'] = [task_id,]*len(f10_table['mtime'])
@@ -178,7 +178,7 @@ def sixtrack_results(cf, cluster):
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['task_id'] = task_id
-                job_table['mtime'] = str(time.time())
+                job_table['mtime'] = int(time.time()*1E7)
                 where = "wu_id=%s"%item
                 db.update('sixtrack_wu', job_table, where)
                 content = "Sixtrack job %s has completed normally!"%item

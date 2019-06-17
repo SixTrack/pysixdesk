@@ -12,7 +12,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
         oneturn_param_names, mes_level=1, log_file=None):
     '''Parse the results of preprocess jobs'''
     task_table['wu_id'] = item
-    task_table['mtime'] = str(time.time())
+    task_table['mtime'] = int(time.time()*1E7)
 
     contents = os.listdir(job_path)
     madx_in = [s for s in contents if 'madx_in' in s]
@@ -57,7 +57,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
         betavalue = os.path.join(job_path, betavalue[0])
         chrom = os.path.join(job_path, chrom[0])
         tunes = os.path.join(job_path, tunes[0])
-        mtime = str(os.path.getmtime(betavalue))
+        mtime = int(os.path.getmtime(betavalue)*1E7)
         with gzip.open(betavalue, 'rt') as f_in:
             line = f_in.read()
             lines_beta = line.split()
@@ -73,10 +73,8 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
             content = 'Error in one turn result of preprocess job %s!'%item
             utils.message('Error', content, mes_level, log_file)
             task_table['status'] = 'Failed'
-            #data = [task_id, item]+21*['None']+[mtime]
             data = [item]+21*['None']+[mtime]
         else:
-            #data = [task_id, item]+lines+[mtime]
             data = [item]+lines+[mtime]
         oneturn_table.update(dict(zip(oneturn_param_names[1:], data)))
     for out in file_list.values():
@@ -93,7 +91,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
 def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
         mes_level=1, log_file=None):
     task_table['wu_id'] = item
-    task_table['mtime'] = str(time.time())
+    task_table['mtime'] = int(time.time()*1E7)
     contents = os.listdir(job_path)
     fort3_in = [s for s in contents if 'fort.3' in s]
     if fort3_in:
@@ -124,7 +122,7 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
             if 'fort.10' in out_f:
                 countl = 1
                 try:
-                    mtime = str(os.path.getmtime(out_f))
+                    mtime = int(os.path.getmtime(out_f)*1E7)
                     f10_data = []
                     with gzip.open(out_f, 'rt') as f_in:
                         for lines in f_in:
@@ -135,11 +133,9 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
                                 content = 'Error in %s'%out_f
                                 utils.message('Warning', content, mes_level, log_file)
                                 task_table['status'] = 'Failed'
-                                #line = [task_id, countl]+60*['None']+[mtime]
                                 line = [countl]+60*['None']+[mtime]
                                 f10_data.append(line)
                             else:
-                                #line = [task_id, countl]+line+[mtime]
                                 line = [countl]+line+[mtime]
                                 f10_data.append(line)
                     f10_table.update(dict(zip(f10_names[1:], zip(*f10_data))))

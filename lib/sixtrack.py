@@ -106,7 +106,7 @@ def run(wu_id, input_info):
         rp.parse_sixtrack(wu_id, job_path, output_files, task_table,
                 f10_table, list(f10_sec.keys()))
         db.insert('sixtrack_task', task_table)
-        where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
+        where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
         task_id = db.select('sixtrack_task', ['task_id'], where)
         task_id = task_id[0][0]
         f10_table['six_input_id'] = [task_id,]*len(f10_table['mtime'])
@@ -114,7 +114,7 @@ def run(wu_id, input_info):
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
             job_table['task_id'] = task_id
-            job_table['mtime'] = str(time.time())
+            job_table['mtime'] = int(time.time()*1E7)
             where = "wu_id=%s"%wu_id
             db.update('sixtrack_wu', job_table, where)
             content = "Sixtrack job %s has completed normally!"%wu_id
@@ -122,7 +122,7 @@ def run(wu_id, input_info):
         else:
             where = "wu_id=%s"%wu_id
             job_table['status'] = 'incomplete'
-            job_table['mtime'] = str(time.time())
+            job_table['mtime'] = int(time.time()*1E7)
             db.update('sixtrack_wu', job_table, where)
             content = "The sixtrack job failed!"
             utils.message('Warning', content)
@@ -130,7 +130,7 @@ def run(wu_id, input_info):
     except:
         where = "wu_id=%s"%wu_id
         job_table['status'] = 'incomplete'
-        job_table['mtime'] = str(time.time())
+        job_table['mtime'] = int(time.time()*1E7)
         db.update('sixtrack_wu', job_table, where)
         content = traceback.print_exc()
         utils.message('Error', content)
@@ -269,7 +269,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         #zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'
         ziph = zipfile.ZipFile(input_zip, 'w', zipfile.ZIP_DEFLATED)
-        inputs = list(input_files.values())
+        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16']
         for infile in inputs:
             if infile in os.listdir('.'):
                 ziph.write(infile)

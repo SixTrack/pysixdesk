@@ -83,7 +83,7 @@ def run(wu_id, input_info):
         rp.parse_preprocess(wu_id, job_path, output_files, task_table,
                 oneturn_table, list(oneturn.keys()))
         db.insert('preprocess_task', task_table)
-        where = "mtime='%s' and wu_id=%s"%(task_table['mtime'], wu_id)
+        where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
         task_id = db.select('preprocess_task', ['task_id'], where)
         task_id = task_id[0][0]
         oneturn_table['task_id'] = task_id
@@ -92,14 +92,14 @@ def run(wu_id, input_info):
             where = "wu_id=%s"%wu_id
             job_table['status'] = 'complete'
             job_table['task_id'] = task_id
-            job_table['mtime'] = str(time.time())
+            job_table['mtime'] = int(time.time()*1E7)
             db.update('preprocess_wu', job_table, where)
             content = "Preprocess job %s has completed normally!"%wu_id
             utils.message('Message', content)
         else:
             where = "wu_id=%s"%wu_id
             job_table['status'] = 'incomplete'
-            job_table['mtime'] = str(time.time())
+            job_table['mtime'] = int(time.time()*1E7)
             db.update('preprocess_wu', job_table, where)
             content = "This is a failed job!"
             utils.message('Warning', content)
@@ -107,7 +107,7 @@ def run(wu_id, input_info):
     except:
         where = "wu_id=%s"%wu_id
         job_table['status'] = 'incomplete'
-        job_table['mtime'] = str(time.time())
+        job_table['mtime'] = int(time.time()*1E7)
         db.update('preprocess_wu', job_table, where)
         content = traceback.print_exc()
         utils.message('Error', content)
