@@ -354,6 +354,12 @@ class Study(object):
             utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
 
+        user_name = getpass.getuser()
+        dir_name = user_name + '_' + wu_name + '_' + st_name
+        boinc_spool = self.paths['boinc_spool']
+        self.env['boinc_work'] = os.path.join(boinc_spool, dir_name, 'work')
+        self.env['boinc_results'] = os.path.join(boinc_spool, dir_name, 'results')
+
         for key in self.madx_params.keys():
             self.tables['preprocess_wu'][key] = 'INT'
         for key in self.madx_output.values():
@@ -382,11 +388,6 @@ class Study(object):
         for key, val in self.boinc_vars.items():
             self.tables['boinc_vars'][key] = self.type_dict[val]
 
-        user_name = getpass.getuser()
-        dir_name = user_name + '_' + wu_name + '_' + st_name
-        boinc_spool = self.paths['boinc_spool']
-        self.env['boinc_work'] = os.path.join(boinc_spool, dir_name, 'work')
-        self.env['boinc_results'] = os.path.join(boinc_spool, dir_name, 'results')
 
         #Initialize the database
         self.db = SixDB(self.db_info, self.db_settings, True, self.mes_level,
