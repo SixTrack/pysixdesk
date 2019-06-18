@@ -43,13 +43,13 @@ def run(wu_id, input_info):
     inp = sixtrack_config["input_files"]
     input_files = utils.evlt(utils.decode_strings, [inp])
     where = 'wu_id=%s'%str(preprocess_id)
-    task_id = db.select('preprocess_wu', ['task_id'], where)
-    if not task_id:
+    pre_task_id = db.select('preprocess_wu', ['task_id'], where)
+    if not pre_task_id:
         print("Can't find the preprocess task_id for this job!")
         return 0
     inputs = list(input_files.values())
-    task_id = task_id[0][0]
-    where = 'task_id=%s'%str(task_id)
+    pre_task_id = pre_task_id[0][0]
+    where = 'task_id=%s'%str(pre_task_id)
     input_buf = db.select('preprocess_task', inputs, where)
     db.close()
     if not input_buf:
@@ -68,7 +68,7 @@ def run(wu_id, input_info):
         boinc_work = boinc_paths[0][0]
         boinc_results = boinc_paths[0][1]
     sixtrack_config['boinc'] = boinc
-    sixtrack_config['task_id'] = task_id
+    sixtrack_config['task_id'] = str(task_id)
     sixtrack_config['boinc_work'] = boinc_work
     sixtrack_config['boinc_results'] = boinc_results
     sixtrack_config['job_name'] = job_name
