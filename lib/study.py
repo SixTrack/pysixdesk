@@ -18,6 +18,7 @@ import dbtypedict
 from importlib.machinery import SourceFileLoader
 from subprocess import Popen, PIPE
 from pysixdb import SixDB
+from datetime import datetime
 
 class Study(object):
 
@@ -354,8 +355,9 @@ class Study(object):
             utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
 
-        user_name = getpass.getuser()
-        dir_name = user_name + '_' + wu_name + '_' + st_name
+        now = datetime.now()
+        date_time = now.strftime("%Y-%b-%d_%H-%M-%S")
+        dir_name = wu_name + '_' + st_name + '_' + date_time
         boinc_spool = self.paths['boinc_spool']
         self.env['boinc_work'] = os.path.join(boinc_spool, dir_name, 'work')
         self.env['boinc_results'] = os.path.join(boinc_spool, dir_name, 'results')
@@ -388,7 +390,6 @@ class Study(object):
         for key, val in self.boinc_vars.items():
             self.tables['boinc_vars'][key] = self.type_dict[val]
 
-
         #Initialize the database
         self.db = SixDB(self.db_info, self.db_settings, True, self.mes_level,
                 self.log_file)
@@ -419,7 +420,6 @@ class Study(object):
             content = "The submission module %s doesn't exist!"%cluster_module
             utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
-
 
     def update_db(self):
         '''Update the database whith the user-defined parameters'''
@@ -598,7 +598,7 @@ class Study(object):
             job_table['preprocess_id'] = j + 1 #in db id begin from 1
             wu_id += 1
             job_table['wu_id'] = wu_id
-            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i'%(j+1, wu_id)
+            job_name = 'sixtrack_job_preprocess_id_%i__wu_id_%i'%(j+1, wu_id)
             job_table['job_name'] = job_name
             dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
             six_sec['dest_path'] = dest_path
@@ -644,12 +644,14 @@ class Study(object):
             exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
             jobname = 'preprocess'
             table_name = 'preprocess_wu'
+            task_table_name = 'preprocess_task'
         elif typ == 1:
             input_path = self.paths['sixtrack_in']
             output_path = self.paths['sixtrack_out']
             exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
             jobname = 'sixtrack'
             table_name = 'sixtrack_wu'
+            task_table_name = 'sixtrack_task'
         else:
             content = "Unknow job type %s"%typ
             utils.message('Error', content, self.mes_level, self.log_file)
@@ -674,6 +676,7 @@ class Study(object):
                 table['batch_name'] = batch_name
                 self.db.update(table_name, table, where)
         else:
+            self.purge_table(task_table_name)
             content = "Failed to submit %s job!"%jobname
             utils.message('Warning', content, self.mes_level, self.log_file)
 
@@ -775,6 +778,21 @@ class Study(object):
                     + "failed furter calculation!"
             utils.message('Error', content, self.mes_level, self.log_file)
             return
+        task_table = {}
+        wu_table = {}
+        task_ids = []
+        for wu_id in wu_ids:
+            task_table['wu_id'] = wu_id
+            task_table['mtime'] = int(time.time()*1E7)
+            self.db.insert('sixtrack_task', task_table)
+            where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
+            task_id = self.db.select('sixtrack_task', ['task_id'], where)
+            task_id = task_id[0][0]
+            task_ids.append(task_id)
+            wu_table['task_id'] = task_id
+            wu_table['mtime'] = int(time.time()*1E7)
+            where = "wu_id=%s"%wu_id
+            self.db.update('sixtrack_wu', wu_table, where)
         db_info = {}
         db_info.update(self.db_info)
         tran_input =[]
@@ -793,12 +811,13 @@ class Study(object):
             sub_db.drop_table('sixtrack_wu')
             sub_db.drop_table('oneturn_sixtrack_wu')
             sub_db.drop_table('templates')
-            tables = {'wu_id':'int', 'preprocess_id':'int', 'input_file':'blob',
-                    'boinc': 'text'}
+            tables = {'wu_id':'int', 'preprocess_id':'int', 'task_id':'int',
+                    'input_file':'blob', 'boinc': 'text', 'job_name': 'text'}
             sub_db.create_table('sixtrack_wu', tables)
             incom_job = {}
             incom_job['wu_id'] = wu_ids
             incom_job['preprocess_id'] = pre_ids
+            incom_job['task_id'] = task_ids
             incom_job['input_file'] = input_buf_new
             incom_job['job_name'] = job_names
             incom_job['boinc'] = ['false']*len(wu_ids)
@@ -845,6 +864,21 @@ class Study(object):
         trans =[]
         outputs = list(zip(*outputs))
         wu_ids = outputs[0]
+        task_table = {}
+        wu_table = {}
+        task_ids = []
+        for wu_id in wu_ids:
+            task_table['wu_id'] = wu_id
+            task_table['mtime'] = int(time.time()*1E7)
+            self.db.insert('preprocess_task', task_table)
+            where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
+            task_id = self.db.select('preprocess_task', ['task_id'], where)
+            task_id = task_id[0][0]
+            task_ids.append(task_id)
+            wu_table['task_id'] = task_id
+            wu_table['mtime'] = int(time.time()*1E7)
+            where = "wu_id=%s"%wu_id
+            self.db.update('preprocess_wu', wu_table, where)
         db_info = {}
         db_info.update(self.db_info)
         if db_info['db_type'].lower() == 'sql':
@@ -854,9 +888,11 @@ class Study(object):
             db_info['db_name'] = sub_name
             sub_db = SixDB(db_info, self.db_settings, True, self.mes_level,
                     self.log_file)
-            sub_db.create_table('preprocess_wu', {'wu_id':'int','input_file':'blob'})
+            sub_db.create_table('preprocess_wu', {'wu_id':'int',
+            'task_id':'int', 'input_file':'blob'})
             incom_job = {}
             incom_job['wu_id'] = outputs[0]
+            incom_job['task_id'] = task_ids
             incom_job['input_file'] = outputs[1]
             sub_db.insertm('preprocess_wu', incom_job)
             sub_db.close()
@@ -899,6 +935,11 @@ class Study(object):
             os.mkdir(work_path)
         if not os.path.isdir(results_path):
             os.mkdir(results_path)
+
+    def purge_table(self, table_name):
+        '''Clean the invalid lines in the specified table'''
+        where = "status IS NULL"
+        self.db.remove(table_name, where)
 
     def name_conven(self, prefix, keys, values, suffix=''):
         '''The convention for naming input file'''

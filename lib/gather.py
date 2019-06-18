@@ -98,17 +98,17 @@ def preprocess_results(cf, cluster):
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
             #parse the results
+            where = 'wu_id=%s'%item
+            task_id = db.select('preprocess_wu', ['task_id'], where)
+            task_id = task_id[0][0]
             rp.parse_preprocess(item, job_path, file_list, task_table,
                     oneturn_table, list(oneturn.keys()), mes_level, log_file)
-            db.insert('preprocess_task', task_table)
-            where = "mtime=%s and wu_id=%s"%(task_table['mtime'], item)
-            task_id = db.select('preprocess_task', ['task_id'], where)
-            task_id = task_id[0][0]
+            where = 'task_id=%s'%task_id
+            db.update('preprocess_task', task_table, where)
             oneturn_table['task_id'] = task_id
             db.insert('oneturn_sixtrack_result', oneturn_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
-                job_table['task_id'] = task_id
                 job_table['mtime'] = int(time.time()*1E7)
                 where = "wu_id=%s"%item
                 db.update('preprocess_wu', job_table, where)

@@ -25,7 +25,7 @@ def run(wu_id, input_info):
     wu_id = str(wu_id)
     where = 'wu_id=%s'%wu_id
     outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc',
-        'job_name'], where)
+        'job_name', 'task_id'], where)
     boinc_paths = db.select('env', ['boinc_work', 'boinc_results'])
     if not outputs:
         print("There isn't input file for sixtrack job %s!"%wu_id)
@@ -35,6 +35,7 @@ def run(wu_id, input_info):
     boinc = outputs[0][2]
     input_buf = outputs[0][0]
     job_name = outputs[0][3]
+    task_id = outputs[0][4]
     input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
     cf.clear()
     cf.read_string(input_file)
@@ -67,6 +68,7 @@ def run(wu_id, input_info):
         boinc_work = boinc_paths[0][0]
         boinc_results = boinc_paths[0][1]
     sixtrack_config['boinc'] = boinc
+    sixtrack_config['task_id'] = task_id
     sixtrack_config['boinc_work'] = boinc_work
     sixtrack_config['boinc_results'] = boinc_results
     sixtrack_config['job_name'] = job_name
@@ -105,15 +107,15 @@ def run(wu_id, input_info):
         job_path = dest_path
         rp.parse_sixtrack(wu_id, job_path, output_files, task_table,
                 f10_table, list(f10_sec.keys()))
-        db.insert('sixtrack_task', task_table)
-        where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
-        task_id = db.select('sixtrack_task', ['task_id'], where)
-        task_id = task_id[0][0]
+        where = 'task_id=%s'%task_id
+        db.update('sixtrack_task', task_table, where)
+        #where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
+        #task_id = db.select('sixtrack_task', ['task_id'], where)
+        #task_id = task_id[0][0]
         f10_table['six_input_id'] = [task_id,]*len(f10_table['mtime'])
         db.insertm('six_results', f10_table)
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
-            job_table['task_id'] = task_id
             job_table['mtime'] = int(time.time()*1E7)
             where = "wu_id=%s"%wu_id
             db.update('sixtrack_wu', job_table, where)
@@ -240,6 +242,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         boinc_work = sixtrack_config['boinc_work']
         boinc_results = sixtrack_config['boinc_results']
         job_name = sixtrack_config['job_name']
+        task_id = sixtrack_config['task_id']
+        job_name = job_name +'_'+'task_id'+'_'+str(task_id)
         if not os.path.isdir(boinc_work):
             os.makedirs(boinc_work)
         if not os.path.isdir(boinc_results):

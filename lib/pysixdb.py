@@ -137,7 +137,7 @@ class SixDB(object):
         '''Update data in a table'''
         self.adaptor.update(self.conn, table_name, values, where)
 
-    def remove(self, table_name, where=None):
+    def remove(self, table_name, where):
         '''Reomve rows based on specified conditions'''
         self.adaptor.delete(self.conn, table_name, where)
 

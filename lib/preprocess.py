@@ -75,6 +75,10 @@ def run(wu_id, input_info):
     #reconnect after jobs finished
     try:
         db = SixDB(db_info)
+        where = "wu_id=%s"%wu_id
+        task_id = db.select('preprocess_wu', ['task_id'], where)
+        print(task_id)
+        task_id = task_id[0][0]
         job_table = {}
         task_table = {}
         oneturn_table = {}
@@ -82,16 +86,16 @@ def run(wu_id, input_info):
         job_path = dest_path
         rp.parse_preprocess(wu_id, job_path, output_files, task_table,
                 oneturn_table, list(oneturn.keys()))
-        db.insert('preprocess_task', task_table)
-        where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
-        task_id = db.select('preprocess_task', ['task_id'], where)
-        task_id = task_id[0][0]
+        where = "task_id=%s"%task_id
+        db.update('preprocess_task', task_table, where)
+        #where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
+        #task_id = db.select('preprocess_task', ['task_id'], where)
+        #task_id = task_id[0][0]
         oneturn_table['task_id'] = task_id
         db.insert('oneturn_sixtrack_result', oneturn_table)
         if task_table['status'] == 'Success':
             where = "wu_id=%s"%wu_id
             job_table['status'] = 'complete'
-            job_table['task_id'] = task_id
             job_table['mtime'] = int(time.time()*1E7)
             db.update('preprocess_wu', job_table, where)
             content = "Preprocess job %s has completed normally!"%wu_id
