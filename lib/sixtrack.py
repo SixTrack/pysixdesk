@@ -94,6 +94,9 @@ def run(wu_id, input_info):
         return status
 
     if boinc.lower() == 'true':
+        down_list=['fort.3']
+        dest_path = sixtrack_config["dest_path"]
+        utils.download_output(down_list, dest_path)
         return status
 
     try:
@@ -228,7 +231,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         six_out.writelines(outputlines)
     if not os.path.isfile('fort.10'):
         print("The sixtrack job %s for chromaticity FAILED!"%wu_id)
-        print("Check the file %s which contains the SixTrack fort.6 output."%output_name)
+        print("Check the file %s which contains the SixTrack output."%output_name)
         six_status = 0
         return six_status
     else:
@@ -243,7 +246,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         boinc_results = sixtrack_config['boinc_results']
         job_name = sixtrack_config['job_name']
         task_id = sixtrack_config['task_id']
-        job_name = job_name +'_'+'task_id'+'_'+str(task_id)
+        st_pre = os.path.basename(os.path.dirname(boinc_work))
+        job_name = st_pre+'_'+job_name +'_'+'task_id'+'_'+str(task_id)
         if not os.path.isdir(boinc_work):
             os.makedirs(boinc_work)
         if not os.path.isdir(boinc_results):

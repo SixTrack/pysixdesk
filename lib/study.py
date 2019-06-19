@@ -1,24 +1,27 @@
 import os
 import io
+import re
 import sys
+import gzip
 import time
 import copy
+import utils
+import gather
 import shutil
 import inspect
 import getpass
+import zipfile
 import itertools
-import configparser
-import collections
 import importlib
-import utils
-import gather
 import traceback
 import dbtypedict
+import collections
+import configparser
 
-from importlib.machinery import SourceFileLoader
-from subprocess import Popen, PIPE
 from pysixdb import SixDB
 from datetime import datetime
+from subprocess import Popen, PIPE
+from importlib.machinery import SourceFileLoader
 
 class Study(object):
 
@@ -355,12 +358,10 @@ class Study(object):
             utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
 
-        now = datetime.now()
-        date_time = now.strftime("%Y-%b-%d_%H-%M-%S")
-        dir_name = wu_name + '_' + st_name + '_' + date_time
+        self.st_pre = wu_name + '_' + st_name
         boinc_spool = self.paths['boinc_spool']
-        self.env['boinc_work'] = os.path.join(boinc_spool, dir_name, 'work')
-        self.env['boinc_results'] = os.path.join(boinc_spool, dir_name, 'results')
+        self.env['boinc_work'] = os.path.join(boinc_spool, self.st_pre, 'work')
+        self.env['boinc_results'] = os.path.join(boinc_spool, self.st_pre, 'results')
 
         for key in self.madx_params.keys():
             self.tables['preprocess_wu'][key] = 'INT'
@@ -732,6 +733,58 @@ class Study(object):
             self.submission.prepare(wu_ids, tran_input, exe, in_name, in_path,
                     out_path)
             self.submission.submit(in_path, job_name, trials)
+
+    def download_from_boinc(self):
+        '''Download results from boinc'''
+        res_path = self.env['boinc_results']
+        if not os.path.isdir(res_path):
+            content = "There isn't job submitted to boinc!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
+            return
+        out_path = self.paths['sixtrack_out']
+        items = os.listdir(out_path)
+        contents = os.listdir(boinc_results)
+        where = "status='submitted'"
+        wu_ids = db.select('sixtrack_wu', ['wu_id'], where)
+        if not wu_ids[0]:
+            content = "There isn't submitted job!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
+            return
+        processed_path = os.path.join(re_path, 'processed')
+        if not os.path.isdir(processed_path):
+            os.mkdir(processed_path)
+        tmp_path = os.path.join(out_path, 'temp')
+        if not os.path.isdir(tmp_path):
+            os.mkdir(tmp_path)
+        for res in contents:
+            if re.match(self.st_pre+'.+\.zip', res):
+                try:
+                    zph = zipfile.ZipFile(res, mode='r')
+                    zph.extractall(tmp_path)
+                    zph.close()
+                    shutil.move(res, processed_path)
+                except:
+                    content = traceback.print_exc()
+                    utils.message('Error', content, self.mes_level,
+                            self.log_file)
+                    zph.close()
+                    continue
+        for f10 in os.listdir(tmp_path):
+            match = re.search('wu_id', f10)
+            if not match:
+                content = 'Something wrong with the result %s'%f10
+                utils.message('Warning', content, self.mes_level, self.log_file)
+                continue
+            wu_id = f10[match.end()+1:match.end()+2]
+            job_path = os.path.join(out_path, wu_id)
+            if not os.path.isdir(job_path):
+                cnt = "The output path for sixtrack job %s doesn't exist!"%wu_id
+                utils.message('Warning', cnt, self.mes_level, self.log_file)
+                os.mkdir(job_path)
+            out_name = os.path.join(job_path, 'fort.10.gz')
+            with open(f10, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        shutil.rmtree(tmp_path)
 
     def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''

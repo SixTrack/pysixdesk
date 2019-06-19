@@ -27,7 +27,7 @@ def run(wu_id, infile):
         if dbtype.lower() == 'mysql':
             content = "There is no need to gather results manually with MySQL db!"
             utils.message('Message', content, mes_level, log_file)
-            sys.exit(0)
+            return
 
         cluster_module = info_sec['cluster_module']
         classname = info_sec['cluster_name']
