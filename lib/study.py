@@ -600,7 +600,7 @@ class Study(object):
             job_table['preprocess_id'] = j + 1 #in db id begin from 1
             wu_id += 1
             job_table['wu_id'] = wu_id
-            job_name = 'sixtrack_job_preprocess_id_%i__wu_id_%i'%(j+1, wu_id)
+            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i'%(j+1, wu_id)
             job_table['job_name'] = job_name
             dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
             six_sec['dest_path'] = dest_path
@@ -678,7 +678,7 @@ class Study(object):
                 table['batch_name'] = batch_name
                 self.db.update(table_name, table, where)
         else:
-            self.purge_table(task_table_name)
+            #self.purge_table(task_table_name)
             content = "Failed to submit %s job!"%jobname
             utils.message('Warning', content, self.mes_level, self.log_file)
 
@@ -754,7 +754,8 @@ class Study(object):
         processed_path = os.path.join(res_path, 'processed')
         if not os.path.isdir(processed_path):
             os.mkdir(processed_path)
-        tmp_path = os.path.join(out_path, 'temp')
+        username = getpass.getuser()
+        tmp_path = os.path.join('/tmp', username, self.st_pre)
         if not os.path.isdir(tmp_path):
             os.mkdir(tmp_path)
         for res in contents:

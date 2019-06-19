@@ -98,13 +98,13 @@ def run(wu_id, input_info):
     else:
         print("Job failed!")
 
-    if dbtype.lower() == 'sql':
-        return status
-
     if boinc.lower() == 'true' and status:
         down_list=['fort.3']
         dest_path = sixtrack_config["dest_path"]
         utils.download_output(down_list, dest_path)
+        return status
+
+    if dbtype.lower() == 'sql':
         return status
 
     try:
@@ -260,7 +260,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         job_name = sixtrack_config['job_name']
         task_id = sixtrack_config['task_id']
         st_pre = os.path.basename(os.path.dirname(boinc_work))
-        job_name = st_pre+'_'+job_name +'_'+'task_id'+'_'+str(task_id)
+        job_name = st_pre+'__'+job_name +'_'+'task_id'+'_'+str(task_id)
         if not os.path.isdir(boinc_work):
             os.makedirs(boinc_work)
         if not os.path.isdir(boinc_results):
