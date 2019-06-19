@@ -362,6 +362,7 @@ class Study(object):
         boinc_spool = self.paths['boinc_spool']
         self.env['boinc_work'] = os.path.join(boinc_spool, self.st_pre, 'work')
         self.env['boinc_results'] = os.path.join(boinc_spool, self.st_pre, 'results')
+        self.env['surv_percent'] = 1
 
         for key in self.madx_params.keys():
             self.tables['preprocess_wu'][key] = 'INT'
@@ -743,14 +744,14 @@ class Study(object):
             return
         out_path = self.paths['sixtrack_out']
         items = os.listdir(out_path)
-        contents = os.listdir(boinc_results)
+        contents = os.listdir(res_path)
         where = "status='submitted'"
-        wu_ids = db.select('sixtrack_wu', ['wu_id'], where)
+        wu_ids = self.db.select('sixtrack_wu', ['wu_id'], where)
         if not wu_ids[0]:
             content = "There isn't submitted job!"
             utils.message('Warning', content, self.mes_level, self.log_file)
             return
-        processed_path = os.path.join(re_path, 'processed')
+        processed_path = os.path.join(res_path, 'processed')
         if not os.path.isdir(processed_path):
             os.mkdir(processed_path)
         tmp_path = os.path.join(out_path, 'temp')
@@ -759,10 +760,11 @@ class Study(object):
         for res in contents:
             if re.match(self.st_pre+'.+\.zip', res):
                 try:
-                    zph = zipfile.ZipFile(res, mode='r')
+                    res_file = os.path.join(res_path, res)
+                    zph = zipfile.ZipFile(res_file, mode='r')
                     zph.extractall(tmp_path)
                     zph.close()
-                    shutil.move(res, processed_path)
+                    shutil.move(res_file, processed_path)
                 except:
                     content = traceback.print_exc()
                     utils.message('Error', content, self.mes_level,
@@ -782,7 +784,8 @@ class Study(object):
                 utils.message('Warning', cnt, self.mes_level, self.log_file)
                 os.mkdir(job_path)
             out_name = os.path.join(job_path, 'fort.10.gz')
-            with open(f10, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
+            f10_file = os.path.join(tmp_path, f10)
+            with open(f10_file, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
         shutil.rmtree(tmp_path)
 

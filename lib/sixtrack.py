@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 import os
+import re
 import sys
+import ast
 import copy
-import utils
 import time
+import utils
 import shutil
-import traceback
 import zipfile
 import getpass
+import traceback
 import configparser
 import resultparser as rp
 
@@ -26,7 +28,8 @@ def run(wu_id, input_info):
     where = 'wu_id=%s'%wu_id
     outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc',
         'job_name', 'task_id'], where)
-    boinc_paths = db.select('env', ['boinc_work', 'boinc_results'])
+    boinc_infos = db.select('env', ['boinc_work', 'boinc_results',
+        'surv_percent'])
     if not outputs:
         print("There isn't input file for sixtrack job %s!"%wu_id)
         db.close()
@@ -61,16 +64,21 @@ def run(wu_id, input_info):
         utils.evlt(utils.decompress_buf, [buf, infile])
     fort3_config = cf['fort3']
     boinc_vars = cf['boinc']
-    if not boinc_paths:
+    if not boinc_infos:
         boinc = 'false'
+        boinc_work = ''
+        boinc_results = ''
+        surv_percent = 1
         print("There isn't valid boinc path to submit this job!")
     else:
-        boinc_work = boinc_paths[0][0]
-        boinc_results = boinc_paths[0][1]
+        boinc_work = boinc_infos[0][0]
+        boinc_results = boinc_infos[0][1]
+        surv_percent = boinc_infos[0][2]
     sixtrack_config['boinc'] = boinc
     sixtrack_config['task_id'] = str(task_id)
     sixtrack_config['boinc_work'] = boinc_work
     sixtrack_config['boinc_results'] = boinc_results
+    sixtrack_config['surv_percent'] = str(surv_percent)
     sixtrack_config['job_name'] = job_name
     sixtrack_config['wu_id'] = wu_id
     status = sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
@@ -93,7 +101,7 @@ def run(wu_id, input_info):
     if dbtype.lower() == 'sql':
         return status
 
-    if boinc.lower() == 'true':
+    if boinc.lower() == 'true' and status:
         down_list=['fort.3']
         dest_path = sixtrack_config["dest_path"]
         utils.download_output(down_list, dest_path)
@@ -242,6 +250,11 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     os.chdir('../') #get out of junk folder
 
     if boinc.lower() == 'true':
+        surv_per = sixtrack_config['surv_percent']
+        surv_per = ast.literal_eval(surv_per)
+        test_status = check_tracking('sixtrack.output', surv_per)
+        if not test_status:
+            return 0
         boinc_work = sixtrack_config['boinc_work']
         boinc_results = sixtrack_config['boinc_results']
         job_name = sixtrack_config['job_name']
@@ -305,6 +318,31 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             print(stdout)
             six_status = 1
     return six_status
+
+def check_tracking(filename, surv_percent=1):
+    '''Check the tracking result to see how many particles survived'''
+    with open(filename, 'r') as f_in:
+        lines = f_in.readlines()
+    try:
+        track_lines = filter(lambda x: re.search('TRACKING>', x), lines)
+        last_line = list(track_lines)[-1]
+        info = re.split(':|,', last_line)
+        turn_info = info[1].split()
+        part_info = info[-1].split()
+        total_turn = ast.literal_eval(turn_info[-1])
+        track_turn = ast.literal_eval(turn_info[1])
+        total_part = ast.literal_eval(part_info[-1])
+        surv_part = ast.literal_eval(part_info[0])
+        if track_turn < total_turn:
+            return 0
+        else:
+            if surv_part/total_part < surv_percent:
+                return 0
+            else:
+                return 1
+    except:
+        print(traceback.print_exc())
+        return 0
 
 def concatenate_files(source, dest):
     '''Concatenate the given files'''
