@@ -1,20 +1,35 @@
 #!/usr/bin/python3
 import os
+import re
 import sys
+import ast
 import copy
+import time
 import utils
 import shutil
 import zipfile
+import getpass
+import traceback
 import configparser
+import resultparser as rp
 
 from pysixdb import SixDB
+from subprocess import Popen, PIPE
 
-def run(wu_id, db_name):
-    db = SixDB(db_name)
+def run(wu_id, input_info):
+    cf = configparser.ConfigParser()
+    cf.optionxform = str #preserve case
+    cf.read(input_info)
+    db_info = {}
+    db_info.update(cf['db_info'])
+    dbtype = db_info['db_type']
+    db = SixDB(db_info)
     wu_id = str(wu_id)
     where = 'wu_id=%s'%wu_id
-    outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc'], where)
-    #db.close()
+    outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc',
+        'job_name', 'task_id'], where)
+    boinc_infos = db.select('env', ['boinc_work', 'boinc_results',
+        'surv_percent'])
     if not outputs:
         print("There isn't input file for sixtrack job %s!"%wu_id)
         db.close()
@@ -22,42 +37,125 @@ def run(wu_id, db_name):
     preprocess_id = outputs[0][1]
     boinc = outputs[0][2]
     input_buf = outputs[0][0]
+    job_name = outputs[0][3]
+    task_id = outputs[0][4]
     input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
-    cf = configparser.ConfigParser()
-    cf.optionxform = str #preserve case
+    cf.clear()
     cf.read_string(input_file)
     sixtrack_config = cf['sixtrack']
     inp = sixtrack_config["input_files"]
     input_files = utils.evlt(utils.decode_strings, [inp])
     where = 'wu_id=%s'%str(preprocess_id)
-    task_id = db.select('preprocess_wu', ['task_id'], where)
-    if not task_id:
+    pre_task_id = db.select('preprocess_wu', ['task_id'], where)
+    if not pre_task_id:
         print("Can't find the preprocess task_id for this job!")
         return 0
     inputs = list(input_files.values())
-    task_id = task_id[0][0]
-    where = 'task_id=%s'%str(task_id)
+    pre_task_id = pre_task_id[0][0]
+    where = 'task_id=%s'%str(pre_task_id)
     input_buf = db.select('preprocess_task', inputs, where)
     db.close()
     if not input_buf:
-        print("The required file %s isn't found!"%infile)
+        print("The required files aren't found!")
         return 0
-
     for infile in inputs:
         i = inputs.index(infile)
         buf = input_buf[0][i]
         utils.evlt(utils.decompress_buf, [buf, infile])
     fort3_config = cf['fort3']
     boinc_vars = cf['boinc']
+    if not boinc_infos:
+        boinc = 'false'
+        boinc_work = ''
+        boinc_results = ''
+        surv_percent = 1
+        print("There isn't valid boinc path to submit this job!")
+    else:
+        boinc_work = boinc_infos[0][0]
+        boinc_results = boinc_infos[0][1]
+        surv_percent = boinc_infos[0][2]
     sixtrack_config['boinc'] = boinc
+    sixtrack_config['task_id'] = str(task_id)
+    sixtrack_config['boinc_work'] = boinc_work
+    sixtrack_config['boinc_results'] = boinc_results
+    sixtrack_config['surv_percent'] = str(surv_percent)
+    sixtrack_config['job_name'] = job_name
     sixtrack_config['wu_id'] = wu_id
     status = sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
-    return status
+    if dbtype.lower() == 'sql':
+        dest_path = sixtrack_config["dest_path"]
+    else:
+        dest_path = './result'
+    if not os.path.isdir(dest_path):
+        os.makedirs(dest_path)
+    inp = sixtrack_config["output_files"]
+    output_files = utils.evlt(utils.decode_strings, [inp])
+    down_list = list(output_files)
+    down_list.append('fort.3')
+    status = utils.download_output(down_list, dest_path)
+    if status:
+        print("All requested results have stored in %s"%dest_path)
+    else:
+        print("Job failed!")
+
+    if boinc.lower() == 'true' and status:
+        down_list=['fort.3']
+        dest_path = sixtrack_config["dest_path"]
+        utils.download_output(down_list, dest_path)
+        return status
+
+    if dbtype.lower() == 'sql':
+        return status
+
+    try:
+        #Reconnect after job finished
+        db = SixDB(db_info)
+        f10_sec = cf['f10']
+        job_table = {}
+        task_table = {}
+        f10_table = {}
+        task_table['status'] = 'Success'
+        job_path = dest_path
+        rp.parse_sixtrack(wu_id, job_path, output_files, task_table,
+                f10_table, list(f10_sec.keys()))
+        where = 'task_id=%s'%task_id
+        db.update('sixtrack_task', task_table, where)
+        #where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
+        #task_id = db.select('sixtrack_task', ['task_id'], where)
+        #task_id = task_id[0][0]
+        f10_table['six_input_id'] = [task_id,]*len(f10_table['mtime'])
+        db.insertm('six_results', f10_table)
+        if task_table['status'] == 'Success':
+            job_table['status'] = 'complete'
+            job_table['mtime'] = int(time.time()*1E7)
+            where = "wu_id=%s"%wu_id
+            db.update('sixtrack_wu', job_table, where)
+            content = "Sixtrack job %s has completed normally!"%wu_id
+            utils.message('Message', content)
+        else:
+            where = "wu_id=%s"%wu_id
+            job_table['status'] = 'incomplete'
+            job_table['mtime'] = int(time.time()*1E7)
+            db.update('sixtrack_wu', job_table, where)
+            content = "The sixtrack job failed!"
+            utils.message('Warning', content)
+        return status
+    except:
+        where = "wu_id=%s"%wu_id
+        job_table['status'] = 'incomplete'
+        job_table['mtime'] = int(time.time()*1E7)
+        db.update('sixtrack_wu', job_table, where)
+        content = traceback.print_exc()
+        utils.message('Error', content)
+        return False
+    finally:
+        db.close()
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     '''The actual sixtrack job'''
     six_status = 1
     fort3_config = config_param
+    real_turn = fort3_config['turnss']
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     source_path = sixtrack_config["source_path"]
     dest_path = sixtrack_config["dest_path"]
@@ -68,8 +166,6 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     inp = sixtrack_config["input_files"]
     input_files = utils.evlt(utils.decode_strings, [inp])
     boinc = sixtrack_config["boinc"]
-    boinc_dir = sixtrack_config["boinc_dir"]
-    #test_turn = sixtrack_config["test_turn"]
     for infile in temp_files:
         infi = os.path.join(source_path, infile)
         if os.path.isfile(infi):
@@ -107,8 +203,9 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         six_status = 0
         return six_status
 
-    #if boinc.lowercase() is 'true':
-    #    fort3_config['turn'] = test_turn
+    if boinc.lower() == 'true':
+        test_turn = sixtrack_config["test_turn"]
+        fort3_config['turnss'] = test_turn
     keys = list(fort3_config.keys())
     patterns = ['%'+a for a in keys]
     values = [fort3_config[key] for key in keys]
@@ -142,7 +239,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         six_out.writelines(outputlines)
     if not os.path.isfile('fort.10'):
         print("The sixtrack job %s for chromaticity FAILED!"%wu_id)
-        print("Check the file %s which contains the SixTrack fort.6 output."%output_name)
+        print("Check the file %s which contains the SixTrack output."%output_name)
         six_status = 0
         return six_status
     else:
@@ -151,14 +248,25 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         shutil.move('fort.3','../fort.3')
         print('Sixtrack job %s has completed normally!'%wu_id)
     os.chdir('../') #get out of junk folder
-    down_list = output_files
-    down_list.append('fort.3')
-    status = utils.download_output(down_list, dest_path)
 
-    if boinc.lower() is 'true':
+    if boinc.lower() == 'true':
+        surv_per = sixtrack_config['surv_percent']
+        surv_per = ast.literal_eval(surv_per)
+        test_status = check_tracking('sixtrack.output', surv_per)
+        if not test_status:
+            return 0
+        boinc_work = sixtrack_config['boinc_work']
+        boinc_results = sixtrack_config['boinc_results']
+        job_name = sixtrack_config['job_name']
+        task_id = sixtrack_config['task_id']
+        st_pre = os.path.basename(os.path.dirname(boinc_work))
+        job_name = st_pre+'__'+job_name +'_'+'task_id'+'_'+str(task_id)
+        if not os.path.isdir(boinc_work):
+            os.makedirs(boinc_work)
+        if not os.path.isdir(boinc_results):
+            os.makedirs(boinc_results)
         print('The job passes the test and will be sumbitted to BOINC!')
-        os.chdir('../')#get out of junk folder
-        fort3_config['turn'] = config_param['turn']
+        fort3_config['turnss'] = real_turn
         values = [fort3_config[key] for key in keys]
         output = []
         #recreate the fort.3 file
@@ -180,7 +288,9 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         concatenate_files(output, 'fort.3')
 
         #zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
-        ziph = zipfile.ZipFile('test.zip', 'w', zipfile.ZIP_DEFLATED)
+        input_zip = job_name + '.zip'
+        ziph = zipfile.ZipFile(input_zip, 'w', zipfile.ZIP_DEFLATED)
+        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16']
         for infile in inputs:
             if infile in os.listdir('.'):
                 ziph.write(infile)
@@ -190,12 +300,49 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
                 return six_status
         ziph.close()
 
-        with open('test.desc', 'w') as f_out:
-            pars = '\n'.join(boinc_vars.values)
+        boinc_config = job_name + '.desc'
+        boinc_vars['workunitName'] = job_name
+        with open(boinc_config, 'w') as f_out:
+            pars = '\n'.join(boinc_vars.values())
             f_out.write(pars)
-        #process = Popen('cp', ['test.zip', 'test.desc', boinc_dir])
-        #TODO
+            f_out.write('\n')
+        process = Popen(['cp', input_zip, boinc_config, boinc_work], stdout=PIPE,\
+                stderr=PIPE, universal_newlines=True)
+        stdout, stderr = process.communicate()
+        if stderr:
+            print(stdout)
+            print(stderr)
+            six_status = 0
+        else:
+            print("Submit to %s successfully!"%boinc_work)
+            print(stdout)
+            six_status = 1
     return six_status
+
+def check_tracking(filename, surv_percent=1):
+    '''Check the tracking result to see how many particles survived'''
+    with open(filename, 'r') as f_in:
+        lines = f_in.readlines()
+    try:
+        track_lines = filter(lambda x: re.search('TRACKING>', x), lines)
+        last_line = list(track_lines)[-1]
+        info = re.split(':|,', last_line)
+        turn_info = info[1].split()
+        part_info = info[-1].split()
+        total_turn = ast.literal_eval(turn_info[-1])
+        track_turn = ast.literal_eval(turn_info[1])
+        total_part = ast.literal_eval(part_info[-1])
+        surv_part = ast.literal_eval(part_info[0])
+        if track_turn < total_turn:
+            return 0
+        else:
+            if surv_part/total_part < surv_percent:
+                return 0
+            else:
+                return 1
+    except:
+        print(traceback.print_exc())
+        return 0
 
 def concatenate_files(source, dest):
     '''Concatenate the given files'''

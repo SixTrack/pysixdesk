@@ -1,21 +1,27 @@
 import os
 import io
+import re
 import sys
+import gzip
 import time
 import copy
-import shutil
-import inspect
-import itertools
-import configparser
-import collections
-import importlib
 import utils
 import gather
+import shutil
+import inspect
+import getpass
+import zipfile
+import itertools
+import importlib
 import traceback
+import dbtypedict
+import collections
+import configparser
 
-from importlib.machinery import SourceFileLoader
-from subprocess import Popen, PIPE
 from pysixdb import SixDB
+from datetime import datetime
+from subprocess import Popen, PIPE
+from importlib.machinery import SourceFileLoader
 
 class Study(object):
 
@@ -27,8 +33,8 @@ class Study(object):
         self.config = configparser.ConfigParser()
         self.config.optionxform = str #preserve case
         self.submission = None
-        self.preprocess_joblist = []
-        self.sixtrack_joblist = []
+        self.db_info = {}
+        self.type_dict = None
         #All the requested parameters for a study
         self.paths = {}
         self.env = {}
@@ -62,9 +68,12 @@ class Study(object):
         self.paths["sixtrack_out"] = os.path.join(self.study_path, "sixtrack_output")
         self.paths["gather"] = os.path.join(self.study_path, "gather")
         self.paths["templates"] = self.study_path
-        self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
+        #self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
+        self.env['test_turn'] = 1000
         self.cluster_module = None
         self.cluster_name = 'HTCondor'
+        self.log_file = None
+        self.mes_level = 1
 
         self.madx_output = {
                 'fc.2': 'fort.2',
@@ -113,43 +122,40 @@ class Study(object):
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
 
-        self.dbname = 'data.db'
+        self.db_info['db_type'] = 'sql'
         #Default definition of the database tables
         self.tables['templates'] = collections.OrderedDict()
         self.tables['env'] = collections.OrderedDict()
         self.tables['preprocess_wu'] = collections.OrderedDict([
-                ('wu_id', 'int'),
+                ('wu_id', 'INTEGER'),
                 ('job_name', 'text'),
                 ('input_file', 'blob'),
                 ('batch_name', 'text'),
                 ('unique_id', 'text'),
                 ('status', 'text'),
                 ('task_id', 'int'),
-                ('mtime', 'float')])
+                ('mtime', 'bigint')])
         self.table_keys['preprocess_wu'] = {
                 'primary': ['wu_id'],
+                'autoincrement': ['wu_id'],
                 'foreign': {},
                 }
         self.tables['preprocess_task'] = collections.OrderedDict([
-                ('task_id', 'int'),
+                ('task_id', 'INTEGER'),
                 ('wu_id', 'int'),
-                ('task_name', 'text'),
                 ('madx_in' , 'blob'),
                 ('madx_stdout', 'blob'),
                 ('job_stdout', 'blob'),
                 ('job_stderr', 'blob'),
                 ('job_stdlog', 'blob'),
-                ('count', 'int'),
                 ('status', 'text'),
-                ('mtime', 'float')])
+                ('mtime', 'bigint')])
         self.table_keys['preprocess_task'] = {
                 'primary': ['task_id'],
+                'autoincrement': ['task_id'],
                 'foreign': {'preprocess_wu': [['wu_id'], ['wu_id']]},
                 }
         self.tables['oneturn_sixtrack_wu'] = collections.OrderedDict()
-        self.tables['preprocess_optics'] = {
-                'task_id': 'int',
-                'wu_id': 'int'}
         self.tables['oneturn_sixtrack_result'] = collections.OrderedDict([
                 ('task_id', 'int'),
                 ('wu_id', 'int'),
@@ -174,9 +180,9 @@ class Study(object):
                 ('tuney1', 'float'),
                 ('tunex2', 'float'),
                 ('tuney2', 'float'),
-                ('mtim', 'float')])
+                ('mtime', 'bigint')])
         self.tables['sixtrack_wu']=collections.OrderedDict([
-                ('wu_id', 'int'),
+                ('wu_id', 'INTEGER'),
                 ('preprocess_id', 'int'),
                 ('job_name', 'text'),
                 ('input_file', 'blob'),
@@ -184,24 +190,25 @@ class Study(object):
                 ('unique_id', 'text'),
                 ('status', 'text'),
                 ('task_id', 'int'),
-                ('mtime', 'float')])
+                ('boinc', 'text'),
+                ('mtime', 'bigint')])
         self.table_keys['sixtrack_wu'] = {
                 'primary': ['wu_id'],
+                'autoincrement': ['wu_id'],
                 'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
                 }
         self.tables['sixtrack_task'] = collections.OrderedDict([
-                ('task_id', 'int'),
+                ('task_id', 'INTEGER'),
                 ('wu_id', 'int'),
-                ('task_name', 'text'),
                 ('fort3', 'blob'),
                 ('job_stdout', 'blob'),
                 ('job_stderr', 'blob'),
                 ('job_stdlog', 'blob'),
-                ('count', 'int'),
                 ('status', 'text'),
-                ('mtime', 'float')])
+                ('mtime', 'bigint')])
         self.table_keys['sixtrack_task'] = {
                 'primary': ['task_id'],
+                'autoincrement': ['task_id'],
                 'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
                 }
         self.tables['six_results'] = collections.OrderedDict([
@@ -267,7 +274,7 @@ class Study(object):
                 ('delta', 'float'),
                 ('dnms', 'float'),
                 ('trttime', 'float'),
-                ('mtime','float')])
+                ('mtime','bigint')])
         self.table_keys['six_results'] = {
                 'primary': ['six_input_id', 'row_num'],
                 'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},
@@ -311,9 +318,11 @@ class Study(object):
                     d = os.path.join(temp, item)
                     if os.path.isfile(s):
                         shutil.copy2(s, d)
-                print("Copy templates from default source templates folder!")
+                content = "Copy templates from default source templates folder!"
+                utils.message('Message', content, self.mes_level, self.log_file)
             else:
-                print("The default source templates folder %s is inavlid!"%tem_path)
+                content = "The default source templates folder %s is inavlid!"%tem_path
+                utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
 
         if not os.path.isdir(self.paths["preprocess_in"]):
@@ -327,24 +336,44 @@ class Study(object):
         if not os.path.isdir(self.paths["gather"]):
             os.makedirs(self.paths["gather"])
 
-        #Initialize the database
-        dbname = os.path.join(self.study_path, self.dbname)
-        self.db = SixDB(dbname, self.db_settings, True)
-
     def customize(self):
         '''Update the column names of database tables  and initialize the
         submission module after the user define the necessary variables.
         '''
+        stp = self.study_path
+        studies = os.path.dirname(stp)
+        wu_path = os.path.dirname(studies)
+        wu_name = os.path.basename(wu_path)
+        st_name = os.path.basename(stp)
+
+        db_type = self.db_info['db_type']
+        if db_type.lower() == 'sql':
+            self.type_dict = dbtypedict.SQLiteDict()
+            self.db_info['db_name'] = os.path.join(self.study_path, 'data.db')
+        elif db_type.lower() == 'mysql':
+            self.type_dict = dbtypedict.MySQLDict()
+            self.db_info['db_name'] = wu_name + '_' + st_name
+        else:
+            content = "Unknown database type!"
+            utils.message('Error', content, self.mes_level, self.log_file)
+            sys.exit(1)
+
+        self.st_pre = wu_name + '_' + st_name
+        boinc_spool = self.paths['boinc_spool']
+        self.env['boinc_work'] = os.path.join(boinc_spool, self.st_pre, 'work')
+        self.env['boinc_results'] = os.path.join(boinc_spool, self.st_pre, 'results')
+        self.env['surv_percent'] = 1
+
         for key in self.madx_params.keys():
             self.tables['preprocess_wu'][key] = 'INT'
         for key in self.madx_output.values():
-            self.tables['preprocess_task'][key] = 'BLOB'
+            self.tables['preprocess_task'][key] = 'MEDIUMBLOB'
 
-        for key in self.oneturn_sixtrack_params.keys():
-            self.tables['oneturn_sixtrack_wu'][key] = 'INT'
+        for key, val in self.oneturn_sixtrack_params.items():
+            self.tables['oneturn_sixtrack_wu'][key] = self.type_dict[val]
 
-        for key in self.sixtrack_params.keys():
-            self.tables['sixtrack_wu'][key] = 'INT'
+        for key, val in self.sixtrack_params.items():
+            self.tables['sixtrack_wu'][key] = self.type_dict[val]
         for key in self.sixtrack_output:
             self.tables['sixtrack_task'][key] = 'BLOB'
 
@@ -357,11 +386,15 @@ class Study(object):
 
         for key in self.paths.keys():
             self.tables['env'][key] = 'TEXT'
-        for key in self.env.keys():
-            self.tables['env'][key] = 'INT'
+        for key, val in self.env.items():
+            self.tables['env'][key] = self.type_dict[val]
 
-        for key in self.boinc_vars.keys():
-            self.tables['boinc_vars'][key] = 'TEXT'
+        for key, val in self.boinc_vars.items():
+            self.tables['boinc_vars'][key] = self.type_dict[val]
+
+        #Initialize the database
+        self.db = SixDB(self.db_info, self.db_settings, True, self.mes_level,
+                self.log_file)
         #create the database tables if not exist
         if not self.db.fetch_tables():
             self.db.create_tables(self.tables, self.table_keys)
@@ -378,15 +411,17 @@ class Study(object):
                 mod = SourceFileLoader(module_name, cluster_module).load_module()
                 cls = getattr(mod, classname)
                 #pass temp path to submission class
-                self.submission = cls(self.paths['templates'])
+                self.submission = cls(self.mes_level, self.log_file, self.paths['templates'])
             except:
-                print(traceback.print_exc())
-                print("Failed to initialize submission module!")
+                content = traceback.print_exc()
+                utils.message('Error', content, self.mes_level, self.log_file)
+                content = "Failed to initialize submission module!"
+                utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
         else:
-            print("The submission module %s doesn't exist!"%cluster_module)
+            content = "The submission module %s doesn't exist!"%cluster_module
+            utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
-
 
     def update_db(self):
         '''Update the database whith the user-defined parameters'''
@@ -397,7 +432,8 @@ class Study(object):
         require.append(self.madx_input["mask_file"])
         for re in require:
             if re not in cont:
-                print("The required file %s isn't found in %s!"%(re, temp))
+                content = "The required file %s isn't found in %s!"%(re, temp)
+                utils.message('Error', content, self.mes_level, self.log_file)
                 return
         outputs = self.db.select('templates', self.tables['templates'].keys())
         if not outputs:
@@ -418,11 +454,16 @@ class Study(object):
         envs.update(self.env)
         if not outputs:
             self.db.insert('env', envs)
+        else:
+            self.db.update('env', envs)
         outputs = self.db.select('boinc_vars', self.boinc_vars.keys())
         if not outputs:
             self.db.insert('boinc_vars', self.boinc_vars)
+        else:
+            self.db.update('boinc_vars', self.boinc_vars)
 
         self.config.clear()
+        self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
         self.config['madx'] = {}
         madx_sec = self.config['madx']
         self.config['mask'] = {}
@@ -461,7 +502,8 @@ class Study(object):
             if element in check_params:
                 i = check_params.index(element)
                 name = check_jobs[i][1]
-                print("The job %s is already in the database!"%name)
+                content = "The job %s is already in the database!"%name
+                utils.message('Warning', content, self.mes_level, self.log_file)
                 continue
             for i in range(len(element)):
                 ky = keys[i]
@@ -482,9 +524,10 @@ class Study(object):
             madx_table['input_file'] = utils.evlt(utils.compress_buf, [out,'str'])
             madx_table['status'] = 'incomplete'
             madx_table['job_name'] = job_name
-            madx_table['mtime'] = time.time()
+            madx_table['mtime'] = int(time.time()*1E7)
             self.db.insert('preprocess_wu', madx_table)
-            print('Store preprocess job %s into database!'%job_name)
+            content = 'Store preprocess job %s into database!'%job_name
+            utils.message('Message', content, self.mes_level, self.log_file)
 
         #prepare sixtrack paramters in database
         self.config.clear()
@@ -492,6 +535,7 @@ class Study(object):
         six_sec = self.config['sixtrack']
         self.config['fort3'] = {}
         fort3_sec = self.config['fort3']
+        self.config['f10'] = self.tables['six_results']
         six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         inp = self.sixtrack_input['input']
@@ -501,11 +545,13 @@ class Study(object):
         six_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
+        six_sec['test_turn'] = str(self.env['test_turn'])
 
         madx_keys = list(self.madx_params.keys())
         madx_vals = self.db.select('preprocess_wu', ['wu_id']+madx_keys)
         if not madx_vals:
-            print("The preprocess_wu table is empty!")
+            content = "The preprocess_wu table is empty!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
             return
         madx_vals = list(zip(*madx_vals))
         madx_ids = list(madx_vals[0])
@@ -534,7 +580,8 @@ class Study(object):
             if element in outputs:
                 i = outputs.index(element)
                 nm = namevsid[i][1]
-                print("The sixtrack job %s is already in the database!"%nm)
+                content = "The sixtrack job %s is already in the database!"%nm
+                utils.message('Warning', content, self.mes_level, self.log_file)
                 continue
             for i in range(len(element)-1):
                 ky = keys[i]
@@ -553,7 +600,7 @@ class Study(object):
             job_table['preprocess_id'] = j + 1 #in db id begin from 1
             wu_id += 1
             job_table['wu_id'] = wu_id
-            job_name = 'sixtrack_job_%i_%i'%(j+1, wu_id)
+            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i'%(j+1, wu_id)
             job_table['job_name'] = job_name
             dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
             six_sec['dest_path'] = dest_path
@@ -563,9 +610,10 @@ class Study(object):
             out = f_out.getvalue()
             job_table['input_file'] = utils.evlt(utils.compress_buf, [out,'str'])
             job_table['status'] = 'incomplete'
-            job_table['mtime'] = time.time()
+            job_table['mtime'] = int(time.time()*1E7)
             self.db.insert('sixtrack_wu', job_table)
-            print('Store sixtrack job %s into database!'%job_name)
+            content = 'Store sixtrack job %s into database!'%job_name
+            utils.message('Message', content, self.mes_level, self.log_file)
 
     def info(self, job=2, where=None):
         '''Print the status information of this study.
@@ -574,24 +622,19 @@ class Study(object):
         1: print sixtrack job
         2: print madx, oneturn sixtrack and sixtrack jobs
         wehre: the filter condition for database query, e.g. "status='complete'" '''
-        loc = self.study_path
-        conts = os.listdir(loc)
-        if self.dbname not in conts:
-            print("This study directory is empty!")
-        else:
-            query= ['wu_id', 'job_name', 'status', 'unique_id']
-            if job==0 or job==2:
-                wus = self.db.select('preprocess_wu', query, where)
-                print('madx and one turn sixtrack jobs:')
-                print(query)
-                for i in wus:
-                    print(i)
-            if job==1 or job==2:
-                six = self.db.select('sixtrack_wu', query, where)
-                print('Sixtrack jobs:')
-                print(query)
-                for j in six:
-                    print(j)
+        query= ['wu_id', 'job_name', 'status', 'unique_id']
+        if job==0 or job==2:
+            wus = self.db.select('preprocess_wu', query, where)
+            print('madx and one turn sixtrack jobs:')
+            print(query)
+            for i in wus:
+                print(i)
+        if job==1 or job==2:
+            six = self.db.select('sixtrack_wu', query, where)
+            print('Sixtrack jobs:')
+            print(query)
+            for j in six:
+                print(j)
 
     def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
@@ -603,14 +646,17 @@ class Study(object):
             exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
             jobname = 'preprocess'
             table_name = 'preprocess_wu'
+            task_table_name = 'preprocess_task'
         elif typ == 1:
             input_path = self.paths['sixtrack_in']
             output_path = self.paths['sixtrack_out']
             exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
             jobname = 'sixtrack'
             table_name = 'sixtrack_wu'
+            task_table_name = 'sixtrack_task'
         else:
-            print("Unknow job type %s"%typ)
+            content = "Unknow job type %s"%typ
+            utils.message('Error', content, self.mes_level, self.log_file)
             return
 
         batch_name = os.path.join(self.study_path, jobname)
@@ -620,9 +666,10 @@ class Study(object):
         ibatch += 1
         batch_name = batch_name+'_'+str(ibatch)
         status, out = self.submission.submit(input_path, batch_name,
-                trials, *args, *kwargs)
+                trials, *args, **kwargs)
         if status:
-            print("Submit %s job successfully!"%jobname)
+            content = "Submit %s job successfully!"%jobname
+            utils.message('Message', content, self.mes_level, self.log_file)
             table = {}
             table['status'] = 'submitted'
             for ky, vl in out.items():
@@ -631,7 +678,9 @@ class Study(object):
                 table['batch_name'] = batch_name
                 self.db.update(table_name, table, where)
         else:
-            print("Failed to submit %s job!"%jobname)
+            #self.purge_table(task_table_name)
+            content = "Failed to submit %s job!"%jobname
+            utils.message('Warning', content, self.mes_level, self.log_file)
 
     def collect_result(self, typ, trials=5, platform='local', clean='False'):
         '''Collect the results of preprocess or  sixtrack jobs'''
@@ -639,7 +688,12 @@ class Study(object):
         self.config['info'] = {}
         info_sec = self.config['info']
         self.config['db_setting'] = self.db_settings
-        info_sec['db'] = os.path.join(self.study_path, self.dbname)
+        self.config['db_info'] = self.db_info
+        info_sec['mes_level'] = str(self.mes_level)
+        if self.log_file is None:
+            info_sec['log_file'] = ''
+        else:
+            info_sec['log_file'] = self.log_file
         cluster_module = self.cluster_module
         if cluster_module is None:
             cluster_module = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
@@ -661,7 +715,8 @@ class Study(object):
             in_name = 'sixtrack.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
         else:
-            print("Unkown job type %s"%typ)
+            content = "Unkown job type %s"%typ
+            utils.message('Error', content, self.mes_level, self.log_file)
 
         in_path = os.path.join(self.paths['gather'], str(typ))
         out_path = in_path
@@ -673,9 +728,6 @@ class Study(object):
             gather.run(typ, task_input)
         elif platform is 'htcondor':
             tran_input =[]
-            tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
-            tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
-            tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
             tran_input.append(task_input)
             exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')
             wu_ids = [typ]
@@ -683,43 +735,87 @@ class Study(object):
                     out_path)
             self.submission.submit(in_path, job_name, trials)
 
+    def download_from_boinc(self):
+        '''Download results from boinc'''
+        res_path = self.env['boinc_results']
+        if not os.path.isdir(res_path):
+            content = "There isn't job submitted to boinc!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
+            return
+        out_path = self.paths['sixtrack_out']
+        items = os.listdir(out_path)
+        contents = os.listdir(res_path)
+        where = "status='submitted'"
+        wu_ids = self.db.select('sixtrack_wu', ['wu_id'], where)
+        if not wu_ids[0]:
+            content = "There isn't submitted job!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
+            return
+        processed_path = os.path.join(res_path, 'processed')
+        if not os.path.isdir(processed_path):
+            os.mkdir(processed_path)
+        username = getpass.getuser()
+        tmp_path = os.path.join('/tmp', username, self.st_pre)
+        if not os.path.isdir(tmp_path):
+            os.mkdir(tmp_path)
+        for res in contents:
+            if re.match(self.st_pre+'.+\.zip', res):
+                try:
+                    res_file = os.path.join(res_path, res)
+                    zph = zipfile.ZipFile(res_file, mode='r')
+                    zph.extractall(tmp_path)
+                    zph.close()
+                    shutil.move(res_file, processed_path)
+                except:
+                    content = traceback.print_exc()
+                    utils.message('Error', content, self.mes_level,
+                            self.log_file)
+                    zph.close()
+                    continue
+        for f10 in os.listdir(tmp_path):
+            match = re.search('wu_id', f10)
+            if not match:
+                content = 'Something wrong with the result %s'%f10
+                utils.message('Warning', content, self.mes_level, self.log_file)
+                continue
+            wu_id = f10[match.end()+1:match.end()+2]
+            job_path = os.path.join(out_path, wu_id)
+            if not os.path.isdir(job_path):
+                cnt = "The output path for sixtrack job %s doesn't exist!"%wu_id
+                utils.message('Warning', cnt, self.mes_level, self.log_file)
+                os.mkdir(job_path)
+            out_name = os.path.join(job_path, 'fort.10.gz')
+            f10_file = os.path.join(tmp_path, f10)
+            with open(f10_file, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        shutil.rmtree(tmp_path)
+
     def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
         where = "status='complete'"
         preprocess_outs = self.db.select('preprocess_wu', ['wu_id', 'task_id'], where)
         if not preprocess_outs:
-            print("There isn't complete madx job!")
+            content = "There isn't complete madx job!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
             return
         preprocess_outs = list(zip(*preprocess_outs))
         if len(preprocess_outs[0]) == 1:
             where = "status='incomplete' and preprocess_id=%s"%str(preprocess_outs[0][0])
         else:
             where = "status='incomplete' and preprocess_id in %s"%str(preprocess_outs[0])
-        outputs = self.db.select('sixtrack_wu', ['wu_id', 'preprocess_id', 'input_file'], where)
+        outputs = self.db.select('sixtrack_wu', ['wu_id', 'preprocess_id',
+            'input_file', 'job_name'], where)
         if not outputs:
-            print("There isn't available sixtrack job to submit!")
+            content = "There isn't available sixtrack job to submit!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
             return
-        sub_name = os.path.join(self.paths['sixtrack_in'], 'sub.db')
-        sub_main = os.path.join(self.study_path, self.dbname)
-        if os.path.exists(sub_name):
-            os.remove(sub_name)#remove the old one
-        shutil.copy2(sub_main, sub_name)
-        sub_db = SixDB(sub_name, self.db_settings)
-        sub_db.drop_table('sixtrack_task')
-        sub_db.drop_table('result')
-        sub_db.drop_table('sixtrack_wu')
-        sub_db.drop_table('oneturn_sixtrack_wu')
-        sub_db.drop_table('env')
-        sub_db.drop_table('templates')
-        tables = {'wu_id':'int', 'preprocess_id':'int', 'input_file':'blob',
-                'boinc': 'text'}
-        sub_db.create_table('sixtrack_wu', tables)
-        incom_job = {}
         outputs = list(zip(*outputs))
         wu_ids = []
         pre_ids = []
+        job_names = []
         input_buf_new = []
-        for wu_id, pre_id, buf in zip(outputs[0], outputs[1], outputs[2]):
+        for wu_id, pre_id, buf, job_name in zip(outputs[0], outputs[1],
+                outputs[2], outputs[3]):
             in_fil = utils.evlt(utils.decompress_buf, [buf, None, 'buf'])
             self.config.clear()
             self.config.read_string(in_fil)
@@ -733,30 +829,85 @@ class Study(object):
                 input_buf_new.append(buf_new)
                 wu_ids.append(wu_id)
                 pre_ids.append(pre_id)
+                job_names.append(job_name)
         if not wu_ids:
-            print("There isn't available sixtrack job to submit due to failed "
-                    "furter calculation!")
+            content = "There isn't available sixtrack job to submit due to "\
+                    + "failed furter calculation!"
+            utils.message('Error', content, self.mes_level, self.log_file)
             return
-        incom_job['wu_id'] = wu_ids
-        incom_job['preprocess_id'] = pre_ids
-        incom_job['input_file'] = input_buf_new
-        incom_job['boinc'] = ['false']*len(wu_ids)
-        if boinc:
-            incom_job['boinc'] = ['true']*len(wu_ids)
-        sub_db.insertm('sixtrack_wu', incom_job)
-        wu_ids = sub_db.select('sixtrack_wu', ['wu_id'])
-        wu_ids = list(zip(*wu_ids))[0]
-        sub_db.close()
-        print("The submitted database %s is ready!"%sub_name)
+        task_table = {}
+        wu_table = {}
+        task_ids = []
+        for wu_id in wu_ids:
+            task_table['wu_id'] = wu_id
+            task_table['mtime'] = int(time.time()*1E7)
+            self.db.insert('sixtrack_task', task_table)
+            where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
+            task_id = self.db.select('sixtrack_task', ['task_id'], where)
+            task_id = task_id[0][0]
+            task_ids.append(task_id)
+            wu_table['task_id'] = task_id
+            wu_table['mtime'] = int(time.time()*1E7)
+            where = "wu_id=%s"%wu_id
+            self.db.update('sixtrack_wu', wu_table, where)
+        db_info = {}
+        db_info.update(self.db_info)
         tran_input =[]
-        tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
-        tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
-        tran_input.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
-        tran_input.append(sub_name)
+        if db_info['db_type'].lower() == 'sql':
+            sub_name = os.path.join(self.paths['sixtrack_in'], 'sub.db')
+            sub_main = self.db_info['db_name']
+            if os.path.exists(sub_name):
+                os.remove(sub_name)#remove the old one
+            shutil.copy2(sub_main, sub_name)
+            db_info['db_name'] = sub_name
+            sub_db = SixDB(db_info, self.db_settings, mes_level=self.mes_level,
+                    log_file=self.log_file)
+
+            sub_db.drop_table('sixtrack_task')
+            sub_db.drop_table('result')
+            sub_db.drop_table('sixtrack_wu')
+            sub_db.drop_table('oneturn_sixtrack_wu')
+            sub_db.drop_table('templates')
+            tables = {'wu_id':'int', 'preprocess_id':'int', 'task_id':'int',
+                    'input_file':'blob', 'boinc': 'text', 'job_name': 'text'}
+            sub_db.create_table('sixtrack_wu', tables)
+            incom_job = {}
+            incom_job['wu_id'] = wu_ids
+            incom_job['preprocess_id'] = pre_ids
+            incom_job['task_id'] = task_ids
+            incom_job['input_file'] = input_buf_new
+            incom_job['job_name'] = job_names
+            incom_job['boinc'] = ['false']*len(wu_ids)
+            if boinc:
+                incom_job['boinc'] = ['true']*len(wu_ids)
+            sub_db.insertm('sixtrack_wu', incom_job)
+            wu_ids = sub_db.select('sixtrack_wu', ['wu_id'])
+            wu_ids = list(zip(*wu_ids))[0]
+            sub_db.close()
+            db_info['db_name'] = 'sub.db'
+            content = "The submitted db %s is ready!"%self.db_info['db_name']
+            utils.message('Message', content, self.mes_level, self.log_file)
+            tran_input.append(sub_name)
+        else:
+            job_table = {}
+            job_table['boinc'] = str(boinc)
+            if len(wu_ids) == 1:
+                where = "wu_id=%s"%wu_ids[0]
+            else:
+                where = "wu_id in %s"%str(tuple(wu_ids))
+            self.db.update('sixtrack_wu', job_table, where)
+        if boinc:
+            self.init_boinc_dir()
+        input_info = os.path.join(self.paths['sixtrack_in'], 'db.ini')
+        self.config.clear()
+        self.config['db_info'] = db_info
+        with open(input_info, 'w') as f_out:
+            self.config.write(f_out)
+        tran_input.append(input_info)
         in_path = self.paths['sixtrack_in']
         out_path = self.paths['sixtrack_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
-        self.submission.prepare(wu_ids, tran_input, exe, 'sub.db', in_path,
+        self.submission.prepare(wu_ids, tran_input, exe, 'db.ini', in_path,
                     out_path, *args, **kwargs)
 
     def prepare_preprocess_input(self, *args, **kwargs):
@@ -764,51 +915,103 @@ class Study(object):
         where = "status='incomplete'"
         outputs = self.db.select('preprocess_wu', ['wu_id', 'input_file'], where)
         if not outputs:
-            print("There isn't incomplete preprocess job!")
+            content = "There isn't incomplete preprocess job!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
             return
-        sub_name = os.path.join(self.paths['preprocess_in'], 'sub.db')
-        if os.path.exists(sub_name):
-            os.remove(sub_name)#remove the old one
-        sub_db = SixDB(sub_name, self.db_settings, create=True)
-        sub_db.create_table('preprocess_wu', {'wu_id':'int','input_file':'blob'})
-        incom_job = {}
-        outputs = list(zip(*outputs))
-        incom_job['wu_id'] = outputs[0]
-        incom_job['input_file'] = outputs[1]
-        sub_db.insertm('preprocess_wu', incom_job)
-        wu_ids = sub_db.select('preprocess_wu', 'wu_id')
-        wu_ids = list(zip(*wu_ids))[0]
-        sub_db.close()
-        print("The submitted database %s is ready!"%sub_name)
         trans =[]
-        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
-        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
-        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
-        trans.append(sub_name)
+        outputs = list(zip(*outputs))
+        wu_ids = outputs[0]
+        task_table = {}
+        wu_table = {}
+        task_ids = []
+        for wu_id in wu_ids:
+            task_table['wu_id'] = wu_id
+            task_table['mtime'] = int(time.time()*1E7)
+            self.db.insert('preprocess_task', task_table)
+            where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
+            task_id = self.db.select('preprocess_task', ['task_id'], where)
+            task_id = task_id[0][0]
+            task_ids.append(task_id)
+            wu_table['task_id'] = task_id
+            wu_table['mtime'] = int(time.time()*1E7)
+            where = "wu_id=%s"%wu_id
+            self.db.update('preprocess_wu', wu_table, where)
+        db_info = {}
+        db_info.update(self.db_info)
+        if db_info['db_type'].lower() == 'sql':
+            sub_name = os.path.join(self.paths['preprocess_in'], 'sub.db')
+            if os.path.exists(sub_name):
+                os.remove(sub_name)#remove the old one
+            db_info['db_name'] = sub_name
+            sub_db = SixDB(db_info, self.db_settings, True, self.mes_level,
+                    self.log_file)
+            sub_db.create_table('preprocess_wu', {'wu_id':'int',
+            'task_id':'int', 'input_file':'blob'})
+            incom_job = {}
+            incom_job['wu_id'] = outputs[0]
+            incom_job['task_id'] = task_ids
+            incom_job['input_file'] = outputs[1]
+            sub_db.insertm('preprocess_wu', incom_job)
+            sub_db.close()
+            db_info['db_name'] = 'sub.db'
+            content = "The submitted database %s is ready!"%db_info['db_name']
+            utils.message('Message', content, self.mes_level, self.log_file)
+            trans.append(sub_name)
+
+        input_info = os.path.join(self.paths['preprocess_in'], 'db.ini')
+        self.config.clear()
+        self.config['db_info'] = db_info
+        with open(input_info, 'w') as f_out:
+            self.config.write(f_out)
+        trans.append(input_info)
         in_path = self.paths['preprocess_in']
         out_path = self.paths['preprocess_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
-        self.submission.prepare(wu_ids, trans, exe, 'sub.db', in_path,
+        self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
                 out_path, *args, **kwargs)
 
     def pre_calc(self, **args):
         '''Further calculations for the specified parameters'''
         pass
 
+    def init_boinc_dir(self):
+        '''Initialise the boinc directory'''
+        user_name = getpass.getuser()
+        work_path = self.env['boinc_work']
+        results_path = self.env['boinc_results']
+        boinc_dir = os.path.dirname(work_path)
+        owner = os.path.join(boinc_dir, 'owner')
+        if not os.path.isdir(boinc_dir):
+            os.mkdir(boinc_dir)
+            os.system('fs setacl -dir %s -acl %s rlidwka boinc:users rl'\
+                    %(boinc_dir, user_name))
+        if not os.path.isfile(owner):
+            with open(owner, 'w') as f_out:
+                f_out.write(user_name)
+        if not os.path.isdir(work_path):
+            os.mkdir(work_path)
+        if not os.path.isdir(results_path):
+            os.mkdir(results_path)
+
+    def purge_table(self, table_name):
+        '''Clean the invalid lines in the specified table'''
+        where = "status IS NULL"
+        self.db.remove(table_name, where)
+
     def name_conven(self, prefix, keys, values, suffix=''):
         '''The convention for naming input file'''
-        lStatus = True
         b = ''
         if len(keys) == len(values):
             a = ['_'.join(map(str, i)) for i in zip(keys, values)]
             b = '_'.join(map(str, a))
         else:
-            print("The input list keys and values must have same length!")
-            lStatus = False
+            content = "The input list keys and values must have same length!"
+            utils.message('Error', content, self.mes_level, self.log_file)
         mk = prefix + '_' + b + suffix
         return mk
 
     def __del__(self):
         '''The destructor'''
         self.db.close()
-        print('Database is closed!')
+        content = 'Database is closed!'
+        utils.message('Message', content, self.mes_level, self.log_file)
