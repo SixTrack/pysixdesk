@@ -66,8 +66,6 @@ class HTCondor(Cluster):
                 os.makedirs(out_f)
         os.chmod(job_list, 0o444)#change the permission to readonly
         rep = {}
-        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pymysql'))
-        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'cryptography'))
         trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'resultparser.py'))
         trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
         trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
