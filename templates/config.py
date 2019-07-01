@@ -44,14 +44,14 @@ class MyStudy(Study):
         self.madx_params["SEEDRAN"] = [1,2] #all seeds in the study
         self.madx_params["QP"] = list(range(1,1+1))#all chromaticity in the study
         self.madx_params["IOCT"] = list(range(100,200+1,100))#all octupole currents in the study
-        self.oneturn_sixtrack_input['temp'] = ['fort.3.mother']
+        self.oneturn_sixtrack_input['temp'] = ['fort.3']
         self.oneturn_sixtrack_output = ['mychrom', 'betavalues', 'sixdesktunes']
         self.oneturn_sixtrack_params.update(lhc_params)
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
         amp = [8,10,12]#The amplitude
         self.sixtrack_params['amp'] = list(zip(amp,amp[1:]))#Take pairs
         self.sixtrack_params['kang'] = list(range(1, 1+1))#The angle
-        self.sixtrack_input['temp'] = ['fort.3.mother']
+        self.sixtrack_input['temp'] = ['fort.3']
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
 
         self.env['emit'] = 3.75
