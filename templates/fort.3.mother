@@ -58,7 +58,9 @@ NEXT
 %DIFFERENTIAL ALGEBRA---------------------------------------------------
 %DIF1%NO  %NV 1E-38 %nsix 0
 %DIF1NEXT
+
 ENDE====================================================================
+
 ORGA--------------------------------------------------------------------
 NEXT
 DIFFERENTIAL ALGEBRA---------------------------------------------------
@@ -92,4 +94,34 @@ SEARCH FOR THE BEST POSITIONS FOR COMPENSATION-ELEMENTS-----------------
          MSCBH MSCBV 
 NEXT
 ORBIT ADJUSTMENT--------------------------------------------------------
+
 NEXT
+/ DUMP block
+DUMP
+ip3 1 1030 2 IP3_DUMP_1 1 4096
+/ -> ip3..1 1 1031 2 IP3_DUMP_2 5905 10000
+/ -> ip3..2 1 1032 2 IP3_DUMP_3 1 4096
+/ -> ip3..3 1 1033 2 IP3_DUMP_4 5905 10000
+NEXT
+/
+/ linear optics functions
+LINE
+ELEMENT 0 2 1 3.75 3.75
+NEXT
+/
+/ FMA analysis
+FMA
+IP3_DUMP_1 TUNELASK
+/ -> IP3_DUMP_2 TUNELASK
+/ -> IP3_DUMP_3 TUNELASK 0
+/ -> IP3_DUMP_4 TUNELASK 0
+NEXT
+/
+/ zip files in SixOut.zip
+ZIPF
+fma_sixtrack
+IP3_DUMP_1
+fort.90
+NEXT
+/
+/ always end file with new line char

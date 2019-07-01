@@ -8,7 +8,7 @@ import copy
 import traceback
 from study import Study
 from math import sqrt, pi, sin, cos
-from machineparams import LHC
+from machineparams import LHC, HLLHC
 
 class MyStudy(Study):
 
