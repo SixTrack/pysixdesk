@@ -44,11 +44,11 @@ FLUCTUATION
 NEXT
 /TUNE VARIATION----------------------------------------------------------
 
-//          0.
-//          
-/NEXT
-/CHROMATICITY CORRECTION------------------------------------------------
-/NEXT
+%TUNE/          0.
+%TUNE/          
+%TUNENEXT
+%CHROCHROMATICITY CORRECTION------------------------------------------------
+%CHRONEXT
 %POSTPROCESSING----------------------------------------------------------
 %POS1LHC Dynamic Aperture at Injection Version 5 (1998)
 %POS120 0 0 1 .08 .08 1 0 0 1. 1.

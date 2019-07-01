@@ -96,6 +96,8 @@ class Study(object):
                 ("idfor", 0),
                 ("ibtype", 0),
                 ("ition", 0),
+                ("CHRO", '/'),
+                ("TUNE", '/'),
                 ("POST", 'POST'),
                 ("POS1", ''),
                 ("ndafi", 1),
