@@ -8,7 +8,7 @@ import copy
 import traceback
 from study import Study
 from math import sqrt, pi, sin, cos
-from machineparams import LHC, HLLHC
+from machineparams import Machine
 
 class MyStudy(Study):
 
@@ -32,7 +32,7 @@ class MyStudy(Study):
         self.db_info['passwd'] = 'pysixdesk'
 
         #Get the default values for specified machine with specified runtype
-        lhc = LHC('inj')
+        lhc = Machine('LHC', 'inj')
         lhc_params = {}
         lhc_params['rfvol'] = lhc['RF_voltage']
         lhc_params['sigz'] = lhc['sigz']
