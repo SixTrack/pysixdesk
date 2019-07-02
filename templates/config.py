@@ -8,6 +8,7 @@ import copy
 import traceback
 from study import Study
 from math import sqrt, pi, sin, cos
+from machineparams import MachineConfig
 
 class MyStudy(Study):
 
@@ -30,19 +31,23 @@ class MyStudy(Study):
         self.db_info['user'] = 'admin'
         self.db_info['passwd'] = 'pysixdesk'
 
+        #Get the default values for specified machine with specified runtype
+        machine_params = MachineConfig('LHC','inj')
+
         #All parameters are case-sensitive
         #the name of mask file
         self.madx_input["mask_file"] = 'hl10.mask'
         self.madx_params["SEEDRAN"] = [1,2] #all seeds in the study
         self.madx_params["QP"] = list(range(1,1+1))#all chromaticity in the study
         self.madx_params["IOCT"] = list(range(100,200+1,100))#all octupole currents in the study
-        self.oneturn_sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
+        self.oneturn_sixtrack_input['temp'] = ['fort.3']
         self.oneturn_sixtrack_output = ['mychrom', 'betavalues', 'sixdesktunes']
+        self.oneturn_sixtrack_params.update(machine_params)
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
         amp = [8,10,12]#The amplitude
         self.sixtrack_params['amp'] = list(zip(amp,amp[1:]))#Take pairs
         self.sixtrack_params['kang'] = list(range(1, 1+1))#The angle
-        self.sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
+        self.sixtrack_input['temp'] = ['fort.3']
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
 
         self.env['emit'] = 3.75

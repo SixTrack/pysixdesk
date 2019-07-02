@@ -17,6 +17,7 @@ import traceback
 import dbtypedict
 import collections
 import configparser
+import constants
 
 from pysixdb import SixDB
 from datetime import datetime
@@ -106,7 +107,7 @@ class Study(object):
                 ("inttuney", 60.31),
                 ("DIFF", '/DIFF'),
                 ("DIF1", '/'),
-                ("pmass", 938.272013),
+                ("pmass", constants.PROTON_MASS),
                 ("emit_beam", 3.75),
                 ("e0", 7000),
                 ("bunch_charge", 1.15E11),
@@ -115,9 +116,9 @@ class Study(object):
                 ("dp1", 0.000001),
                 ("dp2", 0.000001),
                 ("chromx", 2),
-                ("chromy", 2),
-                ("TUNEVAL", '/'),
-                ("CHROVAL", '/')])
+                ("chromy", 2)])
+                #("TUNEVAL", '/'),
+                #("CHROVAL", '/')])
         self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
