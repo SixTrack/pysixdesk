@@ -32,7 +32,7 @@ class MyStudy(Study):
         self.db_info['passwd'] = 'pysixdesk'
 
         #Get the default values for specified machine with specified runtype
-        machine_params = MachineConfig('LHC','inj')
+        machine_params = MachineConfig('LHC').parameters('inj')
 
         #All parameters are case-sensitive
         #the name of mask file
