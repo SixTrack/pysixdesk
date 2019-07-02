@@ -8,7 +8,7 @@ import copy
 import traceback
 from study import Study
 from math import sqrt, pi, sin, cos
-from machineparams import Machine
+from machineparams import MachineConfig
 
 class MyStudy(Study):
 
@@ -32,11 +32,7 @@ class MyStudy(Study):
         self.db_info['passwd'] = 'pysixdesk'
 
         #Get the default values for specified machine with specified runtype
-        machine = Machine('LHC', 'inj')
-        machine_params = {}
-        machine_params['rfvol'] = machine['RF_voltage']
-        machine_params['sigz'] = machine['sigz']
-        machine_params['sige'] = machine['sige']
+        machine_params = MachineConfig('LHC','inj')
 
         #All parameters are case-sensitive
         #the name of mask file
