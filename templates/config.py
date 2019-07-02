@@ -32,11 +32,11 @@ class MyStudy(Study):
         self.db_info['passwd'] = 'pysixdesk'
 
         #Get the default values for specified machine with specified runtype
-        lhc = Machine('LHC', 'inj')
-        lhc_params = {}
-        lhc_params['rfvol'] = lhc['RF_voltage']
-        lhc_params['sigz'] = lhc['sigz']
-        lhc_params['sige'] = lhc['sige']
+        machine = Machine('LHC', 'inj')
+        machine_params = {}
+        machine_params['rfvol'] = machine['RF_voltage']
+        machine_params['sigz'] = machine['sigz']
+        machine_params['sige'] = machine['sige']
 
         #All parameters are case-sensitive
         #the name of mask file
@@ -46,7 +46,7 @@ class MyStudy(Study):
         self.madx_params["IOCT"] = list(range(100,200+1,100))#all octupole currents in the study
         self.oneturn_sixtrack_input['temp'] = ['fort.3']
         self.oneturn_sixtrack_output = ['mychrom', 'betavalues', 'sixdesktunes']
-        self.oneturn_sixtrack_params.update(lhc_params)
+        self.oneturn_sixtrack_params.update(machine_params)
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
         amp = [8,10,12]#The amplitude
         self.sixtrack_params['amp'] = list(zip(amp,amp[1:]))#Take pairs
