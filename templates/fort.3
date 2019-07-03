@@ -1,0 +1,134 @@
+GEOME-STRENG TITLE:%Runnam
+PRINTOUT OF INPUT PARAMETERS--------------------------------------------
+NEXT
+TRACKING PARAMETERS-----------------------------------------------------
+%turnss 0 %nss %ax0s %ax1s 0 %imc
+1 1 %idfor 1 %iclo6
+0 0 1 1 %writebins 50000 2
+NEXT
+INITIAL COORDINATES-----------------------------------------------------
+        2 0. 0. %ratios 0
+        0.
+        0.
+        0. 
+        0.
+        0.
+        %dp1
+        .000001 
+        0.
+        0. 
+        0.
+        0.
+        %dp2
+        %e0
+        %e0
+        %e0
+NEXT
+SYNCHROTRON OSCILLATIONS--------'PLACE AFTER TRACKING PARAMETERS'-------
+      35640 .000347 %rfvol 0. %length %pmass %ition
+      1.       1.
+NEXT
+BEAM
+%bunch_charge   %emit_beam  %emit_beam  %sigz  %sige  1  %ibtype 1 0
+
+NEXT
+ITERATION-ACCURACY------------------------------------------------------
+       50 1D-12 1D-15
+       10 1D-10 1D-10
+       10 1D-6  1D-6
+          1D-6  1D-9  1D-9
+NEXT
+
+FLUCTUATION
+100000 1 7 3
+NEXT
+TUNE VARIATION---------------------------------------------------------
+         mq.7r3.b1..1  %tunex
+         mq.8r3.b1..1  %tuney
+/          0.
+NEXT
+CHROMATICITY CORRECTION------------------------------------------------
+         ms.11r3.b1 %chromx		
+         ms.12r3.b1 %chromy		
+NEXT
+%POSTPROCESSING----------------------------------------------------------
+%POS1LHC Dynamic Aperture at Injection Version 5 (1998)
+%POS120 0 0 1 .08 .08 1 0 0 1. 1.
+%POS1%inttunex %inttuney 1 1 10 .005 1 .050
+%POS10 1 0 1 1 1 1 1 %ndafi
+%POS1NEXT
+%DIFFERENTIAL ALGEBRA---------------------------------------------------
+%DIF1%NO  %NV 1E-38 %nsix 0
+%DIF1NEXT
+
+ENDE====================================================================
+
+/         mq.7r3.b1..1  %tunex
+/         mq.8r3.b1..1  %tuney
+/         ms.11r3.b1 %chromx
+/         ms.12r3.b1 %chromy
+
+ORGA--------------------------------------------------------------------
+NEXT
+DIFFERENTIAL ALGEBRA---------------------------------------------------
+4  5 1E-38 1 1
+NEXT
+COMBINATION OF ELEMENTS-------------------------------------------------
+CODSDO 1.  CODSDE
+CODSFO 1.  CODSFE
+NEXT
+SUBRESONANCE CALCULATION------------------------------------------------
+3 3 %tunex %tuney 1. 1. 0 %length
+NEXT
+RESONANCE COMPENSATION -------------------------------------------------
+      1         3       0    0    0         0    0    0
+      0                   0 0 0
+     %length %tunex %tuney 1. 1.
+                 MSCBH MSCBV
+      0          MSCBH MSCBV
+      0          QF QD %tunex %tuney
+NEXT
+RIPPLE OF POWER SUPPLIES------------------------------------------------
+         Q413R   -1.54D-4    4340.580
+         Q414R   -3.70D-4    4340.580
+NEXT
+LIMITATION OF APERTURE--------------------------------------------------
+          AP1        EL      10.       10.
+NEXT
+SEARCH FOR THE BEST POSITIONS FOR COMPENSATION-ELEMENTS-----------------
+         %tunex %tuney 1. 1. %length
+         2   3   0   2  -2   0   0   0
+         MSCBH MSCBV 
+NEXT
+ORBIT ADJUSTMENT--------------------------------------------------------
+
+NEXT
+/ DUMP block
+DUMP
+ip3 1 1030 2 IP3_DUMP_1 1 4096
+/ -> ip3..1 1 1031 2 IP3_DUMP_2 5905 10000
+/ -> ip3..2 1 1032 2 IP3_DUMP_3 1 4096
+/ -> ip3..3 1 1033 2 IP3_DUMP_4 5905 10000
+NEXT
+/
+/ linear optics functions
+LINE
+ELEMENT 0 2 1 3.75 3.75
+NEXT
+/
+/ FMA analysis
+FMA
+IP3_DUMP_1 TUNELASK
+/ -> IP3_DUMP_2 TUNELASK
+/ -> IP3_DUMP_3 TUNELASK 0
+/ -> IP3_DUMP_4 TUNELASK 0
+NEXT
+/
+/ zip files in SixOut.zip
+ZIPF
+fma_sixtrack
+IP3_DUMP_1
+fort.90
+NEXT
+/
+/ always end file with new line char

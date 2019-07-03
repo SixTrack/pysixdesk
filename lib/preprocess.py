@@ -78,7 +78,6 @@ def run(wu_id, input_info):
         db = SixDB(db_info)
         where = "wu_id=%s" % wu_id
         task_id = db.select('preprocess_wu', ['task_id'], where)
-        print(task_id)
         task_id = task_id[0][0]
         job_table = {}
         task_table = {}
