@@ -110,3 +110,13 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
       myStudy.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
       myStudy.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
       ```
+
+## Description for the database tables
+
+There are ten tables in the database:
+
+**boinc\_vars**: store the config parameters for boinc jobs
+**env**: store some general parameters for the jobs, e.g.: madx\_exe, sixtrack\_exe, study\_path
+**templates**: store the template files, e.g. mask file of madx job, fort.3 mother file
+**preprocess\_wu**: store the machine parameters for scanning and some general information for preprocess job
+**preprocess\_task**: 
