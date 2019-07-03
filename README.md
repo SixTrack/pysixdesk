@@ -113,7 +113,8 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
 
 ## Description for the database tables
 
-There are ten tables in the database:\
+There are ten tables in the database:
+
 | Table Name | Description |
 |:------------:|:-----------:|
 |**boinc\_vars**| store the config parameters for boinc jobs |
