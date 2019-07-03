@@ -16,11 +16,15 @@ class ParentMachine(object):
         }
         return
 
-    def parameters(self, runtype):
-        return self.params[runtype]
+    def parameters(self, runtype=None):
+        if runtype is None:
+            return self.params
+        else:
+            return self.params[runtype]
 
 
 class LHC(ParentMachine):
+
     def __init__(self):
         ParentMachine.__init__(self)
 
@@ -34,6 +38,7 @@ class LHC(ParentMachine):
 
 
 class HLLHC(ParentMachine):
+
     def __init__(self):
         ParentMachine.__init__(self)
 
@@ -47,10 +52,18 @@ class HLLHC(ParentMachine):
 
 
 class MachineConfig(object):
-    def __init__(self, machine, runtype):
+
+    def __init__(self, machine):
+        self.params = {}
         if machine.lower() == 'lhc':
-            return LHC().parameters(runtype)
+            self.params = LHC().parameters()
         elif machine.lower() == 'hllhc':
-            return HLLHC().parameters(runtype)
+            self.params = LHC().parameters()
         else:
             print("Machine %s not available" % machine)
+
+    def parameters(self, runtype=None):
+        if runtype is None:
+            return self.params
+        else:
+            return self.params[runtype]
