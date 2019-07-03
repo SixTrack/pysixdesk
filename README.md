@@ -116,7 +116,7 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
 There are ten tables in the database:
 
 | Table Name | Description |
-|:------------:|:-----------:|
+|:------------:|:-----------|
 |**boinc\_vars**| store the config parameters for boinc jobs |
 |**env** | store some general parameters for the jobs, e.g.: madx\_exe, sixtrack\_exe, study\_path |
 |**templates** | store the template files, e.g. mask file of madx job, fort.3 mother file |
@@ -128,4 +128,4 @@ There are ten tables in the database:
 |**sixtrack\_task**| store general information for the sixtrack task, also record every submission|
 |**six\_results**| store the results of sixtrack jobs, for the moment keep same column name with old sixdb|
 
-The detailed structure of these tables, please view the doc [Table.md](https://github.com/SixTrack/pysixdesk/doc/Table.md).
+The detailed structure of these tables, please view the doc [Table.md](./doc/Table.md).
