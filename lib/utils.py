@@ -6,9 +6,11 @@ import gzip
 import shutil
 from datetime import datetime
 
-#Gobal variables
-MES_TYPE = dict([['Progress', 0], ['Warning', 1], ['Message', 2], ['Error', 3]])
+# Gobal variables
+MES_TYPE = dict([['Progress', 0], ['Warning', 1],
+                 ['Message', 2], ['Error', 3]])
 PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def check(files):
     '''Check the existence of the files and rename them if the files is a dict
@@ -17,23 +19,24 @@ def check(files):
     '''
     status = False
     if isinstance(files, dict):
-        for key,value in files.items():
+        for key, value in files.items():
             if os.path.isfile(key):
                 if key != value:
                     os.rename(key, value)
             else:
-                print("The file %s isn't generated successfully!" %key)
+                print("The file %s isn't generated successfully!" % key)
                 return status
     elif isinstance(files, list):
         for key in files:
             if not os.path.isfile(key):
-                print("The file %s isn't generated successfully!" %key)
+                print("The file %s isn't generated successfully!" % key)
                 return status
     else:
         print("The input must be a list or dict!")
         return status
     status = True
     return status
+
 
 def download_output(filenames, dest, zp=True):
     '''Download the requested files to the given destinaion.
@@ -52,10 +55,11 @@ def download_output(filenames, dest, zp=True):
             else:
                 shutil.copy(filename, dest)
         else:
-            print("The file %s doesn't exist, download failed!"%filename)
+            print("The file %s doesn't exist, download failed!" % filename)
             return status
     status = True
     return status
+
 
 def replace(patterns, replacements, source, dest):
     '''Reads a source file and writes the destination file.
@@ -73,10 +77,11 @@ def replace(patterns, replacements, source, dest):
         fin.close()
         fout.close()
     else:
-        print("The file %s doesn't exist!"%source)
+        print("The file %s doesn't exist!" % source)
         return status
     status = True
     return status
+
 
 def encode_strings(inputs):
     '''Convert list or directory to special-format string'''
@@ -91,6 +96,7 @@ def encode_strings(inputs):
         return status, output
     status = True
     return status, output
+
 
 def decode_strings(inputs):
     '''Convert special-format string to list or directory'''
@@ -110,6 +116,7 @@ def decode_strings(inputs):
         return status, output
     status = True
     return status, output
+
 
 def compress_buf(data, source='file'):
     '''Data compression for storing in database
@@ -134,6 +141,7 @@ def compress_buf(data, source='file'):
     status = True
     return status, zbuf.getvalue()
 
+
 def decompress_buf(buf, out, des='file'):
     '''Data decompression to retireve from database'''
     status = False
@@ -156,6 +164,7 @@ def decompress_buf(buf, out, des='file'):
         print("Invalid input data!")
         return status
 
+
 def message(mes_type, content, level=1, log_file=None):
     '''Print the different type message to the destination'''
     if mes_type in MES_TYPE.keys():
@@ -166,13 +175,14 @@ def message(mes_type, content, level=1, log_file=None):
     if mes_level >= level:
         now = datetime.now()
         date_time = now.strftime("%Y/%b/%d %H:%M:%S")
-        message = "%s %s: %s"%(date_time, mes_type, content)
+        message = "%s %s: %s" % (date_time, mes_type, content)
         if log_file is not None:
             with open(log_file, 'a') as f_out:
                 f_out.write(message)
                 f_out.write('\n')
         else:
             print(message)
+
 
 def evlt(fun, inputs, action=sys.exit):
     '''Evaluate the specified function'''

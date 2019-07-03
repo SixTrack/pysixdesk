@@ -12,20 +12,21 @@ import resultparser as rp
 
 from pysixdb import SixDB
 
+
 def run(wu_id, input_info):
     cf = configparser.ConfigParser()
-    cf.optionxform = str #preserve case
+    cf.optionxform = str  # preserve case
     cf.read(input_info)
     db_info = {}
     db_info.update(cf['db_info'])
     dbtype = db_info['db_type']
     db = SixDB(db_info)
     wu_id = str(wu_id)
-    where = 'wu_id=%s'%wu_id
+    where = 'wu_id=%s' % wu_id
     outputs = db.select('preprocess_wu', ['input_file'], where)
     db.close()
     if not outputs[0]:
-        print("There isn't input file for preprocess job %s!"%wu_id)
+        print("There isn't input file for preprocess job %s!" % wu_id)
         return 0
     input_buf = outputs[0][0]
     input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
@@ -56,7 +57,7 @@ def run(wu_id, input_info):
     if not os.path.isdir(dest_path):
         os.makedirs(dest_path)
 
-    #Download the requested files.
+    # Download the requested files.
     down_list = list(output_files.values())
     down_list.append('madx_in')
     down_list.append('madx_stdout')
@@ -66,16 +67,16 @@ def run(wu_id, input_info):
     status = utils.download_output(down_list, dest_path)
 
     if status:
-        print("All requested results have stored in %s"%dest_path)
+        print("All requested results have stored in %s" % dest_path)
     else:
         print("Job failed!")
     if dbtype.lower() == 'sql':
         return status
 
-    #reconnect after jobs finished
+    # reconnect after jobs finished
     try:
         db = SixDB(db_info)
-        where = "wu_id=%s"%wu_id
+        where = "wu_id=%s" % wu_id
         task_id = db.select('preprocess_wu', ['task_id'], where)
         print(task_id)
         task_id = task_id[0][0]
@@ -85,23 +86,23 @@ def run(wu_id, input_info):
         task_table['status'] = 'Success'
         job_path = dest_path
         rp.parse_preprocess(wu_id, job_path, output_files, task_table,
-                oneturn_table, list(oneturn.keys()))
-        where = "task_id=%s"%task_id
+                            oneturn_table, list(oneturn.keys()))
+        where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
-        #where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
-        #task_id = db.select('preprocess_task', ['task_id'], where)
-        #task_id = task_id[0][0]
+        # where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
+        # task_id = db.select('preprocess_task', ['task_id'], where)
+        # task_id = task_id[0][0]
         oneturn_table['task_id'] = task_id
         db.insert('oneturn_sixtrack_result', oneturn_table)
         if task_table['status'] == 'Success':
-            where = "wu_id=%s"%wu_id
+            where = "wu_id=%s" % wu_id
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time()*1E7)
             db.update('preprocess_wu', job_table, where)
-            content = "Preprocess job %s has completed normally!"%wu_id
+            content = "Preprocess job %s has completed normally!" % wu_id
             utils.message('Message', content)
         else:
-            where = "wu_id=%s"%wu_id
+            where = "wu_id=%s" % wu_id
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time()*1E7)
             db.update('preprocess_wu', job_table, where)
@@ -109,7 +110,7 @@ def run(wu_id, input_info):
             utils.message('Warning', content)
         return status
     except:
-        where = "wu_id=%s"%wu_id
+        where = "wu_id=%s" % wu_id
         job_table['status'] = 'incomplete'
         job_table['mtime'] = int(time.time()*1E7)
         db.update('preprocess_wu', job_table, where)
@@ -118,6 +119,7 @@ def run(wu_id, input_info):
         return False
     finally:
         db.close()
+
 
 def madxjob(madx_config, mask_config):
     '''MADX job to generate input files for sixtrack'''
@@ -139,7 +141,7 @@ def madxjob(madx_config, mask_config):
     if not os.path.isdir(dest_path):
         os.mkdir(dest_path)
 
-    #Generate the actual madx file from mask file
+    # Generate the actual madx file from mask file
     patterns = ['%'+a for a in mask_config.keys()]
     values = list(mask_config.values())
     madx_in = 'madx_in'
@@ -149,9 +151,9 @@ def madxjob(madx_config, mask_config):
         madx_status = 0
         return madx_status
 
-    #Begin to execute madx job
+    # Begin to execute madx job
     command = madxexe + " " + madx_in
-    print("Calling madx %s"%madxexe)
+    print("Calling madx %s" % madxexe)
     print("MADX job is running...")
     output = os.popen(command)
     outputlines = output.readlines()
@@ -164,11 +166,12 @@ def madxjob(madx_config, mask_config):
     else:
         print("MADX has completed properly!")
 
-    #Check the existence of madx output
+    # Check the existence of madx output
     status = utils.check(output_files)
     if not status:
-        return status#The required files aren't generated normally,we need to quit
+        return status  # The required files aren't generated normally,we need to quit
     return madx_status
+
 
 def sixtrackjobs(config, fort3_config):
     '''Manage all the one turn sixtrack job'''
@@ -183,16 +186,16 @@ def sixtrackjobs(config, fort3_config):
     for s in temp_files:
         source = os.path.join(source_path, s)
         shutil.copy2(source, s)
-    print('Calling sixtrack %s'%sixtrack_exe)
-    first_status = sixtrackjob(config, fort3_config, 'first_oneturn',\
-            dp1='.0', dp2='.0')
+    print('Calling sixtrack %s' % sixtrack_exe)
+    first_status = sixtrackjob(config, fort3_config, 'first_oneturn',
+                               dp1='.0', dp2='.0')
     if not first_status:
         return first_status
     second_status = sixtrackjob(config, fort3_config, 'second_oneturn')
     if not second_status:
         return second_status
 
-    #Calculate and write out the requested values
+    # Calculate and write out the requested values
     tunes = open('sixdesktunes', 'w')
     tunes.write(fort3_config['chrom_eps'])
     tunes.write('\n')
@@ -218,8 +221,8 @@ def sixtrackjobs(config, fort3_config):
     chrom.write('\n')
     chrom.close()
 
-    chrom_status = sixtrackjob(config, fort3_config, 'beta_oneturn',\
-            dp1='.0', dp2='.0')
+    chrom_status = sixtrackjob(config, fort3_config, 'beta_oneturn',
+                               dp1='.0', dp2='.0')
     if not chrom_status:
         return chrom_status
     f_in = open('fort.10_beta_oneturn', 'r')
@@ -227,8 +230,8 @@ def sixtrackjobs(config, fort3_config):
     f_in.close()
     beta = beta_line.split()
     f_out = open('betavalues', 'w')
-    beta_out = [beta[4], beta[47], beta[5], beta[48], beta[2], beta[3],\
-                beta[49], beta[50], beta[52], beta[53], beta[54], beta[55],\
+    beta_out = [beta[4], beta[47], beta[5], beta[48], beta[2], beta[3],
+                beta[49], beta[50], beta[52], beta[53], beta[54], beta[55],
                 beta[56], beta[57]]
     if fort3_config['CHROM'] == '0':
         beta_out[6] = chrom1
@@ -237,14 +240,15 @@ def sixtrackjobs(config, fort3_config):
     f_out.write(lines)
     f_out.write('\n')
     f_out.close()
-    #Download the requested files
-    #dest_path = config["dest_path"]
-    #b = ['sixdesktunes', 'mychrom', 'betavalues']
-    #status = utils.download_output(b, dest_path, False)
-    #if not status:
+    # Download the requested files
+    # dest_path = config["dest_path"]
+    # b = ['sixdesktunes', 'mychrom', 'betavalues']
+    # status = utils.download_output(b, dest_path, False)
+    # if not status:
     #    sixtrack_status = 0
     #    return sixtrack_status
     return sixtrack_status
+
 
 def sixtrackjob(config, config_re, jobname, **args):
     '''One turn sixtrack job'''
@@ -268,10 +272,10 @@ def sixtrackjob(config, config_re, jobname, **args):
     fc3aux_2 = fc3aux_lines[1]
     c = fc3aux_2.split()
     lhc_length = c[4]
-    fort3_config['length']=lhc_length
+    fort3_config['length'] = lhc_length
     fort3_config.update(args)
 
-    #Create a temp folder to excute sixtrack
+    # Create a temp folder to excute sixtrack
     if os.path.isdir('junk'):
         shutil.rmtree('junk')
     os.mkdir('junk')
@@ -297,12 +301,12 @@ def sixtrackjob(config, config_re, jobname, **args):
     if os.path.isfile(temp1):
         output.insert(1, temp1)
     else:
-        print("The %s file doesn't exist!"%temp1)
+        print("The %s file doesn't exist!" % temp1)
         sixtrack_status = 0
         return sixtrack_status
     concatenate_files(output, 'fort.3')
 
-    #prepare the other input files
+    # prepare the other input files
     if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
         os.symlink('../fort.2', 'fort.2')
         os.symlink('../fort.16', 'fort.16')
@@ -311,26 +315,27 @@ def sixtrackjob(config, config_re, jobname, **args):
         else:
             os.symlink('../fort.8', 'fort.8')
 
-    #actually run
-    print('Sixtrack job %s is runing...'%jobname)
+    # actually run
+    print('Sixtrack job %s is runing...' % jobname)
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
     output_name = '../' + jobname + '.output'
     with open(output_name, 'w') as six_out:
         six_out.writelines(outputlines)
     if not os.path.isfile('fort.10'):
-        print("The %s sixtrack job for chromaticity FAILED!"%jobname)
-        print("Check the file %s which contains the SixTrack fort.6 output."%output_name)
+        print("The %s sixtrack job for chromaticity FAILED!" % jobname)
+        print("Check the file %s which contains the SixTrack fort.6 output." % output_name)
         sixtrack_status = 0
         return sixtrack_status
     else:
         result_name = '../fort.10' + '_' + jobname
         shutil.move('fort.10', result_name)
-        print('Sixtrack job %s has completed normally!'%jobname)
+        print('Sixtrack job %s has completed normally!' % jobname)
 
-    #Get out the temp folder
+    # Get out the temp folder
     os.chdir('../')
     return sixtrack_status
+
 
 def concatenate_files(source, dest):
     '''Concatenate the given files'''
@@ -345,6 +350,7 @@ def concatenate_files(source, dest):
         f_out.writelines(f_in.readlines())
         f_in.close()
     f_out.close()
+
 
 if __name__ == '__main__':
     args = sys.argv

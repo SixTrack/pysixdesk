@@ -7,6 +7,7 @@ import collections
 import traceback
 from abc import ABC, abstractmethod
 
+
 class DatabaseAdaptor(ABC):
 
     def __init__(self, mes_level, log_file):
@@ -25,7 +26,7 @@ class DatabaseAdaptor(ABC):
         '''Create a new table'''
         c = conn.cursor()
         if recreate:
-            c.execute("DROP TABLE IF EXISTS %s"%name)
+            c.execute("DROP TABLE IF EXISTS %s" % name)
         sql = 'CREATE TABLE IF NOT EXISTS %s (%s)'
         if 'autoincrement' in keys.keys():
             auto_keys = keys['autoincrement']
@@ -38,8 +39,8 @@ class DatabaseAdaptor(ABC):
         if 'primary' in keys.keys():
             prim = keys['primary']
             if prim:
-                prim_key = ','.join(map(str,prim))
-                prim_sql = ', PRIMARY KEY(%s)'%prim_key
+                prim_key = ','.join(map(str, prim))
+                prim_sql = ', PRIMARY KEY(%s)' % prim_key
                 fill += prim_sql
         if 'foreign' in keys.keys():
             fore = keys['foreign']
@@ -48,16 +49,16 @@ class DatabaseAdaptor(ABC):
                     fore_k = ','.join(fore[k][0])
                     ref_k = ','.join(fore[k][1])
                     fore_sql = ', FOREIGN KEY(%s) REFERENCES %s(%s) ON UPDATE\
-                                CASCADE ON DELETE CASCADE'%(fore_k, k, ref_k)
+                                CASCADE ON DELETE CASCADE' % (fore_k, k, ref_k)
                     fill += fore_sql
-        sql_cmd = sql%(name, fill)
+        sql_cmd = sql % (name, fill)
         c.execute(sql_cmd)
         conn.commit()
 
     def drop_table(self, conn, table_name):
         '''Drop an exist table'''
         c = conn.cursor()
-        sql = 'DROP TABLE IF EXISTS %s'%table_name
+        sql = 'DROP TABLE IF EXISTS %s' % table_name
         c.execute(sql)
         conn.commit()
 
@@ -77,7 +78,7 @@ class DatabaseAdaptor(ABC):
         keys = [i.replace('.', '_') for i in keys]
         cols = ','.join(keys)
         ques = ','.join((ph,)*len(keys))
-        sql_cmd = sql%(table_name, cols, ques)
+        sql_cmd = sql % (table_name, cols, ques)
         c.execute(sql_cmd, vals)
         conn.commit()
 
@@ -97,7 +98,7 @@ class DatabaseAdaptor(ABC):
         keys = [i.replace('.', '_') for i in keys]
         cols = ','.join(keys)
         ques = ','.join((ph,)*len(keys))
-        sql_cmd = sql%(table_name, cols, ques)
+        sql_cmd = sql % (table_name, cols, ques)
         vals = list(zip(*vals))
         c.executemany(sql_cmd, vals)
         conn.commit()
@@ -118,11 +119,11 @@ class DatabaseAdaptor(ABC):
                 not isinstance(cols, str)):
             cols = [i.replace('.', '_') for i in cols]
             cols = ','.join(cols)
-        sql = 'SELECT %s FROM %s'%(cols, table_name)
+        sql = 'SELECT %s FROM %s' % (cols, table_name)
         if 'DISTINCT' in args.keys() and args['DISTINCT']:
-            sql = 'SELECT DISTINCT %s FROM %s'%(cols, table_name)
+            sql = 'SELECT DISTINCT %s FROM %s' % (cols, table_name)
         if where is not None:
-            sql += ' WHERE %s'%where
+            sql += ' WHERE %s' % where
         if orderby is not None:
             sql += ' ORDER BY %s'(','.join(orderby))
         c.execute(sql)
@@ -150,7 +151,7 @@ class DatabaseAdaptor(ABC):
         sets = ','.join(sets)
         if where is not None:
             sql = sql + 'WHERE ' + where
-        sql_cmd = sql%(table_name, sets)
+        sql_cmd = sql % (table_name, sets)
         c.execute(sql_cmd, vals)
         conn.commit()
 
@@ -161,9 +162,10 @@ class DatabaseAdaptor(ABC):
         @where(str) Selection condition which is mandatory here!
         '''
         c = conn.cursor()
-        sql = 'DELETE FROM %s WHERE %s'%(table_name, where)
+        sql = 'DELETE FROM %s WHERE %s' % (table_name, where)
         c.execute(sql)
         conn.commit()
+
 
 class SQLDatabaseAdaptor(DatabaseAdaptor):
 
@@ -174,7 +176,7 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def new_connection(self, db_name, **args):
         '''Create a new connection'''
-        if not '.db' in db_name:
+        if '.db' not in db_name:
             db_name = db_name + '.db'
         conn = sqlite3.connect(db_name)
         return conn
@@ -183,7 +185,7 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         '''Execute the settings of the database via pragma command'''
         c = conn.cursor()
         for key, value in settings.items():
-            sql = 'PRAGMA %s=%s'%(key, str(value))
+            sql = 'PRAGMA %s=%s' % (key, str(value))
             c.execute(sql)
         conn.commit()
 
@@ -197,7 +199,7 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
                     if ky in prim_keys and columns[ky] != 'INTEGER':
                         columns[ky] = 'INTEGER'
         super(SQLDatabaseAdaptor, self).create_table(conn, name, columns, keys,
-                recreate)
+                                                     recreate)
 
     def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
@@ -215,7 +217,9 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def update(self, conn, table_name, values, where):
         '''update values'''
-        super(SQLDatabaseAdaptor, self).update(conn, table_name, values, where, '?')
+        super(SQLDatabaseAdaptor, self).update(
+            conn, table_name, values, where, '?')
+
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
@@ -230,7 +234,7 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
             conn = pymysql.connect(host, user, passwd, **args)
             c = conn.cursor()
             sql = "SELECT schema_name FROM information_schema.schemata\
-                    WHERE schema_name='%s'"%db_name
+                    WHERE schema_name='%s'" % db_name
             c.execute(sql)
         except:
             content = traceback.print_exc()
@@ -239,19 +243,19 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
         if not list(c):
             try:
-                sql = "CREATE DATABASE %s"%db_name
+                sql = "CREATE DATABASE %s" % db_name
                 c.execute(sql)
                 conn.commit()
             except:
                 content = traceback.print_exc()
                 utils.message('Error', content, self.mes_level, self.log_file)
-                content = "Failed to create new db %s!"%db_name
+                content = "Failed to create new db %s!" % db_name
                 utils.message('Error', content, self.mes_level, self.log_file)
                 conn.rollback()
             finally:
                 conn.close()
         else:
-            content = "The db %s already exist!"%db_name
+            content = "The db %s already exist!" % db_name
             utils.message('Warning', content, self.mes_level, self.log_file)
 
     def new_connection(self, host, user, passwd, db_name, **args):
@@ -262,7 +266,7 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
         except:
             content = traceback.print_exc()
             utils.message('Error', content, self.mes_level, self.log_file)
-            content = "Failed to connect to databae %s!"%db_name
+            content = "Failed to connect to databae %s!" % db_name
             utils.message('Error', content, self.mes_level, self.log_file)
             return
 
@@ -272,24 +276,27 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
     def create_table(self, conn, name, columns, keys, recreate):
         '''Create a new table'''
         super(MySQLDatabaseAdaptor, self).create_table(conn, name, columns,
-                keys, recreate)
+                                                       keys, recreate)
 
     def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
         c = conn.cursor()
-        #c.execute("show databases")
+        # c.execute("show databases")
         c.execute("show tables")
-        a=list(c)
+        a = list(c)
         return a
 
     def insert(self, conn, table_name, values):
         '''Insert a row of values'''
-        super(MySQLDatabaseAdaptor, self).insert(conn, table_name, values, '%s')
+        super(MySQLDatabaseAdaptor, self).insert(
+            conn, table_name, values, '%s')
 
     def insertm(self, conn, table_name, values):
         '''Insert multi rows of values'''
-        super(MySQLDatabaseAdaptor, self).insertm(conn, table_name, values, '%s')
+        super(MySQLDatabaseAdaptor, self).insertm(
+            conn, table_name, values, '%s')
 
     def update(self, conn, table_name, values, where):
         '''update values'''
-        super(MySQLDatabaseAdaptor, self).update(conn, table_name, values, where, '%s')
+        super(MySQLDatabaseAdaptor, self).update(
+            conn, table_name, values, where, '%s')

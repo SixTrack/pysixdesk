@@ -9,6 +9,7 @@ import traceback
 from abc import ABC, abstractmethod
 from subprocess import Popen, PIPE
 
+
 class Cluster(ABC):
 
     def __init__(self, mes_level, log_file, temp_path):
@@ -17,7 +18,7 @@ class Cluster(ABC):
 
     @abstractmethod
     def prepare(self, wu_ids, trans, exe, exe_args, input_path, output_path,
-            *args, **kwargs):
+                *args, **kwargs):
         pass
 
     @abstractmethod
@@ -32,6 +33,7 @@ class Cluster(ABC):
     def remove(self, **args):
         pass
 
+
 class HTCondor(Cluster):
     '''The HTCondor management system'''
 
@@ -43,7 +45,7 @@ class HTCondor(Cluster):
         self.sub_name = 'htcondor_run.sub'
 
     def prepare(self, wu_ids, trans, exe, exe_args, input_path, output_path,
-            *args, **kwargs):
+                *args, **kwargs):
         '''Prepare the submission file
         @wu_ids(tuple) The job ids for submission
         @trans(list) The python modules needed by the executables
@@ -64,12 +66,15 @@ class HTCondor(Cluster):
                 if os.path.exists(out_f):
                     shutil.rmtree(out_f)
                 os.makedirs(out_f)
-        os.chmod(job_list, 0o444)#change the permission to readonly
+        os.chmod(job_list, 0o444)  # change the permission to readonly
         rep = {}
-        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'resultparser.py'))
+        trans.append(os.path.join(
+            utils.PYSIXDESK_ABSPATH, 'lib', 'resultparser.py'))
         trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'utils.py'))
-        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
-        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
+        trans.append(os.path.join(
+            utils.PYSIXDESK_ABSPATH, 'lib', 'pysixdb.py'))
+        trans.append(os.path.join(
+            utils.PYSIXDESK_ABSPATH, 'lib', 'dbadaptor.py'))
         rep['%func'] = utils.evlt(utils.encode_strings, [trans])
         rep['%exe'] = exe
         rep['%dirname'] = output_path
@@ -80,7 +85,7 @@ class HTCondor(Cluster):
         sub_temp = os.path.join(self.temp, self.sub_name)
         sub_file = os.path.join(input_path, self.sub_name)
         if os.path.exists(sub_file):
-            os.remove(sub_file)#remove the old one
+            os.remove(sub_file)  # remove the old one
         with open(sub_temp, 'r') as f_in:
             with open(sub_file, 'w') as f_out:
                 conts = f_in.read()
@@ -98,7 +103,7 @@ class HTCondor(Cluster):
         sub = os.path.join(input_path, self.sub_name)
         joblist = os.path.join(input_path, 'job_id.list')
         if not os.path.isfile(joblist):
-            content = "There isn't %s job for submission!"%job_name
+            content = "There isn't %s job for submission!" % job_name
             utils.message('Warning', content, self.mes_level, self.log_file)
             return False, None
         scont = 1
@@ -109,8 +114,8 @@ class HTCondor(Cluster):
             args.append(sub)
             args.append('-batch-name')
             args.append(job_name)
-            process = Popen(['condor_submit', '-terse', *args], stdout=PIPE,\
-                    stderr=PIPE, universal_newlines=True)
+            process = Popen(['condor_submit', '-terse', *args], stdout=PIPE,
+                            stderr=PIPE, universal_newlines=True)
             stdout, stderr = process.communicate()
             if stderr:
                 utils.message('Message', stdout, self.mes_level, self.log_file)
@@ -131,16 +136,19 @@ class HTCondor(Cluster):
                     uniq_ids = [str(cl_id)+'.'+str(pr_id) for pr_id in proc_ls]
                     if len(wu_ids) != len(uniq_ids):
                         content = "There are something wrong during submitting!"
-                        utils.message('Error', content, self.mes_level, self.log_file)
+                        utils.message('Error', content,
+                                      self.mes_level, self.log_file)
                         return False, None
                     else:
                         comb = list(zip(wu_ids, uniq_ids))
                         out = dict(comb)
-                        os.remove(joblist)#remove job list after successful submission
+                        # remove job list after successful submission
+                        os.remove(joblist)
                         return True, out
                 except:
                     content = traceback.print_exc()
-                    utils.message('Error', content, self.mes_level, self.log_file)
+                    utils.message('Error', content,
+                                  self.mes_level, self.log_file)
                     utils.message('Error', outs, self.mes_level, self.log_file)
                     return False, None
         return False, None
@@ -152,8 +160,8 @@ class HTCondor(Cluster):
 
         args = ['-format', '%d\n', 'JobStatus']
         Id = str(unique_id)
-        process = Popen(['condor_q', Id, *args], stdout=PIPE,\
-                stderr=PIPE, universal_newlines=True)
+        process = Popen(['condor_q', Id, *args], stdout=PIPE,
+                        stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:
             utils.message('Message', stdout, self.mes_level, self.log_file)
@@ -167,7 +175,8 @@ class HTCondor(Cluster):
                     return st
                 except:
                     content = traceback.print_exc()
-                    utils.message('Error', content, self.mes_level, self.log_file)
+                    utils.message('Error', content,
+                                  self.mes_level, self.log_file)
                     return None
             elif len(st) == 0:
                 return 0
@@ -181,8 +190,8 @@ class HTCondor(Cluster):
         '''Check the job status'''
         for ky, vl in kwargs:
             args = args + ['-'+ky, vl]
-        process = Popen(['condor_q', *args], stdout=PIPE,\
-                stderr=PIPE, universal_newlines=True)
+        process = Popen(['condor_q', *args], stdout=PIPE,
+                        stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:
             utils.message('Message', stdout, self.mes_level, self.log_file)
@@ -196,8 +205,8 @@ class HTCondor(Cluster):
         '''Cancel the submitted jobs'''
         for ky, vl in kwargs:
             args = args + ['-'+ky, vl]
-        process = Popen(['condor_rm', sub], stdout=PIPE,\
-                stderr=PIPE, universal_newlines=True)
+        process = Popen(['condor_rm', sub], stdout=PIPE,
+                        stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:
             utils.message('Message', stdout, self.mes_level, self.log_file)

@@ -6,10 +6,11 @@ import shutil
 import gzip
 import dbadaptor
 
+
 class SixDB(object):
 
     def __init__(self, db_info, settings=None, create=False, mes_level=1,
-            log_file=None):
+                 log_file=None):
         '''Constructor.
         db_info(dict): contain the information of the database,
                        such as db_name, type, user, password, host and so on
@@ -33,32 +34,32 @@ class SixDB(object):
             dbtype = db_info.pop('db_type')
         if dbtype.lower() == 'sql':
             self.adaptor = dbadaptor.SQLDatabaseAdaptor(self.mes_level,
-                    self.log_file)
-            status =  self.info_check(dbtype, db_info)
+                                                        self.log_file)
+            status = self.info_check(dbtype, db_info)
             if status:
                 name = db_info['db_name']
                 if not self.create and not os.path.exists(name):
-                    content = "The database %s doesn't exist!"%name
+                    content = "The database %s doesn't exist!" % name
                     utils.message('Error', content, self.mes_level,
-                            self.log_file)
+                                  self.log_file)
                     sys.exit(1)
             else:
-                content = "Something wrong with db info %s!"%str(db_info)
+                content = "Something wrong with db info %s!" % str(db_info)
                 utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
         elif dbtype.lower() == 'mysql':
             self.adaptor = dbadaptor.MySQLDatabaseAdaptor(self.mes_level,
-                    self.log_file)
-            status =  self.info_check(dbtype, db_info)
+                                                          self.log_file)
+            status = self.info_check(dbtype, db_info)
             if status:
                 if self.create:
                     self.adaptor.create_db(**db_info)
             else:
-                content = "Something wrong with db info %s!"%str(db_info)
+                content = "Something wrong with db info %s!" % str(db_info)
                 utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
         else:
-            content = "Unkonw database type %s!"%dbtype
+            content = "Unkonw database type %s!" % dbtype
             utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
 
@@ -104,8 +105,8 @@ class SixDB(object):
 
     def create_table(self, table_name, table_info, key_info={}, recreate=False):
         '''Create a new table or recreate an existing table'''
-        self.adaptor.create_table(self.conn, table_name, table_info, key_info,\
-                recreate)
+        self.adaptor.create_table(self.conn, table_name, table_info, key_info,
+                                  recreate)
 
     def create_tables(self, tables, tables_keys={}, recreate=False):
         '''Create multiple tables'''
@@ -130,7 +131,7 @@ class SixDB(object):
     def select(self, table_name, columns='*', where=None, orderby=None, **args):
         '''Select values with specified conditions'''
         r = self.adaptor.select(self.conn, table_name, columns, where, orderby,
-                **args)
+                                **args)
         return r
 
     def update(self, table_name, values, where=None):
