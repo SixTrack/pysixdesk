@@ -4,16 +4,16 @@
 | Field                   | Type    | Description
 |-------------------------|---------|-----------
 | workunitName            | text    | The work unit name 
-| fpopsEstimate           | double  | 
-| fpopsBound              | double  | 
-| memBound                | int(11) | 
-| diskBound               | int(11) | 
-| delayBound              | int(11) | 
-| redundancy              | int(11) | 
-| copies                  | int(11) | 
-| errors                  | int(11) | 
-| numIssues               | int(11) | 
-| resultsWithoutConcensus | int(11) | 
+| fpopsEstimate           | double  | Getting the fpops estimate and multiplying it with 10 to get the bound 
+| fpopsBound              | double  | fpopsEstimate*1000 
+| memBound                | int(11) | The workunit will only be sent to clients with at least this much available RAM. If exceeded the workunit will be aborted 
+| diskBound               | int(11) | An upper bound on the amount of disk space requred to process the workunit 
+| delayBound              | int(11) | An upper bound on the time (in seconds) between sending a result to a client and receiving a reply 
+| redundancy              | int(11) | The number of redundant calculations. Set to two or more ot achieve redundancy 
+| copies                  | int(11) | The number of copies of the workunit to issue to clients
+| errors                  | int(11) | The number of errors from clients before the workunit is declared to have an error 
+| numIssues               | int(11) | The total number of clients to issue the work unit to before it is declared to have an error 
+| resultsWithoutConcensus | int(11) | The total number of returned results without a concensus is found before the workunit is declared to have an error 
 | appName                 | text    | The app name (usually is sixtrack) 
 | appVer                  | int(11) | The app version 
 
@@ -95,14 +95,14 @@
 | ition        | int(11) | Transition energy switch 
 | CHRO         | text    | /  
 | TUNE         | text    | / 
-| POST         | text    | / 
-| POS1         | text    | / 
+| POST         | text    | 'POST' 
+| POS1         | text    | ''
 | ndafi        | int(11) | Number of data files to be processed. 
 | tunex        | double  | Horizontal tune 
 | tuney        | double  | Vertical tune 
 | inttunex     | double  | Values of the horizontal tune (integer part) to be added to the averaged phase advance and to the Q values of the FFT analysis
 | inttuney     | double  | Values of the vertical tune... 
-| DIFF         | text    |/ 
+| DIFF         | text    |'/DIFF' 
 | DIF1         | text    |/ 
 | pmass        | double  | Proton mass 
 | emit_beam    | double  | Emittance 
@@ -173,14 +173,14 @@
 | ition         | int(11)    | Transition energy switch 
 | CHRO          | text       | /  
 | TUNE          | text       | / 
-| POST          | text       | / 
-| POS1          | text       | / 
+| POST          | text       | 'POST' 
+| POS1          | text       | '' 
 | ndafi         | int(11)    | Number of data files to be processed. 
 | tunex         | double     | Horizontal tune 
 | tuney         | double     | Vertical tune 
 | inttunex      | double     | Values of the horizontal tune (integer part) to be added to the averaged phase advance and to the Q values of the FFT analysis
 | inttuney      | double     | Values of the vertical tune... 
-| DIFF          | text       | / 
+| DIFF          | text       | '/DIFF' 
 | DIF1          | text       | / 
 | pmass         | double     | Proton mass 
 | emit_beam     | double     | Emittance 
