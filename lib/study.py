@@ -328,7 +328,7 @@ class Study(object):
                 utils.message('Message', content,
                               self.mes_level, self.log_file)
             else:
-                content = "The default source templates folder %s is inavlid!" % tem_path
+                content = "The default source templates folder %s is invalid!" % tem_path
                 utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
 
@@ -546,7 +546,7 @@ class Study(object):
             content = 'Store preprocess job %s into database!' % job_name
             utils.message('Message', content, self.mes_level, self.log_file)
 
-        # prepare sixtrack paramters in database
+        # prepare sixtrack parameters in database
         self.config.clear()
         self.config['sixtrack'] = {}
         six_sec = self.config['sixtrack']
