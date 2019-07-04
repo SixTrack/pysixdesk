@@ -100,13 +100,15 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
       ```python
       myStudy.prepare_preprocess_input()
       myStudy.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
-      myStudy.collect_result(0, 5, platform='htcondor') # 'platform'=... submits a collection job to HTCondor
+      myStudy.collect_result(0) # collect results locally
       ```
 
    1. prepare and submit actual sixtrack jobs, and collect results:
 
       ```python
       myStudy.prepare_sixtrack_input()
+      or
+      myStudy.prepare_sixtrack_input(True) #True: submit jobs to Boinc
       myStudy.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
       myStudy.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
       ```
