@@ -15,7 +15,7 @@
 | numIssues               | int(11) | The total number of clients to issue the work unit to before it is declared to have an error 
 | resultsWithoutConcensus | int(11) | The total number of returned results without a concensus is found before the workunit is declared to have an error 
 | appName                 | text    | The app name (usually is sixtrack) 
-| appVer                  | int(11) | The app version 
+| appVer                  | int(11) | The app version (e.g. 50210)
 
 ## env
 | Field          | Type    | Description
@@ -32,10 +32,10 @@
 | boinc_spool    | text    | The boinc spool for submitting jobs to boinc 
 | test_turn      | int(11) | When submitting jobs to boinc, we need to test the jobs on HTCondor firstly 
 | emit           | double  | Normalized emittance 
-| gamma          | double  | The gamma 
+| gamma          | double  | The relativistic  gamma 
 | kmax           | int(11) | The number of phase space angles 
-| boinc_work     | text    | The absolute path of work directory 
-| boinc_results  | text    | The absolute path of results directory 
+| boinc_work     | text    | The absolute path of work directory which is the spool directory on the boinc volume to hold the input files of sixtrack 
+| boinc_results  | text    | The absolute path of results directory which is the spool directory on the bonic volume to hold the results 
 | surv_percent   | int(11) | When testing jobs on HTCondor, survival percent decides whether to submit jobs to boinc
 
 ## templates
@@ -45,21 +45,25 @@
 | fort_3    | blob | The mother file of fort.3 
 
 ## preprocess_wu
+This table will have as many lines as the macine configurations
+
 | Field      | Type       | Description 
 |------------|------------|------
 | wu_id      | int(11)    | The work unit id
 | job_name   | text       | The job name  
-| input_file | blob       | The input file for preprocess.py  
+| input_file | blob       | Hold all the required informations for the executable python script 'preprocess.py' which is used for runing madx job and oneturn sixtrack job
 | batch_name | text       | The batch name of this job in HTCondor
 | unique_id  | text       | The unique id of this job on HTCondor, usually is ClusterId.ProcId  
 | status     | text       | The status of this job, 'complete', 'incomplete' or 'submitted'  
-| task_id    | int(11)    | The task id which point to a submission  
+| task_id    | int(11)    | The id of the latest submitted task
 | mtime      | bigint(20) | The Last modification time  
 | SEEDRAN    | int(11)    | The seed for madx job   
 | QP         | int(11)    | A parameter for the machine  
 | IOCT       | int(11)    | A parameter for the machine  
 
 ## preprocess_task
+This table have at least as many lines as the preprocess\_wu table
+
 | Field       | Type       | Description 
 |-------------|------------|------
 | task_id     | int(11)    | The unique task id
@@ -82,19 +86,17 @@
 | Field        | Type    | Description 
 |--------------|---------|------
 | turnss       | int(11) | The tracking turn
-| nss          | int(11) | Amplitude step in beam delta 
-| ax0s         | double  | Start amplitude 
-| ax1s         | double  | End amplitude 
+| nss          | int(11) | Amplitude step in normalised amplitude
+| ax0s         | double  | Start amplitude in normalised unit [mm] 
+| ax1s         | double  | End amplitude in normalised unit [mm] 
 | imc          | int(11) | Number of variations of the relative momentum deviation 
 | iclo6        | int(11) | This switch allows to calculate the 6D closed orbit and optical functions at the starting point, using the differential algebra package.
 | writebins    | int(11) | This defines after how many turns data are written to output files 
 | ratios       | int(11) | Denotes the emittance ratio (eII/eI) of horizontal and vertical motion 
-| Runnam       | text    | The running name 
+| Runnam       | text    | The title of the job reported in fort.3 
 | idfor        | int(11) | The closed orbit is added to the initial coordinates (0) or not (1)
 | ibtype       | int(11) | Use the Erskine/McIntosh optimised error function of a complex number(1) or not (0) 
 | ition        | int(11) | Transition energy switch 
-| CHRO         | text    | /  
-| TUNE         | text    | / 
 | POST         | text    | 'POST' 
 | POS1         | text    | ''
 | ndafi        | int(11) | Number of data files to be processed. 
@@ -147,12 +149,14 @@
 | mtime     | bigint(20) | Last modification time 
 
 ## sixtrack_wu
+This table have as many lines as the machine configurations
+
 | Field         | Type       | Description 
 |---------------|------------|------
 | wu_id         | int(11)    | The work unit id 
 | preprocess_id | int(11)    | The work unit id of preprocess job 
 | job_name      | text       | The job name
-| input_file    | blob       | The input file needed by the sixtrack.py 
+| input_file    | blob       | Hold all the required informations for the executable python script 'sixtrack.py' which is used for running actual sixtrack job
 | batch_name    | text       | The batch name of this job in HTCondor
 | unique_id     | text       | The unique id of this job in HTCondor, usually is ClusterId.ProcId 
 | status        | text       | The status of this job, 'complete', 'incomplete' or 'submitted'
@@ -160,9 +164,9 @@
 | boinc         | text       | Submit to boinc ('true') or not ('false')
 | mtime         | bigint(20) | The Last modification time 
 | turnss        | int(11)    | The tracking turn
-| nss           | int(11)    | Amplitude step in beam delta 
-| ax0s          | double     | Start amplitude 
-| ax1s          | double     | End amplitude 
+| nss           | int(11)    | Amplitude step [mm]
+| ax0s          | double     | Start amplitude [mm] 
+| ax1s          | double     | End amplitude [mm] 
 | imc           | int(11)    | Number of variations of the relative momentum deviation 
 | iclo6         | int(11)    | This switch allows to calculate the 6D closed orbit and optical functions at the starting point, using the differential algebra package.
 | writebins     | int(11)    | This defines after how many turns data are written to output files 
@@ -171,8 +175,6 @@
 | idfor         | int(11)    | The closed orbit is added to the initial coordinates (0) or not (1)
 | ibtype        | int(11)    | Use the Erskine/McIntosh optimised error function of a complex number(1) or not (0) 
 | ition         | int(11)    | Transition energy switch 
-| CHRO          | text       | /  
-| TUNE          | text       | / 
 | POST          | text       | 'POST' 
 | POS1          | text       | '' 
 | ndafi         | int(11)    | Number of data files to be processed. 
@@ -199,6 +201,8 @@
 | kang          | int(11)    | The angles in phase space (list)  
 
 ## sixtrack_task
+This table at least have as many lines as the sixtrack\_wu
+
 | Field      | Type       | Description 
 |------------|------------|------
 | task_id    | int(11)    | The unique task id for a submission 
@@ -212,6 +216,8 @@
 | fort_10    | blob       | The fort.10 file (result) 
 
 ## six_results
+This table hold the results of sixtrack jobs which will have as many lines as the points in all scans
+
 | Field        | Type       | Description 
 |--------------|------------|------
 | six_input_id | int(11)    | unique id for each sixtrack task
@@ -274,8 +280,22 @@
 | xp           | float      | Dummy5
 | yp           | float      | Dummy6
 | delta        | float      | Dummy7
-| dnms         | float      | Internal1
-| trttime      | float      | Internal2
 | mtime        | bigint(20) | Last modification time
 
-N.B. The detailed descritption of some input parameters for sixtrack could be found in the [User's Reference Manual](https:/sixtrack.web.cern.ch/SixTrack/docs/user_full/manual.php#Ch3) of sixtrack
+# Remarks
+
+The **preprocess job** aims to generate sixtrack input file from madx, e.g.
+fort.2,fort.8,fort.16 ..., and also get some machine parameters from oneturn sixtrack job, e.g. tune, chromaticity, beta ...\
+The **sixtrack job** is the actual tracking job for the study.
+
+The **\*\_wu** tables hold the points of the scan parameters for the jobs (preprocess job or sixtrack job)\
+The **\*\_task** tables record every submission of the jobs, no matter success or failure.
+
+```shell
+# Get the preprocess_wu line linked to a given task:
+preprocess_task.wu_id = preprocess_wu.wu_id 
+# Get the latest/reference task of a given wu:
+preprocess_wu.task_id = preprocess_task.task_id 
+```
+
+**N.B.** The detailed descritption of some input parameters for sixtrack could be found in the [User's Reference Manual](https:/sixtrack.web.cern.ch/SixTrack/docs/user_full/manual.php#Ch3) of sixtrack
