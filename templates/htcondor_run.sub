@@ -6,6 +6,7 @@ initialdir = %dirname/$(wu_id)/
 output = %dirname/$(wu_id)/htcondor.$(ClusterId).$(ProcId).out
 error = %dirname/$(wu_id)/htcondor.$(ClusterId).$(ProcId).err
 log = %dirname/$(wu_id)/htcondor.$(ClusterId).$(ProcId).log
+getenv = true
 # do not ask htcondor to take care of output files, otherwise empty ones will be created while the simulation proceeds
 transfer_input_files = %func
 transfer_output_files = ""
