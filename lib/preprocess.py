@@ -191,7 +191,7 @@ def sixtrackjobs(config, fort3_config):
     second_status = sixtrackjob(config, fort3_config, 'second_oneturn')
     if not second_status:
         return second_status
-    #Calculate and write out the requested values
+    # Calculate and write out the requested values
     chrom_eps = fort3_config['chrom_eps']
     first = open('fort.10_first_oneturn')
     a = first.readline()
@@ -213,8 +213,8 @@ def sixtrackjobs(config, fort3_config):
     beta_line = f_in.readline()
     f_in.close()
     beta = beta_line.split()
-    beta_out = [beta[4], beta[47], beta[5], beta[48], beta[2], beta[3],\
-                beta[49], beta[50], beta[52], beta[53], beta[54], beta[55],\
+    beta_out = [beta[4], beta[47], beta[5], beta[48], beta[2], beta[3],
+                beta[49], beta[50], beta[52], beta[53], beta[54], beta[55],
                 beta[56], beta[57]]
     if fort3_config['CHROM'] == '0':
         beta_out[6] = chrom1

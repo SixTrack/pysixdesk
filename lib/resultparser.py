@@ -49,27 +49,27 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
     job_stdlog = [s for s in contents if re.match('htcondor\..+\.log', s)]
     if job_stdlog:
         job_stdlog = os.path.join(job_path, job_stdlog[0])
-        task_table['job_stdlog'] = utils.evlt(utils.compress_buf,\
-                [job_stdlog])
+        task_table['job_stdlog'] = utils.evlt(utils.compress_buf,
+                                              [job_stdlog])
     oneturn_result = [s for s in contents if 'oneturnresult' in s]
-    #chrom = [s for s in contents if 'chrom' in s]
-    #tunes = [s for s in contents if 'sixdesktunes' in s]
+    # chrom = [s for s in contents if 'chrom' in s]
+    # tunes = [s for s in contents if 'sixdesktunes' in s]
     if oneturn_result:
         oneturn_result = os.path.join(job_path, oneturn_result[0])
-        #chrom = os.path.join(job_path, chrom[0])
-        #tunes = os.path.join(job_path, tunes[0])
+        # chrom = os.path.join(job_path, chrom[0])
+        # tunes = os.path.join(job_path, tunes[0])
         mtime = int(os.path.getmtime(oneturn_result)*1E7)
-        #with gzip.open(betavalue, 'rt') as f_in:
-        #    line = f_in.read()
-        #    lines_beta = line.split()
-        #with gzip.open(chrom, 'rt') as f_in:
-        #    line = f_in.read()
-        #    lines_chrom = line.split()
+        # with gzip.open(betavalue, 'rt') as f_in:
+        #     line = f_in.read()
+        #     lines_beta = line.split()
+        # with gzip.open(chrom, 'rt') as f_in:
+        #     line = f_in.read()
+        #     lines_chrom = line.split()
         with gzip.open(oneturn_result, 'rt') as f_in:
 
             line = f_in.read()
             lines = line.split()
-        #lines = lines_beta + lines_chrom + lines_tunes
+        # lines = lines_beta + lines_chrom + lines_tunes
         if len(lines) != 21:
             utils.message('Message', lines, mes_level, log_file)
             content = 'Error in one turn result of preprocess job %s!' % item

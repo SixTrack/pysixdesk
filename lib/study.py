@@ -122,8 +122,8 @@ class Study(object):
             ("dp2", 0.000001),
             ("chromx", 2),
             ("chromy", 2)])
-            # ("TUNEVAL", '/'),
-            # ("CHROVAL", '/')])
+        # ("TUNEVAL", '/'),
+        # ("CHROVAL", '/')])
         self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
