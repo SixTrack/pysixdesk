@@ -100,13 +100,34 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
       ```python
       myStudy.prepare_preprocess_input()
       myStudy.submit(0, 5) # 0 stand for preprocess job, 5 is trial number 
-      myStudy.collect_result(0, 5, platform='htcondor') # 'platform'=... submits a collection job to HTCondor
+      myStudy.collect_result(0) # collect results locally
       ```
 
    1. prepare and submit actual sixtrack jobs, and collect results:
 
       ```python
       myStudy.prepare_sixtrack_input()
+      or
+      myStudy.prepare_sixtrack_input(True) #True: submit jobs to Boinc
       myStudy.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
       myStudy.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
       ```
+
+## Description for the database tables
+
+There are ten tables in the database:
+
+| Table Name | Description |
+|:------------:|:-----------|
+|**boinc\_vars**| store the config parameters for boinc jobs |
+|**env** | store some general parameters for the jobs, e.g.: madx\_exe, sixtrack\_exe, study\_path |
+|**templates** | store the template files, e.g. mask file of madx job, fort.3 mother file |
+|**preprocess\_wu**| store the machine parameters for scanning and some general information for preprocess job|
+|**preprocess\_task**| store general information for the preprocess task, every submission will be recorded|
+|**oneturn\_sixtrack\_wu**| store the input parameters of oneturn sixtrack job|
+|**oneturn\_sixtrack\_result**| store the result of oneturn sixtrack job|
+|**sixtrack\_wu**| store the sixtrack parameters for scanning and general information for sixtrack job|
+|**sixtrack\_task**| store general information for the sixtrack task, also record every submission|
+|**six\_results**| store the results of sixtrack jobs, for the moment keep same column name with old sixdb|
+
+The detailed structure of these tables, please view the doc [Table.md](./doc/Table.md).

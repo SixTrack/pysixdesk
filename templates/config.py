@@ -44,8 +44,7 @@ class MyStudy(Study):
         # all octupole currents in the study
         self.madx_params["IOCT"] = list(range(100, 200+1, 100))
         self.oneturn_sixtrack_input['temp'] = ['fort.3']
-        self.oneturn_sixtrack_output = [
-            'mychrom', 'betavalues', 'sixdesktunes']
+        self.oneturn_sixtrack_output = ['oneturnresult']
         self.oneturn_sixtrack_params.update(machine_params)
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
         amp = [8, 10, 12]  # The amplitude
