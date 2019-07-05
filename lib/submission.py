@@ -3,7 +3,6 @@ import sys
 import utils
 import subprocess
 import shutil
-import study
 import traceback
 
 from abc import ABC, abstractmethod

@@ -60,9 +60,7 @@ def run(wu_id, input_info):
     down_list = list(output_files.values())
     down_list.append('madx_in')
     down_list.append('madx_stdout')
-    down_list.append('sixdesktunes')
-    down_list.append('mychrom')
-    down_list.append('betavalues')
+    down_list.append('oneturnresult')
     status = utils.download_output(down_list, dest_path)
 
     if status:
@@ -192,9 +190,7 @@ def sixtrackjobs(config, fort3_config):
         return second_status
 
     #Calculate and write out the requested values
-    tunes = open('sixdesktunes', 'w')
-    tunes.write(fort3_config['chrom_eps'])
-    tunes.write('\n')
+    chrom_eps = fort3_config['chrom_eps']
     first = open('fort.10_first_oneturn')
     a = first.readline()
     valf = a.split()
@@ -202,20 +198,10 @@ def sixtrackjobs(config, fort3_config):
     second = open('fort.10_second_oneturn')
     b = second.readline()
     vals = b.split()
-    tunes.write(valf[2]+" "+valf[3])
-    tunes.write('\n')
-    tunes.write(vals[2]+" "+vals[3])
-    tunes.write('\n')
-    tunes.close()
-    chrom_eps = fort3_config['chrom_eps']
+    tunes = [chrom_eps, valf[2], valf[3], vals[2], vals[3]]
     chrom1 = (float(vals[2])-float(valf[2]))/float(chrom_eps)
-    chrom1 = str(chrom1)
     chrom2 = (float(vals[3])-float(valf[3]))/float(chrom_eps)
-    chrom2 = str(chrom2)
-    chrom = open('mychrom', 'w')
-    chrom.write(chrom1+" "+chrom2)
-    chrom.write('\n')
-    chrom.close()
+    mychrom = [chrom1, chrom2]
 
     chrom_status = sixtrackjob(config, fort3_config, 'beta_oneturn',\
             dp1='.0', dp2='.0')
@@ -225,24 +211,17 @@ def sixtrackjobs(config, fort3_config):
     beta_line = f_in.readline()
     f_in.close()
     beta = beta_line.split()
-    f_out = open('betavalues', 'w')
     beta_out = [beta[4], beta[47], beta[5], beta[48], beta[2], beta[3],\
                 beta[49], beta[50], beta[52], beta[53], beta[54], beta[55],\
                 beta[56], beta[57]]
     if fort3_config['CHROM'] == '0':
         beta_out[6] = chrom1
         beta_out[7] = chrom2
+    beta_out = beta_out + mychrom + tunes
     lines = ' '.join(map(str, beta_out))
-    f_out.write(lines)
-    f_out.write('\n')
-    f_out.close()
-    #Download the requested files
-    #dest_path = config["dest_path"]
-    #b = ['sixdesktunes', 'mychrom', 'betavalues']
-    #status = utils.download_output(b, dest_path, False)
-    #if not status:
-    #    sixtrack_status = 0
-    #    return sixtrack_status
+    with open('oneturnresult', 'w') as f_out:
+        f_out.write(lines)
+        f_out.write('\n')
     return sixtrack_status
 
 def sixtrackjob(config, config_re, jobname, **args):
