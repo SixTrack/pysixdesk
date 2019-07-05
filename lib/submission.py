@@ -176,6 +176,23 @@ class HTCondor(Cluster):
                 utils.message('Message', stdout, self.mes_level, self.log_file)
                 return None
 
+    def check_running(self):
+        '''Check the unfininshed job
+        @return(list or None) The ClusterId.ProcId'''
+
+        args = ['-constraint', 'JobStatus != 4', '-format', '%d.',
+                'ClusterId', '-format', '%d\n', 'ProcId']
+        process = Popen(['condor_q', *args], stdout=PIPE,\
+                stderr=PIPE, universal_newlines=True)
+        stdout, stderr = process.communicate()
+        if stderr:
+            utils.message('Message', stdout, self.mes_level, self.log_file)
+            utils.message('Error', stderr, self.mes_level, self.log_file)
+            return None
+        else:
+            st = stdout.split()
+            return st
+
     def check(self, *args, **kwargs):
         '''Check the job status'''
         for ky, vl in kwargs:

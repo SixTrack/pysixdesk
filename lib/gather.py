@@ -77,6 +77,7 @@ def preprocess_results(cf, cluster):
     job_ids = db.select('preprocess_wu', ['wu_id', 'unique_id'], where)
     job_ids = [(str(i), str(j)) for i, j in job_ids]
     job_index = dict(job_ids)
+    unfin = cluster.check_running()
 
     for item in os.listdir(preprocess_path):
         if not item in job_index.keys():
