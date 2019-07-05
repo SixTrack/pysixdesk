@@ -282,7 +282,7 @@ class Study(object):
             'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},
         }
         self.db_settings = {
-            'synchronous': 'off',
+            # 'synchronous': 'off',
             'foreign_keys': 'on',
             'journal_mode': 'memory',
             'auto_vacuum': 'full',
