@@ -89,7 +89,7 @@ This table have at least as many lines as the preprocess\_wu table
 | fort_34     | mediumblob | fort.34
 
 ## oneturn_sixtrack_wu
-This table will have as many lines as the machine configurations
+This table has only one line
 
 | Field        | Type    | Description 
 |--------------|---------|------
@@ -129,7 +129,7 @@ This table will have as many lines as the machine configurations
 | sige         | double  | r.m.s energy spread 
 
 ## oneturn_sixtrack_result
-This table will have as many lines as the oneturn_sixtrack_wu table 
+This table will have as many lines as the machine configurations
 
 | Field     | Type       | Description 
 |-----------|------------|------
