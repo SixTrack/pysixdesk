@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 import os
-import re
 import sys
 import time
-import gzip
 import shutil
 import utils
 import traceback

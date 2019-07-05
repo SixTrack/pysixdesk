@@ -1,9 +1,6 @@
 import os
 import sys
-import time
 import utils
-import shutil
-import gzip
 import dbadaptor
 
 

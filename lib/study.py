@@ -8,11 +8,9 @@ import copy
 import utils
 import gather
 import shutil
-import inspect
 import getpass
 import zipfile
 import itertools
-import importlib
 import traceback
 import dbtypedict
 import collections
@@ -20,8 +18,6 @@ import configparser
 import constants
 
 from pysixdb import SixDB
-from datetime import datetime
-from subprocess import Popen, PIPE
 from importlib.machinery import SourceFileLoader
 
 

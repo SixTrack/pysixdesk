@@ -1,10 +1,8 @@
 import os
 import re
-import sys
 import time
 import gzip
 import utils
-import shutil
 
 '''Parse the results of preprocess jobs and sixtrack jobs'''
 

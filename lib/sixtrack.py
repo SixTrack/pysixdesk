@@ -3,12 +3,10 @@ import os
 import re
 import sys
 import ast
-import copy
 import time
 import utils
 import shutil
 import zipfile
-import getpass
 import traceback
 import configparser
 import resultparser as rp
