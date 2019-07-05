@@ -1,6 +1,8 @@
 # The structure of database table
 
 ## boinc_vars
+This table will have only one line
+
 | Field                   | Type    | Description
 |-------------------------|---------|-----------
 | workunitName            | text    | The work unit name 
@@ -18,6 +20,8 @@
 | appVer                  | int(11) | The app version (e.g. 50210)
 
 ## env
+This table will have only one line
+
 | Field          | Type    | Description
 |----------------|---------|------------
 | madx_exe       | text    | The madx executable
@@ -39,13 +43,15 @@
 | surv_percent   | int(11) | When testing jobs on HTCondor, survival percent decides whether to submit jobs to boinc
 
 ## templates
+This table will have only one line
+
 | Field     | Type | Description 
 |-----------|------|------------
 | mask_file | blob | The mask file of madx input file 
 | fort_3    | blob | The mother file of fort.3 
 
 ## preprocess_wu
-This table will have as many lines as the macine configurations
+This table will have as many lines as the machine configurations
 
 | Field      | Type       | Description 
 |------------|------------|------
@@ -83,6 +89,8 @@ This table have at least as many lines as the preprocess\_wu table
 | fort_34     | mediumblob | fort.34
 
 ## oneturn_sixtrack_wu
+This table will have as many lines as the machine configurations
+
 | Field        | Type    | Description 
 |--------------|---------|------
 | turnss       | int(11) | The tracking turn
@@ -121,6 +129,8 @@ This table have at least as many lines as the preprocess\_wu table
 | sige         | double  | r.m.s energy spread 
 
 ## oneturn_sixtrack_result
+This table will have as many lines as the oneturn_sixtrack_wu table 
+
 | Field     | Type       | Description 
 |-----------|------------|------
 | task_id   | int(11)    | The task id 
@@ -149,7 +159,7 @@ This table have at least as many lines as the preprocess\_wu table
 | mtime     | bigint(20) | Last modification time 
 
 ## sixtrack_wu
-This table have as many lines as the machine configurations
+This table will have as many lines as the cartesian product between machine configurations and the beam phase space scan points
 
 | Field         | Type       | Description 
 |---------------|------------|------
