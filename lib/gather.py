@@ -75,24 +75,24 @@ def preprocess_results(cf, cluster):
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
     where = "status='submitted'"
     job_ids = db.select('preprocess_wu', ['wu_id', 'unique_id'], where)
-    job_ids = [(str(i), str(j)) for i, j in job_ids]
+    job_ids = [(str(j), str(i)) for i, j in job_ids]
     job_index = dict(job_ids)
-    unfin = cluster.check_running()
+    studypath = os.path.dirname(preprocess_path)
+    unfin = cluster.check_running(studypath)
+    running_jobs = [job_index.pop(unid) for unid in unfin]
+    if running_jobs:
+        content = "The preprocess jobs %s aren't completed yet!"\
+                % str(running_jobs)
+        utils.message('Warning', content, mes_level, log_file)
 
     for item in os.listdir(preprocess_path):
-        if not item in job_index.keys():
-            content = "Unknown preprocess job id %s!"%item
-            utils.message('Error', content, mes_level, log_file)
+        if item not in job_index.values():
             continue
-        else:
-            status = cluster.check_format(job_index[item])
-            if status is None:
-                continue
-            elif status:
-                content = "The preprocess job %s isn't completed yet!"%item
-                utils.message('Warning', content, mes_level, log_file)
-                continue
         job_path = os.path.join(preprocess_path, item)
+        if not os.listdir(job_path):
+            content = "The preprocess job %s is empty!"%item
+            utils.message('Warning', content, mes_level, log_file)
+            continue
         job_table = {}
         task_table = {}
         oneturn_table = {}
@@ -146,22 +146,24 @@ def sixtrack_results(cf, cluster):
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
     where = "status='submitted'"
     job_ids = db.select('sixtrack_wu', ['wu_id', 'unique_id'], where)
-    job_ids = [(str(i), str(j)) for i, j in job_ids]
+    job_ids = [(str(j), str(i)) for i, j in job_ids]
     job_index = dict(job_ids)
+    studypath = os.path.dirname(six_path)
+    unfin = cluster.check_running(studypath)
+    running_jobs = [job_index.pop(unid) for unid in unfin]
+    if running_jobs:
+        content = "The sixtrack jobs %s aren't completed yet!"\
+                % str(running_jobs)
+        utils.message('Warning', content, mes_level, log_file)
+
     for item in os.listdir(six_path):
-        if not item in job_index.keys():
-            content = "Unknown sixtrack job id %s!"%item
-            utils.message('Error', content, mes_level, log_file)
+        if not item in job_index.values():
             continue
-        else:
-            status = cluster.check_format(job_index[item])
-            if status is None:
-                continue
-            elif status:
-                content = "The sixtrack job %s isn't completed yet!"%item
-                utils.message('Warning', content, mes_level, log_file)
-                continue
         job_path = os.path.join(six_path, item)
+        if not os.listdir(job_path):
+            content = "The sixtrack job %s is empty!"%item
+            utils.message('Warning', content, mes_level, log_file)
+            continue
         job_table = {}
         task_table = {}
         f10_table = {}

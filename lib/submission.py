@@ -176,11 +176,13 @@ class HTCondor(Cluster):
                 utils.message('Message', stdout, self.mes_level, self.log_file)
                 return None
 
-    def check_running(self):
+    def check_running(self, studypath):
         '''Check the unfininshed job
-        @return(list or None) The ClusterId.ProcId'''
+        @studypath The absolute path of the study
+        @return(list or None) The unique id (ClusterId.ProcId) list'''
 
-        args = ['-constraint', 'JobStatus != 4', '-format', '%d.',
+        args = ['-constraint', 'regexp("%s", JobBatchName)' % studypath,
+                '-constraint', 'JobStatus != 4', '-format', '%d.',
                 'ClusterId', '-format', '%d\n', 'ProcId']
         process = Popen(['condor_q', *args], stdout=PIPE,\
                 stderr=PIPE, universal_newlines=True)
