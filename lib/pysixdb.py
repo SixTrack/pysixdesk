@@ -125,10 +125,10 @@ class SixDB(object):
         '''Insert multiple rows'''
         self.adaptor.insertm(self.conn, table_name, values)
 
-    def select(self, table_name, columns='*', where=None, orderby=None, **args):
+    def select(self, table_name, columns='*', where=None, orderby=None, **kwargs):
         '''Select values with specified conditions'''
         r = self.adaptor.select(self.conn, table_name, columns, where, orderby,
-                                **args)
+                                **kwargs)
         return r
 
     def update(self, table_name, values, where=None):

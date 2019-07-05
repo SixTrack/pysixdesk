@@ -226,7 +226,7 @@ def sixtrackjobs(config, fort3_config):
     return sixtrack_status
 
 
-def sixtrackjob(config, config_re, jobname, **args):
+def sixtrackjob(config, config_re, jobname, **kwargs):
     '''One turn sixtrack job'''
     sixtrack_status = 1
     sixtrack_config = config
@@ -249,7 +249,7 @@ def sixtrackjob(config, config_re, jobname, **args):
     c = fc3aux_2.split()
     lhc_length = c[4]
     fort3_config['length'] = lhc_length
-    fort3_config.update(args)
+    fort3_config.update(kwargs)
 
     # Create a temp folder to excute sixtrack
     if os.path.isdir('junk'):

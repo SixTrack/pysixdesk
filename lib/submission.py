@@ -27,7 +27,7 @@ class Cluster(ABC):
         pass
 
     @abstractmethod
-    def remove(self, **args):
+    def remove(self, **kwargs):
         pass
 
 
@@ -198,11 +198,11 @@ class HTCondor(Cluster):
             utils.message('Message', stdout, self.mes_level, self.log_file)
             return stdout
 
-    def remove(self, **args):
+    def remove(self, *args, **kwargs):
         '''Cancel the submitted jobs'''
         for ky, vl in kwargs:
             args = args + ['-'+ky, vl]
-        process = Popen(['condor_rm', sub], stdout=PIPE,
+        process = Popen(['condor_rm', *args], stdout=PIPE,
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:

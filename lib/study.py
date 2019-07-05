@@ -743,9 +743,9 @@ class Study(object):
             os.makedirs(in_path)
         with open(task_input, 'w') as f_out:
             self.config.write(f_out)
-        if platform is 'local':
+        if platform == 'local':
             gather.run(typ, task_input)
-        elif platform is 'htcondor':
+        elif platform == 'htcondor':
             tran_input = []
             tran_input.append(task_input)
             exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')
@@ -994,7 +994,7 @@ class Study(object):
         self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
                                 out_path, *args, **kwargs)
 
-    def pre_calc(self, **args):
+    def pre_calc(self, **kwargs):
         '''Further calculations for the specified parameters'''
         pass
 
