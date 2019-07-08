@@ -732,6 +732,7 @@ class Study(object):
             self.config['f10'] = self.tables['six_results']
             info_sec['path'] = self.paths['sixtrack_out']
             info_sec['boinc_results'] = self.env['boinc_results']
+            info_sec['boinc'] = str(boinc)
             info_sec['st_pre'] = self.st_pre
             info_sec['outs'] = utils.evlt(
                 utils.encode_strings, [self.sixtrack_output])
@@ -749,7 +750,7 @@ class Study(object):
         with open(task_input, 'w') as f_out:
             self.config.write(f_out)
         if platform is 'local':
-            gather.run(typ, task_input, boinc)
+            gather.run(typ, task_input)
         # TODO: Submit gather job to htcondor is error-prone, so I block it for
         #       the moment. Acctually it's dispensable.
         # elif platform is 'htcondor':

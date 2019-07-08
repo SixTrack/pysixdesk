@@ -16,12 +16,14 @@ from pysixdb import SixDB
 from importlib.machinery import SourceFileLoader
 
 
-def run(wu_id, infile, boinc=False):
+def run(wu_id, infile):
     cf = configparser.ConfigParser()
     if os.path.isfile(infile):
         cf.read(infile)
         info_sec = cf['info']
-        info_sec['boinc'] = str(boinc)
+        boinc = 'false'
+        if str(wu_id) == '1':
+            boinc = info_sec['boinc']
         mes_level = int(info_sec['mes_level'])
         log_file = info_sec['log_file']
         if len(log_file) == 0:
