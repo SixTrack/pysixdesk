@@ -30,9 +30,7 @@ def run(wu_id, infile):
             log_file = None
         db_info = cf['db_info']
         dbtype = db_info['db_type']
-        if ((dbtype.lower() == 'mysql' and str(boinc).lower() == 'false') or
-                (dbtype.lower() == 'mysql' and str(boinc).lower() == 'true'
-                    and str(wu_id) == '0')):
+        if dbtype.lower() == 'mysql' and str(boinc).lower() == 'false':
             content = "No need to gather results manually with MySQL!"
             utils.message('Message', content, mes_level, log_file)
             return
