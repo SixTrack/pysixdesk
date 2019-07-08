@@ -762,7 +762,7 @@ class Study(object):
             utils.message('Warning', content, self.mes_level, self.log_file)
             return
         out_path = self.paths['sixtrack_out']
-        items = os.listdir(out_path)
+        # items = os.listdir(out_path)
         contents = os.listdir(res_path)
         where = "status='submitted'"
         wu_ids = self.db.select('sixtrack_wu', ['wu_id'], where)
