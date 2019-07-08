@@ -93,14 +93,14 @@ def run(wu_id, input_info):
         if task_table['status'] == 'Success':
             where = "wu_id=%s" % wu_id
             job_table['status'] = 'complete'
-            job_table['mtime'] = int(time.time()*1E7)
+            job_table['mtime'] = int(time.time() * 1E7)
             db.update('preprocess_wu', job_table, where)
             content = "Preprocess job %s has completed normally!" % wu_id
             utils.message('Message', content)
         else:
             where = "wu_id=%s" % wu_id
             job_table['status'] = 'incomplete'
-            job_table['mtime'] = int(time.time()*1E7)
+            job_table['mtime'] = int(time.time() * 1E7)
             db.update('preprocess_wu', job_table, where)
             content = "This is a failed job!"
             utils.message('Warning', content)
@@ -108,7 +108,7 @@ def run(wu_id, input_info):
     except:
         where = "wu_id=%s" % wu_id
         job_table['status'] = 'incomplete'
-        job_table['mtime'] = int(time.time()*1E7)
+        job_table['mtime'] = int(time.time() * 1E7)
         db.update('preprocess_wu', job_table, where)
         content = traceback.print_exc()
         utils.message('Error', content)
@@ -138,7 +138,7 @@ def madxjob(madx_config, mask_config):
         os.mkdir(dest_path)
 
     # Generate the actual madx file from mask file
-    patterns = ['%'+a for a in mask_config.keys()]
+    patterns = ['%' + a for a in mask_config.keys()]
     values = list(mask_config.values())
     madx_in = 'madx_in'
     status = utils.replace(patterns, values, mask_name, madx_in)
@@ -200,8 +200,8 @@ def sixtrackjobs(config, fort3_config):
     b = second.readline()
     vals = b.split()
     tunes = [chrom_eps, valf[2], valf[3], vals[2], vals[3]]
-    chrom1 = (float(vals[2])-float(valf[2]))/float(chrom_eps)
-    chrom2 = (float(vals[3])-float(valf[3]))/float(chrom_eps)
+    chrom1 = (float(vals[2]) - float(valf[2])) / float(chrom_eps)
+    chrom2 = (float(vals[3]) - float(valf[3])) / float(chrom_eps)
     mychrom = [chrom1, chrom2]
 
     chrom_status = sixtrackjob(config, fort3_config, 'beta_oneturn',
@@ -231,7 +231,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     sixtrack_status = 1
     sixtrack_config = config
     fort3_config = copy.deepcopy(config_re)
-    source_path = sixtrack_config["source_path"]
+    # source_path = sixtrack_config["source_path"]
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     status, temp_files = utils.decode_strings(sixtrack_config["temp_files"])
     if not status:
@@ -260,11 +260,11 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     print("Preparing the sixtrack input files!")
 
     keys = list(fort3_config.keys())
-    patterns = ['%'+a for a in keys]
+    patterns = ['%' + a for a in keys]
     values = [fort3_config[key] for key in keys]
     output = []
     for s in temp_files:
-        dest = s+".t1"
+        dest = s + ".t1"
         source = os.path.join('../', s)
         status = utils.replace(patterns, values, source, dest)
         if not status:

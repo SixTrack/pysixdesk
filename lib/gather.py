@@ -67,7 +67,7 @@ def preprocess_results(cf, cluster):
         content = "There isn't result in path %s!" % preprocess_path
         utils.message('Warning', content, mes_level, log_file)
         return
-    contents = os.listdir(preprocess_path)
+    # contents = os.listdir(preprocess_path)
     set_sec = cf['db_setting']
     db_info = cf['db_info']
     oneturn = cf['oneturn']
@@ -110,7 +110,7 @@ def preprocess_results(cf, cluster):
             db.insert('oneturn_sixtrack_result', oneturn_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
-                job_table['mtime'] = int(time.time()*1E7)
+                job_table['mtime'] = int(time.time() * 1E7)
                 where = "wu_id=%s" % item
                 db.update('preprocess_wu', job_table, where)
                 content = "Preprocess job %s has completed normally!" % item
@@ -176,12 +176,12 @@ def sixtrack_results(cf, cluster):
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], item)
             task_id = db.select('sixtrack_task', ['task_id'], where)
             task_id = task_id[0][0]
-            f10_table['six_input_id'] = [task_id, ]*len(f10_table['mtime'])
+            f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
             db.insertm('six_results', f10_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['task_id'] = task_id
-                job_table['mtime'] = int(time.time()*1E7)
+                job_table['mtime'] = int(time.time() * 1E7)
                 where = "wu_id=%s" % item
                 db.update('sixtrack_wu', job_table, where)
                 content = "Sixtrack job %s has completed normally!" % item

@@ -122,11 +122,11 @@ def run(wu_id, input_info):
         # where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
         # task_id = db.select('sixtrack_task', ['task_id'], where)
         # task_id = task_id[0][0]
-        f10_table['six_input_id'] = [task_id, ]*len(f10_table['mtime'])
+        f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
         db.insertm('six_results', f10_table)
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
-            job_table['mtime'] = int(time.time()*1E7)
+            job_table['mtime'] = int(time.time() * 1E7)
             where = "wu_id=%s" % wu_id
             db.update('sixtrack_wu', job_table, where)
             content = "Sixtrack job %s has completed normally!" % wu_id
@@ -134,7 +134,7 @@ def run(wu_id, input_info):
         else:
             where = "wu_id=%s" % wu_id
             job_table['status'] = 'incomplete'
-            job_table['mtime'] = int(time.time()*1E7)
+            job_table['mtime'] = int(time.time() * 1E7)
             db.update('sixtrack_wu', job_table, where)
             content = "The sixtrack job failed!"
             utils.message('Warning', content)
@@ -142,7 +142,7 @@ def run(wu_id, input_info):
     except:
         where = "wu_id=%s" % wu_id
         job_table['status'] = 'incomplete'
-        job_table['mtime'] = int(time.time()*1E7)
+        job_table['mtime'] = int(time.time() * 1E7)
         db.update('sixtrack_wu', job_table, where)
         content = traceback.print_exc()
         utils.message('Error', content)
@@ -158,11 +158,11 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     real_turn = fort3_config['turnss']
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     source_path = sixtrack_config["source_path"]
-    dest_path = sixtrack_config["dest_path"]
+    # dest_path = sixtrack_config["dest_path"]
     inp = sixtrack_config["temp_files"]
     temp_files = utils.evlt(utils.decode_strings, [inp])
-    inp = sixtrack_config["output_files"]
-    output_files = utils.evlt(utils.decode_strings, [inp])
+    # inp = sixtrack_config["output_files"]
+    # output_files = utils.evlt(utils.decode_strings, [inp])
     inp = sixtrack_config["input_files"]
     input_files = utils.evlt(utils.decode_strings, [inp])
     boinc = sixtrack_config["boinc"]
@@ -207,7 +207,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         test_turn = sixtrack_config["test_turn"]
         fort3_config['turnss'] = test_turn
     keys = list(fort3_config.keys())
-    patterns = ['%'+a for a in keys]
+    patterns = ['%' + a for a in keys]
     values = [fort3_config[key] for key in keys]
     output = []
     for s in temp_files:
@@ -337,7 +337,7 @@ def check_tracking(filename, surv_percent=1):
         if track_turn < total_turn:
             return 0
         else:
-            if surv_part/total_part < surv_percent:
+            if surv_part / total_part < surv_percent:
                 return 0
             else:
                 return 1

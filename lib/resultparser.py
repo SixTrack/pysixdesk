@@ -11,7 +11,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
                      oneturn_param_names, mes_level=1, log_file=None):
     '''Parse the results of preprocess jobs'''
     task_table['wu_id'] = item
-    task_table['mtime'] = int(time.time()*1E7)
+    task_table['mtime'] = int(time.time() * 1E7)
 
     contents = os.listdir(job_path)
     madx_in = [s for s in contents if 'madx_in' in s]
@@ -73,9 +73,9 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
             content = 'Error in one turn result of preprocess job %s!' % item
             utils.message('Error', content, mes_level, log_file)
             task_table['status'] = 'Failed'
-            data = [item]+21*['None']+[mtime]
+            data = [item] + 21 * ['None'] + [mtime]
         else:
-            data = [item]+lines+[mtime]
+            data = [item] + lines + [mtime]
         oneturn_table.update(dict(zip(oneturn_param_names[1:], data)))
     for out in file_list.values():
         out_f = [s for s in contents if out in s]
@@ -93,7 +93,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
 def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
                    mes_level=1, log_file=None):
     task_table['wu_id'] = item
-    task_table['mtime'] = int(time.time()*1E7)
+    task_table['mtime'] = int(time.time() * 1E7)
     contents = os.listdir(job_path)
     fort3_in = [s for s in contents if 'fort.3' in s]
     if fort3_in:
@@ -124,7 +124,7 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
             if 'fort.10' in out_f:
                 countl = 1
                 try:
-                    mtime = int(os.path.getmtime(out_f)*1E7)
+                    mtime = int(os.path.getmtime(out_f) * 1E7)
                     f10_data = []
                     with gzip.open(out_f, 'rt') as f_in:
                         for lines in f_in:
@@ -137,10 +137,10 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
                                 utils.message('Warning', content,
                                               mes_level, log_file)
                                 task_table['status'] = 'Failed'
-                                line = [countl]+60*['None']+[mtime]
+                                line = [countl] + 60 * ['None'] + [mtime]
                                 f10_data.append(line)
                             else:
-                                line = [countl]+line+[mtime]
+                                line = [countl] + line + [mtime]
                                 f10_data.append(line)
                     f10_table.update(dict(zip(f10_names[1:], zip(*f10_data))))
                 except:

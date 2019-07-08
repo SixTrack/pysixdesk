@@ -107,7 +107,7 @@ class HTCondor(Cluster):
         while scont <= trials:
             args = list(args)
             for ky, vl in kwargs:
-                args = args + ['-'+ky, vl]
+                args = args + ['-' + ky, vl]
             args.append(sub)
             args.append('-batch-name')
             args.append(job_name)
@@ -205,7 +205,7 @@ class HTCondor(Cluster):
     def check(self, *args, **kwargs):
         '''Check the job status'''
         for ky, vl in kwargs:
-            args = args + ['-'+ky, vl]
+            args = args + ['-' + ky, vl]
         process = Popen(['condor_q', *args], stdout=PIPE,
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
@@ -220,7 +220,7 @@ class HTCondor(Cluster):
     def remove(self, *args, **kwargs):
         '''Cancel the submitted jobs'''
         for ky, vl in kwargs:
-            args = args + ['-'+ky, vl]
+            args = args + ['-' + ky, vl]
         process = Popen(['condor_rm', *args], stdout=PIPE,
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
