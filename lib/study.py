@@ -735,7 +735,7 @@ class Study(object):
             info_sec['st_pre'] = self.st_pre
             info_sec['outs'] = utils.evlt(
                 utils.encode_strings, [self.sixtrack_output])
-            job_name = 'collect sixtrack reslut'
+            job_name = 'collect sixtrack result'
             in_name = 'sixtrack.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
         else:
