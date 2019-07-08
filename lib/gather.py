@@ -161,7 +161,8 @@ def sixtrack_results(cf, cluster):
     studypath = os.path.dirname(six_path)
     unfin = cluster.check_running(studypath)
     if unfin is not None:
-        running_jobs = [job_index.pop(unid) for unid in unfin]
+        running_jobs = [job_index.pop(unid) for unid in unfin if unid in
+                        job_index.keys()]
     else:
         content = "Can't get job status, try later!"
         utils.message('Warning', content, mes_level, log_file)
@@ -170,7 +171,7 @@ def sixtrack_results(cf, cluster):
         content = "Sixtrack jobs %s on HTCondor aren't completed yet!" % str(
             running_jobs)
         utils.message('Warning', content, mes_level, log_file)
-    valid_wu_ids = job_index.values()
+    valid_wu_ids = list(job_index.values())
 
     # Donwload results from boinc if there is any
     if boinc.lower() == 'true':
@@ -182,7 +183,7 @@ def sixtrack_results(cf, cluster):
         unfn_wu_ids = [i for i in valid_wu_ids if i not in wu_ids]
         if unfn_wu_ids:
             content = "Sixtrack jobs %s on Boinc aren't completed yet!" % str(
-                running_jobs)
+                unfn_wu_ids)
             utils.message('Warning', content, mes_level, log_file)
         valid_wu_ids = wu_ids
 
