@@ -970,7 +970,8 @@ class Study(object):
             sub_db = SixDB(db_info, self.db_settings, True, self.mes_level,
                            self.log_file)
             sub_db.create_table('preprocess_wu', {'wu_id': 'int',
-                                                  'task_id': 'int', 'input_file': 'blob'})
+                                                  'task_id': 'int',
+                                                  'input_file': 'blob'})
             incom_job = {}
             incom_job['wu_id'] = outputs[0]
             incom_job['task_id'] = task_ids

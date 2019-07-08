@@ -191,8 +191,8 @@ class HTCondor(Cluster):
         args = ['-constraint', 'regexp("%s", JobBatchName)' % studypath,
                 '-constraint', 'JobStatus != 4', '-format', '%d.',
                 'ClusterId', '-format', '%d\n', 'ProcId']
-        process = Popen(['condor_q', *args], stdout=PIPE,\
-                stderr=PIPE, universal_newlines=True)
+        process = Popen(['condor_q', *args], stdout=PIPE,
+                        stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:
             utils.message('Message', stdout, self.mes_level, self.log_file)

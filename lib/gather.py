@@ -81,8 +81,7 @@ def preprocess_results(cf, cluster):
     unfin = cluster.check_running(studypath)
     running_jobs = [job_index.pop(unid) for unid in unfin]
     if running_jobs:
-        content = "The preprocess jobs %s aren't completed yet!"\
-                % str(running_jobs)
+        content = "The preprocess jobs %s aren't completed yet!" % str(running_jobs)
         utils.message('Warning', content, mes_level, log_file)
 
     for item in os.listdir(preprocess_path):
@@ -90,7 +89,7 @@ def preprocess_results(cf, cluster):
             continue
         job_path = os.path.join(preprocess_path, item)
         if not os.listdir(job_path):
-            content = "The preprocess job %s is empty!"%item
+            content = "The preprocess job %s is empty!" % item
             utils.message('Warning', content, mes_level, log_file)
             continue
         job_table = {}
@@ -154,16 +153,15 @@ def sixtrack_results(cf, cluster):
     unfin = cluster.check_running(studypath)
     running_jobs = [job_index.pop(unid) for unid in unfin]
     if running_jobs:
-        content = "The sixtrack jobs %s aren't completed yet!"\
-                % str(running_jobs)
+        content = "The sixtrack jobs %s aren't completed yet!" % str(running_jobs)
         utils.message('Warning', content, mes_level, log_file)
 
     for item in os.listdir(six_path):
-        if not item in job_index.values():
+        if item not in job_index.values():
             continue
         job_path = os.path.join(six_path, item)
         if not os.listdir(job_path):
-            content = "The sixtrack job %s is empty!"%item
+            content = "The sixtrack job %s is empty!" % item
             utils.message('Warning', content, mes_level, log_file)
             continue
         job_table = {}
