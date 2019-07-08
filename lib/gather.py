@@ -4,8 +4,10 @@ import re
 import sys
 import time
 import gzip
-import shutil
 import utils
+import shutil
+import getpass
+import zipfile
 import traceback
 import configparser
 import resultparser as rp
@@ -14,19 +16,22 @@ from pysixdb import SixDB
 from importlib.machinery import SourceFileLoader
 
 
-def run(wu_id, infile):
+def run(wu_id, infile, boinc=False):
     cf = configparser.ConfigParser()
     if os.path.isfile(infile):
         cf.read(infile)
         info_sec = cf['info']
+        info_sec['boinc'] = str(boinc)
         mes_level = int(info_sec['mes_level'])
         log_file = info_sec['log_file']
         if len(log_file) == 0:
             log_file = None
         db_info = cf['db_info']
         dbtype = db_info['db_type']
-        if dbtype.lower() == 'mysql':
-            content = "There is no need to gather results manually with MySQL db!"
+        if ((dbtype.lower() == 'mysql' and str(boinc).lower() == 'false') or
+                (dbtype.lower() == 'mysql' and str(boinc).lower() == 'true'
+                    and str(wu_id) == '0')):
+            content = "No need to gather results manually with MySQL!"
             utils.message('Message', content, mes_level, log_file)
             return
 
@@ -53,7 +58,6 @@ def run(wu_id, infile):
     else:
         content = "The input file %s doesn't exist!" % infile
         utils.message('Error', content, mes_level, log_file)
-
 
 def preprocess_results(cf, cluster):
     '''Gather the results of madx and oneturn sixtrack jobs and store in
@@ -134,6 +138,7 @@ def sixtrack_results(cf, cluster):
     info_sec = cf['info']
     mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
+    boinc = info_sec['boinc']
     if len(log_file) == 0:
         log_file = None
     six_path = info_sec['path']
@@ -152,12 +157,21 @@ def sixtrack_results(cf, cluster):
     job_index = dict(job_ids)
     studypath = os.path.dirname(six_path)
     unfin = cluster.check_running(studypath)
-    running_jobs = [job_index.pop(unid) for unid in unfin]
+    if unfin is not None:
+        running_jobs = [job_index.pop(unid) for unid in unfin]
+    else:
+        content = "Can't get job status, try later!"
+        utils.message('Warning', content, mes_level, log_file)
+        return
     if running_jobs:
         content = "The sixtrack jobs %s aren't completed yet!" % str(running_jobs)
         utils.message('Warning', content, mes_level, log_file)
     # Donwload results from boinc if there is any
-    download_from_boinc(info_sec)
+    if boinc.lower() == 'true':
+        content = "Downloading results from boinc spool!"
+        utils.message('Message', content, mes_level, log_file)
+        download_from_boinc(info_sec)
+
     for item in os.listdir(six_path):
         if item not in job_index.values():
             continue

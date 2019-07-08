@@ -294,7 +294,7 @@ class Study(object):
             'count_changes': 'off'}
 
         self.tables['boinc_vars'] = collections.OrderedDict()
-        self.boinc_vars['workunitName'] = 'sixdesk'
+        self.boinc_vars['workunitName'] = 'pysixdesk'
         self.boinc_vars['fpopsEstimate'] = 30*2*10e5/2*10e6*6
         self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate']*1000
         self.boinc_vars['memBound'] = 100000000
@@ -702,7 +702,7 @@ class Study(object):
             content = "Failed to submit %s job!" % jobname
             utils.message('Warning', content, self.mes_level, self.log_file)
 
-    def collect_result(self, typ, trials=5, platform='local', clean='False'):
+    def collect_result(self, typ, boinc=False, trials=5, platform='local'):
         '''Collect the results of preprocess or  sixtrack jobs'''
         self.config.clear()
         self.config['info'] = {}
@@ -720,7 +720,6 @@ class Study(object):
                 utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
         info_sec['cluster_module'] = str(cluster_module)
         info_sec['cluster_name'] = self.cluster_name
-        info_sec['clean'] = clean
         if typ == 0:
             self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
             info_sec['path'] = self.paths['preprocess_out']
@@ -749,7 +748,7 @@ class Study(object):
         with open(task_input, 'w') as f_out:
             self.config.write(f_out)
         if platform is 'local':
-            gather.run(typ, task_input)
+            gather.run(typ, task_input, boinc)
         # TODO: Submit gather job to htcondor is error-prone, so I block it for
         #       the moment. Acctually it's dispensable.
         #elif platform is 'htcondor':
