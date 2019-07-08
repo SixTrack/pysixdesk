@@ -167,21 +167,27 @@ def sixtrack_results(cf, cluster):
         utils.message('Warning', content, mes_level, log_file)
         return
     if running_jobs:
-        content = "The sixtrack jobs %s aren't completed yet!" % str(
+        content = "Sixtrack jobs %s on HTCondor aren't completed yet!" % str(
             running_jobs)
         utils.message('Warning', content, mes_level, log_file)
+    valid_wu_ids = job_index.values()
+
     # Donwload results from boinc if there is any
     if boinc.lower() == 'true':
         content = "Downloading results from boinc spool!"
         utils.message('Message', content, mes_level, log_file)
-        stat = download_from_boinc(info_sec)
+        stat, wu_ids = download_from_boinc(info_sec)
         if not stat:
-            content = "No result in boinc spool yet!"
-            utils.message('Warning', content, mes_level, log_file)
             return
+        unfn_wu_ids = [i for i in valid_wu_ids if i not in wu_ids]
+        if unfn_wu_ids:
+            content = "Sixtrack jobs %s on Boinc aren't completed yet!" % str(
+                running_jobs)
+            utils.message('Warning', content, mes_level, log_file)
+        valid_wu_ids = wu_ids
 
     for item in os.listdir(six_path):
-        if item not in job_index.values():
+        if item not in valid_wu_ids:
             continue
         job_path = os.path.join(six_path, item)
         if not os.listdir(job_path):
@@ -225,6 +231,7 @@ def sixtrack_results(cf, cluster):
 
 def download_from_boinc(info_sec):
     '''Download results from boinc'''
+    wu_ids = []
     mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
     if len(log_file) == 0:
@@ -235,10 +242,17 @@ def download_from_boinc(info_sec):
     if not os.path.isdir(res_path):
         content = "There isn't job submitted to boinc!"
         utils.message('Warning', content, mes_level, log_file)
-        return 0
+        return 0, []
+    contents = os.listdir(res_path)
+    if 'processed' in contents:
+        contents.remove('processed')
+    if not contents:
+        content = "No result in boinc spool yet!"
+        utils.message('Warning', content, mes_level, log_file)
+        return 0, []
     out_path = six_path
     items = os.listdir(out_path)
-    contents = os.listdir(res_path)
+
     processed_path = os.path.join(res_path, 'processed')
     if not os.path.isdir(processed_path):
         os.mkdir(processed_path)
@@ -277,8 +291,9 @@ def download_from_boinc(info_sec):
         f10_file = os.path.join(tmp_path, f10)
         with open(f10_file, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
+        wu_ids.append(wu_id)
     shutil.rmtree(tmp_path)
-    return 1
+    return 1, wu_ids
 
 
 if __name__ == '__main__':
