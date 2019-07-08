@@ -156,7 +156,8 @@ def sixtrack_results(cf, cluster):
     if running_jobs:
         content = "The sixtrack jobs %s aren't completed yet!" % str(running_jobs)
         utils.message('Warning', content, mes_level, log_file)
-
+    # Donwload results from boinc if there is any
+    download_from_boinc(info_sec)
     for item in os.listdir(six_path):
         if item not in job_index.values():
             continue
@@ -199,17 +200,13 @@ def sixtrack_results(cf, cluster):
         shutil.rmtree(job_path)
     db.close()
 
-def download_from_boinc(cf):
+def download_from_boinc(info_sec):
     '''Download results from boinc'''
-    info_sec = cf['info']
     mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
     if len(log_file) == 0:
         log_file = None
     six_path = info_sec['path']
-    set_sec = cf['db_setting']
-    db_info = cf['db_info']
-    db = SixDB(db_info, set_sec, False, mes_level, log_file)
     res_path = info_sec['boinc_results']
     st_pre = info_sec['st_pre']
     if not os.path.isdir(res_path):
@@ -219,12 +216,6 @@ def download_from_boinc(cf):
     out_path = six_path
     items = os.listdir(out_path)
     contents = os.listdir(res_path)
-    where = "status='submitted'"
-    wu_ids = db.select('sixtrack_wu', ['wu_id'], where)
-    if not wu_ids[0]:
-        content = "There isn't submitted job!"
-        utils.message('Warning', content, mes_level, log_file)
-        return
     processed_path = os.path.join(res_path, 'processed')
     if not os.path.isdir(processed_path):
         os.mkdir(processed_path)
