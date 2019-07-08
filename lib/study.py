@@ -733,7 +733,8 @@ class Study(object):
             info_sec['path'] = self.paths['sixtrack_out']
             info_sec['boinc_results'] = self.env['boinc_results']
             info_sec['st_pre'] = self.st_pre
-            info_sec['outs'] = utils.evlt(utils.encode_strings, [self.sixtrack_output])
+            info_sec['outs'] = utils.evlt(
+                utils.encode_strings, [self.sixtrack_output])
             job_name = 'collect sixtrack reslut'
             in_name = 'sixtrack.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
@@ -751,7 +752,7 @@ class Study(object):
             gather.run(typ, task_input, boinc)
         # TODO: Submit gather job to htcondor is error-prone, so I block it for
         #       the moment. Acctually it's dispensable.
-        #elif platform is 'htcondor':
+        # elif platform is 'htcondor':
         #    tran_input =[]
         #    tran_input.append(task_input)
         #    exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')

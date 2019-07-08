@@ -262,7 +262,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         job_name = sixtrack_config['job_name']
         task_id = sixtrack_config['task_id']
         st_pre = os.path.basename(os.path.dirname(boinc_work))
-        job_name = st_pre + '__' + job_name + '_' + 'task_id' + '_' + str(task_id)
+        job_name = st_pre + '__' + job_name + \
+            '_' + 'task_id' + '_' + str(task_id)
         if not os.path.isdir(boinc_work):
             os.makedirs(boinc_work)
         if not os.path.isdir(boinc_results):

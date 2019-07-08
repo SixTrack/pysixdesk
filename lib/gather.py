@@ -59,6 +59,7 @@ def run(wu_id, infile, boinc=False):
         content = "The input file %s doesn't exist!" % infile
         utils.message('Error', content, mes_level, log_file)
 
+
 def preprocess_results(cf, cluster):
     '''Gather the results of madx and oneturn sixtrack jobs and store in
     database
@@ -87,7 +88,8 @@ def preprocess_results(cf, cluster):
     unfin = cluster.check_running(studypath)
     running_jobs = [job_index.pop(unid) for unid in unfin]
     if running_jobs:
-        content = "The preprocess jobs %s aren't completed yet!" % str(running_jobs)
+        content = "The preprocess jobs %s aren't completed yet!" % str(
+            running_jobs)
         utils.message('Warning', content, mes_level, log_file)
 
     for item in os.listdir(preprocess_path):
@@ -133,6 +135,7 @@ def preprocess_results(cf, cluster):
         shutil.rmtree(job_path)
     db.close()
 
+
 def sixtrack_results(cf, cluster):
     '''Gather the results of sixtrack jobs and store in database'''
     info_sec = cf['info']
@@ -164,13 +167,18 @@ def sixtrack_results(cf, cluster):
         utils.message('Warning', content, mes_level, log_file)
         return
     if running_jobs:
-        content = "The sixtrack jobs %s aren't completed yet!" % str(running_jobs)
+        content = "The sixtrack jobs %s aren't completed yet!" % str(
+            running_jobs)
         utils.message('Warning', content, mes_level, log_file)
     # Donwload results from boinc if there is any
     if boinc.lower() == 'true':
         content = "Downloading results from boinc spool!"
         utils.message('Message', content, mes_level, log_file)
-        download_from_boinc(info_sec)
+        stat = download_from_boinc(info_sec)
+        if not stat:
+            content = "No result in boinc spool yet!"
+            utils.message('Warning', content, mes_level, log_file)
+            return
 
     for item in os.listdir(six_path):
         if item not in job_index.values():
@@ -214,6 +222,7 @@ def sixtrack_results(cf, cluster):
         shutil.rmtree(job_path)
     db.close()
 
+
 def download_from_boinc(info_sec):
     '''Download results from boinc'''
     mes_level = int(info_sec['mes_level'])
@@ -226,7 +235,7 @@ def download_from_boinc(info_sec):
     if not os.path.isdir(res_path):
         content = "There isn't job submitted to boinc!"
         utils.message('Warning', content, mes_level, log_file)
-        return
+        return 0
     out_path = six_path
     items = os.listdir(out_path)
     contents = os.listdir(res_path)
@@ -255,13 +264,13 @@ def download_from_boinc(info_sec):
             continue
         match = re.search('wu_id', f10)
         if not match:
-            content = 'Something wrong with the result %s'%f10
+            content = 'Something wrong with the result %s' % f10
             utils.message('Warning', content, mes_level, log_file)
             continue
         wu_id = f10[match.end()+1:match.end()+2]
         job_path = os.path.join(out_path, wu_id)
         if not os.path.isdir(job_path):
-            cnt = "The output path for sixtrack job %s doesn't exist!"%wu_id
+            cnt = "The output path for sixtrack job %s doesn't exist!" % wu_id
             utils.message('Warning', cnt, mes_level, log_file)
             os.mkdir(job_path)
         out_name = os.path.join(job_path, 'fort.10.gz')
@@ -269,6 +278,8 @@ def download_from_boinc(info_sec):
         with open(f10_file, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
     shutil.rmtree(tmp_path)
+    return 1
+
 
 if __name__ == '__main__':
     args = sys.argv
