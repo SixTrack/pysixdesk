@@ -4,13 +4,16 @@ import copy
 import math
 from study import Study
 
+
 class BashStudy(Study):
 
     def __init__(self, name='study', location='.'):
         super(BashStudy, self).__init__(name, location)
 
     def initialize(self, mfile, *files):
-        '''Set up a study from the initial files of old version sixdesk, e.g. sixdeskenv,sixenv
+        '''
+        Set up a study from the initial files of old version sixdesk,
+        e.g. sixdeskenv,sixenv
         '''
         vals = {}
         mvals = self.parse_bash_script(mfile)
@@ -24,7 +27,7 @@ class BashStudy(Study):
                 f_in.close()
                 f_out.writelines(f_lines)
             else:
-                print("The input file %s doesn't exist!"%a)
+                print("The input file %s doesn't exist!" % a)
         f_out.close()
         val1 = self.parse_bash_script('cob_env.sh')
         os.remove('cob_env.sh')
@@ -33,7 +36,7 @@ class BashStudy(Study):
         seed_i = vals['istamad']
         seed_e = vals['iendmad']
         scan_vars = mvals['scan_variables'].split()
-        scan_hols = mvals['scan_placeholders'].replace('%','').split()
+        scan_hols = mvals['scan_placeholders'].replace('%', '').split()
         scan_vals = []
         for a in scan_vars:
             val = mvals['scan_vals_' + a]
@@ -51,8 +54,10 @@ class BashStudy(Study):
             self.madx_params[scan_hols[i]] = scan_vals[i]
 
         self.madx_input["mask_file"] = 'hl10.mask'
-        self.oneturn_sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
-        self.oneturn_sixtrack_output = ['mychrom', 'betavalues', 'sixdesktunes']
+        self.oneturn_sixtrack_input['temp'] = [
+            'fort.3.mother1', 'fort.3.mother2']
+        self.oneturn_sixtrack_output = [
+            'mychrom', 'betavalues', 'sixdesktunes']
         self.sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
         self.update_tables()
@@ -82,8 +87,8 @@ class BashStudy(Study):
                             coms.append(command)
                             params.append(param)
                 elif '=' in line and 'if' not in line:
-                #There is a potential bug, 
-                #when the parameter name contains 'if' it will be ignored
+                    # There is a potential bug,
+                    # when the parameter name contains 'if' it will be ignored
                     m_ar = line.split('=')
                     param = m_ar[0]
                     param = peel_str(param)
@@ -106,10 +111,12 @@ class BashStudy(Study):
             print("There should be something wrong with your input files!")
         return vals
 
-def peel_str(val, query=['(',')','\n',' '], replace=['','','','']):
-    for que,rep in zip(query, replace):
+
+def peel_str(val, query=['(', ')', '\n', ' '], replace=['', '', '', '']):
+    for que, rep in zip(query, replace):
         val = val.replace(que, rep)
     return val
+
 
 def num(val):
     if isinstance(val, str) and val.isnumeric():
