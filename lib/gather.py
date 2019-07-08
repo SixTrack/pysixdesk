@@ -198,6 +198,72 @@ def sixtrack_results(cf, cluster):
         shutil.rmtree(job_path)
     db.close()
 
+def download_from_boinc(cf):
+    '''Download results from boinc'''
+    info_sec = cf['info']
+    mes_level = int(info_sec['mes_level'])
+    log_file = info_sec['log_file']
+    if len(log_file) == 0:
+        log_file = None
+    six_path = info_sec['path']
+    set_sec = cf['db_setting']
+    db_info = cf['db_info']
+    db = SixDB(db_info, set_sec, False, mes_level, log_file)
+    res_path = info_sec['boinc_results']
+    st_pre = info_sec['st_pre']
+    if not os.path.isdir(res_path):
+        content = "There isn't job submitted to boinc!"
+        utils.message('Warning', content, mes_level, log_file)
+        return
+    out_path = six_path
+    items = os.listdir(out_path)
+    contents = os.listdir(res_path)
+    where = "status='submitted'"
+    wu_ids = db.select('sixtrack_wu', ['wu_id'], where)
+    if not wu_ids[0]:
+        content = "There isn't submitted job!"
+        utils.message('Warning', content, mes_level, log_file)
+        return
+    processed_path = os.path.join(res_path, 'processed')
+    if not os.path.isdir(processed_path):
+        os.mkdir(processed_path)
+    username = getpass.getuser()
+    tmp_path = os.path.join('/tmp', username, st_pre)
+    if not os.path.isdir(tmp_path):
+        os.mkdir(tmp_path)
+    for res in contents:
+        if re.match(st_pre+'.+\.zip', res):
+            try:
+                res_file = os.path.join(res_path, res)
+                zph = zipfile.ZipFile(res_file, mode='r')
+                zph.extractall(tmp_path)
+                zph.close()
+                shutil.move(res_file, processed_path)
+            except:
+                content = traceback.print_exc()
+                utils.message('Error', content, mes_level, log_file)
+                zph.close()
+                continue
+    for f10 in os.listdir(tmp_path):
+        if f10[-1] != '0':
+            continue
+        match = re.search('wu_id', f10)
+        if not match:
+            content = 'Something wrong with the result %s'%f10
+            utils.message('Warning', content, mes_level, log_file)
+            continue
+        wu_id = f10[match.end()+1:match.end()+2]
+        job_path = os.path.join(out_path, wu_id)
+        if not os.path.isdir(job_path):
+            cnt = "The output path for sixtrack job %s doesn't exist!"%wu_id
+            utils.message('Warning', cnt, mes_level, log_file)
+            os.mkdir(job_path)
+        out_name = os.path.join(job_path, 'fort.10.gz')
+        f10_file = os.path.join(tmp_path, f10)
+        with open(f10_file, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    shutil.rmtree(tmp_path)
+
 if __name__ == '__main__':
     args = sys.argv
     num = len(args[1:])
