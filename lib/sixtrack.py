@@ -243,9 +243,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         six_status = 0
         return six_status
     else:
-        result_name = '../fort.10'
-        shutil.move('fort.10', result_name)
-        shutil.move('fort.3', '../fort.3')
+        shutil.move('fort.10', '../fort.10')
         print('Sixtrack job %s has completed normally!' % wu_id)
     os.chdir('../')  # get out of junk folder
 
