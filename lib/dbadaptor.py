@@ -184,9 +184,10 @@ class DatabaseAdaptor(ABC):
         self.conn.commit()
 
     def close(self):
-        '''Disconnect the database'''
-        self.conn.commit()
-        self.conn.close()
+        '''Disconnect the database, if a connection is active'''
+        if self.conn is not None:
+            self.conn.commit()
+            self.conn.close()
 
     def __del__(self):
         '''Disconnect before deletion'''
@@ -267,7 +268,7 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
     def _check(self):
-        if self.info_check():
+        if self._info_check():
             if self.create:
                 self.create_db(**self.db_info)
         else:
@@ -327,7 +328,7 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
             utils.message('Warning', content, self.mes_level, self.log_file)
 
     def new_connection(self, host, user, passwd, db_name, **kwargs):
-        '''Connect to an exist database'''
+        '''Connect to an existing database'''
         conn = pymysql.connect(host, user, passwd, db_name, **kwargs)
         return conn
 
