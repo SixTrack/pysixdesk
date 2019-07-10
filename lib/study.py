@@ -438,7 +438,7 @@ class Study(object):
         require += self.oneturn_sixtrack_input["temp"]
         require.append(self.madx_input["mask_file"])
         for r in require:
-            if re not in cont:
+            if r not in cont:
                 content = "The required file %s isn't found in %s!" % (
                     r, temp)
                 utils.message('Error', content, self.mes_level, self.log_file)
@@ -636,7 +636,7 @@ class Study(object):
         0: print madx, oneturn sixtrack job
         1: print sixtrack job
         2: print madx, oneturn sixtrack and sixtrack jobs
-        wehre: the filter condition for database query, e.g. "status='complete'" '''
+        where: the filter condition for database query, e.g. "status='complete'" '''
         query = ['wu_id', 'job_name', 'status', 'unique_id']
         if job == 0 or job == 2:
             wus = self.db.select('preprocess_wu', query, where)

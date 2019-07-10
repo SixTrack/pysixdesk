@@ -56,7 +56,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
         oneturn_result = os.path.join(job_path, oneturn_result[0])
         # chrom = os.path.join(job_path, chrom[0])
         # tunes = os.path.join(job_path, tunes[0])
-        mtime = int(os.path.getmtime(oneturn_result)*1E7)
+        mtime = int(os.path.getmtime(oneturn_result) * 1E7)
         # with gzip.open(betavalue, 'rt') as f_in:
         #     line = f_in.read()
         #     lines_beta = line.split()

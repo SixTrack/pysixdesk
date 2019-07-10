@@ -129,8 +129,8 @@ class HTCondor(Cluster):
                     cl_id = int(cluster_id)
                     proc_st = int(proc_st)
                     proc_ed = int(proc_ed)
-                    proc_ls = list(range(proc_st, proc_ed+1))
-                    uniq_ids = [str(cl_id)+'.'+str(pr_id) for pr_id in proc_ls]
+                    proc_ls = list(range(proc_st, proc_ed + 1))
+                    uniq_ids = [str(cl_id) + '.' + str(pr_id) for pr_id in proc_ls]
                     if len(wu_ids) != len(uniq_ids):
                         content = "There are something wrong during submitting!"
                         utils.message('Error', content,
