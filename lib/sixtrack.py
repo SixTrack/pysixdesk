@@ -175,8 +175,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             six_status = 0
             return six_status
 
-    fc3aux = open('fort.3.aux', 'r')
-    fc3aux_lines = fc3aux.readlines()
+    with open('fort.3.aux', 'r') as fc3aux:
+        fc3aux_lines = fc3aux.readlines()
     fc3aux_2 = fc3aux_lines[1]
     c = fc3aux_2.split()
     lhc_length = c[4]

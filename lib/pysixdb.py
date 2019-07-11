@@ -17,7 +17,7 @@ class SixDB(object):
         '''
         self.settings = settings
         self.create = create
-        self.mes_level = 1
+        self.mes_level = mes_level
         self.log_file = log_file
         info = {}
         info.update(db_info)

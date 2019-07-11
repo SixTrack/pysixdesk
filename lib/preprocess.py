@@ -192,13 +192,12 @@ def sixtrackjobs(config, fort3_config):
         return second_status
     # Calculate and write out the requested values
     chrom_eps = fort3_config['chrom_eps']
-    first = open('fort.10_first_oneturn')
-    a = first.readline()
-    valf = a.split()
-    first.close()
-    second = open('fort.10_second_oneturn')
-    b = second.readline()
-    vals = b.split()
+    with open('fort.10_first_oneturn', 'r') as first:
+        a = first.readline()
+        valf = a.split()
+    with open('fort.10_second_oneturn', 'r') as second:
+        b = second.readline()
+        vals = b.split()
     tunes = [chrom_eps, valf[2], valf[3], vals[2], vals[3]]
     chrom1 = (float(vals[2]) - float(valf[2])) / float(chrom_eps)
     chrom2 = (float(vals[3]) - float(valf[3])) / float(chrom_eps)
@@ -208,9 +207,8 @@ def sixtrackjobs(config, fort3_config):
                                dp1='.0', dp2='.0')
     if not chrom_status:
         return chrom_status
-    f_in = open('fort.10_beta_oneturn', 'r')
-    beta_line = f_in.readline()
-    f_in.close()
+    with open('fort.10_beta_oneturn', 'r') as f_in:
+        beta_line = f_in.readline()
     beta = beta_line.split()
     beta_out = [beta[4], beta[47], beta[5], beta[48], beta[2], beta[3],
                 beta[49], beta[50], beta[52], beta[53], beta[54], beta[55],
@@ -243,8 +241,8 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
         print("Wrong setting of oneturn sixtrack input!")
         sixtrack_status = 0
         return sixtrack_status
-    fc3aux = open('fort.3.aux', 'r')
-    fc3aux_lines = fc3aux.readlines()
+    with open('fort.3.aux', 'r') as fc3aux:
+        fc3aux_lines = fc3aux.readlines()
     fc3aux_2 = fc3aux_lines[1]
     c = fc3aux_2.split()
     lhc_length = c[4]
