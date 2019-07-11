@@ -1034,9 +1034,3 @@ class Study(object):
             utils.message('Error', content, self.mes_level, self.log_file)
         mk = prefix + '_' + b + suffix
         return mk
-
-    def __del__(self):
-        '''The destructor'''
-        self.db.close()
-        content = 'Database is closed!'
-        utils.message('Message', content, self.mes_level, self.log_file)
