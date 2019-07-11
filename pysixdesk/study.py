@@ -1,33 +1,29 @@
 import os
 import io
 import re
-import sys
 import gzip
 import time
 import copy
-import utils
-import gather
 import shutil
 import logging
 import getpass
 import zipfile
 import itertools
-import traceback
-import dbtypedict
 import collections
 import configparser
-import constants
 
-from pysixdb import SixDB
-from importlib.machinery import SourceFileLoader
+from . import dbtypedict
+from . import utils
+from . import gather
+from . import constants
+from . import submission
+from .pysixdb import SixDB
 
 
 class Study(object):
 
     def __init__(self, name='example_study', loc=os.getcwd()):
         '''Constructor'''
-        # logging.basicConfig(format='%(asctime)s-%(name)s-%(funcName)s-%(levelname)s: %(message)s',
-        #                     datefmt='%H:%M:%S')
         self._logger = logging.getLogger(__name__)
         self.name = name
         self.location = os.path.abspath(loc)
@@ -76,8 +72,23 @@ class Study(object):
         self.paths["templates"] = self.study_path
         # self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
         self.env['test_turn'] = 1000
-        self.cluster_module = None
-        self.cluster_name = 'HTCondor'
+
+        # self.cluster_module = None
+        # self.cluster_name = 'HTCondor'
+        # I think doing something like this is better than using self.cluster_module
+        # and self.cluster_name and it avoids some of the hacky SourceFileloader stuff
+        # and you can give attributes to the class to access stuff like cluster_name
+        # by doing somthing like 'cluster_name= self.cluster_class.cluster_name'
+        # or you could assume the name of the class is the name of the cluster and do
+        # cluser_name = self.cluster_class.__name__ I think ?
+        # print(f'Trying out cluster_class.cluster_name : {self.cluster_class.cluster_name}')
+        # print(f'Trying out cluster_class.__name__ : {self.cluster_class.__name__}')
+        self.cluster_class = submission.HTCondor
+        self.cluster_name = self.cluster_class.__name__
+        # returns pysixtrack.submission we want pysixtrack/submission 
+        module_path = self.cluster_class.__module__.replace('.', '/')
+        # make it absolute
+        self.cluster_module = os.path.join(utils.PYSIXDESK_ABSPATH, module_path)
         self.log_file = None
         self.mes_level = 1
 
@@ -399,34 +410,18 @@ class Study(object):
             self.tables['boinc_vars'][key] = self.type_dict[val]
 
         # Initialize the database
-        self.db = SixDB(self.db_info, self.db_settings, True, self.mes_level,
-                        self.log_file)
+        self.db = SixDB(self.db_info, self.db_settings, True, self.log_file)
         # create the database tables if not exist
         if not self.db.fetch_tables():
             self.db.create_tables(self.tables, self.table_keys)
 
         # Initialize the submission object
-        cluster_module = self.cluster_module
-        classname = self.cluster_name
-        if cluster_module is None:
-            cluster_module = os.path.join(
-                utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
-        if os.path.isfile(cluster_module):
-            module_name = os.path.abspath(cluster_module)
-            module_name = module_name.replace('.py', '')
-            try:
-                mod = SourceFileLoader(
-                    module_name, cluster_module).load_module()
-                cls = getattr(mod, classname)
-                # pass temp path to submission class
-                self.submission = cls(
-                    self.mes_level, self.log_file, self.paths['templates'])
-            except:
-                content = "Failed to initialize submission module!"
-                raise ImportError(content)
-        else:
-            content = "The submission module %s doesn't exist!" % cluster_module
-            self._logger.info(content)
+        try:
+            self.submission = self.cluster_class(self.mes_level, self.log_file, self.paths['templates'])
+        except Exception:
+            content = 'Failed to instantiate cluster class.'
+            self._logger.error(content, exc_info=True)
+            raise
 
     def update_db(self):
         '''Update the database whith the user-defined parameters'''
@@ -652,14 +647,14 @@ class Study(object):
         if typ == 0:
             input_path = self.paths['preprocess_in']
             # output_path = self.paths['preprocess_out']
-            # exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
+            # exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk', 'preprocess.py')
             jobname = 'preprocess'
             table_name = 'preprocess_wu'
             # task_table_name = 'preprocess_task'
         elif typ == 1:
             input_path = self.paths['sixtrack_in']
             # output_path = self.paths['sixtrack_out']
-            # exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
+            # exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk', 'sixtrack.py')
             jobname = 'sixtrack'
             table_name = 'sixtrack_wu'
             # task_table_name = 'sixtrack_task'
@@ -704,26 +699,21 @@ class Study(object):
             info_sec['log_file'] = ''
         else:
             info_sec['log_file'] = self.log_file
-        cluster_module = self.cluster_module
-        if cluster_module is None:
-            cluster_module = os.path.join(
-                utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
+
         info_sec['cluster_module'] = str(cluster_module)
         info_sec['cluster_name'] = self.cluster_name
         info_sec['clean'] = clean
         if typ == 0:
             self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
             info_sec['path'] = self.paths['preprocess_out']
-            info_sec['outs'] = utils.evlt(
-                utils.encode_strings, [self.madx_output])
+            info_sec['outs'] = utils.evlt(utils.encode_strings, [self.madx_output])
             job_name = 'collect preprocess result'
             in_name = 'preprocess.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
         elif typ == 1:
             self.config['f10'] = self.tables['six_results']
             info_sec['path'] = self.paths['sixtrack_out']
-            info_sec['outs'] = utils.evlt(
-                utils.encode_strings, [self.sixtrack_output])
+            info_sec['outs'] = utils.evlt(utils.encode_strings, [self.sixtrack_output])
             job_name = 'collect sixtrack result'
             in_name = 'sixtrack.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
@@ -742,7 +732,7 @@ class Study(object):
         elif platform == 'htcondor':
             tran_input = []
             tran_input.append(task_input)
-            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')
+            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk', 'gather.py')
             wu_ids = [typ]
             self.submission.prepare(wu_ids, tran_input, exe, in_name, in_path,
                                     out_path)
@@ -779,10 +769,8 @@ class Study(object):
                     zph.extractall(tmp_path)
                     zph.close()
                     shutil.move(res_file, processed_path)
-                except:
-                    content = traceback.print_exc()
-                    utils.message('Error', content, self.mes_level,
-                                  self.log_file)
+                except Exception as e:
+                    self._logger.error(e, exc_info=True)
                     zph.close()
                     continue
         for f10 in os.listdir(tmp_path):
@@ -876,8 +864,7 @@ class Study(object):
                 os.remove(sub_name)  # remove the old one
             shutil.copy2(sub_main, sub_name)
             db_info['db_name'] = sub_name
-            sub_db = SixDB(db_info, self.db_settings, mes_level=self.mes_level,
-                           log_file=self.log_file)
+            sub_db = SixDB(db_info, self.db_settings, log_file=self.log_file)
 
             sub_db.drop_table('sixtrack_task')
             sub_db.drop_table('result')
@@ -922,7 +909,7 @@ class Study(object):
         tran_input.append(input_info)
         in_path = self.paths['sixtrack_in']
         out_path = self.paths['sixtrack_out']
-        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk', 'sixtrack.py')
         self.submission.prepare(wu_ids, tran_input, exe, 'db.ini', in_path,
                                 out_path, *args, **kwargs)
 
@@ -960,8 +947,7 @@ class Study(object):
             if os.path.exists(sub_name):
                 os.remove(sub_name)  # remove the old one
             db_info['db_name'] = sub_name
-            sub_db = SixDB(db_info, self.db_settings, True, self.mes_level,
-                           self.log_file)
+            sub_db = SixDB(db_info, self.db_settings, True, self.log_file)
             sub_db.create_table('preprocess_wu', {'wu_id': 'int',
                                                   'task_id': 'int',
                                                   'input_file': 'blob'})
@@ -984,7 +970,7 @@ class Study(object):
         trans.append(input_info)
         in_path = self.paths['preprocess_in']
         out_path = self.paths['preprocess_out']
-        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk', 'preprocess.py')
         self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
                                 out_path, *args, **kwargs)
 

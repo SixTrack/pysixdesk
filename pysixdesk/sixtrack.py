@@ -4,18 +4,26 @@ import re
 import sys
 import ast
 import time
-import utils
 import shutil
+import logging
 import zipfile
-import traceback
 import configparser
-import resultparser as rp
 
-from pysixdb import SixDB
 from subprocess import Popen, PIPE
+
+from .pysixdb import SixDB
+from . import utils
+from . import resultparser as rp
+
+logging.basicConfig(format='%(asctime)s-%(name)s-%(levelname)s: %(message)s',
+                    datefmt='%H:%M:%S',
+                    level=logging.INFO)
 
 
 def run(wu_id, input_info):
+
+    logger = logging.getLogger(__name__)
+
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
@@ -30,7 +38,7 @@ def run(wu_id, input_info):
     boinc_infos = db.select('env', ['boinc_work', 'boinc_results',
                                     'surv_percent'])
     if not outputs:
-        print("There isn't input file for sixtrack job %s!" % wu_id)
+        logger.error("There isn't input file for sixtrack job %s!" % wu_id)
         db.close()
         return 0
     preprocess_id = outputs[0][1]
@@ -47,7 +55,7 @@ def run(wu_id, input_info):
     where = 'wu_id=%s' % str(preprocess_id)
     pre_task_id = db.select('preprocess_wu', ['task_id'], where)
     if not pre_task_id:
-        print("Can't find the preprocess task_id for this job!")
+        logger.error("Can't find the preprocess task_id for this job!")
         return 0
     inputs = list(input_files.values())
     pre_task_id = pre_task_id[0][0]
@@ -55,7 +63,7 @@ def run(wu_id, input_info):
     input_buf = db.select('preprocess_task', inputs, where)
     db.close()
     if not input_buf:
-        print("The required files aren't found!")
+        logger.error("The required files aren't found!")
         return 0
     for infile in inputs:
         i = inputs.index(infile)
@@ -68,7 +76,7 @@ def run(wu_id, input_info):
         boinc_work = ''
         boinc_results = ''
         surv_percent = 1
-        print("There isn't valid boinc path to submit this job!")
+        logger.error("There isn't valid boinc path to submit this job!")
     else:
         boinc_work = boinc_infos[0][0]
         boinc_results = boinc_infos[0][1]
@@ -93,9 +101,9 @@ def run(wu_id, input_info):
     down_list.append('fort.3')
     status = utils.download_output(down_list, dest_path)
     if status:
-        print("All requested results have stored in %s" % dest_path)
+        logger.info("All requested results have been stored in %s" % dest_path)
     else:
-        print("Job failed!")
+        logger.error("Job failed!")
 
     if boinc.lower() == 'true' and status:
         down_list = ['fort.3']
@@ -130,22 +138,21 @@ def run(wu_id, input_info):
             where = "wu_id=%s" % wu_id
             db.update('sixtrack_wu', job_table, where)
             content = "Sixtrack job %s has completed normally!" % wu_id
-            utils.message('Message', content)
+            logger.info(content)
         else:
             where = "wu_id=%s" % wu_id
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
             db.update('sixtrack_wu', job_table, where)
             content = "The sixtrack job failed!"
-            utils.message('Warning', content)
+            logger.warning(content)
         return status
-    except:
+    except Exception:
         where = "wu_id=%s" % wu_id
         job_table['status'] = 'incomplete'
         job_table['mtime'] = int(time.time() * 1E7)
         db.update('sixtrack_wu', job_table, where)
-        content = traceback.print_exc()
-        utils.message('Error', content)
+        logger.error('Error during reconnection.', exc_info=True)
         return False
     finally:
         db.close()
@@ -153,6 +160,9 @@ def run(wu_id, input_info):
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     '''The actual sixtrack job'''
+
+    logger = logging.getLogger(__name__)
+
     six_status = 1
     fort3_config = config_param
     real_turn = fort3_config['turnss']
@@ -171,7 +181,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         if os.path.isfile(infi):
             shutil.copy2(infi, infile)
         else:
-            print("The required file %s isn't found!" % infile)
+            logger.error("The required file %s isn't found!" % infile)
             six_status = 0
             return six_status
 
@@ -188,7 +198,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     os.mkdir('junk')
     os.chdir('junk')
 
-    print("Preparing the sixtrack input files!")
+    logger.info("Preparing the sixtrack input files!")
 
     # prepare the other input files
     if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
@@ -199,7 +209,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         else:
             os.symlink('../fort.8', 'fort.8')
     else:
-        print("There isn't the required input files for sixtrack!")
+        logger.error("There isn't the required input files for sixtrack!")
         six_status = 0
         return six_status
 
@@ -215,7 +225,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         source = os.path.join('../', s)
         status = utils.replace(patterns, values, source, dest)
         if not status:
-            print("Failed to generate input file for oneturn sixtrack!")
+            logger.error("Failed to generate input file for oneturn sixtrack!")
             six_status = 0
             return six_status
         output.append(dest)
@@ -224,27 +234,27 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     if os.path.isfile(temp1):
         output.insert(1, temp1)
     else:
-        print("The %s file doesn't exist!" % temp1)
+        logger.error("The %s file doesn't exist!" % temp1)
         six_status = 0
         return six_status
     concatenate_files(output, 'fort.3')
 
     # actually run
     wu_id = sixtrack_config['wu_id']
-    print('Sixtrack job %s is runing...' % wu_id)
+    logger.info('Sixtrack job %s is running...' % wu_id)
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
     output_name = os.path.join('../', 'sixtrack.output')
     with open(output_name, 'w') as six_out:
         six_out.writelines(outputlines)
     if not os.path.isfile('fort.10'):
-        print("The sixtrack job %s for chromaticity FAILED!" % wu_id)
-        print("Check the file %s which contains the SixTrack output." % output_name)
+        logger.error("The sixtrack job %s for chromaticity FAILED!" % wu_id)
+        logger.info("Check the file %s which contains the SixTrack output." % output_name)
         six_status = 0
         return six_status
     else:
         shutil.move('fort.10', '../fort.10')
-        print('Sixtrack job %s has completed normally!' % wu_id)
+        logger.info('Sixtrack job %s has completed normally!' % wu_id)
     os.chdir('../')  # get out of junk folder
 
     if boinc.lower() == 'true':
@@ -263,7 +273,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             os.makedirs(boinc_work)
         if not os.path.isdir(boinc_results):
             os.makedirs(boinc_results)
-        print('The job passes the test and will be sumbitted to BOINC!')
+        logger.info('The job passes the test and will be sumbitted to BOINC!')
         fort3_config['turnss'] = real_turn
         values = [fort3_config[key] for key in keys]
         output = []
@@ -272,7 +282,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             dest = s + '.temp'
             status = utils.replace(patterns, values, s, dest)
             if not status:
-                print("Failed to generate input file for sixtrack!")
+                logger.error("Failed to generate input file for sixtrack!")
                 six_status = 0
                 return six_status
             output.append(dest)
@@ -280,7 +290,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         if os.path.isfile(temp1):
             output.insert(1, temp1)
         else:
-            print("The %s file doesn't exist!" % temp1)
+            logger.error("The %s file doesn't exist!" % temp1)
             six_status = 0
             return six_status
         concatenate_files(output, 'fort.3')
@@ -293,7 +303,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             if infile in os.listdir('.'):
                 ziph.write(infile)
             else:
-                print("The required file %s isn't found!" % infile)
+                logger.error("The required file %s isn't found!" % infile)
                 six_status = 0
                 return six_status
         ziph.close()
@@ -308,12 +318,12 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:
-            print(stdout)
-            print(stderr)
+            logger.info(stdout)
+            logger.error(stderr)
             six_status = 0
         else:
-            print("Submit to %s successfully!" % boinc_work)
-            print(stdout)
+            logger.info("Submit to %s successfully!" % boinc_work)
+            logger.info(stdout)
             six_status = 1
     return six_status
 
@@ -339,8 +349,8 @@ def check_tracking(filename, surv_percent=1):
                 return 0
             else:
                 return 1
-    except:
-        print(traceback.print_exc())
+    except Exception as e:
+        print(e)
         return 0
 
 

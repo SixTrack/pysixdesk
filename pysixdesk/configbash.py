@@ -1,7 +1,8 @@
 import os
 import copy
 import math
-from study import Study
+
+from .study import Study
 
 
 class BashStudy(Study):

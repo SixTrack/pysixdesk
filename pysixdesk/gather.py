@@ -3,29 +3,42 @@ import os
 import sys
 import time
 import shutil
-import utils
-import traceback
 import configparser
-import resultparser as rp
-
-from pysixdb import SixDB
 from importlib.machinery import SourceFileLoader
+
+# need to check these imports
+from .pysixdb import SixDB
+from . import utils
+from . import resultparser as rp
+
+import logging
+logging.basicConfig(format='%(asctime)s-%(name)s-%(levelname)s: %(message)s',
+                    datefmt='%H:%M:%S',
+                    level=logging.INFO)
 
 
 def run(wu_id, infile):
+    logger = logging.getLogger(__name__)
+
     cf = configparser.ConfigParser()
     if os.path.isfile(infile):
         cf.read(infile)
         info_sec = cf['info']
         mes_level = int(info_sec['mes_level'])
         log_file = info_sec['log_file']
-        if len(log_file) == 0:
-            log_file = None
+
+        if log_file is not None:
+            # if desired, create a file handler with DEBUG level to catch everything
+            # and attach it to logger
+            file_handler = logging.FileHandler(log_file)
+            file_handler.setLevel(logging.DEBUG)
+            logger.addHandler(file_handler)
+
         db_info = cf['db_info']
         dbtype = db_info['db_type']
         if dbtype.lower() == 'mysql':
             content = "There is no need to gather results manually with MySQL db!"
-            utils.message('Message', content, mes_level, log_file)
+            logger.info(content)
             return
 
         cluster_module = info_sec['cluster_module']
@@ -34,12 +47,11 @@ def run(wu_id, infile):
             module_name = os.path.abspath(cluster_module)
             module_name = module_name.replace('.py', '')
             mod = SourceFileLoader(module_name, cluster_module).load_module()
-            cls = getattr(mod, classname)
-            cluster = cls(mes_level, log_file)
+            cluster_cls = getattr(mod, classname)
+            cluster = cluster_cls(mes_level, log_file)
         except:
-            utils.message('Error', traceback.print_exc(), mes_level, log_file)
-            content = "Failed to instantiate cluster module %s!" % cluster_module
-            utils.message('Error', content, mes_level, log_file)
+            content = "Failed to instantiate cluster class %s!" % cluster_module
+            logger.error(content, exc_info=True)
             return
         if str(wu_id) == '0':
             preprocess_results(cf, cluster)
@@ -47,25 +59,33 @@ def run(wu_id, infile):
             sixtrack_results(cf, cluster)
         else:
             content = "Unknown task!"
-            utils.message('Error', content, mes_level, log_file)
+            logger.error(content)
     else:
         content = "The input file %s doesn't exist!" % infile
-        utils.message('Error', content, mes_level, log_file)
+        logger.error(content)
 
 
 def preprocess_results(cf, cluster):
     '''Gather the results of madx and oneturn sixtrack jobs and store in
     database
     '''
+    logger = logging.getLogger(__name__)
+
     info_sec = cf['info']
     mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
-    if len(log_file) == 0:
-        log_file = None
+
+    if log_file is not None:
+        # if desired, create a file handler with DEBUG level to catch everything
+        # and attach it to logger
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+
     preprocess_path = info_sec['path']
     if not os.path.isdir(preprocess_path) or not os.listdir(preprocess_path):
         content = "There isn't result in path %s!" % preprocess_path
-        utils.message('Warning', content, mes_level, log_file)
+        logger.warning(content)
         return
     # contents = os.listdir(preprocess_path)
     set_sec = cf['db_setting']
@@ -82,7 +102,7 @@ def preprocess_results(cf, cluster):
     running_jobs = [job_index.pop(unid) for unid in unfin]
     if running_jobs:
         content = "The preprocess jobs %s aren't completed yet!" % str(running_jobs)
-        utils.message('Warning', content, mes_level, log_file)
+        logger.warning(content)
 
     for item in os.listdir(preprocess_path):
         if item not in job_index.values():
@@ -90,7 +110,7 @@ def preprocess_results(cf, cluster):
         job_path = os.path.join(preprocess_path, item)
         if not os.listdir(job_path):
             content = "The preprocess job %s is empty!" % item
-            utils.message('Warning', content, mes_level, log_file)
+            logger.warning(content)
             continue
         job_table = {}
         task_table = {}
@@ -114,7 +134,7 @@ def preprocess_results(cf, cluster):
                 where = "wu_id=%s" % item
                 db.update('preprocess_wu', job_table, where)
                 content = "Preprocess job %s has completed normally!" % item
-                utils.message('Message', content, mes_level, log_file)
+                logger.info(content)
             else:
                 where = "wu_id=%s" % item
                 job_table['status'] = 'incomplete'
@@ -123,22 +143,32 @@ def preprocess_results(cf, cluster):
             task_table['status'] = 'Failed'
             db.insert('preprocess_task', task_table)
             content = "This is a failed job!"
-            utils.message('Warning', content, mes_level, log_file)
+            logger.warning(content)
         shutil.rmtree(job_path)
     db.close()
 
 
 def sixtrack_results(cf, cluster):
     '''Gather the results of sixtrack jobs and store in database'''
+    logger = logging.getLogger(__name__)
+
     info_sec = cf['info']
     mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
     if len(log_file) == 0:
         log_file = None
+
+    if log_file is not None:
+        # if desired, create a file handler with DEBUG level to catch everything
+        # and attach it to logger
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+
     six_path = info_sec['path']
     if not os.path.isdir(six_path) or not os.listdir(six_path):
         content = "There isn't result in path %s!" % six_path
-        utils.message('Warning', content, mes_level, log_file)
+        logger.warning(content)
         return
     set_sec = cf['db_setting']
     f10_sec = cf['f10']
@@ -154,7 +184,7 @@ def sixtrack_results(cf, cluster):
     running_jobs = [job_index.pop(unid) for unid in unfin]
     if running_jobs:
         content = "The sixtrack jobs %s aren't completed yet!" % str(running_jobs)
-        utils.message('Warning', content, mes_level, log_file)
+        logger.warning(content)
 
     for item in os.listdir(six_path):
         if item not in job_index.values():
@@ -162,7 +192,7 @@ def sixtrack_results(cf, cluster):
         job_path = os.path.join(six_path, item)
         if not os.listdir(job_path):
             content = "The sixtrack job %s is empty!" % item
-            utils.message('Warning', content, mes_level, log_file)
+            logger.warning(content)
             continue
         job_table = {}
         task_table = {}
@@ -185,7 +215,7 @@ def sixtrack_results(cf, cluster):
                 where = "wu_id=%s" % item
                 db.update('sixtrack_wu', job_table, where)
                 content = "Sixtrack job %s has completed normally!" % item
-                utils.message('Message', content, mes_level, log_file)
+                logger.info(content)
             else:
                 where = "wu_id=%s" % item
                 job_table['status'] = 'incomplete'
@@ -194,7 +224,7 @@ def sixtrack_results(cf, cluster):
             task_table['status'] = 'Failed'
             db.insert('sixtrack_task', task_table)
             content = "This is an empty job path!"
-            utils.message('Warning', content, mes_level, log_file)
+            logger.warning(content)
         shutil.rmtree(job_path)
     db.close()
 

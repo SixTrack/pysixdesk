@@ -1,10 +1,9 @@
 import os
-import sys
-import utils
 import shutil
 import logging
-
 from importlib.machinery import SourceFileLoader
+
+from . import utils
 
 # Global variable
 LEVEL = 1
@@ -139,7 +138,7 @@ class WorkSpace(object):
                 content = '...workspace %s contains %i studies:' % (
                     self.name, len(self.studies))
                 self._logger.info(content)
-            print(self.studies)
+            self._logger.info(f'...studies found: {self.studies}')
         content = '...done.\n'
         self._logger.info(content)
 
@@ -215,7 +214,7 @@ class WorkSpace(object):
         module_name = os.path.abspath(module_path)
         module_name = module_name.replace('.py', '')
         mod = SourceFileLoader(module_name, module_path).load_module()
-        cls = getattr(mod, class_name)
+        study_cls = getattr(mod, class_name)
         content = "Study %s loaded from %s \n" % (study_name, study_path)
         self._logger.info(content)
-        return cls(study_name, self.paths['studies'])
+        return study_cls(study_name, self.paths['studies'])

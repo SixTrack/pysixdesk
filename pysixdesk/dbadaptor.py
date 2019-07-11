@@ -1,22 +1,24 @@
 import os
-import sys
-import utils
 import sqlite3
 import pymysql
 import logging
 import collections
-import traceback
 from abc import ABC, abstractmethod
 
 
 class DatabaseAdaptor(ABC):
 
-    def __init__(self, db_info, settings=None, create=False, mes_level=1, log_file=None):
-        # logging.basicConfig(filename=log_file)
+    def __init__(self, db_info, settings=None, create=False, log_file=None):
         self._logger = logging.getLogger(__name__)
+        if log_file is not None:
+            # if desired, create a file handler with DEBUG level and attach
+            # it to logger
+            file_handler = logging.FileHandler(log_file)
+            file_handler.setLevel(logging.DEBUG)
+            self._logger.addHandler(file_handler)
+
         self.settings = settings
         self.create = create
-        self.mes_level = mes_level
         self.log_file = log_file
         self.db_info = db_info
         self.conn = None

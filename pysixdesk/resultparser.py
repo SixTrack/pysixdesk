@@ -2,7 +2,9 @@ import os
 import re
 import time
 import gzip
-import utils
+import logging
+
+from . import utils
 
 '''Parse the results of preprocess jobs and sixtrack jobs'''
 
@@ -10,6 +12,14 @@ import utils
 def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
                      oneturn_param_names, mes_level=1, log_file=None):
     '''Parse the results of preprocess jobs'''
+    logger = logging.getLogger(__name__)
+    if log_file is not None:
+        # if desired, create a file handler with DEBUG level and attach
+        # it to logger
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+
     task_table['wu_id'] = item
     task_table['mtime'] = int(time.time() * 1E7)
 
@@ -21,7 +31,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
                                            [madx_in, 'gzip'])
     else:
         content = "The madx_in file for job %s dosen't exist! The job failed!" % item
-        utils.message('Error', content, mes_level, log_file)
+        logger.error(content)
         task_table['status'] = 'Failed'
     madx_out = [s for s in contents if 'madx_stdout' in s]
     if madx_out:
@@ -30,7 +40,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
                                                [madx_out, 'gzip'])
     else:
         content = "The madx_out file for job %s doesn't exist! The job failed!" % item
-        utils.message('Error', content, mes_level, log_file)
+        logger.error(content)
         task_table['status'] = 'Failed'
     job_stdout = [s for s in contents if (re.match('htcondor\..+\.out', s) or
                                           re.match('_condor_stdout', s))]
@@ -69,9 +79,9 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
             lines = line.split()
         # lines = lines_beta + lines_chrom + lines_tunes
         if len(lines) != 21:
-            utils.message('Message', lines, mes_level, log_file)
+            logger.info(lines)
             content = 'Error in one turn result of preprocess job %s!' % item
-            utils.message('Error', content, mes_level, log_file)
+            logger.error(content)
             task_table['status'] = 'Failed'
             data = [item] + 21 * ['None'] + [mtime]
         else:
@@ -87,11 +97,20 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
             task_table['status'] = 'Failed'
             content = "The madx output file %s for job %s doesn't exist! The job failed!" % (
                 out, item)
-            utils.message('Error', content, mes_level, log_file)
+            logger.error(content)
 
 
 def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
                    mes_level=1, log_file=None):
+    '''Parse the results of sixtrack job'''
+    logger = logging.getLogger(__name__)
+    if log_file is not None:
+        # if desired, create a file handler with DEBUG level and attach
+        # it to logger
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+
     task_table['wu_id'] = item
     task_table['mtime'] = int(time.time() * 1E7)
     contents = os.listdir(job_path)
@@ -131,11 +150,9 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
                             line = lines.split()
                             countl += 1
                             if len(line) != 60:
-                                utils.message('Message', line,
-                                              mes_level, log_file)
+                                logger.info(line)
                                 content = 'Error in %s' % out_f
-                                utils.message('Warning', content,
-                                              mes_level, log_file)
+                                logger.warning(content)
                                 task_table['status'] = 'Failed'
                                 line = [countl] + 60 * ['None'] + [mtime]
                                 f10_data.append(line)
@@ -147,11 +164,11 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
                     task_table['status'] = 'Failed'
                     content = "There is something wrong with the output "\
                         "file %s for job %s!" % (out, item)
-                    utils.message('Error', content, mes_level, log_file)
+                    logger.error(content)
             task_table[out] = utils.evlt(utils.compress_buf,
                                          [out_f, 'gzip'])
         else:
             task_table['status'] = 'Failed'
             content = "The sixtrack output file %s for job %s doesn't "\
                 "exist! The job failed!" % (out, item)
-            utils.message('Warning', content, mes_level, log_file)
+            logger.warning(content)

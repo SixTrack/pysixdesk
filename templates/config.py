@@ -6,7 +6,10 @@ import sys
 import ast
 import copy
 import traceback
-from study import Study
+
+# need to check if this import works properly
+from pysixdesk import submission
+from pysixdesk import Study
 from math import sqrt, pi, sin, cos
 from machineparams import MachineConfig
 
@@ -16,11 +19,11 @@ class MyStudy(Study):
     def __init__(self, name='study', location=os.getcwd()):
         super(MyStudy, self).__init__(name, location)
         '''initialize a study'''
-        self.cluster_module = None  # default
-        self.cluster_name = 'HTCondor'
+        self.cluster_class = submission.HTCondor
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
 
         # Echo message to the terminal, if not None, echo to log_file
+        # need to figure out how to give these values to the logger
         self.log_file = None
         self.mes_level = 1  # message level
         # Add database informations
