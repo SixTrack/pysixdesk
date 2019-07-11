@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+import re
 import os
 import sys
 import time
-import shutil
+import gzip
 import utils
+import shutil
+import getpass
+import zipfile
 import traceback
 import configparser
 import resultparser as rp
@@ -17,14 +21,17 @@ def run(wu_id, infile):
     if os.path.isfile(infile):
         cf.read(infile)
         info_sec = cf['info']
+        boinc = 'false'
+        if str(wu_id) == '1':
+            boinc = info_sec['boinc']
         mes_level = int(info_sec['mes_level'])
         log_file = info_sec['log_file']
         if len(log_file) == 0:
             log_file = None
         db_info = cf['db_info']
         dbtype = db_info['db_type']
-        if dbtype.lower() == 'mysql':
-            content = "There is no need to gather results manually with MySQL db!"
+        if dbtype.lower() == 'mysql' and str(boinc).lower() == 'false':
+            content = "No need to gather results manually with MySQL!"
             utils.message('Message', content, mes_level, log_file)
             return
 
@@ -81,7 +88,8 @@ def preprocess_results(cf, cluster):
     unfin = cluster.check_running(studypath)
     running_jobs = [job_index.pop(unid) for unid in unfin]
     if running_jobs:
-        content = "The preprocess jobs %s aren't completed yet!" % str(running_jobs)
+        content = "The preprocess jobs %s aren't completed yet!" % str(
+            running_jobs)
         utils.message('Warning', content, mes_level, log_file)
 
     for item in os.listdir(preprocess_path):
@@ -133,6 +141,7 @@ def sixtrack_results(cf, cluster):
     info_sec = cf['info']
     mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
+    boinc = info_sec['boinc']
     if len(log_file) == 0:
         log_file = None
     six_path = info_sec['path']
@@ -151,13 +160,35 @@ def sixtrack_results(cf, cluster):
     job_index = dict(job_ids)
     studypath = os.path.dirname(six_path)
     unfin = cluster.check_running(studypath)
-    running_jobs = [job_index.pop(unid) for unid in unfin]
-    if running_jobs:
-        content = "The sixtrack jobs %s aren't completed yet!" % str(running_jobs)
+    if unfin is not None:
+        running_jobs = [job_index.pop(unid) for unid in unfin if unid in
+                        job_index.keys()]
+    else:
+        content = "Can't get job status, try later!"
         utils.message('Warning', content, mes_level, log_file)
+        return
+    if running_jobs:
+        content = "Sixtrack jobs %s on HTCondor aren't completed yet!" % str(
+            running_jobs)
+        utils.message('Warning', content, mes_level, log_file)
+    valid_wu_ids = list(job_index.values())
+
+    # Donwload results from boinc if there is any
+    if boinc.lower() == 'true':
+        content = "Downloading results from boinc spool!"
+        utils.message('Message', content, mes_level, log_file)
+        stat, wu_ids = download_from_boinc(info_sec)
+        if not stat:
+            return
+        unfn_wu_ids = [i for i in valid_wu_ids if i not in wu_ids]
+        if unfn_wu_ids:
+            content = "Sixtrack jobs %s on Boinc aren't completed yet!" % str(
+                unfn_wu_ids)
+            utils.message('Warning', content, mes_level, log_file)
+        valid_wu_ids = wu_ids
 
     for item in os.listdir(six_path):
-        if item not in job_index.values():
+        if item not in valid_wu_ids:
             continue
         job_path = os.path.join(six_path, item)
         if not os.listdir(job_path):
@@ -197,6 +228,73 @@ def sixtrack_results(cf, cluster):
             utils.message('Warning', content, mes_level, log_file)
         shutil.rmtree(job_path)
     db.close()
+
+
+def download_from_boinc(info_sec):
+    '''Download results from boinc'''
+    wu_ids = []
+    mes_level = int(info_sec['mes_level'])
+    log_file = info_sec['log_file']
+    if len(log_file) == 0:
+        log_file = None
+    six_path = info_sec['path']
+    res_path = info_sec['boinc_results']
+    st_pre = info_sec['st_pre']
+    if not os.path.isdir(res_path):
+        content = "There isn't job submitted to boinc!"
+        utils.message('Warning', content, mes_level, log_file)
+        return 0, []
+    contents = os.listdir(res_path)
+    if 'processed' in contents:
+        contents.remove('processed')
+    if not contents:
+        content = "No result in boinc spool yet!"
+        utils.message('Warning', content, mes_level, log_file)
+        return 0, []
+    out_path = six_path
+    # items = os.listdir(out_path)
+
+    processed_path = os.path.join(res_path, 'processed')
+    if not os.path.isdir(processed_path):
+        os.mkdir(processed_path)
+    username = getpass.getuser()
+    tmp_path = os.path.join('/tmp', username, st_pre)
+    if not os.path.isdir(tmp_path):
+        os.mkdir(tmp_path)
+    for res in contents:
+        if re.match(st_pre + '.+\.zip', res):
+            try:
+                res_file = os.path.join(res_path, res)
+                zph = zipfile.ZipFile(res_file, mode='r')
+                zph.extractall(tmp_path)
+                zph.close()
+                shutil.move(res_file, processed_path)
+            except:
+                content = traceback.print_exc()
+                utils.message('Error', content, mes_level, log_file)
+                zph.close()
+                continue
+    for f10 in os.listdir(tmp_path):
+        if f10[-1] != '0':
+            continue
+        match = re.search('wu_id', f10)
+        if not match:
+            content = 'Something wrong with the result %s' % f10
+            utils.message('Warning', content, mes_level, log_file)
+            continue
+        wu_id = f10[match.end() + 1:match.end() + 2]
+        job_path = os.path.join(out_path, wu_id)
+        if not os.path.isdir(job_path):
+            cnt = "The output path for sixtrack job %s doesn't exist!" % wu_id
+            utils.message('Warning', cnt, mes_level, log_file)
+            os.mkdir(job_path)
+        out_name = os.path.join(job_path, 'fort.10.gz')
+        f10_file = os.path.join(tmp_path, f10)
+        with open(f10_file, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+        wu_ids.append(wu_id)
+    shutil.rmtree(tmp_path)
+    return 1, wu_ids
 
 
 if __name__ == '__main__':

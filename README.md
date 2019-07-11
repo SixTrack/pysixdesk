@@ -110,7 +110,9 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
       or
       myStudy.prepare_sixtrack_input(True) #True: submit jobs to Boinc
       myStudy.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
-      myStudy.collect_result(1, 5) # 1 stands for sixtrack job, 5 is trial number 
+      myStudy.collect_result(1) # 1 stands for sixtrack job 
+      or
+      myStudy.collect_result(1, True) # True: collect results from boinc spool directory
       ```
 
 ## Description for the database tables
