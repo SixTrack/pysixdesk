@@ -76,13 +76,14 @@ class DatabaseAdaptor(ABC):
                     fill += fore_sql
         sql_cmd = sql % (name, fill)
         c.execute(sql_cmd)
+        c.close()
         self.conn.commit()
 
     def drop_table(self, table_name):
         '''Drop an exist table'''
-        c = self.conn.cursor()
-        sql = 'DROP TABLE IF EXISTS %s' % table_name
-        c.execute(sql)
+        with self.conn.cursor() as c:
+            sql = 'DROP TABLE IF EXISTS %s' % table_name
+            c.execute(sql)
         self.conn.commit()
 
     def insert(self, table_name, values, ph):
@@ -93,7 +94,6 @@ class DatabaseAdaptor(ABC):
         '''
         if len(values) == 0:
             return
-        c = self.conn.cursor()
         sql = 'INSERT INTO %s (%s) VALUES (%s)'
         keys = list(values.keys())
         vals = [values[key] for key in keys]
@@ -101,7 +101,8 @@ class DatabaseAdaptor(ABC):
         cols = ','.join(keys)
         ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
-        c.execute(sql_cmd, vals)
+        with self.conn.cursor() as c:
+            c.execute(sql_cmd, vals)
         self.conn.commit()
 
     def insertm(self, table_name, values, ph):
@@ -112,7 +113,6 @@ class DatabaseAdaptor(ABC):
         '''
         if len(values) == 0:
             return
-        c = self.conn.cursor()
         sql = 'INSERT INTO %s (%s) VALUES (%s)'
         keys = list(values.keys())
         vals = [values[key] for key in keys]
@@ -121,7 +121,8 @@ class DatabaseAdaptor(ABC):
         ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
         vals = list(zip(*vals))
-        c.executemany(sql_cmd, vals)
+        with self.conn.cursor() as c:
+            c.executemany(sql_cmd, vals)
         self.conn.commit()
 
     def select(self, table_name, cols='*', where=None, orderby=None, **kwargs):
@@ -134,7 +135,6 @@ class DatabaseAdaptor(ABC):
         '''
         if len(cols) == 0:
             return []
-        c = self.conn.cursor()
         if (isinstance(cols, collections.Iterable) and not isinstance(cols, str)):
             cols = [i.replace('.', '_') for i in cols]
             cols = ','.join(cols)
@@ -145,7 +145,8 @@ class DatabaseAdaptor(ABC):
             sql += ' WHERE %s' % where
         if orderby is not None:
             sql += ' ORDER BY %s'(','.join(orderby))
-        c.execute(sql)
+        with self.conn.cursor() as c:
+            c.execute(sql)
         data = list(c)
         return data
 
@@ -159,7 +160,6 @@ class DatabaseAdaptor(ABC):
 
         if len(values) == 0:
             return
-        c = self.conn.cursor()
         sql = 'UPDATE %s SET %s '
         keys = values.keys()
         vals = [values[key] for key in keys]
@@ -170,7 +170,8 @@ class DatabaseAdaptor(ABC):
         if where is not None:
             sql = sql + 'WHERE ' + where
         sql_cmd = sql % (table_name, sets)
-        c.execute(sql_cmd, vals)
+        with self.conn.cursor() as c:
+            c.execute(sql_cmd, vals)
         self.conn.commit()
 
     def remove(self, table_name, where):
@@ -178,9 +179,9 @@ class DatabaseAdaptor(ABC):
         @table_name(str) The table name
         @where(str) Selection condition which is mandatory here!
         '''
-        c = self.conn.cursor()
         sql = 'DELETE FROM %s WHERE %s' % (table_name, where)
-        c.execute(sql)
+        with self.conn.cursor() as c:
+            c.execute(sql)
         self.conn.commit()
 
     def close(self):
@@ -229,10 +230,10 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def setting(self, settings):
         '''Execute the settings of the database via pragma command'''
-        c = self.conn.cursor()
-        for key, value in settings.items():
-            sql = 'PRAGMA %s=%s' % (key, str(value))
-            c.execute(sql)
+        with self.conn.cursor() as c:
+            for key, value in settings.items():
+                sql = 'PRAGMA %s=%s' % (key, str(value))
+                c.execute(sql)
         self.conn.commit()
 
     def create_table(self, name, columns, keys, recreate):
@@ -248,9 +249,9 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def fetch_tables(self):
         '''Fetch all the table names in the database'''
-        c = self.conn.cursor()
-        c.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        return list(c)
+        with self.conn.cursor() as c:
+            out = c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        return list(out)
 
     def insert(self, table_name, values):
         '''Insert a row of values'''
@@ -305,12 +306,13 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
             sql = "SELECT schema_name FROM information_schema.schemata\
                     WHERE schema_name='%s'" % db_name
             c.execute(sql)
+            out = c.fetchall()
         except:
             content = traceback.print_exc()
             utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
 
-        if not list(c):
+        if not out:
             try:
                 sql = "CREATE DATABASE %s" % db_name
                 c.execute(sql)
@@ -322,8 +324,11 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
                 utils.message('Error', content, self.mes_level, self.log_file)
                 conn.rollback()
             finally:
+                c.close()
                 conn.close()
         else:
+            c.close()
+            conn.close()
             content = "The db %s already exist!" % db_name
             utils.message('Warning', content, self.mes_level, self.log_file)
 
@@ -341,10 +346,9 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
     def fetch_tables(self):
         '''Fetch all the table names in the database'''
-        c = self.conn.cursor()
-        # c.execute("show databases")
-        c.execute("show tables")
-        a = list(c)
+        with self.conn.cursor() as c:
+            c.execute("show tables")
+            a = list(c)
         return a
 
     def insert(self, table_name, values):
