@@ -247,22 +247,26 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     else:
         result_name = '../fort.10'
         shutil.move('fort.10', result_name)
-        shutil.move('fort.3', '../fort.3')
         print('Sixtrack job %s has completed normally!' % wu_id)
     os.chdir('../')  # get out of junk folder
-
-    if boinc.lower() == 'true':
+    if boinc.lower() != 'true':
+        shutil.move('junk/fort.3', 'fort.3')
+        if boinc.lower() != 'false':
+            print("Unknown boinc flag %s!" % boinc)
+    else:
         surv_per = sixtrack_config['surv_percent']
         surv_per = ast.literal_eval(surv_per)
         test_status = check_tracking('sixtrack.output', surv_per)
         if not test_status:
+            print("The job doesn't pass the test!")
             return 0
         boinc_work = sixtrack_config['boinc_work']
         boinc_results = sixtrack_config['boinc_results']
         job_name = sixtrack_config['job_name']
         task_id = sixtrack_config['task_id']
         st_pre = os.path.basename(os.path.dirname(boinc_work))
-        job_name = st_pre + '__' + job_name + '_' + 'task_id' + '_' + str(task_id)
+        job_name = st_pre + '__' + job_name + \
+            '_' + 'task_id' + '_' + str(task_id)
         if not os.path.isdir(boinc_work):
             os.makedirs(boinc_work)
         if not os.path.isdir(boinc_results):

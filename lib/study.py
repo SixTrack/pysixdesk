@@ -294,7 +294,7 @@ class Study(object):
             'count_changes': 'off'}
 
         self.tables['boinc_vars'] = collections.OrderedDict()
-        self.boinc_vars['workunitName'] = 'sixdesk'
+        self.boinc_vars['workunitName'] = 'pysixdesk'
         self.boinc_vars['fpopsEstimate'] = 30*2*10e5/2*10e6*6
         self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate']*1000
         self.boinc_vars['memBound'] = 100000000
@@ -702,7 +702,7 @@ class Study(object):
             content = "Failed to submit %s job!" % jobname
             utils.message('Warning', content, self.mes_level, self.log_file)
 
-    def collect_result(self, typ, trials=5, platform='local', clean='False'):
+    def collect_result(self, typ, boinc=False, trials=5, platform='local'):
         '''Collect the results of preprocess or  sixtrack jobs'''
         self.config.clear()
         self.config['info'] = {}
@@ -720,7 +720,6 @@ class Study(object):
                 utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
         info_sec['cluster_module'] = str(cluster_module)
         info_sec['cluster_name'] = self.cluster_name
-        info_sec['clean'] = clean
         if typ == 0:
             self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
             info_sec['path'] = self.paths['preprocess_out']
@@ -732,6 +731,9 @@ class Study(object):
         elif typ == 1:
             self.config['f10'] = self.tables['six_results']
             info_sec['path'] = self.paths['sixtrack_out']
+            info_sec['boinc_results'] = self.env['boinc_results']
+            info_sec['boinc'] = str(boinc)
+            info_sec['st_pre'] = self.st_pre
             info_sec['outs'] = utils.evlt(
                 utils.encode_strings, [self.sixtrack_output])
             job_name = 'collect sixtrack result'
@@ -749,70 +751,16 @@ class Study(object):
             self.config.write(f_out)
         if platform is 'local':
             gather.run(typ, task_input)
-        elif platform is 'htcondor':
-            tran_input = []
-            tran_input.append(task_input)
-            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')
-            wu_ids = [typ]
-            self.submission.prepare(wu_ids, tran_input, exe, in_name, in_path,
-                                    out_path)
-            self.submission.submit(in_path, job_name, trials)
-
-    def download_from_boinc(self):
-        '''Download results from boinc'''
-        res_path = self.env['boinc_results']
-        if not os.path.isdir(res_path):
-            content = "There isn't job submitted to boinc!"
-            utils.message('Warning', content, self.mes_level, self.log_file)
-            return
-        out_path = self.paths['sixtrack_out']
-        items = os.listdir(out_path)
-        contents = os.listdir(res_path)
-        where = "status='submitted'"
-        wu_ids = self.db.select('sixtrack_wu', ['wu_id'], where)
-        if not wu_ids[0]:
-            content = "There isn't submitted job!"
-            utils.message('Warning', content, self.mes_level, self.log_file)
-            return
-        processed_path = os.path.join(res_path, 'processed')
-        if not os.path.isdir(processed_path):
-            os.mkdir(processed_path)
-        username = getpass.getuser()
-        tmp_path = os.path.join('/tmp', username, self.st_pre)
-        if not os.path.isdir(tmp_path):
-            os.mkdir(tmp_path)
-        for res in contents:
-            if re.match(self.st_pre+'.+\.zip', res):
-                try:
-                    res_file = os.path.join(res_path, res)
-                    zph = zipfile.ZipFile(res_file, mode='r')
-                    zph.extractall(tmp_path)
-                    zph.close()
-                    shutil.move(res_file, processed_path)
-                except:
-                    content = traceback.print_exc()
-                    utils.message('Error', content, self.mes_level,
-                                  self.log_file)
-                    zph.close()
-                    continue
-        for f10 in os.listdir(tmp_path):
-            match = re.search('wu_id', f10)
-            if not match:
-                content = 'Something wrong with the result %s' % f10
-                utils.message('Warning', content,
-                              self.mes_level, self.log_file)
-                continue
-            wu_id = f10[match.end()+1:match.end()+2]
-            job_path = os.path.join(out_path, wu_id)
-            if not os.path.isdir(job_path):
-                cnt = "The output path for sixtrack job %s doesn't exist!" % wu_id
-                utils.message('Warning', cnt, self.mes_level, self.log_file)
-                os.mkdir(job_path)
-            out_name = os.path.join(job_path, 'fort.10.gz')
-            f10_file = os.path.join(tmp_path, f10)
-            with open(f10_file, 'rb') as f_in, gzip.open(out_name, 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-        shutil.rmtree(tmp_path)
+        # TODO: Submit gather job to htcondor is error-prone, so I block it for
+        #       the moment. Acctually it's dispensable.
+        # elif platform is 'htcondor':
+        #    tran_input =[]
+        #    tran_input.append(task_input)
+        #    exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')
+        #    wu_ids = [typ]
+        #    self.submission.prepare(wu_ids, tran_input, exe, in_name, in_path,
+        #            out_path)
+        #    self.submission.submit(in_path, job_name, trials)
 
     def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''

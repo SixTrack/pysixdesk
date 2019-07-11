@@ -19,6 +19,7 @@ class MyStudy(Study):
         self.cluster_module = None  # default
         self.cluster_name = 'HTCondor'
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
+        self.boinc_vars['appName'] = 'sixtracktest'
 
         # Echo message to the terminal, if not None, echo to log_file
         self.log_file = None

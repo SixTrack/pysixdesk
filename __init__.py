@@ -6,4 +6,5 @@ from .lib import preprocess
 from .lib.study import Study
 from .lib.pysixdb import SixDB
 from .lib.workspace import WorkSpace
+from .lib.machineparams import MachineConfig
 from .lib.submission import Cluster, HTCondor
