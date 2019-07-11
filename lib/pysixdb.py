@@ -11,7 +11,7 @@ def SixDB(db_info, settings=None, create=False, mes_level=1, log_file=None):
     @settings: databse settings, i.e. pragmas
     @create: bool controls whethter to create the db
     @mes_level: controls the messaging level, see utils.message
-    @log_file: if provided, the utils.message write to provided file
+    @log_file: if provided, utils.message writes to the provided file
     '''
     db_info = db_info.copy()
     if 'db_type' not in db_info.keys():
