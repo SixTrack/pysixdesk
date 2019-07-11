@@ -21,6 +21,7 @@ class MyStudy(Study):
         '''initialize a study'''
         self.cluster_class = submission.HTCondor
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
+        self.boinc_vars['appName'] = 'sixtracktest'
 
         # Echo message to the terminal, if not None, echo to log_file
         # need to figure out how to give these values to the logger
