@@ -3,6 +3,7 @@ import sys
 import utils
 import sqlite3
 import pymysql
+import logging
 import collections
 import traceback
 from abc import ABC, abstractmethod
@@ -11,6 +12,8 @@ from abc import ABC, abstractmethod
 class DatabaseAdaptor(ABC):
 
     def __init__(self, db_info, settings=None, create=False, mes_level=1, log_file=None):
+        # logging.basicConfig(filename=log_file)
+        self._logger = logging.getLogger(__name__)
         self.settings = settings
         self.create = create
         self.mes_level = mes_level
@@ -202,12 +205,10 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
             name = self.db_info['db_name']
             if not self.create and not os.path.exists(name):
                 content = "The database %s doesn't exist!" % name
-                utils.message('Error', content, self.mes_level, self.log_file)
-                sys.exit(1)
+                raise Exception(content)
         else:
             content = "Something wrong with db info %s!" % str(self.db_info)
-            utils.message('Error', content, self.mes_level, self.log_file)
-            sys.exit(1)  # This used to not exit
+            raise Exception(content)
 
     def _info_check(self):
         '''
@@ -274,8 +275,7 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
                 self.create_db(**self.db_info)
         else:
             content = "Something wrong with db info %s!" % str(self.db_info)
-            utils.message('Error', content, self.mes_level, self.log_file)
-            sys.exit(1)
+            raise Exception(content)
 
     def _info_check(self):
         '''
@@ -300,17 +300,13 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
     def create_db(self, host, user, passwd, db_name, **kwargs):
         '''Create a new database'''
-        try:
-            conn = pymysql.connect(host, user, passwd, **kwargs)
-            c = conn.cursor()
-            sql = "SELECT schema_name FROM information_schema.schemata\
-                    WHERE schema_name='%s'" % db_name
-            c.execute(sql)
-            out = c.fetchall()
-        except:
-            content = traceback.print_exc()
-            utils.message('Error', content, self.mes_level, self.log_file)
-            sys.exit(1)
+
+        conn = pymysql.connect(host, user, passwd, **kwargs)
+        c = conn.cursor()
+        sql = "SELECT schema_name FROM information_schema.schemata\
+                WHERE schema_name='%s'" % db_name
+        c.execute(sql)
+        out = c.fetchall()
 
         if not out:
             try:
@@ -318,11 +314,9 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
                 c.execute(sql)
                 conn.commit()
             except:
-                content = traceback.print_exc()
-                utils.message('Error', content, self.mes_level, self.log_file)
-                content = "Failed to create new db %s!" % db_name
-                utils.message('Error', content, self.mes_level, self.log_file)
                 conn.rollback()
+                content = "Failed to create new db %s!" % db_name
+                self._logger.error(content, exc_info=True)
             finally:
                 c.close()
                 conn.close()
@@ -330,7 +324,7 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
             c.close()
             conn.close()
             content = "The db %s already exist!" % db_name
-            utils.message('Warning', content, self.mes_level, self.log_file)
+            self._logger.warning(content)
 
     def new_connection(self, host, user, passwd, db_name, **kwargs):
         '''Connect to an existing database'''

@@ -1,7 +1,8 @@
 import os
+import sys
 import utils
 import shutil
-import sys
+import logging
 
 from importlib.machinery import SourceFileLoader
 
@@ -28,6 +29,7 @@ class WorkSpace(object):
     '''
 
     def __init__(self, workspace_name='./sandbox', log_file=None):
+        self._logger = logging.getLogger(__name__)
         self.name = workspace_name
         self.paths = {}
         self.studies = []
@@ -38,7 +40,7 @@ class WorkSpace(object):
         '''Check the workspace name'''
         if len(self.name) == 0:
             content = "...undefined workspace! Please create one first"
-            utils.message('Error', content, level, self.log_file)
+            self._logger.error(content)
             return False
 
     def _check_study_name(self, study_name, level=LEVEL):
@@ -51,8 +53,7 @@ class WorkSpace(object):
                 input_study_name = 'test'
         elif not isinstance(input_study_name, str):
             content = 'invalid string for study name.'
-            utils.message('Error', content, level, self.log_file)
-            sys.exit(1)
+            raise ValueError(content)
         return input_study_name
 
     def _inflate_paths(self, sanity_check=True, level=LEVEL):
@@ -60,7 +61,7 @@ class WorkSpace(object):
         if sanity_check:
             self._check_name()
         content = 'Inflating paths of workspace %s ...' % (self.name)
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
         self.paths['workspace'] = os.path.abspath(self.name)
         self.paths['studies'] = os.path.join(self.paths['workspace'],
                                              'studies')
@@ -75,7 +76,7 @@ class WorkSpace(object):
         else:
             input_study_name = study_name
         content = 'Inflating path to study %s ...' % (input_study_name)
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
         return os.path.join(self.paths['studies'], input_study_name)
 
     def _init_dirs(self, sanity_check=True, level=LEVEL):
@@ -84,21 +85,21 @@ class WorkSpace(object):
         if sanity_check:
             self._inflate_paths()
         content = 'Checking directories of workspace %s ...' % (self.name)
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
         for key in self.paths.keys():
             if not os.path.isdir(self.paths[key]):
                 os.mkdir(self.paths[key])
                 content = '...created %s directory: %s' % (
                     key, self.paths[key])
-                utils.message('Message', content, level, self.log_file)
+                self._logger.info(content)
             else:
                 content = '...%s directory already exists: %s' % (
                     key, self.paths[key])
-                utils.message('Message', content, level, self.log_file)
+                self._logger.info(content)
 
         content = 'Checking template files in %s...' % (
             self.paths['templates'])
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
         tem_path = os.path.join(utils.PYSIXDESK_ABSPATH, 'templates')
         for item in os.listdir(tem_path):
             sour = os.path.join(tem_path, item)
@@ -107,12 +108,12 @@ class WorkSpace(object):
                 shutil.copy2(sour, dest)
                 content = '...copied template file %s from %s .' % (
                     item, utils.PYSIXDESK_ABSPATH)
-                utils.message('Progress', content, level, self.log_file)
+                self._logger.info(content)
             else:
                 content = '...template file %s present.' % (item)
-                utils.message('Progress', content, level, self.log_file)
+                self._logger.info(content)
         content = '...done.\n'
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
 
     def _update_list_existing_studies(self, sanity_check=True, level=LEVEL):
         '''Update and report list of studies in the current workspace'''
@@ -120,7 +121,7 @@ class WorkSpace(object):
             self._init_dirs()
         content = 'Loading list of studies in %s...' % (
             self.paths['studies'])
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
         for item in os.listdir(self.paths['studies']):
             if os.path.isdir(os.path.join(self.paths['studies'], item)):
                 if (item not in self.studies):
@@ -128,19 +129,19 @@ class WorkSpace(object):
         if len(self.studies) == 0:
             content = '...workspace %s contains no studies at the moment' % (
                 self.name)
-            utils.message('Message', content, level, self.log_file)
+            self._logger.info(content)
         else:
             if len(self.studies) == 1:
                 content = '...workspace %s contains %i study:' % (
                     self.name, len(self.studies))
-                utils.message('Progress', content, level, self.log_file)
+                self._logger.info(content)
             else:
                 content = '...workspace %s contains %i studies:' % (
                     self.name, len(self.studies))
-                utils.message('Message', content, level, self.log_file)
+                self._logger.info(content)
             print(self.studies)
         content = '...done.\n'
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
 
     def show_studies(self):
         '''Show all the studies in the current workspace'''
@@ -158,17 +159,17 @@ class WorkSpace(object):
 
         content = 'Initialising study %s in workspace %s...' % (
             input_study_name, self.paths['workspace'])
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
 
         # study directory
         study_path = self._inflate_study_path(input_study_name)
         if not os.path.isdir(study_path):
             os.makedirs(study_path)
             content = '...created directory %s' % (study_path)
-            utils.message('Message', content, level, self.log_file)
+            self._logger.info(content)
         else:
             content = '...%s directory already exists' % (study_path)
-            utils.message('Message', content, level, self.log_file)
+            self._logger.info(content)
 
         # template files
         for item in os.listdir(self.paths['templates']):
@@ -178,10 +179,10 @@ class WorkSpace(object):
                 shutil.copy2(sour, dest)
                 content = '...copied template file %s from %s .' % (
                     item, self.paths['templates'])
-                utils.message('Progress', content, level, self.log_file)
+                self._logger.info(content)
             else:
                 content = '...template file %s present.' % (item)
-                utils.message('Progress', content, level, self.log_file)
+                self._logger.info(content)
 
         # update list of existing studies
         self._update_list_existing_studies()
@@ -196,12 +197,9 @@ class WorkSpace(object):
         else:
             input_study_name = study_name
         if study_name not in self.studies:
-            content = "Study %s not present in workspace %s" % (
-                study_name, self.paths['workspace'])
-            utils.message('Error', content, level, self.log_file)
-            content = "Please create one with the init_study()"
-            utils.message('Error', content, level, self.log_file)
-            sys.exit(1)
+            content = ("Study %s not present in workspace %s. "
+                       "Please create one with the init_study()") % (study_name, self.paths['workspace'])
+            raise FileNotFoundError(content)
 
         # other sanity checks:
         study_path = self._inflate_study_path(input_study_name)
@@ -209,16 +207,15 @@ class WorkSpace(object):
             module_path = os.path.join(study_path, 'config.py')
         if not os.path.isfile(module_path):
             content = "The config file %s isn't found!" % module_path
-            utils.message('Error', content, level, self.log_file)
-            sys.exit(1)
+            raise FileNotFoundError(content)
 
         content = 'Loading study %s in workspace %s ...' % (
             study_name, self.paths['workspace'])
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
         module_name = os.path.abspath(module_path)
         module_name = module_name.replace('.py', '')
         mod = SourceFileLoader(module_name, module_path).load_module()
         cls = getattr(mod, class_name)
         content = "Study %s loaded from %s \n" % (study_name, study_path)
-        utils.message('Message', content, level, self.log_file)
+        self._logger.info(content)
         return cls(study_name, self.paths['studies'])
