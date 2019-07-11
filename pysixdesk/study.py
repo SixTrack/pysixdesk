@@ -85,7 +85,7 @@ class Study(object):
         # print(f'Trying out cluster_class.__name__ : {self.cluster_class.__name__}')
         self.cluster_class = submission.HTCondor
         self.cluster_name = self.cluster_class.__name__
-        # returns pysixtrack.submission we want pysixtrack/submission 
+        # returns pysixtrack.submission we want pysixtrack/submission
         module_path = self.cluster_class.__module__.replace('.', '/')
         # make it absolute
         self.cluster_module = os.path.join(utils.PYSIXDESK_ABSPATH, module_path)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import os
 import sys
 import time
@@ -6,7 +7,6 @@ import gzip
 import shutil
 import getpass
 import zipfile
-import traceback
 import configparser
 from importlib.machinery import SourceFileLoader
 
@@ -194,11 +194,10 @@ def sixtrack_results(cf, cluster):
                         job_index.keys()]
     else:
         content = "Can't get job status, try later!"
-        utils.message('Warning', content, mes_level, log_file)
+        logger.warniing(content)
         return
     if running_jobs:
-        content = "Sixtrack jobs %s on HTCondor aren't completed yet!" % str(
-            running_jobs)
+        content = "Sixtrack jobs %s on HTCondor aren't completed yet!" % str(running_jobs)
         logger.warning(content)
     valid_wu_ids = list(job_index.values())
 
@@ -259,6 +258,8 @@ def sixtrack_results(cf, cluster):
 
 def download_from_boinc(info_sec):
     '''Download results from boinc'''
+    logger = logging.getLogger()
+
     wu_ids = []
     mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
@@ -269,17 +270,16 @@ def download_from_boinc(info_sec):
     st_pre = info_sec['st_pre']
     if not os.path.isdir(res_path):
         content = "There isn't job submitted to boinc!"
-        utils.message('Warning', content, mes_level, log_file)
+        logger.warning(content)
         return 0, []
     contents = os.listdir(res_path)
     if 'processed' in contents:
         contents.remove('processed')
     if not contents:
         content = "No result in boinc spool yet!"
-        utils.message('Warning', content, mes_level, log_file)
+        logger.warning(content)
         return 0, []
     out_path = six_path
-    items = os.listdir(out_path)
 
     processed_path = os.path.join(res_path, 'processed')
     if not os.path.isdir(processed_path):
@@ -289,16 +289,15 @@ def download_from_boinc(info_sec):
     if not os.path.isdir(tmp_path):
         os.mkdir(tmp_path)
     for res in contents:
-        if re.match(st_pre+'.+\.zip', res):
+        if re.match(st_pre + '.+\.zip', res):
             try:
                 res_file = os.path.join(res_path, res)
                 zph = zipfile.ZipFile(res_file, mode='r')
                 zph.extractall(tmp_path)
                 zph.close()
                 shutil.move(res_file, processed_path)
-            except:
-                content = traceback.print_exc()
-                utils.message('Error', content, mes_level, log_file)
+            except Exception as e:
+                logging.error(e, exc_info=True)
                 zph.close()
                 continue
     for f10 in os.listdir(tmp_path):
@@ -307,13 +306,13 @@ def download_from_boinc(info_sec):
         match = re.search('wu_id', f10)
         if not match:
             content = 'Something wrong with the result %s' % f10
-            utils.message('Warning', content, mes_level, log_file)
+            logger.warning(content)
             continue
-        wu_id = f10[match.end()+1:match.end()+2]
+        wu_id = f10[match.end() + 1:match.end() + 2]
         job_path = os.path.join(out_path, wu_id)
         if not os.path.isdir(job_path):
-            cnt = "The output path for sixtrack job %s doesn't exist!" % wu_id
-            utils.message('Warning', cnt, mes_level, log_file)
+            content = "The output path for sixtrack job %s doesn't exist!" % wu_id
+            logger.warning(content)
             os.mkdir(job_path)
         out_name = os.path.join(job_path, 'fort.10.gz')
         f10_file = os.path.join(tmp_path, f10)
