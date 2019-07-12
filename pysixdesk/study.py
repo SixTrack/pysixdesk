@@ -50,6 +50,32 @@ class Study(object):
         Study._defaults(self)
         Study._structure(self)
 
+    # cluster_class getter/setter
+    # TODO: test this
+    @property
+    def cluster_class(self):
+        return self._cluster_class
+
+    @cluster_class.setter
+    def cluster_class(self, value):
+        '''
+        if user sets his own cluster_class, cluster_module and cluster_name update
+        '''
+        self._cluster_class = value
+        self._cluster_name = self._cluster_class.__name__     # return 'HTCondor'
+        print(self._cluster_class.__name__)
+        self._cluster_module = self._cluster_class.__module__  # returns 'pysixtrack.submission'
+        print(self._cluster_class.__module__)
+
+    # the user cannot change these without going through the cluster_class setter
+    @property
+    def cluster_name(self):
+        return self._cluster_name
+
+    @property
+    def cluser_module(self):
+        return self._cluser_module
+
     def _defaults(self):
         '''initialize a study with some default settings'''
         # full path to madx
@@ -70,20 +96,8 @@ class Study(object):
         # self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
         self.env['test_turn'] = 1000
 
-        # self.cluster_module = None
-        # self.cluster_name = 'HTCondor'
-        # I think doing something like this is better than using self.cluster_module
-        # and self.cluster_name and it avoids some of the hacky SourceFileloader stuff
-        # and you can give attributes to the class to access stuff like cluster_name
-        # by doing something like 'cluster_name = self.cluster_class.cluster_name'
-        # or you could assume the name of the class is the name of the cluster and do
-        # cluser_name = self.cluster_class.__name__ I think ?
-        # print(f'Trying out cluster_class.cluster_name : {self.cluster_class.cluster_name}')
-        # print(f'Trying out cluster_class.__name__ : {self.cluster_class.__name__}')
-        # TODO: improve this with getter/setter logic
         self.cluster_class = submission.HTCondor
-        self.cluster_name = self.cluster_class.__name__     # return HTCondor
-        self.cluster_module = self.cluster_class.__module__  # returns pysixtrack.submission
+
         self.log_file = None
 
         self.madx_output = {
