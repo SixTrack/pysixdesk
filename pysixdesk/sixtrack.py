@@ -5,7 +5,6 @@ import sys
 import ast
 import time
 import shutil
-import logging
 import zipfile
 import configparser
 
@@ -21,9 +20,6 @@ logging.basicConfig(format='%(asctime)s-%(name)s-%(levelname)s: %(message)s',
 
 
 def run(wu_id, input_info):
-
-    logger = logging.getLogger(__name__)
-
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
@@ -160,10 +156,6 @@ def run(wu_id, input_info):
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     '''The actual sixtrack job'''
-
-    logger = logging.getLogger(__name__)
-
-    six_status = 1
     fort3_config = config_param
     real_turn = fort3_config['turnss']
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
@@ -375,15 +367,19 @@ def concatenate_files(source, dest):
 
 
 if __name__ == '__main__':
+
+    logger = utils.condor_logger()
+
     args = sys.argv
     num = len(args[1:])
     if num == 0 or num == 1:
-        print("The input file is missing!")
+        logger.error("The input file is missing!")
         sys.exit(1)
     elif num == 2:
         wu_id = args[1]
         db_name = args[2]
         run(wu_id, db_name)
+        sys.exit(0)
     else:
-        print("Too many input arguments!")
+        logger.error("Too many input arguments!")
         sys.exit(1)

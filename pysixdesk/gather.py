@@ -157,8 +157,6 @@ def preprocess_results(cf, cluster):
 
 def sixtrack_results(cf, cluster):
     '''Gather the results of sixtrack jobs and store in database'''
-    logger = logging.getLogger(__name__)
-
     info_sec = cf['info']
     mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
@@ -258,8 +256,6 @@ def sixtrack_results(cf, cluster):
 
 def download_from_boinc(info_sec):
     '''Download results from boinc'''
-    logger = logging.getLogger()
-
     wu_ids = []
     mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
@@ -324,15 +320,31 @@ def download_from_boinc(info_sec):
 
 
 if __name__ == '__main__':
+
+    # these separated imports are quite a hacky solution, as this file is imported in
+    # pysixtrack/study.py for a gather.run call, when collecting results locally.
+    # As it is used in the pacakge, these imports should be relative, but they can't be
+    # as this file is moved to htcondor to be ran independently from the package.
+    # With this, the imported files don't need to be moved to htcondor. As the pysixdesk
+    # package is in python path even on HTCondor.
+
+    # the better solution is to have this file (and the other files executed on htcondor)
+    # seperated completely from the package.
+    from pysixdesk.pysixdb import SixDB
+    from pysixdesk import utils
+    from pysixdesk.resultparser import parse_preprocess, parse_sixtrack
+
+    logger = utils.condor_logger()
+
     args = sys.argv
     num = len(args[1:])
     if num == 0 or num == 1:
-        print("The input file is missing!")
+        logger.error("The input file is missing!")
         sys.exit(1)
     elif num == 2:
         wu_id = args[1]
         in_file = args[2]
         run(wu_id, in_file)
     else:
-        print("Too many input arguments!")
+        logger.error("Too many input arguments!")
         sys.exit(1)

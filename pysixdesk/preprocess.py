@@ -4,7 +4,6 @@ import sys
 import time
 import copy
 import shutil
-import logging
 import configparser
 
 # need to check these imports
@@ -18,9 +17,6 @@ logging.basicConfig(format='%(asctime)s-%(name)s-%(levelname)s: %(message)s',
 
 
 def run(wu_id, input_info):
-
-    logger = logging.getLogger(__name__)
-
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
@@ -74,7 +70,7 @@ def run(wu_id, input_info):
     status = utils.download_output(down_list, dest_path)
 
     if status:
-        logger.info("All requested results have stored in %s" % dest_path)
+        logger.info("All requested results have been stored in %s" % dest_path)
     else:
         logger.error("Job failed!")
     if dbtype.lower() == 'sql':
@@ -309,7 +305,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
             os.symlink('../fort.8', 'fort.8')
 
     # actually run
-    logger.error('Sixtrack job %s is running...' % jobname)
+    logger.info('Sixtrack job %s is running...' % jobname)
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
     output_name = '../' + jobname + '.output'
@@ -346,15 +342,19 @@ def concatenate_files(source, dest):
 
 
 if __name__ == '__main__':
+
+    logger = utils.condor_logger()
+
     args = sys.argv
     num = len(args[1:])
     if num == 0 or num == 1:
-        print("The input file is missing!")
+        logger.error("The input file is missing!")
         sys.exit(1)
     elif num == 2:
         wu_id = args[1]
         db_name = args[2]
         run(wu_id, db_name)
+        sys.exit(0)
     else:
-        print("Too many input arguments!")
+        logger.error("To many input arguments!")
         sys.exit(1)

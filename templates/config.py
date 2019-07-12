@@ -84,20 +84,20 @@ class MyStudy(Study):
         @pre_id The identified preprocess job id
         @return The status'''
         if source not in paramdict.keys():
-            print("Invalid parameter name %s!" % source)
+            self._logger.info("Invalid parameter name %s!" % source)
             return 0
         value = paramdict.pop(source)
         try:
             value = ast.literal_eval(value)
         except ValueError:
-            print("Invalid source value for job %s!" % pre_id)
+            self._logger.error("Invalid source value for job %s!" % pre_id)
             return 0
         except:
-            print("Unexpected error!\n", traceback.print_exc())
+            self._logger.error("Unexpected error!", exc_info=True)
             return 0
         if source == 'amp':
             if 'angle' not in paramdict.keys():
-                print("The angle should be calculated before amplitude!")
+                self._logger.error("The angle should be calculated before amplitude!")
                 return 0
             try:
                 values = self.getval(pre_id, ['betax'])
@@ -116,7 +116,7 @@ class MyStudy(Study):
                 paramdict[dest[1]] = str(value1)
                 return 1
             except:
-                print("Unexpected error!\n", traceback.print_exc())
+                self._logger("Unexpected error!", exc_info=True)
                 return 0
         elif source == 'kang':
             try:
@@ -124,11 +124,11 @@ class MyStudy(Study):
                 value1 = value / (kmax + 1)
                 paramdict[dest] = str(value1)
                 return 1
-            except:
-                print("Unexpected error!\n", traceback.print_exc())
+            except Exception:
+                self._logger.error("Unexpected error!", exc_info=True)
                 return 0
         else:
-            print("There isn't a formula for parameter %s!" % dest)
+            self._logger.error("There isn't a formula for parameter %s!" % dest)
             return 0
 
     def getval(self, pre_id, reqlist):
