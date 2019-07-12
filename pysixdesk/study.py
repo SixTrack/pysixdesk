@@ -75,17 +75,15 @@ class Study(object):
         # I think doing something like this is better than using self.cluster_module
         # and self.cluster_name and it avoids some of the hacky SourceFileloader stuff
         # and you can give attributes to the class to access stuff like cluster_name
-        # by doing somthing like 'cluster_name= self.cluster_class.cluster_name'
+        # by doing something like 'cluster_name = self.cluster_class.cluster_name'
         # or you could assume the name of the class is the name of the cluster and do
         # cluser_name = self.cluster_class.__name__ I think ?
         # print(f'Trying out cluster_class.cluster_name : {self.cluster_class.cluster_name}')
         # print(f'Trying out cluster_class.__name__ : {self.cluster_class.__name__}')
+        # TODO: improve this with getter/setter logic
         self.cluster_class = submission.HTCondor
-        self.cluster_name = self.cluster_class.__name__
-        # returns pysixtrack.submission we want pysixtrack/submission
-        module_path = self.cluster_class.__module__.replace('.', '/')
-        # make it absolute
-        self.cluster_module = os.path.join(utils.PYSIXDESK_ABSPATH, module_path)
+        self.cluster_name = self.cluster_class.__name__     # return HTCondor
+        self.cluster_module = self.cluster_class.__module__  # returns pysixtrack.submission
         self.log_file = None
 
         self.madx_output = {
@@ -695,7 +693,7 @@ class Study(object):
         else:
             info_sec['log_file'] = self.log_file
 
-        info_sec['cluster_module'] = str(self.cluster_module)
+        info_sec['cluster_module'] = self.cluster_module
         info_sec['cluster_name'] = self.cluster_name
         if typ == 0:
             self.config['oneturn'] = self.tables['oneturn_sixtrack_result']

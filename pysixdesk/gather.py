@@ -37,18 +37,16 @@ def run(wu_id, infile):
             logger.info(content)
             return
 
-        cluster_module = info_sec['cluster_module']
-        classname = info_sec['cluster_name']
+        cluster_module = info_sec['cluster_module']  # pysixtrack.submission
+        classname = info_sec['cluster_name']  # HTCondor
         try:
-            module_name = os.path.abspath(cluster_module)
-            module_name = module_name.replace('.py', '')
-            mod = SourceFileLoader(module_name, cluster_module).load_module()
-            cluster_cls = getattr(mod, classname)
-            cluster = cluster_cls(mes_level, log_file)
-        except:
+            module = importlib.import_module(cluster_module)
+            cluster_cls = getattr(module, classname)
+            cluster = cluster_cls()
+        except ModuleNotFoundError as e:
             content = "Failed to instantiate cluster class %s!" % cluster_module
-            logger.error(content, exc_info=True)
-            return
+            logger.error(content)
+            raise e
         if str(wu_id) == '0':
             preprocess_results(cf, cluster)
         elif str(wu_id) == '1':
