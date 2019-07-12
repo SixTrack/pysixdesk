@@ -131,15 +131,12 @@ class MyStudy(Study):
         where = 'wu_id=%s' % pre_id
         ids = self.db.select('preprocess_wu', ['task_id'], where)
         if not ids:
-            print("Wrong preprocess job id %s!" % pre_id)
-            sys.exit(1)
+            raise ValueError("Wrong preprocess job id %s!" % pre_id)
         task_id = ids[0][0]
         if task_id is None:
-            print("Incomplete preprocess job id %s!" % pre_id)
-            sys.exit(1)
+            raise Exception("Incomplete preprocess job id %s!" % pre_id)
         where = 'task_id=%s' % task_id
         values = self.db.select('oneturn_sixtrack_result', reqlist, where)
         if not values:
-            print("Wrong task id %s!" % task_id)
-            sys.exit(1)
+            raise ValueError("Wrong task id %s!" % task_id)
         return values[0]

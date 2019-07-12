@@ -328,6 +328,7 @@ if __name__ == '__main__':
         wu_id = args[1]
         in_file = args[2]
         run(wu_id, in_file)
+        sys.exit(0)
     else:
         logger.error("Too many input arguments!")
         sys.exit(1)
