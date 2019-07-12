@@ -72,6 +72,10 @@ class Study(object):
             self.study_path, "sixtrack_input")
         self.paths["sixtrack_out"] = os.path.join(
             self.study_path, "sixtrack_output")
+        self.paths["collimation_in"] = os.path.join(
+            self.study_path, "collimation_input")
+        self.paths["collimation_out"] = os.path.join(
+            self.study_path, "collimation_output")
         self.paths["gather"] = os.path.join(self.study_path, "gather")
         self.paths["templates"] = self.study_path
         # self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
@@ -122,8 +126,6 @@ class Study(object):
             ("dp2", 0.000001),
             ("chromx", 2),
             ("chromy", 2)])
-        # ("TUNEVAL", '/'),
-        # ("CHROVAL", '/')])
         self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
@@ -132,6 +134,42 @@ class Study(object):
         # Default definition of the database tables
         self.tables['templates'] = collections.OrderedDict()
         self.tables['env'] = collections.OrderedDict()
+        self.tables['collimation_wu'] = collections.OrderedDict([
+            ('wu_id', 'INTEGER'),
+            ('job_name', 'text'),
+            ('input_file', 'blob'),
+            ('batch_name', 'text'),
+            ('unique_id', 'text'),
+            ('status', 'text'),
+            ('task_id', 'int'),
+            ('mtime', 'bigint')])
+        self.table_keys['collimation_wu'] = {
+            'primary': ['wu_id'],
+            'autoincrement': ['wu_id'],
+            'foreign': {},
+        }
+        self.tables['collimation_task'] = collections.OrderedDict([
+            ('task_id', 'INTEGER'),
+            ('wu_id', 'int'),
+            ('fort2', 'blob'),
+            ('coll_stdout', 'blob'),
+            ('job_stdout', 'blob'),
+            ('job_stderr', 'blob'),
+            ('job_stdlog', 'blob'),
+            ('status', 'text'),
+            ('mtime', 'bigint')])
+        self.table_keys['collimation_task'] = {
+            'primary': ['task_id'],
+            'autoincrement': ['task_id'],
+            'foreign': {'collimation_wu': [['wu_id'], ['wu_id']]},
+        }
+        self.tables['collimation_results'] = collections.OrderedDict([
+            ('task_id', 'INTEGER'),
+            ('mtime', 'bigint')])
+        self.table_keys['collimation_results'] = {
+            'primary': ['task_id'],
+            'foreign': {'collimation_task': [['task_id'], ['task_id']]},
+        }
         self.tables['preprocess_wu'] = collections.OrderedDict([
             ('wu_id', 'INTEGER'),
             ('job_name', 'text'),
@@ -943,6 +981,67 @@ class Study(object):
         in_path = self.paths['preprocess_in']
         out_path = self.paths['preprocess_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
+        self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
+                                out_path, *args, **kwargs)
+
+    def prepare_collimation_input(self, *args, **kwargs):
+        '''Prepare the input files for collimations jobs'''
+        where = "status='incomplete'"
+        outputs = self.db.select(
+            'collimation_wu', ['wu_id', 'input_file'], where)
+        if not outputs:
+            content = "There isn't incomplete collimation job!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
+            return
+        trans = []
+        outputs = list(zip(*outputs))
+        wu_ids = outputs[0]
+        task_table = {}
+        wu_table = {}
+        task_ids = []
+        for wu_id in wu_ids:
+            task_table['wu_id'] = wu_id
+            task_table['mtime'] = int(time.time()*1E7)
+            self.db.insert('collimation_task', task_table)
+            where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
+            task_id = self.db.select('collimation_task', ['task_id'], where)
+            task_id = task_id[0][0]
+            task_ids.append(task_id)
+            wu_table['task_id'] = task_id
+            wu_table['mtime'] = int(time.time()*1E7)
+            where = "wu_id=%s" % wu_id
+            self.db.update('collimation_wu', wu_table, where)
+        db_info = {}
+        db_info.update(self.db_info)
+        if db_info['db_type'].lower() == 'sql':
+            sub_name = os.path.join(self.paths['collimation_in'], 'sub.db')
+            if os.path.exists(sub_name):
+                os.remove(sub_name)  # remove the old one
+            db_info['db_name'] = sub_name
+            sub_db = SixDB(db_info, self.db_settings, True, self.mes_level,
+                           self.log_file)
+            sub_db.create_table('collimation_wu', {'wu_id': 'int',
+                                                  'task_id': 'int', 'input_file': 'blob'})
+            incom_job = {}
+            incom_job['wu_id'] = outputs[0]
+            incom_job['task_id'] = task_ids
+            incom_job['input_file'] = outputs[1]
+            sub_db.insertm('collimation_wu', incom_job)
+            sub_db.close()
+            db_info['db_name'] = 'sub.db'
+            content = "The submitted database %s is ready!" % db_info['db_name']
+            utils.message('Message', content, self.mes_level, self.log_file)
+            trans.append(sub_name)
+
+        input_info = os.path.join(self.paths['collimation_in'], 'db.ini')
+        self.config.clear()
+        self.config['db_info'] = db_info
+        with open(input_info, 'w') as f_out:
+            self.config.write(f_out)
+        trans.append(input_info)
+        in_path = self.paths['collimation_in']
+        out_path = self.paths['collimation_out']
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'collimation.py')
         self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
                                 out_path, *args, **kwargs)
 
