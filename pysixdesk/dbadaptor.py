@@ -183,7 +183,7 @@ class DatabaseAdaptor(ABC):
 
     def close(self):
         '''Disconnect the database, if a connection is active'''
-        if self.conn is not None:
+        if self.conn is not None and self.conn.open:
             self.conn.commit()
             self.conn.close()
 
@@ -307,7 +307,7 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
                 sql = "CREATE DATABASE %s" % db_name
                 c.execute(sql)
                 conn.commit()
-            except:
+            except Exception:
                 conn.rollback()
                 content = "Failed to create new db %s!" % db_name
                 self._logger.error(content, exc_info=True)
