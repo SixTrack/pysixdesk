@@ -746,8 +746,7 @@ class Study(object):
             return
         preprocess_outs = list(zip(*preprocess_outs))
         if len(preprocess_outs[0]) == 1:
-            where = "status='incomplete' and preprocess_id=%s" % str(
-                preprocess_outs[0][0])
+            where = "status='incomplete' and preprocess_id=%s" % str(preprocess_outs[0][0])
         else:
             where = "status='incomplete' and preprocess_id in %s" % str(
                 preprocess_outs[0])

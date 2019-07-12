@@ -157,7 +157,7 @@ def decompress_buf(buf, out, des='file'):
                 out = f_in.read()
                 out = out.decode()
         else:
-            print("Unknow output type!")
+            print("Unknown output type!")
             return status
         status = True
         return status, out

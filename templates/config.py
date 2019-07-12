@@ -65,8 +65,7 @@ class MyStudy(Study):
         # The angle should be calculated before amplitude
         status = []
         status.append(self.formulas('kang', 'angle', paramdict, pre_id))
-        status.append(self.formulas(
-            'amp', ['ax0s', 'ax1s'], paramdict, pre_id))
+        status.append(self.formulas('amp', ['ax0s', 'ax1s'], paramdict, pre_id))
         return all(status)
 
     def formulas(self, source, dest, paramdict, pre_id):
