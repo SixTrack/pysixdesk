@@ -22,8 +22,6 @@ logging.basicConfig(format='%(asctime)s-%(name)s-%(levelname)s: %(message)s',
 
 
 def run(wu_id, infile):
-    logger = logging.getLogger(__name__)
-
     cf = configparser.ConfigParser()
     if os.path.isfile(infile):
         cf.read(infile)
