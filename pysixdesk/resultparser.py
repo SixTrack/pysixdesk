@@ -10,12 +10,13 @@ from . import utils
 
 
 def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
-                     oneturn_param_names, mes_level=1, log_file=None):
+                     oneturn_param_names, log_file=None):
     '''Parse the results of preprocess jobs'''
     logger = logging.getLogger(__name__)
     if log_file is not None:
         # if desired, create a file handler with DEBUG level and attach
         # it to logger
+        # TODO: test this
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
@@ -101,12 +102,13 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
 
 
 def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
-                   mes_level=1, log_file=None):
+                   log_file=None):
     '''Parse the results of sixtrack job'''
     logger = logging.getLogger(__name__)
     if log_file is not None:
         # if desired, create a file handler with DEBUG level and attach
         # it to logger
+        # TODO: test this
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)

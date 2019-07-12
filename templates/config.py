@@ -23,10 +23,7 @@ class MyStudy(Study):
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
 
-        # Echo message to the terminal, if not None, echo to log_file
-        # need to figure out how to give these values to the logger
         self.log_file = None
-        self.mes_level = 1  # message level
         # Add database informations
         # self.db_info['db_type'] = 'sql'
         self.db_info['db_type'] = 'mysql'

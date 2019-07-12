@@ -27,12 +27,11 @@ class WorkSpace(object):
             |_ config.py
     '''
 
-    def __init__(self, workspace_name='./sandbox', log_file=None):
+    def __init__(self, workspace_name='./sandbox'):
         self._logger = logging.getLogger(__name__)
         self.name = workspace_name
         self.paths = {}
         self.studies = []
-        self.log_file = log_file
         self._update_list_existing_studies()
 
     def _check_name(self, level=LEVEL):

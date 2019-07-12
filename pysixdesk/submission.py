@@ -10,7 +10,7 @@ from . import utils
 
 class Cluster(ABC):
 
-    def __init__(self, mes_level, log_file, temp_path):
+    def __init__(self, temp_path):
         '''Constructor'''
         pass
 
@@ -35,18 +35,10 @@ class Cluster(ABC):
 class HTCondor(Cluster):
     '''The HTCondor management system'''
 
-    def __init__(self, mes_level=1, log_file=None, temp_path=None):
+    def __init__(self, temp_path=None):
         '''Constructor'''
         self._logger = logging.getLogger(__name__)
-        if log_file is not None:
-            # if desired, create a file handler with DEBUG level to catch everything
-            # and attach it to logger
-            file_handler = logging.FileHandler(log_file)
-            file_handler.setLevel(logging.DEBUG)
-            self._logger.addHandler(file_handler)
         self.temp = temp_path
-        self.mes_level = mes_level
-        self.log_file = log_file
         self.sub_name = 'htcondor_run.sub'
 
     def prepare(self, wu_ids, trans, exe, exe_args, input_path, output_path,

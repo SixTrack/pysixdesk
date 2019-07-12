@@ -8,18 +8,10 @@ from abc import ABC, abstractmethod
 
 class DatabaseAdaptor(ABC):
 
-    def __init__(self, db_info, settings=None, create=False, log_file=None):
+    def __init__(self, db_info, settings=None, create=False):
         self._logger = logging.getLogger(__name__)
-        if log_file is not None:
-            # if desired, create a file handler with DEBUG level and attach
-            # it to logger
-            file_handler = logging.FileHandler(log_file)
-            file_handler.setLevel(logging.DEBUG)
-            self._logger.addHandler(file_handler)
-
         self.settings = settings
         self.create = create
-        self.log_file = log_file
         self.db_info = db_info
         self.conn = None
         self._check()

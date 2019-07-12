@@ -90,7 +90,6 @@ class Study(object):
         # make it absolute
         self.cluster_module = os.path.join(utils.PYSIXDESK_ABSPATH, module_path)
         self.log_file = None
-        self.mes_level = 1
 
         self.madx_output = {
             'fc.2': 'fort.2',
@@ -410,14 +409,14 @@ class Study(object):
             self.tables['boinc_vars'][key] = self.type_dict[val]
 
         # Initialize the database
-        self.db = SixDB(self.db_info, self.db_settings, True, self.log_file)
+        self.db = SixDB(self.db_info, settings=self.db_settings, create=True)
         # create the database tables if not exist
         if not self.db.fetch_tables():
             self.db.create_tables(self.tables, self.table_keys)
 
         # Initialize the submission object
         try:
-            self.submission = self.cluster_class(self.mes_level, self.log_file, self.paths['templates'])
+            self.submission = self.cluster_class(self.paths['templates'])
         except Exception:
             content = 'Failed to instantiate cluster class.'
             self._logger.error(content, exc_info=True)
@@ -694,7 +693,6 @@ class Study(object):
         info_sec = self.config['info']
         self.config['db_setting'] = self.db_settings
         self.config['db_info'] = self.db_info
-        info_sec['mes_level'] = str(self.mes_level)
         if self.log_file is None:
             info_sec['log_file'] = ''
         else:
@@ -815,7 +813,7 @@ class Study(object):
                 os.remove(sub_name)  # remove the old one
             shutil.copy2(sub_main, sub_name)
             db_info['db_name'] = sub_name
-            sub_db = SixDB(db_info, self.db_settings, log_file=self.log_file)
+            sub_db = SixDB(db_info, self.db_settings)
 
             sub_db.drop_table('sixtrack_task')
             sub_db.drop_table('result')
@@ -898,7 +896,7 @@ class Study(object):
             if os.path.exists(sub_name):
                 os.remove(sub_name)  # remove the old one
             db_info['db_name'] = sub_name
-            sub_db = SixDB(db_info, self.db_settings, True, self.log_file)
+            sub_db = SixDB(db_info, settings=self.db_settings, create=True)
             sub_db.create_table('preprocess_wu', {'wu_id': 'int',
                                                   'task_id': 'int',
                                                   'input_file': 'blob'})

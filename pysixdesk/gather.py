@@ -31,12 +31,12 @@ def run(wu_id, infile):
         boinc = 'false'
         if str(wu_id) == '1':
             boinc = info_sec['boinc']
-        mes_level = int(info_sec['mes_level'])
         log_file = info_sec['log_file']
 
         if log_file is not None:
             # if desired, create a file handler with DEBUG level to catch everything
             # and attach it to logger
+            # TODO: test this
             file_handler = logging.FileHandler(log_file)
             file_handler.setLevel(logging.DEBUG)
             logger.addHandler(file_handler)
@@ -76,15 +76,13 @@ def preprocess_results(cf, cluster):
     '''Gather the results of madx and oneturn sixtrack jobs and store in
     database
     '''
-    logger = logging.getLogger(__name__)
-
     info_sec = cf['info']
-    mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
 
     if log_file is not None:
         # if desired, create a file handler with DEBUG level to catch everything
         # and attach it to logger
+        # TODO: test this
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
@@ -98,7 +96,7 @@ def preprocess_results(cf, cluster):
     set_sec = cf['db_setting']
     db_info = cf['db_info']
     oneturn = cf['oneturn']
-    db = SixDB(db_info, set_sec, False, mes_level, log_file)
+    db = SixDB(db_info, settings=set_sec, create=False)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
     where = "status='submitted'"
     job_ids = db.select('preprocess_wu', ['wu_id', 'unique_id'], where)
@@ -128,9 +126,8 @@ def preprocess_results(cf, cluster):
             where = 'wu_id=%s' % item
             task_id = db.select('preprocess_wu', ['task_id'], where)
             task_id = task_id[0][0]
-            rp.parse_preprocess(item, job_path, file_list, task_table,
-                                oneturn_table, list(oneturn.keys()), mes_level,
-                                log_file)
+            parse_preprocess(item, job_path, file_list, task_table,
+                             oneturn_table, list(oneturn.keys()), log_file)
             where = 'task_id=%s' % task_id
             db.update('preprocess_task', task_table, where)
             oneturn_table['task_id'] = task_id
@@ -158,7 +155,6 @@ def preprocess_results(cf, cluster):
 def sixtrack_results(cf, cluster):
     '''Gather the results of sixtrack jobs and store in database'''
     info_sec = cf['info']
-    mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
     boinc = info_sec['boinc']
     if len(log_file) == 0:
@@ -167,6 +163,7 @@ def sixtrack_results(cf, cluster):
     if log_file is not None:
         # if desired, create a file handler with DEBUG level to catch everything
         # and attach it to logger
+        # TODO: test this
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
@@ -179,7 +176,7 @@ def sixtrack_results(cf, cluster):
     set_sec = cf['db_setting']
     f10_sec = cf['f10']
     db_info = cf['db_info']
-    db = SixDB(db_info, set_sec, False, mes_level, log_file)
+    db = SixDB(db_info, settings=set_sec, create=False)
     file_list = utils.evlt(utils.decode_strings, [info_sec['outs']])
     where = "status='submitted'"
     job_ids = db.select('sixtrack_wu', ['wu_id', 'unique_id'], where)
@@ -225,8 +222,8 @@ def sixtrack_results(cf, cluster):
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
             # parse the result
-            rp.parse_sixtrack(item, job_path, file_list, task_table, f10_table,
-                              list(f10_sec.keys()), mes_level, log_file)
+            parse_sixtrack(item, job_path, file_list, task_table, f10_table,
+                           list(f10_sec.keys()), log_file)
             db.insert('sixtrack_task', task_table)
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], item)
             task_id = db.select('sixtrack_task', ['task_id'], where)
@@ -257,7 +254,6 @@ def sixtrack_results(cf, cluster):
 def download_from_boinc(info_sec):
     '''Download results from boinc'''
     wu_ids = []
-    mes_level = int(info_sec['mes_level'])
     log_file = info_sec['log_file']
     if len(log_file) == 0:
         log_file = None
