@@ -80,6 +80,7 @@ class Study(object):
         self.paths["templates"] = self.study_path
         # self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
         self.env['test_turn'] = 1000
+        self.env['study_type'] = 'DA'
         self.cluster_module = None
         self.cluster_name = 'HTCondor'
         self.log_file = None
@@ -370,16 +371,22 @@ class Study(object):
                 utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
 
-        if not os.path.isdir(self.paths["preprocess_in"]):
-            os.makedirs(self.paths["preprocess_in"])
-        if not os.path.isdir(self.paths["preprocess_out"]):
-            os.makedirs(self.paths["preprocess_out"])
-        if not os.path.isdir(self.paths["sixtrack_in"]):
-            os.makedirs(self.paths["sixtrack_in"])
-        if not os.path.isdir(self.paths["sixtrack_out"]):
-            os.makedirs(self.paths["sixtrack_out"])
-        if not os.path.isdir(self.paths["gather"]):
-            os.makedirs(self.paths["gather"])
+        if self.env['study_type'].lower() == 'da':
+            if not os.path.isdir(self.paths["preprocess_in"]):
+                os.makedirs(self.paths["preprocess_in"])
+            if not os.path.isdir(self.paths["preprocess_out"]):
+                os.makedirs(self.paths["preprocess_out"])
+            if not os.path.isdir(self.paths["sixtrack_in"]):
+                os.makedirs(self.paths["sixtrack_in"])
+            if not os.path.isdir(self.paths["sixtrack_out"]):
+                os.makedirs(self.paths["sixtrack_out"])
+            if not os.path.isdir(self.paths["gather"]):
+                os.makedirs(self.paths["gather"])
+        elif self.env['study_type'].lower() == 'collimation':
+            if not os.path.isdir(self.paths["collimation_in"]):
+                os.makedirs(self.paths["collimation_in"])
+            if not os.path.isdir(self.paths["collimation_out"]):
+                os.makedirs(self.paths["collimation_out"])
 
     def customize(self):
         '''Update the column names of database tables  and initialize the
@@ -671,6 +678,22 @@ class Study(object):
             self.db.insert('sixtrack_wu', job_table)
             content = 'Store sixtrack job %s into database!' % job_name
             utils.message('Message', content, self.mes_level, self.log_file)
+
+        # prepare collimation parameters in database
+        self.config.clear()
+        self.config['collimation'] = {}
+        coll_sec = self.config['collimation']
+        self.config['fort3'] = {}
+        fort3_sec = self.config['fort3']
+        #self.config['f10'] = self.tables['six_results']
+        coll_sec['source_path'] = self.paths['templates']
+        coll_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+        inp = self.collimation_input['input']
+        coll_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
+        inp = self.collimation_input['temp']
+        coll_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
+        inp = self.collimation_output
+        coll_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
 
     def info(self, job=2, where=None):
         '''Print the status information of this study.

@@ -54,6 +54,7 @@ class MyStudy(Study):
         self.sixtrack_input['temp'] = ['fort.3']
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
 
+        #self.env['study_type'] = 'collimation'
         self.env['emit'] = 3.75
         self.env['gamma'] = 7460.5
         self.env['kmax'] = 5
