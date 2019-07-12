@@ -7,16 +7,12 @@ import time
 import shutil
 import zipfile
 import configparser
-
 from subprocess import Popen, PIPE
 
-from .pysixdb import SixDB
-from . import utils
-from . import resultparser as rp
-
-logging.basicConfig(format='%(asctime)s-%(name)s-%(levelname)s: %(message)s',
-                    datefmt='%H:%M:%S',
-                    level=logging.INFO)
+# this is still quite a hacky solution
+from pysixdesk.pysixdb import SixDB
+from pysixdesk import utils
+from pysixdesk.resultparser import parse_sixtrack
 
 
 def run(wu_id, input_info):

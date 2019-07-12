@@ -6,14 +6,9 @@ import copy
 import shutil
 import configparser
 
-# need to check these imports
-from .pysixdb import SixDB
-from . import resultparser as rp
-from . import utils
-
-logging.basicConfig(format='%(asctime)s-%(name)s-%(levelname)s: %(message)s',
-                    datefmt='%H:%M:%S',
-                    level=logging.INFO)
+from pysixdesk import utils
+from pysixdesk.pysixdb import SixDB
+from pysixdesk.resultparser import parse_preprocess
 
 
 def run(wu_id, input_info):

@@ -2,10 +2,8 @@
 This is a template file of preparing parameters for madx and sixtracking jobs.
 '''
 import os
-import sys
 import ast
 import copy
-import traceback
 
 # need to check if this import works properly
 from pysixdesk import submission

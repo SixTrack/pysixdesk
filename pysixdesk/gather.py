@@ -7,18 +7,9 @@ import gzip
 import shutil
 import getpass
 import zipfile
-import configparser
-from importlib.machinery import SourceFileLoader
-
-# need to check these imports
-from .pysixdb import SixDB
-from . import utils
-from . import resultparser as rp
-
 import logging
-logging.basicConfig(format='%(asctime)s-%(name)s-%(levelname)s: %(message)s',
-                    datefmt='%H:%M:%S',
-                    level=logging.INFO)
+import configparser
+import importlib
 
 
 def run(wu_id, infile):
@@ -342,3 +333,8 @@ if __name__ == '__main__':
     else:
         logger.error("Too many input arguments!")
         sys.exit(1)
+else:
+    # relative imports for safe use in pysixdesk package
+    from .pysixdb import SixDB
+    from . import utils
+    from .resultparser import parse_preprocess, parse_sixtrack
