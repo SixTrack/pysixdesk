@@ -97,13 +97,16 @@ def run(wu_id, input_info):
     output_files = utils.evlt(utils.decode_strings, [inp])
     down_list = list(output_files)
     down_list.append('fort.3')
-    status = utils.download_output(down_list, dest_path)
-    if status:
-        logger.info("All requested results have been stored in %s" % dest_path)
-    else:
-        logger.error("Job failed!")
 
-    if boinc.lower() == 'true' and status:
+    try:
+        utils.download_output(down_list, dest_path)
+        logger.info("All requested results have been stored in %s" % dest_path)
+        dl_done = True
+    except Exception:
+        logger.error("Job failed!", exc_info=True)
+        dl_done = False
+
+    if boinc.lower() == 'true' and dl_done:
         down_list = ['fort.3']
         dest_path = sixtrack_config["dest_path"]
         utils.download_output(down_list, dest_path)

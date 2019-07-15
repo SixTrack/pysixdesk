@@ -62,12 +62,13 @@ def run(wu_id, input_info):
     down_list.append('madx_in')
     down_list.append('madx_stdout')
     down_list.append('oneturnresult')
-    status = utils.download_output(down_list, dest_path)
 
-    if status:
+    try:
+        utils.download_output(down_list, dest_path)
         logger.info("All requested results have been stored in %s" % dest_path)
-    else:
-        logger.error("Job failed!")
+    except Exception:
+        logger.warning("Job failed!", exc_info=True)
+
     if dbtype.lower() == 'sql':
         return
 
