@@ -3,12 +3,10 @@ import os
 import re
 import sys
 import ast
-import copy
 import time
 import utils
 import shutil
 import zipfile
-import getpass
 import traceback
 import configparser
 import resultparser as rp
@@ -229,7 +227,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         print("The %s file doesn't exist!" % temp1)
         six_status = 0
         return six_status
-    concatenate_files(output, 'fort.3')
+    utils.concatenate_files(output, 'fort.3')
 
     # actually run
     wu_id = sixtrack_config['wu_id']
@@ -291,7 +289,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             print("The %s file doesn't exist!" % temp1)
             six_status = 0
             return six_status
-        concatenate_files(output, 'fort.3')
+        utils.concatenate_files(output, 'fort.3')
 
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'
@@ -350,21 +348,6 @@ def check_tracking(filename, surv_percent=1):
     except:
         print(traceback.print_exc())
         return 0
-
-
-def concatenate_files(source, dest):
-    '''Concatenate the given files'''
-    f_out = open(dest, 'w')
-    if type(source) is list:
-        for s_in in source:
-            f_in = open(s_in, 'r')
-            f_out.writelines(f_in.readlines())
-            f_in.close()
-    else:
-        f_in = open(source, 'r')
-        f_out.writelines(f_in.readlines())
-        f_in.close()
-    f_out.close()
 
 
 if __name__ == '__main__':

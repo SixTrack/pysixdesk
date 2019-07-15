@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 import os
-import io
 import sys
 import time
 import copy
+import utils
 import shutil
 import traceback
-import utils
 import configparser
 import resultparser as rp
 
@@ -281,7 +280,7 @@ def sixtrackjob(config, config_re, jobname, **args):
         print("The %s file doesn't exist!" % temp1)
         sixtrack_status = 0
         return sixtrack_status
-    concatenate_files(output, 'fort.3')
+    utils.concatenate_files(output, 'fort.3')
 
     # prepare the other input files
     if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
@@ -312,21 +311,6 @@ def sixtrackjob(config, config_re, jobname, **args):
     # Get out the temp folder
     os.chdir('../')
     return sixtrack_status
-
-
-def concatenate_files(source, dest):
-    '''Concatenate the given files'''
-    f_out = open(dest, 'w')
-    if type(source) is list:
-        for s_in in source:
-            f_in = open(s_in, 'r')
-            f_out.writelines(f_in.readlines())
-            f_in.close()
-    else:
-        f_in = open(source, 'r')
-        f_out.writelines(f_in.readlines())
-        f_in.close()
-    f_out.close()
 
 
 if __name__ == '__main__':

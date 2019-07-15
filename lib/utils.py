@@ -184,6 +184,21 @@ def message(mes_type, content, level=1, log_file=None):
             print(message)
 
 
+def concatenate_files(source, dest):
+    '''Concatenate the given files'''
+    f_out = open(dest, 'w')
+    if type(source) is list:
+        for s_in in source:
+            f_in = open(s_in, 'r')
+            f_out.writelines(f_in.readlines())
+            f_in.close()
+    else:
+        f_in = open(source, 'r')
+        f_out.writelines(f_in.readlines())
+        f_in.close()
+    f_out.close()
+
+
 def evlt(fun, inputs, action=sys.exit):
     '''Evaluate the specified function'''
     try:
