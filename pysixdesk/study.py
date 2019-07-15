@@ -50,8 +50,6 @@ class Study(object):
         Study._defaults(self)
         Study._structure(self)
 
-    # cluster_class getter/setter
-    # TODO: test this
     @property
     def cluster_class(self):
         return self._cluster_class
@@ -62,10 +60,8 @@ class Study(object):
         if user sets his own cluster_class, cluster_module and cluster_name update
         '''
         self._cluster_class = value
-        self._cluster_name = self._cluster_class.__name__     # return 'HTCondor'
-        print(self._cluster_class.__name__)
+        self._cluster_name = self._cluster_class.__name__      # returns 'HTCondor'
         self._cluster_module = self._cluster_class.__module__  # returns 'pysixtrack.submission'
-        print(self._cluster_class.__module__)
 
     # the user cannot change these without going through the cluster_class setter
     # it might be best to leave these as hidden attributes?

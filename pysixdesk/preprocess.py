@@ -155,6 +155,7 @@ def madxjob(madx_config, mask_config):
     if 'finished normally' not in outputlines[-2]:
         content = "MADX has not completed properly!"
         raise Exception(content)
+
     else:
         logger.info("MADX has completed properly!")
 
@@ -273,6 +274,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
         if not status:
             content = "Failed to generate input file for oneturn sixtrack!"
             raise Exception(content)
+
         output.append(dest)
     temp1 = input_files['fc.3']
     temp1 = os.path.join('../', temp1)
@@ -281,6 +283,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     else:
         content = "The %s file doesn't exist!" % temp1
         raise FileNotFoundError(content)
+
     concatenate_files(output, 'fort.3')
 
     # prepare the other input files
@@ -303,6 +306,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
         logger.error("The %s sixtrack job for chromaticity FAILED!" % jobname)
         logger.info("Check the file %s which contains the SixTrack fort.6 output." % output_name)
         raise FileNotFoundError('fort.10 not found.')
+
     else:
         result_name = '../fort.10' + '_' + jobname
         shutil.move('fort.10', result_name)

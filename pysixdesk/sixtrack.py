@@ -251,6 +251,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         test_status = check_tracking('sixtrack.output', surv_per)
         if not test_status:
             raise Exception("The job doesn't pass the test!")
+
         boinc_work = sixtrack_config['boinc_work']
         boinc_results = sixtrack_config['boinc_results']
         job_name = sixtrack_config['job_name']
@@ -271,6 +272,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             status = utils.replace(patterns, values, s, dest)
             if not status:
                 raise Exception("Failed to generate input file for sixtrack!")
+
             output.append(dest)
         temp1 = input_files['fc.3']
         if os.path.isfile(temp1):
