@@ -32,9 +32,7 @@ def run(wu_id, input_info):
     if not outputs:
         content = "Input file not found for preprocess job %s!" % wu_id
         raise FileNotFoundError(content)
-        # logger.error("There isn't input file for sixtrack job %s!" % wu_id)
-        # db.close()
-        # return 0
+
     preprocess_id = outputs[0][1]
     boinc = outputs[0][2]
     input_buf = outputs[0][0]
@@ -50,8 +48,7 @@ def run(wu_id, input_info):
     pre_task_id = db.select('preprocess_wu', ['task_id'], where)
     if not pre_task_id:
         raise Exception("Can't find the preprocess task_id for this job!")
-        # logger.error("Can't find the preprocess task_id for this job!")
-        # return 0
+
     inputs = list(input_files.values())
     pre_task_id = pre_task_id[0][0]
     where = 'task_id=%s' % str(pre_task_id)
@@ -59,8 +56,7 @@ def run(wu_id, input_info):
     db.close()
     if not input_buf:
         raise FileNotFoundError("The required files were not found!")
-        # logger.error("The required files aren't found!")
-        # return 0
+
     for infile in inputs:
         i = inputs.index(infile)
         buf = input_buf[0][i]

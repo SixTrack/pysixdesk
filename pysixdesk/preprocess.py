@@ -26,6 +26,7 @@ def run(wu_id, input_info):
     if not outputs[0]:
         content = "Input file not found for preprocess job %s!" % wu_id
         raise FileNotFoundError(content)
+
     input_buf = outputs[0][0]
     input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
     cf.clear()
@@ -123,11 +124,9 @@ def madxjob(madx_config, mask_config):
     output_files = madx_config["output_files"]
     status, output_files = utils.decode_strings(output_files)
     if not status:
-        # logger.error("Wrong setting of madx output!")
-        # madx_status = 0
-        # return madx_status
         content = "Wrong setting of madx output!"
         raise ValueError(content)
+
     if 'mask' not in mask_name:
         mask_name = mask_name + '.mask'
     mask_file = os.path.join(source_path, mask_name)
@@ -142,9 +141,6 @@ def madxjob(madx_config, mask_config):
     madx_in = 'madx_in'
     status = utils.replace(patterns, values, mask_name, madx_in)
     if not status:
-        # logger.error("Failed to generate actual madx input file!")
-        # madx_status = 0
-        # return madx_status
         content = "Failed to generate actual madx input file!"
         raise Exception(content)
 
@@ -157,9 +153,6 @@ def madxjob(madx_config, mask_config):
     with open('madx_stdout', 'w') as mad_out:
         mad_out.writelines(outputlines)
     if 'finished normally' not in outputlines[-2]:
-        # logger.error("MADX has not completed properly!")
-        # madx_status = 0
-        # return madx_status
         content = "MADX has not completed properly!"
         raise Exception(content)
     else:
@@ -170,7 +163,6 @@ def madxjob(madx_config, mask_config):
     if not status:
         content = 'MADX output files not found.'
         raise FileNotFoundError(content)
-        # return status  # The required files aren't generated normally,we need to quit
 
 
 def sixtrackjobs(config, fort3_config):
@@ -180,9 +172,6 @@ def sixtrackjobs(config, fort3_config):
 
     status, temp_files = utils.decode_strings(config["temp_files"])
     if not status:
-        # logger.error("Wrong setting of oneturn sixtrack templates!")
-        # sixtrack_status = 0
-        # return sixtrack_status
         content = "Wrong setting of oneturn sixtrack templates!"
         raise ValueError(content)
 
@@ -249,17 +238,11 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
 
     status, temp_files = utils.decode_strings(sixtrack_config["temp_files"])
     if not status:
-        # logger.error("Wrong setting of oneturn sixtrack templates!")
-        # sixtrack_status = 0
-        # return sixtrack_status
         content = "Wrong setting of oneturn sixtrack templates!"
         raise ValueError(content)
 
     status, input_files = utils.decode_strings(sixtrack_config["input_files"])
     if not status:
-        # logger.error("Wrong setting of oneturn sixtrack input!")
-        # sixtrack_status = 0
-        # return sixtrack_status
         content = "Wrong setting of oneturn sixtrack input!"
         raise ValueError(content)
 
@@ -288,9 +271,6 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
         source = os.path.join('../', s)
         status = utils.replace(patterns, values, source, dest)
         if not status:
-            # logger.error("Failed to generate input file for oneturn sixtrack!")
-            # sixtrack_status = 0
-            # return sixtrack_status
             content = "Failed to generate input file for oneturn sixtrack!"
             raise Exception(content)
         output.append(dest)
@@ -301,9 +281,6 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     else:
         content = "The %s file doesn't exist!" % temp1
         raise FileNotFoundError(content)
-        # logger.error("The %s file doesn't exist!" % temp1)
-        # sixtrack_status = 0
-        # return sixtrack_status
     concatenate_files(output, 'fort.3')
 
     # prepare the other input files
@@ -325,8 +302,6 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     if not os.path.isfile('fort.10'):
         logger.error("The %s sixtrack job for chromaticity FAILED!" % jobname)
         logger.info("Check the file %s which contains the SixTrack fort.6 output." % output_name)
-        # sixtrack_status = 0
-        # return sixtrack_status
         raise FileNotFoundError('fort.10 not found.')
     else:
         result_name = '../fort.10' + '_' + jobname

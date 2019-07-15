@@ -2,6 +2,7 @@ from .study import Study
 from .workspace import WorkSpace
 from .pysixdb import SixDB
 from .submission import HTCondor
+from .pysixdb import SixDB
 
 
 import logging
