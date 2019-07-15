@@ -5,7 +5,7 @@ from .submission import HTCondor
 
 
 import logging
-# The module logger is 'pysixdesk'
+# The module level logger is 'pysixdesk'
 # to change the logging level, in your script do:
 # ---------------------------------------
 # logger = logging.getLogger('pysixdesk')

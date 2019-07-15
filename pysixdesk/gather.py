@@ -20,15 +20,6 @@ def run(wu_id, infile):
         boinc = 'false'
         if str(wu_id) == '1':
             boinc = info_sec['boinc']
-        log_file = info_sec['log_file']
-
-        if log_file is not None:
-            # if desired, create a file handler with DEBUG level to catch everything
-            # and attach it to logger
-            # TODO: test this
-            file_handler = logging.FileHandler(log_file)
-            file_handler.setLevel(logging.DEBUG)
-            logger.addHandler(file_handler)
 
         db_info = cf['db_info']
         dbtype = db_info['db_type']
@@ -64,15 +55,6 @@ def preprocess_results(cf, cluster):
     database
     '''
     info_sec = cf['info']
-    log_file = info_sec['log_file']
-
-    if log_file is not None:
-        # if desired, create a file handler with DEBUG level to catch everything
-        # and attach it to logger
-        # TODO: test this
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(logging.DEBUG)
-        logger.addHandler(file_handler)
 
     preprocess_path = info_sec['path']
     if not os.path.isdir(preprocess_path) or not os.listdir(preprocess_path):
@@ -114,7 +96,7 @@ def preprocess_results(cf, cluster):
             task_id = db.select('preprocess_wu', ['task_id'], where)
             task_id = task_id[0][0]
             parse_preprocess(item, job_path, file_list, task_table,
-                             oneturn_table, list(oneturn.keys()), log_file)
+                             oneturn_table, list(oneturn.keys()))
             where = 'task_id=%s' % task_id
             db.update('preprocess_task', task_table, where)
             oneturn_table['task_id'] = task_id
@@ -142,18 +124,8 @@ def preprocess_results(cf, cluster):
 def sixtrack_results(cf, cluster):
     '''Gather the results of sixtrack jobs and store in database'''
     info_sec = cf['info']
-    log_file = info_sec['log_file']
-    boinc = info_sec['boinc']
-    if len(log_file) == 0:
-        log_file = None
 
-    if log_file is not None:
-        # if desired, create a file handler with DEBUG level to catch everything
-        # and attach it to logger
-        # TODO: test this
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(logging.DEBUG)
-        logger.addHandler(file_handler)
+    boinc = info_sec['boinc']
 
     six_path = info_sec['path']
     if not os.path.isdir(six_path) or not os.listdir(six_path):
@@ -210,7 +182,7 @@ def sixtrack_results(cf, cluster):
         if os.path.isdir(job_path) and os.listdir(job_path):
             # parse the result
             parse_sixtrack(item, job_path, file_list, task_table, f10_table,
-                           list(f10_sec.keys()), log_file)
+                           list(f10_sec.keys()))
             db.insert('sixtrack_task', task_table)
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], item)
             task_id = db.select('sixtrack_task', ['task_id'], where)
@@ -241,9 +213,7 @@ def sixtrack_results(cf, cluster):
 def download_from_boinc(info_sec):
     '''Download results from boinc'''
     wu_ids = []
-    log_file = info_sec['log_file']
-    if len(log_file) == 0:
-        log_file = None
+
     six_path = info_sec['path']
     res_path = info_sec['boinc_results']
     st_pre = info_sec['st_pre']

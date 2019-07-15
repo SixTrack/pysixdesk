@@ -68,13 +68,14 @@ class Study(object):
         print(self._cluster_class.__module__)
 
     # the user cannot change these without going through the cluster_class setter
+    # it might be best to leave these as hidden attributes?
     @property
     def cluster_name(self):
         return self._cluster_name
 
     @property
-    def cluser_module(self):
-        return self._cluser_module
+    def cluster_module(self):
+        return self._cluster_module
 
     def _defaults(self):
         '''initialize a study with some default settings'''
@@ -97,8 +98,6 @@ class Study(object):
         self.env['test_turn'] = 1000
 
         self.cluster_class = submission.HTCondor
-
-        self.log_file = None
 
         self.madx_output = {
             'fc.2': 'fort.2',
@@ -702,10 +701,6 @@ class Study(object):
         info_sec = self.config['info']
         self.config['db_setting'] = self.db_settings
         self.config['db_info'] = self.db_info
-        if self.log_file is None:
-            info_sec['log_file'] = ''
-        else:
-            info_sec['log_file'] = self.log_file
 
         info_sec['cluster_module'] = self.cluster_module
         info_sec['cluster_name'] = self.cluster_name

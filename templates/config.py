@@ -21,7 +21,6 @@ class MyStudy(Study):
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
 
-        self.log_file = None
         # Add database informations
         # self.db_info['db_type'] = 'sql'
         self.db_info['db_type'] = 'mysql'
