@@ -328,9 +328,9 @@ def check_tracking(filename, surv_percent=1):
     with open(filename, 'r') as f_in:
         lines = f_in.readlines()
     try:
-        track_lines = filter(lambda x: re.search('TRACKING>', x), lines)
+        track_lines = filter(lambda x: re.search(r'TRACKING>', x), lines)
         last_line = list(track_lines)[-1]
-        info = re.split(':|,', last_line)
+        info = re.split(r':|,', last_line)
         turn_info = info[1].split()
         part_info = info[-1].split()
         total_turn = ast.literal_eval(turn_info[-1])
