@@ -20,7 +20,7 @@ class MyStudy(Study):
         self.cluster_name = 'HTCondor'
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
-        # self.env['study_type'] = 'collimation'
+        self.env['study_type'] = 'collimation'
 
         ## Echo message to the terminal, if not None, echo to log_file
         self.log_file = None
@@ -59,22 +59,26 @@ class MyStudy(Study):
 
         ## The parameters for collimation job
         self.collimation_input['temp'] = ['fort.3']
-        self.collimation_input['input'] = ['allapert.b1', 'CollDB.dat',
-                'SurveryWithCrossing_XP_lowb.dat']
+        self.collimation_input['input'] = ['allapert.b1', 'CollDB.data',
+                'SurveyWithCrossing_XP_lowb.dat', 'fc.2']
         self.collimation_output = ['aperture_losses.dat', 'coll_summary.dat']
         self.collimation_params = copy.deepcopy(self.oneturn_sixtrack_params)
         self.collimation_params['COLL'] = '/'
         self.collimation_params['turnss'] = 200
-        self.collimation_params['nss'] = 500
+        self.collimation_params['nss'] = 5000
         self.collimation_params['ax0s'] = 0
         self.collimation_params['ax1s'] = 17
         self.collimation_params['e0'] = 6500000
         self.collimation_params['POST'] = '/'
-        self.collimation_params['POST1'] = '/'
+        self.collimation_params['POS1'] = '/'
         self.collimation_params['dp2'] = 0.00
         self.collimation_params['ition'] = 1
         self.collimation_params['ibtype'] = 1
         self.collimation_params['length'] = 26658.864
+        # eigen-emittances to be chosen to determine the coupling angle
+        self.collimation_params['EI'] = 3.5
+        # logical switch to calculate 4D(ilin=1) or DA approach 6D (ilin=2)
+        self.collimation_params['ilin'] = 1
 
         self.env['emit'] = 3.75
         self.env['gamma'] = 7460.5

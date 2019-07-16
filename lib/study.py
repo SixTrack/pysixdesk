@@ -123,6 +123,8 @@ class Study(object):
             ("pmass", constants.PROTON_MASS),
             ("emit_beam", 3.75),
             ("e0", 7000),
+            ("ilin", 2),
+            ("EI", 3.75),
             ("bunch_charge", 1.15E11),
             ("CHROM", 0),
             ("chrom_eps", 0.000001),
@@ -727,10 +729,10 @@ class Study(object):
                 ky = keys[i]
                 vl = element[i]
                 collimation_table[ky] = vl
-            job_name = 'collimation_job_wu_id_%i' % (wu_id)
             coll_input = self.paths['collimation_in']
             wu_id += 1
             collimation_table['wu_id'] = wu_id
+            job_name = 'collimation_job_wu_id_%i' % (wu_id)
             n = str(wu_id)
             coll_sec['dest_path'] = os.path.join(
                 self.paths['collimation_out'], n)
@@ -855,6 +857,14 @@ class Study(object):
                 utils.encode_strings, [self.sixtrack_output])
             job_name = 'collect sixtrack result'
             in_name = 'sixtrack.ini'
+            task_input = os.path.join(self.paths['gather'], str(typ), in_name)
+        elif typ == 2:
+            info_sec['path'] = self.paths['collimation_out']
+            info_sec['st_pre'] = self.st_pre
+            info_sec['outs'] = utils.evlt(
+                utils.encode_strings, [self.collimation_output])
+            job_name = 'collect collimation result'
+            in_name = 'collimation.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
         else:
             content = "Unkown job type %s" % typ

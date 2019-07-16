@@ -14,6 +14,7 @@ import generate_fort2
 import resultparser as rp
 
 from pysixdb import SixDB
+from subprocess import Popen, PIPE
 
 def run(wu_id, input_info):
     cf = configparser.ConfigParser()
@@ -35,28 +36,35 @@ def run(wu_id, input_info):
     cf.clear()
     cf.read_string(input_file)
     coll_config = cf['collimation']
-    mask_config = cf['mask']
+    mask_config = []
     fort3_config = cf['fort3']
-    status = madxjob(coll_config, mask_config)
+    #status = madxjob(coll_config, mask_config)
+    status = True
     if status:
-        # fc2 = fort2_config['fc2']
         inp = coll_config['input_files']
         inputfiles = utils.evlt(utils.decode_strings, [inp])
-        source_path = madx_config["source_path"]
+        source_path = coll_config["source_path"]
         for fil in inputfiles:
             fl = os.path.join(source_path, fil)
             shutil.copy2(fl, fil)
         fc2 = 'fc.2'
         aperture = 'allapert.b1'
-        survery = 'SurveryWithCrossing_XP_lowb.dat'
-        status = generate_fort2.run(fc2, aperture, survery)
+        survery = 'SurveyWithCrossing_XP_lowb.dat'
+        try:
+            generate_fort2.run(fc2, aperture, survery)
+            status = 1
+        except:
+            content = traceback.print_exc()
+            utils.message('Error', content)
+            status = 0
+
     elif dbtype.lower == 'sql':
         content = "The madx job failed!"
         utils.message('Warning', content)
         return status
 
     if status:
-        status = sixtrackjob(coll_config, fort3_cofig)
+        status = sixtrackjob(coll_config, fort3_config)
     elif dbtype.lower == 'sql':
         content = "The generation of fort.2 failed!"
         utils.message('Warning', content)
@@ -65,11 +73,13 @@ def run(wu_id, input_info):
     if dbtype.lower() == 'mysql':
         dest_path = './result'
     else:
-        dest_path = madx_config["dest_path"]
+        dest_path = coll_config["dest_path"]
     if not os.path.isdir(dest_path):
         os.makedirs(dest_path)
     # Download the requested files.
-    down_list = list(output_files.values())
+    otpt = coll_config["output_files"]
+    output_files = utils.evlt(utils.decode_strings, [otpt])
+    down_list = output_files
     # down_list.append('madx_in')
     # down_list.append('madx_stdout')
     status = utils.download_output(down_list, dest_path)
@@ -81,11 +91,43 @@ def run(wu_id, input_info):
         return status
 
     try:
-        pass
+        db = SixDB(db_info)
+        where = "wu_id=%s" % wu_id
+        task_id = db.select('collimation_wu', ['task_id'], where)
+        task_id = task_id[0][0]
+        job_table = {}
+        task_table = {}
+        oneturn_table = {}
+        task_table['status'] = 'Success'
+        job_path = dest_path
+        rp.parse_collimation(wu_id, job_path, output_files, task_table)
+        where = "task_id=%s" % task_id
+        db.update('collimation_task', task_table, where)
+        if task_table['status'] == 'Success':
+            where = "wu_id=%s" % wu_id
+            job_table['status'] = 'complete'
+            job_table['mtime'] = int(time.time()*1E7)
+            db.update('collimation_wu', job_table, where)
+            content = "Collimation job %s has completed normally!" % wu_id
+            utils.message('Message', content)
+        else:
+            where = "wu_id=%s" % wu_id
+            job_table['status'] = 'incomplete'
+            job_table['mtime'] = int(time.time()*1E7)
+            db.update('collimation_wu', job_table, where)
+            content = "This is a failed job!"
+            utils.message('Warning', content)
+        return status
     except:
-        pass
+        where = "wu_id=%s" % wu_id
+        job_table['status'] = 'incomplete'
+        job_table['mtime'] = int(time.time()*1E7)
+        db.update('collimation_wu', job_table, where)
+        content = traceback.print_exc()
+        utils.message('Error', content)
+        return False
     finally:
-        pass
+        db.close()
 
 
 def madxjob(madx_config, mask_config):
@@ -135,9 +177,10 @@ def madxjob(madx_config, mask_config):
 
 def sixtrackjob(sixtrack_config, fort3_config):
     '''run actual sixtrack job'''
-    sixtrack_config = config
     source_path = sixtrack_config["source_path"]
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
+    otpt = sixtrack_config["output_files"]
+    output_files = utils.evlt(utils.decode_strings, [otpt])
     status, temp_files = utils.decode_strings(sixtrack_config["temp_files"])
     if not status:
         print("Wrong setting of oneturn sixtrack templates!")
@@ -175,17 +218,10 @@ def sixtrackjob(sixtrack_config, fort3_config):
         if not status:
             print("Failed to generate input file for sixtrack job!")
             return 0
-    # temp1 = input_files['fc.3']
-    # temp1 = os.path.join('../', temp1)
-    # if os.path.isfile(temp1):
-    #     output.insert(1, temp1)
-    # else:
-    #     print("The %s file doesn't exist!" % temp1)
-    #     return 0
-    # utils.concatenate_files(output, 'fort.3')
 
     # prepare the other input files
     input_files.append('fort.2')
+    input_files.append('fort3.limi')
     for fils in input_files:
         fs = os.path.join('../', fils)
         if os.path.isfile(fs):
@@ -196,10 +232,19 @@ def sixtrackjob(sixtrack_config, fort3_config):
 
     # actually run
     print('Sixtrack job is runing...')
-    six_output = os.popen(sixtrack_exe)
-    outputlines = six_output.readlines()
+    process = Popen([sixtrack_exe], stdout=PIPE,
+            stderr=PIPE, universal_newlines=True)
+    stdout, stderr = process.communicate()
+    if stderr:
+        #utils.message('Message', stdout)
+        utils.message('Error', stderr)
     with open('../coll.output', 'w') as six_out:
-        six_out.writelines(outputlines)
+        six_out.write(stderr)
+        six_out.write('\n')
+        six_out.write(stdout)
+    for otpt in output_files:
+        if os.path.isfile(otpt):
+            shutil.copy2(otpt, '../%s' % otpt)
     #if not os.path.isfile('fort.10'):
     #    return 0
     #else:
