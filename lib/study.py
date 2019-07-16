@@ -49,6 +49,9 @@ class Study(object):
         self.sixtrack_params = collections.OrderedDict()
         self.sixtrack_input = {}
         self.sixtrack_output = []
+        self.collimation_params = collections.OrderedDict()
+        self.collimation_input = {}
+        self.collimation_output = []
         self.tables = {}
         self.table_keys = {}
         self.pragma = collections.OrderedDict()
@@ -430,6 +433,11 @@ class Study(object):
         for key in self.sixtrack_output:
             self.tables['sixtrack_task'][key] = 'BLOB'
 
+        for key, val in self.collimation_params.items():
+            self.tables['collimation_wu'][key] = self.type_dict[val]
+        for key in self.collimation_output:
+            self.tables['collimation_task'][key] = 'BLOB'
+
         for key in self.madx_input.keys():
             self.tables['templates'][key] = 'BLOB'
         for key in self.oneturn_sixtrack_input['temp']:
@@ -683,10 +691,9 @@ class Study(object):
         self.config.clear()
         self.config['collimation'] = {}
         coll_sec = self.config['collimation']
-        self.config['fort3'] = {}
-        fort3_sec = self.config['fort3']
-        #self.config['f10'] = self.tables['six_results']
+        self.config['fort3'] = self.collimation_params
         coll_sec['source_path'] = self.paths['templates']
+        coll_sec['madx_exe'] = self.paths['madx_exe']
         coll_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         inp = self.collimation_input['input']
         coll_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
@@ -694,6 +701,52 @@ class Study(object):
         coll_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
         inp = self.collimation_output
         coll_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
+
+        keys = list(self.collimation_params.keys())
+        values = []
+        for key in keys:
+            val = self.collimation_params[key]
+            if not isinstance(val, collections.Iterable) or isinstance(val, str):
+                val = [val]  # wrap with list for a single element
+            values.append(val)
+
+        check_params = self.db.select('collimation_wu', keys)
+        check_jobs = self.db.select(
+            'collimation_wu', ['wu_id', 'job_name', 'status'])
+
+        wu_id = len(check_params)
+        for element in itertools.product(*values):
+            collimation_table = collections.OrderedDict()
+            if element in check_params:
+                i = check_params.index(element)
+                name = check_jobs[i][1]
+                content = "The job %s is already in the database!" % name
+                utils.message('Warning', content,
+                              self.mes_level, self.log_file)
+                continue
+            for i in range(len(element)):
+                ky = keys[i]
+                vl = element[i]
+                mask_sec[ky] = str(vl)
+                collimation_table[ky] = vl
+            job_name = 'collimation_job_wu_id_%i' % (wu_id)
+            coll_input = self.paths['collimation_in']
+            wu_id += 1
+            collimation_table['wu_id'] = wu_id
+            n = str(wu_id)
+            coll_sec['dest_path'] = os.path.join(
+                self.paths['collimation_out'], n)
+            f_out = io.StringIO()
+            self.config.write(f_out)
+            out = f_out.getvalue()
+            collimation_table['input_file'] = utils.evlt(
+                utils.compress_buf, [out, 'str'])
+            collimation_table['status'] = 'incomplete'
+            collimation_table['job_name'] = job_name
+            collimation_table['mtime'] = int(time.time()*1E7)
+            self.db.insert('collimation_wu', collimation_table)
+            content = 'Store collimation job %s into database!' % job_name
+            utils.message('Message', content, self.mes_level, self.log_file)
 
     def info(self, job=2, where=None):
         '''Print the status information of this study.
@@ -718,22 +771,27 @@ class Study(object):
 
     def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
-        @type(0 or 1) The job type, 0 is preprocess job, 1 is sixtrack job
+        @type(0,1 or 2) The job type, 0 is preprocess job, 1 is sixtrack job,
+                        2 is collimation job
         @trials The maximum number of trials of submission'''
         if typ == 0:
             input_path = self.paths['preprocess_in']
-            output_path = self.paths['preprocess_out']
             exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
             jobname = 'preprocess'
             table_name = 'preprocess_wu'
             task_table_name = 'preprocess_task'
         elif typ == 1:
             input_path = self.paths['sixtrack_in']
-            output_path = self.paths['sixtrack_out']
             exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
             jobname = 'sixtrack'
             table_name = 'sixtrack_wu'
             task_table_name = 'sixtrack_task'
+        elif typ == 2:
+            input_path = self.paths['collimation_in']
+            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'collimation.py')
+            jobname = 'collimation'
+            table_name = 'collimation_wu'
+            task_table_name = 'collimation_task'
         else:
             content = "Unknow job type %s" % typ
             utils.message('Error', content, self.mes_level, self.log_file)
@@ -822,6 +880,74 @@ class Study(object):
         #    self.submission.prepare(wu_ids, tran_input, exe, in_name, in_path,
         #            out_path)
         #    self.submission.submit(in_path, job_name, trials)
+
+    def prepare_collimation_input(self, *args, **kwargs):
+        '''prepare the input files for collimation job'''
+        where = "status='incomplete'"
+        outputs = self.db.select(
+            'collimation_wu', ['wu_id', 'input_file'], where)
+        if not outputs:
+            content = "There isn't incomplete collimation job!"
+            utils.message('Warning', content, self.mes_level, self.log_file)
+            return
+        trans = []
+        outputs = list(zip(*outputs))
+        wu_ids = outputs[0]
+        task_table = {}
+        wu_table = {}
+        task_ids = []
+        for wu_id in wu_ids:
+            task_table['wu_id'] = wu_id
+            task_table['mtime'] = int(time.time()*1E7)
+            self.db.insert('collimation_task', task_table)
+            where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
+            task_id = self.db.select('collimation_task', ['task_id'], where)
+            task_id = task_id[0][0]
+            task_ids.append(task_id)
+            wu_table['task_id'] = task_id
+            wu_table['mtime'] = int(time.time()*1E7)
+            where = "wu_id=%s" % wu_id
+            self.db.update('collimation_wu', wu_table, where)
+        db_info = {}
+        db_info.update(self.db_info)
+        if db_info['db_type'].lower() == 'sql':
+            sub_name = os.path.join(self.paths['collimation_in'], 'sub.db')
+            if os.path.exists(sub_name):
+                os.remove(sub_name) # remove the old one
+            db_info['db_name'] = sub_name
+            sub_db = SixDB(db_info, self.db_settings, True, self.mes_level,
+                           self.log_file)
+            sub_db.create_table('collimation_wu', {'wu_id': 'int',
+                                                  'task_id': 'int', 'input_file': 'blob'})
+            incom_job = {}
+            incom_job['wu_id'] = outputs[0]
+            incom_job['task_id'] = task_ids
+            incom_job['input_file'] = outputs[1]
+            sub_db.insertm('collimation_wu', incom_job)
+            sub_db.close()
+            db_info['db_name'] = 'sub.db'
+            content = "The submitted database %s is ready!" % db_info['db_name']
+            utils.message('Message', content, self.mes_level, self.log_file)
+            trans.append(sub_name)
+
+        input_info = os.path.join(self.paths['collimation_in'], 'db.ini')
+        self.config.clear()
+        self.config['db_info'] = db_info
+        with open(input_info, 'w') as f_out:
+            self.config.write(f_out)
+        trans.append(input_info)
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib',
+            'generate_fort2.py'))
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib',
+            'twiss_tools.py'))
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'lib',
+            'fort2_tools.py'))
+        in_path = self.paths['collimation_in']
+        out_path = self.paths['collimation_out']
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'collimation.py')
+        self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
+                                out_path, *args, **kwargs)
+
 
     def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''

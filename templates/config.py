@@ -20,33 +20,36 @@ class MyStudy(Study):
         self.cluster_name = 'HTCondor'
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
+        # self.env['study_type'] = 'collimation'
 
-        # Echo message to the terminal, if not None, echo to log_file
+        ## Echo message to the terminal, if not None, echo to log_file
         self.log_file = None
         self.mes_level = 1  # message level
-        # Add database informations
-        # self.db_info['db_type'] = 'sql'
-        self.db_info['db_type'] = 'mysql'
-        # The follow information is needed when the db type is mysql
-        self.db_info['host'] = 'dbod-gc023'
-        self.db_info['port'] = '5500'
-        self.db_info['user'] = 'admin'
-        self.db_info['passwd'] = 'pysixdesk'
+        ## Add database informations
+        self.db_info['db_type'] = 'sql'
+        # self.db_info['db_type'] = 'mysql'
+        ## The follow information is needed when the db type is mysql
+        # self.db_info['host'] = 'dbod-gc023'
+        # self.db_info['port'] = '5500'
+        # self.db_info['user'] = 'admin'
+        # self.db_info['passwd'] = 'pysixdesk'
 
-        # Get the default values for specified machine with specified runtype
-        machine_params = MachineConfig('LHC').parameters('inj')
+        ## Get the default values for specified machine with specified runtype
+        #machine_params = MachineConfig('LHC').parameters('inj')
+        machine_params = MachineConfig('LHC').parameters('col')
 
-        # All parameters are case-sensitive
-        # the name of mask file
+        ## All parameters are case-sensitive
+        ## the name of mask file
         self.madx_input["mask_file"] = 'hl10.mask'
         self.madx_params["SEEDRAN"] = [1, 2]  # all seeds in the study
-        # all chromaticity in the study
+        ## all chromaticity in the study
         self.madx_params["QP"] = list(range(1, 1+1))
-        # all octupole currents in the study
+        ## all octupole currents in the study
         self.madx_params["IOCT"] = list(range(100, 200+1, 100))
         self.oneturn_sixtrack_input['temp'] = ['fort.3']
         self.oneturn_sixtrack_output = ['oneturnresult']
         self.oneturn_sixtrack_params.update(machine_params)
+        self.oneturn_sixtrack_params['COLL'] = ''
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
         amp = [8, 10, 12]  # The amplitude
         self.sixtrack_params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
@@ -54,13 +57,31 @@ class MyStudy(Study):
         self.sixtrack_input['temp'] = ['fort.3']
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
 
-        #self.env['study_type'] = 'collimation'
+        ## The parameters for collimation job
+        self.collimation_input['temp'] = ['fort.3']
+        self.collimation_input['input'] = ['allapert.b1', 'CollDB.dat',
+                'SurveryWithCrossing_XP_lowb.dat']
+        self.collimation_output = ['aperture_losses.dat', 'coll_summary.dat']
+        self.collimation_params = copy.deepcopy(self.oneturn_sixtrack_params)
+        self.collimation_params['COLL'] = '/'
+        self.collimation_params['turnss'] = 200
+        self.collimation_params['nss'] = 500
+        self.collimation_params['ax0s'] = 0
+        self.collimation_params['ax1s'] = 17
+        self.collimation_params['e0'] = 6500000
+        self.collimation_params['POST'] = '/'
+        self.collimation_params['POST1'] = '/'
+        self.collimation_params['dp2'] = 0.00
+        self.collimation_params['ition'] = 1
+        self.collimation_params['ibtype'] = 1
+        self.collimation_params['length'] = 26658.864
+
         self.env['emit'] = 3.75
         self.env['gamma'] = 7460.5
         self.env['kmax'] = 5
 
-        # Update the user-define parameters and objects
-        self.customize()  # This call is mandatory
+        ## Update the user-define parameters and objects
+        self.customize()  ## This call is mandatory
 
     def pre_calc(self, paramdict, pre_id):
         '''Further calculations for the specified parameters'''
