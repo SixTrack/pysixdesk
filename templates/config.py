@@ -9,7 +9,7 @@ import copy
 from pysixdesk import submission
 from pysixdesk import Study
 from math import sqrt, pi, sin, cos
-from machineparams import MachineConfig
+from pysixdesk.machineparams import MachineConfig
 
 
 class MyStudy(Study):
