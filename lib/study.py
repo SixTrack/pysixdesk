@@ -352,9 +352,8 @@ class Study(object):
 
     def _structure(self):
         '''Structure the workspace of this study.
-        Prepare the input and output folders.
         Copy the required template files.
-        Initialize the database.'''
+        '''
         temp = self.paths["templates"]
         if not os.path.isdir(temp) or not os.listdir(temp):
             if not os.path.exists(temp):
@@ -374,6 +373,10 @@ class Study(object):
                 utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
 
+    def customize(self):
+        '''Update the column names of database tables  and initialize the
+        submission module after the user define the necessary variables.
+        '''
         if self.env['study_type'].lower() == 'da':
             if not os.path.isdir(self.paths["preprocess_in"]):
                 os.makedirs(self.paths["preprocess_in"])
@@ -391,10 +394,6 @@ class Study(object):
             if not os.path.isdir(self.paths["collimation_out"]):
                 os.makedirs(self.paths["collimation_out"])
 
-    def customize(self):
-        '''Update the column names of database tables  and initialize the
-        submission module after the user define the necessary variables.
-        '''
         stp = self.study_path
         studies = os.path.dirname(stp)
         wu_path = os.path.dirname(studies)
@@ -727,7 +726,6 @@ class Study(object):
             for i in range(len(element)):
                 ky = keys[i]
                 vl = element[i]
-                mask_sec[ky] = str(vl)
                 collimation_table[ky] = vl
             job_name = 'collimation_job_wu_id_%i' % (wu_id)
             coll_input = self.paths['collimation_in']

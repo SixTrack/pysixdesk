@@ -5,11 +5,10 @@
 
 import re
 
-APER_COLUMNS = ['APERTYPE', 'APER_1', 'APER_2', 'APER_3', 'APER_4']
-APER_VALUES = ['APER_1', 'APER_2', 'APER_3', 'APER_4']
-
 class TwissStruct:
     '''Structure containing Twiss file information'''
+    APER_COLUMNS = ['APERTYPE', 'APER_1', 'APER_2', 'APER_3', 'APER_4']
+    APER_VALUES = ['APER_1', 'APER_2', 'APER_3', 'APER_4']
 
     def __init__(self):
         self.globals = dict()

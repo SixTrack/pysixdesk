@@ -227,7 +227,7 @@ def write_fort2(file, struct):
     except UnboundLocalError:
         pass
 
-    for i in xrange(0, len(struct.lattice), 3):
+    for i in range(0, len(struct.lattice), 3):
         try:
             file.write("%-17s %-17s %-17s \n" % (struct.lattice[i],
                 struct.lattice[i + 1], struct.lattice[i + 2]))

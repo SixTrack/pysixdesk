@@ -22,7 +22,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     # Open fc.2 file
     rfile = open(fc2, 'r')
     # Open aperture file
-    tfile = open(file2, 'r')
+    tfile = open(aperture, 'r')
     if survery is None:
         sfile = False
     else:
@@ -42,7 +42,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     print('...read %i elements in total (including DRIFTs);' %
             (len(TWstruct.elements)))
     if ldebug:
-        print 'Dumping aperture makers in TWstruct0.dat ...'
+        print('Dumping aperture makers in TWstruct0.dat ...')
         file0 = open("TWstruct0.dat", 'w')
         for item in TWstruct.elements:
             file0.write("%-16s %12s %12s %12s %12s %12s %12s\n" %
@@ -58,7 +58,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
         item['XOFF'] = 0.0
         item['YOFF'] = 0.0
     if ldebug:
-        print 'Dumping aperture makers in TWstruct1.dat ...'
+        print('Dumping aperture makers in TWstruct1.dat ...')
         file1 = open("TWstruct1.dat", 'w')
         for item in TWstruct.elements:
             file1.write("%-16s %12s %12s %12s %12s %12s %12s %12s %12s\n" %
@@ -107,7 +107,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
             file1.write("%-16s %12.4f\n" % (item['NAME'], item['S']))
         file1.close()
     # Assign apertures to fort.2 lenses, interpolated as done in BeamLossPattern
-    print('\n\nAssigning apertures to fort.2 lenses interpolated as done in
+    print('\n\nAssigning apertures to fort.2 lenses interpolated as done in \
             BeamLossPattern ...')
     Lenselist = assign_apertures(F2sequence, TWstruct)
     # here, TWstruct merges markers from survey onto list of necessary markers from aperture model
@@ -220,9 +220,10 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     print(' %16s | %10s | %10s | %10s' % ('', 'original', 'new', 'variation'))
     print(' %16s | %10i | %10i | %10s' % ('SINGLE ELEMENTs', NSEorig, NSEnew,
         NSEnew-NSEorig))
-    print(' %16s | %10i | %10i | %10s' % ('BLOCs', NBLorig, NBLnew, NBLnew-NBLorig)
-    print(' %16s | %10i | %10i | %10s' % ('LATTICE ELEMENTs', NLTorig, NLTnew,
-        NLTnew-NLTorig))
+    print(' %16s | %10i | %10i | %10s' % ('BLOCs', NBLorig, NBLnew,
+        NBLnew-NBLorig))
+    print(' %16s | %10i | %10i | %10s' %
+        ('LATTICE ELEMENTs', NLTorig, NLTnew, NLTnew-NLTorig))
     print('')
     print('...%i entries in LIMI block;' % (len(seenaper)))
     print('...delta BLOCs + entries in LIMI block = %i;' %
@@ -262,7 +263,6 @@ def error_message(tmp_string, labort):
     for single_string in tmp_strings:
         print(" !! " + single_string.strip())
     print(" !! ")
-    print ""
     if labort:
         exit(1)
 
@@ -461,7 +461,7 @@ def add_aperture(sequence, name, position, index, precision=1.e-04):
                 # Reset the drift name and scan if there are previous
                 # drifts with the same name. If so, use the first name
                 First = True
-                for i in xrange(j):
+                for i in range(j):
                     if drift['LENG'] == sequence[i]['LENG']:
                         if First:
                             firstname = sequence[i]['NAME']
