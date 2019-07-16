@@ -5,9 +5,6 @@ from importlib.machinery import SourceFileLoader
 
 from . import utils
 
-# Global variable
-LEVEL = 1
-
 
 class WorkSpace(object):
     '''
@@ -34,14 +31,14 @@ class WorkSpace(object):
         self.studies = []
         self._update_list_existing_studies()
 
-    def _check_name(self, level=LEVEL):
+    def _check_name(self):
         '''Check the workspace name'''
         if len(self.name) == 0:
             content = "...undefined workspace! Please create one first"
             self._logger.error(content)
             return False
 
-    def _check_study_name(self, study_name, level=LEVEL):
+    def _check_study_name(self, study_name):
         '''Check the study name'''
         input_study_name = study_name
         if input_study_name is None:
@@ -54,7 +51,7 @@ class WorkSpace(object):
             raise ValueError(content)
         return input_study_name
 
-    def _inflate_paths(self, sanity_check=True, level=LEVEL):
+    def _inflate_paths(self, sanity_check=True):
         '''Assemble structural full-paths of current workspace'''
         if sanity_check:
             self._check_name()
@@ -66,7 +63,7 @@ class WorkSpace(object):
         self.paths['templates'] = os.path.join(self.paths['workspace'],
                                                'templates')
 
-    def _inflate_study_path(self, study_name, sanity_check=True, level=LEVEL):
+    def _inflate_study_path(self, study_name, sanity_check=True):
         '''Generate the study path'''
         if sanity_check:
             input_study_name = self._check_study_name(study_name)
@@ -113,7 +110,7 @@ class WorkSpace(object):
         content = '...done.\n'
         self._logger.info(content)
 
-    def _update_list_existing_studies(self, sanity_check=True, level=LEVEL):
+    def _update_list_existing_studies(self, sanity_check=True):
         '''Update and report list of studies in the current workspace'''
         if sanity_check:
             self._init_dirs()
@@ -145,7 +142,7 @@ class WorkSpace(object):
         '''Show all the studies in the current workspace'''
         self._update_list_existing_studies(False)
 
-    def init_study(self, study_name=None, sanity_check=True, level=LEVEL):
+    def init_study(self, study_name=None, sanity_check=True):
         '''Initialise the directory hosting a study'''
 
         # sanity checks
@@ -185,7 +182,7 @@ class WorkSpace(object):
         # update list of existing studies
         self._update_list_existing_studies()
 
-    def load_study(self, study_name, sanity_check=True, level=LEVEL,
+    def load_study(self, study_name, sanity_check=True,
                    module_path=None, class_name='MyStudy'):
         '''Load a study'''
         # sanity checks
