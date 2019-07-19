@@ -59,27 +59,27 @@ class MyStudy(Study):
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
 
         ## The parameters for collimation job
-        self.collimation_input['temp'] = ['fort.3']
-        self.collimation_input['input'] = ['allapert.b1', 'CollDB.data',
-                'SurveyWithCrossing_XP_lowb.dat', 'fc.2']
-        self.collimation_output = ['aperture_losses.dat', 'coll_summary.dat']
-        self.collimation_params = copy.deepcopy(self.oneturn_sixtrack_params)
-        self.collimation_params['COLL'] = '/'
-        self.collimation_params['turnss'] = 200
-        self.collimation_params['nss'] = 5000
-        self.collimation_params['ax0s'] = 0
-        self.collimation_params['ax1s'] = 17
-        self.collimation_params['e0'] = 6500000
-        self.collimation_params['POST'] = '/'
-        self.collimation_params['POS1'] = '/'
-        self.collimation_params['dp2'] = 0.00
-        self.collimation_params['ition'] = 1
-        self.collimation_params['ibtype'] = 1
-        self.collimation_params['length'] = 26658.864
-        # eigen-emittances to be chosen to determine the coupling angle
-        self.collimation_params['EI'] = 3.5
-        # logical switch to calculate 4D(ilin=1) or DA approach 6D (ilin=2)
-        self.collimation_params['ilin'] = 1
+        # self.sixtrack_input['temp'] = ['fort.3']
+        # self.sixtrack_input['input'] = ['allapert.b1', 'CollDB.data',
+        #         'SurveyWithCrossing_XP_lowb.dat', 'fc.2']
+        # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat']
+        # self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
+        # self.sixtrack_params['COLL'] = '/'
+        # self.sixtrack_params['turnss'] = 200
+        # self.sixtrack_params['nss'] = 5000
+        # self.sixtrack_params['ax0s'] = 0
+        # self.sixtrack_params['ax1s'] = 17
+        # self.sixtrack_params['e0'] = 6500000
+        # self.sixtrack_params['POST'] = '/'
+        # self.sixtrack_params['POS1'] = '/'
+        # self.sixtrack_params['dp2'] = 0.00
+        # self.sixtrack_params['ition'] = 1
+        # self.sixtrack_params['ibtype'] = 1
+        # self.sixtrack_params['length'] = 26658.864
+        # # eigen-emittances to be chosen to determine the coupling angle
+        # self.sixtrack_params['EI'] = 3.5
+        # # logical switch to calculate 4D(ilin=1) or DA approach 6D (ilin=2)
+        # self.sixtrack_params['ilin'] = 1
 
         self.env['emit'] = 3.75
         self.env['gamma'] = 7460.5
