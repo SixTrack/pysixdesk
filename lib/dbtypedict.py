@@ -1,6 +1,3 @@
-import os
-
-
 class SQLiteDict(object):
 
     def __init__(self):

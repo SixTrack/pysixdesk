@@ -1,9 +1,6 @@
 import os
 import sys
-import time
 import utils
-import shutil
-import gzip
 import dbadaptor
 
 
@@ -20,7 +17,7 @@ class SixDB(object):
         '''
         self.settings = settings
         self.create = create
-        self.mes_level = 1
+        self.mes_level = mes_level
         self.log_file = log_file
         info = {}
         info.update(db_info)
@@ -128,10 +125,10 @@ class SixDB(object):
         '''Insert multiple rows'''
         self.adaptor.insertm(self.conn, table_name, values)
 
-    def select(self, table_name, columns='*', where=None, orderby=None, **args):
+    def select(self, table_name, columns='*', where=None, orderby=None, **kwargs):
         '''Select values with specified conditions'''
         r = self.adaptor.select(self.conn, table_name, columns, where, orderby,
-                                **args)
+                                **kwargs)
         return r
 
     def update(self, table_name, values, where=None):

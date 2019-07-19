@@ -9,9 +9,9 @@ This table will have only one line
 | fpopsEstimate           | double  | Getting the fpops estimate and multiplying it with 10 to get the bound 
 | fpopsBound              | double  | fpopsEstimate*1000 
 | memBound                | int(11) | The workunit will only be sent to clients with at least this much available RAM. If exceeded the workunit will be aborted 
-| diskBound               | int(11) | An upper bound on the amount of disk space requred to process the workunit 
+| diskBound               | int(11) | An upper bound on the amount of disk space required to process the workunit 
 | delayBound              | int(11) | An upper bound on the time (in seconds) between sending a result to a client and receiving a reply 
-| redundancy              | int(11) | The number of redundant calculations. Set to two or more ot achieve redundancy 
+| redundancy              | int(11) | The number of redundant calculations. Set to two or more to achieve redundancy 
 | copies                  | int(11) | The number of copies of the workunit to issue to clients
 | errors                  | int(11) | The number of errors from clients before the workunit is declared to have an error 
 | numIssues               | int(11) | The total number of clients to issue the work unit to before it is declared to have an error 

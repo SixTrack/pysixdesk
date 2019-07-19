@@ -41,16 +41,17 @@ class MyStudy(Study):
         self.madx_input["mask_file"] = 'hl10.mask'
         self.madx_params["SEEDRAN"] = [1, 2]  # all seeds in the study
         # all chromaticity in the study
-        self.madx_params["QP"] = list(range(1, 1+1))
+        self.madx_params["QP"] = list(range(1, 1 + 1))
         # all octupole currents in the study
-        self.madx_params["IOCT"] = list(range(100, 200+1, 100))
+        self.madx_params["IOCT"] = list(range(100, 200 + 1, 100))
         self.oneturn_sixtrack_input['temp'] = ['fort.3']
         self.oneturn_sixtrack_output = ['oneturnresult']
         self.oneturn_sixtrack_params.update(machine_params)
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
+        self.sixtrack_params['turnss'] = 1e6  # number of turns to track
         amp = [8, 10, 12]  # The amplitude
         self.sixtrack_params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
-        self.sixtrack_params['kang'] = list(range(1, 1+1))  # The angle
+        self.sixtrack_params['kang'] = list(range(1, 1 + 1))  # The angle
         self.sixtrack_input['temp'] = ['fort.3']
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
 
@@ -100,14 +101,14 @@ class MyStudy(Study):
                 beta_x = values[0]
                 kang = paramdict['angle']
                 kang = float(kang)
-                tt = abs(sin(pi/2*kang)/cos(pi/2*kang))
+                tt = abs(sin(pi / 2 * kang) / cos(pi / 2 * kang))
                 ratio = 0.0 if tt < 1.0E-15 else tt**2
                 emit = self.env['emit']
                 gamma = self.env['gamma']
-                factor = sqrt(emit/gamma)
-                ax0t = factor*(sqrt(beta_x)+sqrt(beta_x*ratio)*cos(pi/2*kang))
-                value0 = ax0t*value[0]
-                value1 = ax0t*value[1]
+                factor = sqrt(emit / gamma)
+                ax0t = factor * (sqrt(beta_x) + sqrt(beta_x * ratio) * cos(pi / 2 * kang))
+                value0 = ax0t * value[0]
+                value1 = ax0t * value[1]
                 paramdict[dest[0]] = str(value0)
                 paramdict[dest[1]] = str(value1)
                 return 1
@@ -117,7 +118,7 @@ class MyStudy(Study):
         elif source == 'kang':
             try:
                 kmax = self.env['kmax']
-                value1 = value/(kmax+1)
+                value1 = value / (kmax + 1)
                 paramdict[dest] = str(value1)
                 return 1
             except:

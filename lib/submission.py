@@ -1,7 +1,5 @@
 import os
-import sys
 import utils
-import subprocess
 import shutil
 import traceback
 
@@ -29,7 +27,7 @@ class Cluster(ABC):
         pass
 
     @abstractmethod
-    def remove(self, **args):
+    def remove(self, **kwargs):
         pass
 
 
@@ -109,7 +107,7 @@ class HTCondor(Cluster):
         while scont <= trials:
             args = list(args)
             for ky, vl in kwargs:
-                args = args + ['-'+ky, vl]
+                args = args + ['-' + ky, vl]
             args.append(sub)
             args.append('-batch-name')
             args.append(job_name)
@@ -131,8 +129,8 @@ class HTCondor(Cluster):
                     cl_id = int(cluster_id)
                     proc_st = int(proc_st)
                     proc_ed = int(proc_ed)
-                    proc_ls = list(range(proc_st, proc_ed+1))
-                    uniq_ids = [str(cl_id)+'.'+str(pr_id) for pr_id in proc_ls]
+                    proc_ls = list(range(proc_st, proc_ed + 1))
+                    uniq_ids = [str(cl_id) + '.' + str(pr_id) for pr_id in proc_ls]
                     if len(wu_ids) != len(uniq_ids):
                         content = "There are something wrong during submitting!"
                         utils.message('Error', content,
@@ -207,7 +205,7 @@ class HTCondor(Cluster):
     def check(self, *args, **kwargs):
         '''Check the job status'''
         for ky, vl in kwargs:
-            args = args + ['-'+ky, vl]
+            args = args + ['-' + ky, vl]
         process = Popen(['condor_q', *args], stdout=PIPE,
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
@@ -219,11 +217,11 @@ class HTCondor(Cluster):
             utils.message('Message', stdout, self.mes_level, self.log_file)
             return stdout
 
-    def remove(self, **args):
+    def remove(self, *args, **kwargs):
         '''Cancel the submitted jobs'''
         for ky, vl in kwargs:
-            args = args + ['-'+ky, vl]
-        process = Popen(['condor_rm', sub], stdout=PIPE,
+            args = args + ['-' + ky, vl]
+        process = Popen(['condor_rm', *args], stdout=PIPE,
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:

@@ -1,6 +1,6 @@
-#!/usr/bin/python3
-import os
+#!/usr/bin/env python3
 import re
+import os
 import sys
 import time
 import gzip
@@ -74,7 +74,7 @@ def preprocess_results(cf, cluster):
         content = "There isn't result in path %s!" % preprocess_path
         utils.message('Warning', content, mes_level, log_file)
         return
-    contents = os.listdir(preprocess_path)
+    # contents = os.listdir(preprocess_path)
     set_sec = cf['db_setting']
     db_info = cf['db_info']
     oneturn = cf['oneturn']
@@ -118,7 +118,7 @@ def preprocess_results(cf, cluster):
             db.insert('oneturn_sixtrack_result', oneturn_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
-                job_table['mtime'] = int(time.time()*1E7)
+                job_table['mtime'] = int(time.time() * 1E7)
                 where = "wu_id=%s" % item
                 db.update('preprocess_wu', job_table, where)
                 content = "Preprocess job %s has completed normally!" % item
@@ -207,12 +207,12 @@ def sixtrack_results(cf, cluster):
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], item)
             task_id = db.select('sixtrack_task', ['task_id'], where)
             task_id = task_id[0][0]
-            f10_table['six_input_id'] = [task_id, ]*len(f10_table['mtime'])
+            f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
             db.insertm('six_results', f10_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['task_id'] = task_id
-                job_table['mtime'] = int(time.time()*1E7)
+                job_table['mtime'] = int(time.time() * 1E7)
                 where = "wu_id=%s" % item
                 db.update('sixtrack_wu', job_table, where)
                 content = "Sixtrack job %s has completed normally!" % item
@@ -252,7 +252,7 @@ def download_from_boinc(info_sec):
         utils.message('Warning', content, mes_level, log_file)
         return 0, []
     out_path = six_path
-    items = os.listdir(out_path)
+    # items = os.listdir(out_path)
 
     processed_path = os.path.join(res_path, 'processed')
     if not os.path.isdir(processed_path):
@@ -262,7 +262,7 @@ def download_from_boinc(info_sec):
     if not os.path.isdir(tmp_path):
         os.mkdir(tmp_path)
     for res in contents:
-        if re.match(st_pre+'.+\.zip', res):
+        if re.match(r'%s.+\.zip' % st_pre, res):
             try:
                 res_file = os.path.join(res_path, res)
                 zph = zipfile.ZipFile(res_file, mode='r')
@@ -282,7 +282,7 @@ def download_from_boinc(info_sec):
             content = 'Something wrong with the result %s' % f10
             utils.message('Warning', content, mes_level, log_file)
             continue
-        wu_id = f10[match.end()+1:match.end()+2]
+        wu_id = f10[match.end() + 1:match.end() + 2]
         job_path = os.path.join(out_path, wu_id)
         if not os.path.isdir(job_path):
             cnt = "The output path for sixtrack job %s doesn't exist!" % wu_id
