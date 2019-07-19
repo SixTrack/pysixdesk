@@ -5,7 +5,7 @@ import sqlite3
 import pymysql
 import collections
 import traceback
-from constants import closing
+from contextlib import closing
 from abc import ABC, abstractmethod
 
 
@@ -254,7 +254,8 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
     def fetch_tables(self):
         '''Fetch all the table names in the database'''
         with closing(self.conn.cursor()) as c:
-            out = c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            out = c.fetchall()
         return list(out)
 
     def insert(self, table_name, values):
