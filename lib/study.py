@@ -1,18 +1,13 @@
 import os
 import io
-import re
 import sys
-import gzip
 import time
 import copy
 import utils
 import gather
 import shutil
-import inspect
 import getpass
-import zipfile
 import itertools
-import importlib
 import traceback
 import dbtypedict
 import collections
@@ -20,8 +15,6 @@ import configparser
 import constants
 
 from pysixdb import SixDB
-from datetime import datetime
-from subprocess import Popen, PIPE
 from importlib.machinery import SourceFileLoader
 
 
@@ -330,7 +323,7 @@ class Study(object):
             'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},
         }
         self.db_settings = {
-            'synchronous': 'off',
+            # 'synchronous': 'off',
             'foreign_keys': 'on',
             'journal_mode': 'memory',
             'auto_vacuum': 'full',
@@ -339,8 +332,8 @@ class Study(object):
 
         self.tables['boinc_vars'] = collections.OrderedDict()
         self.boinc_vars['workunitName'] = 'pysixdesk'
-        self.boinc_vars['fpopsEstimate'] = 30*2*10e5/2*10e6*6
-        self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate']*1000
+        self.boinc_vars['fpopsEstimate'] = 30 * 2 * 10e5 / 2 * 10e6 * 6
+        self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate'] * 1000
         self.boinc_vars['memBound'] = 100000000
         self.boinc_vars['diskBound'] = 200000000
         self.boinc_vars['delayBound'] = 2400000
@@ -495,10 +488,10 @@ class Study(object):
         require = []
         require += self.oneturn_sixtrack_input["temp"]
         require.append(self.madx_input["mask_file"])
-        for re in require:
-            if re not in cont:
+        for r in require:
+            if r not in cont:
                 content = "The required file %s isn't found in %s!" % (
-                    re, temp)
+                    r, temp)
                 utils.message('Error', content, self.mes_level, self.log_file)
                 return
         outputs = self.db.select('templates', self.tables['templates'].keys())
@@ -580,7 +573,7 @@ class Study(object):
                 madx_table[ky] = vl
             prefix = self.madx_input['mask_file'].split('.')[0]
             job_name = self.name_conven(prefix, keys, element, '')
-            madx_input = self.paths['preprocess_in']
+            # madx_input = self.paths['preprocess_in']
             wu_id += 1
             madx_table['wu_id'] = wu_id
             n = str(wu_id)
@@ -595,7 +588,7 @@ class Study(object):
                 utils.compress_buf, [out, 'str'])
             madx_table['status'] = 'incomplete'
             madx_table['job_name'] = job_name
-            madx_table['mtime'] = int(time.time()*1E7)
+            madx_table['mtime'] = int(time.time() * 1E7)
             self.db.insert('preprocess_wu', madx_table)
             content = 'Store preprocess job %s into database!' % job_name
             utils.message('Message', content, self.mes_level, self.log_file)
@@ -619,7 +612,7 @@ class Study(object):
         six_sec['test_turn'] = str(self.env['test_turn'])
 
         madx_keys = list(self.madx_params.keys())
-        madx_vals = self.db.select('preprocess_wu', ['wu_id']+madx_keys)
+        madx_vals = self.db.select('preprocess_wu', ['wu_id'] + madx_keys)
         if not madx_vals:
             content = "The preprocess_wu table is empty!"
             utils.message('Warning', content, self.mes_level, self.log_file)
@@ -655,24 +648,24 @@ class Study(object):
                 utils.message('Warning', content,
                               self.mes_level, self.log_file)
                 continue
-            for i in range(len(element)-1):
+            for i in range(len(element) - 1):
                 ky = keys[i]
                 vl = element[i]
                 fort3_sec[ky] = str(vl)
                 if isinstance(vl, collections.Iterable):
                     vl = str(vl)
                 job_table[ky] = vl
-            vl = element[len(element)-1]  # the last one is madx_id(wu_id)
+            vl = element[len(element) - 1]  # the last one is madx_id(wu_id)
             j = madx_ids.index(vl)
             for k in range(len(madx_params)):
                 ky = madx_keys[k]
                 vl = madx_params[k][j]
                 fort3_sec[ky] = str(vl)
-            cols = list(self.sixtrack_input['input'].values())
+            # cols = list(self.sixtrack_input['input'].values())
             job_table['preprocess_id'] = j + 1  # in db id begin from 1
             wu_id += 1
             job_table['wu_id'] = wu_id
-            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j+1, wu_id)
+            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1, wu_id)
             job_table['job_name'] = job_name
             dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
             six_sec['dest_path'] = dest_path
@@ -683,7 +676,7 @@ class Study(object):
             job_table['input_file'] = utils.evlt(
                 utils.compress_buf, [out, 'str'])
             job_table['status'] = 'incomplete'
-            job_table['mtime'] = int(time.time()*1E7)
+            job_table['mtime'] = int(time.time() * 1E7)
             self.db.insert('sixtrack_wu', job_table)
             content = 'Store sixtrack job %s into database!' % job_name
             utils.message('Message', content, self.mes_level, self.log_file)
@@ -754,7 +747,7 @@ class Study(object):
         0: print madx, oneturn sixtrack job
         1: print sixtrack job
         2: print madx, oneturn sixtrack and sixtrack jobs
-        wehre: the filter condition for database query, e.g. "status='complete'" '''
+        where: the filter condition for database query, e.g. "status='complete'" '''
         query = ['wu_id', 'job_name', 'status', 'unique_id']
         if job == 0 or job == 2:
             wus = self.db.select('preprocess_wu', query, where)
@@ -776,19 +769,16 @@ class Study(object):
         @trials The maximum number of trials of submission'''
         if typ == 0:
             input_path = self.paths['preprocess_in']
-            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'preprocess.py')
             jobname = 'preprocess'
             table_name = 'preprocess_wu'
-            task_table_name = 'preprocess_task'
+            # task_table_name = 'preprocess_task'
         elif typ == 1:
             input_path = self.paths['sixtrack_in']
-            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'sixtrack.py')
             jobname = 'sixtrack'
             table_name = 'sixtrack_wu'
             task_table_name = 'sixtrack_task'
         elif typ == 2:
             input_path = self.paths['collimation_in']
-            exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'collimation.py')
             jobname = 'collimation'
             table_name = 'collimation_wu'
             task_table_name = 'collimation_task'
@@ -803,7 +793,7 @@ class Study(object):
             table_name, 'batch_name', where, DISTINCT=True)
         ibatch = len(que_out)
         ibatch += 1
-        batch_name = batch_name+'_'+str(ibatch)
+        batch_name = batch_name + '_' + str(ibatch)
         status, out = self.submission.submit(input_path, batch_name,
                                              trials, *args, **kwargs)
         if status:
@@ -871,12 +861,12 @@ class Study(object):
             utils.message('Error', content, self.mes_level, self.log_file)
 
         in_path = os.path.join(self.paths['gather'], str(typ))
-        out_path = in_path
+        # out_path = in_path
         if not os.path.isdir(in_path):
             os.makedirs(in_path)
         with open(task_input, 'w') as f_out:
             self.config.write(f_out)
-        if platform is 'local':
+        if platform == 'local':
             gather.run(typ, task_input)
         # TODO: Submit gather job to htcondor is error-prone, so I block it for
         #       the moment. Acctually it's dispensable.
@@ -1010,14 +1000,14 @@ class Study(object):
         task_ids = []
         for wu_id in wu_ids:
             task_table['wu_id'] = wu_id
-            task_table['mtime'] = int(time.time()*1E7)
+            task_table['mtime'] = int(time.time() * 1E7)
             self.db.insert('sixtrack_task', task_table)
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
             task_id = self.db.select('sixtrack_task', ['task_id'], where)
             task_id = task_id[0][0]
             task_ids.append(task_id)
             wu_table['task_id'] = task_id
-            wu_table['mtime'] = int(time.time()*1E7)
+            wu_table['mtime'] = int(time.time() * 1E7)
             where = "wu_id=%s" % wu_id
             self.db.update('sixtrack_wu', wu_table, where)
         db_info = {}
@@ -1047,9 +1037,9 @@ class Study(object):
             incom_job['task_id'] = task_ids
             incom_job['input_file'] = input_buf_new
             incom_job['job_name'] = job_names
-            incom_job['boinc'] = ['false']*len(wu_ids)
+            incom_job['boinc'] = ['false'] * len(wu_ids)
             if boinc:
-                incom_job['boinc'] = ['true']*len(wu_ids)
+                incom_job['boinc'] = ['true'] * len(wu_ids)
             sub_db.insertm('sixtrack_wu', incom_job)
             wu_ids = sub_db.select('sixtrack_wu', ['wu_id'])
             wu_ids = list(zip(*wu_ids))[0]
@@ -1097,14 +1087,14 @@ class Study(object):
         task_ids = []
         for wu_id in wu_ids:
             task_table['wu_id'] = wu_id
-            task_table['mtime'] = int(time.time()*1E7)
+            task_table['mtime'] = int(time.time() * 1E7)
             self.db.insert('preprocess_task', task_table)
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
             task_id = self.db.select('preprocess_task', ['task_id'], where)
             task_id = task_id[0][0]
             task_ids.append(task_id)
             wu_table['task_id'] = task_id
-            wu_table['mtime'] = int(time.time()*1E7)
+            wu_table['mtime'] = int(time.time() * 1E7)
             where = "wu_id=%s" % wu_id
             self.db.update('preprocess_wu', wu_table, where)
         db_info = {}
@@ -1117,7 +1107,8 @@ class Study(object):
             sub_db = SixDB(db_info, self.db_settings, True, self.mes_level,
                            self.log_file)
             sub_db.create_table('preprocess_wu', {'wu_id': 'int',
-                                                  'task_id': 'int', 'input_file': 'blob'})
+                                                  'task_id': 'int',
+                                                  'input_file': 'blob'})
             incom_job = {}
             incom_job['wu_id'] = outputs[0]
             incom_job['task_id'] = task_ids
@@ -1202,7 +1193,7 @@ class Study(object):
         self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
                                 out_path, *args, **kwargs)
 
-    def pre_calc(self, **args):
+    def pre_calc(self, **kwargs):
         '''Further calculations for the specified parameters'''
         pass
 

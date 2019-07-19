@@ -122,11 +122,11 @@ def run(wu_id, input_info):
         # where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
         # task_id = db.select('sixtrack_task', ['task_id'], where)
         # task_id = task_id[0][0]
-        f10_table['six_input_id'] = [task_id, ]*len(f10_table['mtime'])
+        f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
         db.insertm('six_results', f10_table)
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
-            job_table['mtime'] = int(time.time()*1E7)
+            job_table['mtime'] = int(time.time() * 1E7)
             where = "wu_id=%s" % wu_id
             db.update('sixtrack_wu', job_table, where)
             content = "Sixtrack job %s has completed normally!" % wu_id
@@ -134,7 +134,7 @@ def run(wu_id, input_info):
         else:
             where = "wu_id=%s" % wu_id
             job_table['status'] = 'incomplete'
-            job_table['mtime'] = int(time.time()*1E7)
+            job_table['mtime'] = int(time.time() * 1E7)
             db.update('sixtrack_wu', job_table, where)
             content = "The sixtrack job failed!"
             utils.message('Warning', content)
@@ -142,7 +142,7 @@ def run(wu_id, input_info):
     except:
         where = "wu_id=%s" % wu_id
         job_table['status'] = 'incomplete'
-        job_table['mtime'] = int(time.time()*1E7)
+        job_table['mtime'] = int(time.time() * 1E7)
         db.update('sixtrack_wu', job_table, where)
         content = traceback.print_exc()
         utils.message('Error', content)
@@ -158,11 +158,11 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     real_turn = fort3_config['turnss']
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     source_path = sixtrack_config["source_path"]
-    dest_path = sixtrack_config["dest_path"]
+    # dest_path = sixtrack_config["dest_path"]
     inp = sixtrack_config["temp_files"]
     temp_files = utils.evlt(utils.decode_strings, [inp])
-    inp = sixtrack_config["output_files"]
-    output_files = utils.evlt(utils.decode_strings, [inp])
+    # inp = sixtrack_config["output_files"]
+    # output_files = utils.evlt(utils.decode_strings, [inp])
     inp = sixtrack_config["input_files"]
     input_files = utils.evlt(utils.decode_strings, [inp])
     boinc = sixtrack_config["boinc"]
@@ -175,8 +175,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             six_status = 0
             return six_status
 
-    fc3aux = open('fort.3.aux', 'r')
-    fc3aux_lines = fc3aux.readlines()
+    with open('fort.3.aux', 'r') as fc3aux:
+        fc3aux_lines = fc3aux.readlines()
     fc3aux_2 = fc3aux_lines[1]
     c = fc3aux_2.split()
     lhc_length = c[4]
@@ -207,7 +207,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         test_turn = sixtrack_config["test_turn"]
         fort3_config['turnss'] = test_turn
     keys = list(fort3_config.keys())
-    patterns = ['%'+a for a in keys]
+    patterns = ['%' + a for a in keys]
     values = [fort3_config[key] for key in keys]
     output = []
     for s in temp_files:
@@ -243,8 +243,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         six_status = 0
         return six_status
     else:
-        result_name = '../fort.10'
-        shutil.move('fort.10', result_name)
+        shutil.move('fort.10', '../fort.10')
         print('Sixtrack job %s has completed normally!' % wu_id)
     os.chdir('../')  # get out of junk folder
     if boinc.lower() != 'true':
@@ -329,9 +328,9 @@ def check_tracking(filename, surv_percent=1):
     with open(filename, 'r') as f_in:
         lines = f_in.readlines()
     try:
-        track_lines = filter(lambda x: re.search('TRACKING>', x), lines)
+        track_lines = filter(lambda x: re.search(r'TRACKING>', x), lines)
         last_line = list(track_lines)[-1]
-        info = re.split(':|,', last_line)
+        info = re.split(r':|,', last_line)
         turn_info = info[1].split()
         part_info = info[-1].split()
         total_turn = ast.literal_eval(turn_info[-1])
@@ -341,7 +340,7 @@ def check_tracking(filename, surv_percent=1):
         if track_turn < total_turn:
             return 0
         else:
-            if surv_part/total_part < surv_percent:
+            if surv_part / total_part < surv_percent:
                 return 0
             else:
                 return 1

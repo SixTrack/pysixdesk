@@ -1,4 +1,3 @@
-import os
 import sys
 import utils
 import sqlite3
@@ -77,7 +76,7 @@ class DatabaseAdaptor(ABC):
         vals = [values[key] for key in keys]
         keys = [i.replace('.', '_') for i in keys]
         cols = ','.join(keys)
-        ques = ','.join((ph,)*len(keys))
+        ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
         c.execute(sql_cmd, vals)
         conn.commit()
@@ -97,30 +96,29 @@ class DatabaseAdaptor(ABC):
         vals = [values[key] for key in keys]
         keys = [i.replace('.', '_') for i in keys]
         cols = ','.join(keys)
-        ques = ','.join((ph,)*len(keys))
+        ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
         vals = list(zip(*vals))
         c.executemany(sql_cmd, vals)
         conn.commit()
 
-    def select(self, conn, table_name, cols='*', where=None, orderby=None, **args):
+    def select(self, conn, table_name, cols='*', where=None, orderby=None, **kwargs):
         '''Select values with conditions
         @conn A connection of database
         @table_name(str) The table name
         @cols(list) The column names
         @where(str) Selection condition
         @orderby(list) Order condition
-        @**args Some other conditions
+        @**kwargs Some other conditions
         '''
         if len(cols) == 0:
             return []
         c = conn.cursor()
-        if (isinstance(cols, collections.Iterable) and
-                not isinstance(cols, str)):
+        if (isinstance(cols, collections.Iterable) and not isinstance(cols, str)):
             cols = [i.replace('.', '_') for i in cols]
             cols = ','.join(cols)
         sql = 'SELECT %s FROM %s' % (cols, table_name)
-        if 'DISTINCT' in args.keys() and args['DISTINCT']:
+        if 'DISTINCT' in kwargs.keys() and kwargs['DISTINCT']:
             sql = 'SELECT DISTINCT %s FROM %s' % (cols, table_name)
         if where is not None:
             sql += ' WHERE %s' % where
@@ -146,7 +144,7 @@ class DatabaseAdaptor(ABC):
         keys = values.keys()
         vals = [values[key] for key in keys]
         keys = [i.replace('.', '_') for i in keys]
-        ques = (ph,)*len(keys)
+        ques = (ph,) * len(keys)
         sets = ['='.join(it) for it in zip(keys, ques)]
         sets = ','.join(sets)
         if where is not None:
@@ -174,7 +172,7 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         self.mes_level = mes_level
         self.log_file = log_file
 
-    def new_connection(self, db_name, **args):
+    def new_connection(self, db_name, **kwargs):
         '''Create a new connection'''
         if '.db' not in db_name:
             db_name = db_name + '.db'
@@ -228,10 +226,10 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
         self.mes_level = mes_level
         self.log_file = log_file
 
-    def create_db(self, host, user, passwd, db_name, **args):
+    def create_db(self, host, user, passwd, db_name, **kwargs):
         '''Create a new database'''
         try:
-            conn = pymysql.connect(host, user, passwd, **args)
+            conn = pymysql.connect(host, user, passwd, **kwargs)
             c = conn.cursor()
             sql = "SELECT schema_name FROM information_schema.schemata\
                     WHERE schema_name='%s'" % db_name
@@ -258,10 +256,10 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
             content = "The db %s already exist!" % db_name
             utils.message('Warning', content, self.mes_level, self.log_file)
 
-    def new_connection(self, host, user, passwd, db_name, **args):
+    def new_connection(self, host, user, passwd, db_name, **kwargs):
         '''Connect to an exist database'''
         try:
-            conn = pymysql.connect(host, user, passwd, db_name, **args)
+            conn = pymysql.connect(host, user, passwd, db_name, **kwargs)
             return conn
         except:
             content = traceback.print_exc()

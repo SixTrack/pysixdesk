@@ -1,5 +1,4 @@
 import os
-import sys
 import copy
 import math
 from study import Study
@@ -43,11 +42,11 @@ class BashStudy(Study):
             val = val.split()
             val = [num(i) for i in val if not math.isnan(num(i))]
             if len(val) == 1:
-                val = [k+1 for k in range(int(val[0]))]
+                val = [k + 1 for k in range(int(val[0]))]
             scan_vals.append(val)
         s_i = num(seed_i)
         s_e = num(seed_e)
-        seeds = [j+s_i for j in range(int(s_e-s_i+1))]
+        seeds = [j + s_i for j in range(int(s_e - s_i + 1))]
         scan_hols.append('SEEDRAN')
         scan_vals.append(seeds)
         for i in range(len(scan_vals)):
@@ -122,7 +121,7 @@ def num(val):
     if isinstance(val, str) and val.isnumeric():
         try:
             return int(val)
-        except valueError:
+        except ValueError:
             return float(val)
     else:
         return float('nan')

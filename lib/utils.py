@@ -4,6 +4,7 @@ import re
 import sys
 import gzip
 import shutil
+import traceback
 from datetime import datetime
 
 # Gobal variables
@@ -123,15 +124,15 @@ def compress_buf(data, source='file'):
     The data source can be file,gzip,str'''
     status = False
     zbuf = io.BytesIO()
-    if source is 'file' and os.path.isfile(data):
+    if source == 'file' and os.path.isfile(data):
         with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
             with open(data, 'rb') as f_in:
                 buf = f_in.read()
                 zfile.write(buf)
-    elif source is 'gzip' and os.path.isfile(data):
+    elif source == 'gzip' and os.path.isfile(data):
         with open(data, 'rb') as f_in:
             shutil.copyfileobj(f_in, zbuf)
-    elif source is 'str' and isinstance(data, str):
+    elif source == 'str' and isinstance(data, str):
         buf = data.encode()
         with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
             zfile.write(buf)
@@ -143,15 +144,15 @@ def compress_buf(data, source='file'):
 
 
 def decompress_buf(buf, out, des='file'):
-    '''Data decompression to retireve from database'''
+    '''Data decompression to retrieve from database'''
     status = False
     if isinstance(buf, bytes):
         zbuf = io.BytesIO(buf)
-        if des is 'file':
+        if des == 'file':
             with gzip.GzipFile(fileobj=zbuf) as f_in:
                 with open(out, 'wb') as f_out:
                     f_out.write(f_in.read())
-        elif des is 'buf':
+        elif des == 'buf':
             with gzip.GzipFile(fileobj=zbuf) as f_in:
                 out = f_in.read()
                 out = out.decode()
