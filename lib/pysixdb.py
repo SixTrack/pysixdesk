@@ -9,7 +9,7 @@ def SixDB(db_info, settings=None, create=False, mes_level=1, log_file=None):
 
     @db_info: dict containing the required database information
     @settings: databse settings, i.e. pragmas
-    @create: bool controls whethter to create the db
+    @create: bool controls whether to create the db
     @mes_level: controls the messaging level, see utils.message
     @log_file: if provided, utils.message writes to the provided file
     '''
