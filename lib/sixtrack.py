@@ -175,8 +175,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             six_status = 0
             return six_status
 
-    fc3aux = open('fort.3.aux', 'r')
-    fc3aux_lines = fc3aux.readlines()
+    with open('fort.3.aux', 'r') as fc3aux:
+        fc3aux_lines = fc3aux.readlines()
     fc3aux_2 = fc3aux_lines[1]
     c = fc3aux_2.split()
     lhc_length = c[4]
@@ -246,19 +246,24 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         shutil.move('fort.10', '../fort.10')
         print('Sixtrack job %s has completed normally!' % wu_id)
     os.chdir('../')  # get out of junk folder
-
-    if boinc.lower() == 'true':
+    if boinc.lower() != 'true':
+        shutil.move('junk/fort.3', 'fort.3')
+        if boinc.lower() != 'false':
+            print("Unknown boinc flag %s!" % boinc)
+    else:
         surv_per = sixtrack_config['surv_percent']
         surv_per = ast.literal_eval(surv_per)
         test_status = check_tracking('sixtrack.output', surv_per)
         if not test_status:
+            print("The job doesn't pass the test!")
             return 0
         boinc_work = sixtrack_config['boinc_work']
         boinc_results = sixtrack_config['boinc_results']
         job_name = sixtrack_config['job_name']
         task_id = sixtrack_config['task_id']
         st_pre = os.path.basename(os.path.dirname(boinc_work))
-        job_name = st_pre + '__' + job_name + '_' + 'task_id' + '_' + str(task_id)
+        job_name = st_pre + '__' + job_name + \
+            '_' + 'task_id' + '_' + str(task_id)
         if not os.path.isdir(boinc_work):
             os.makedirs(boinc_work)
         if not os.path.isdir(boinc_results):
@@ -323,9 +328,9 @@ def check_tracking(filename, surv_percent=1):
     with open(filename, 'r') as f_in:
         lines = f_in.readlines()
     try:
-        track_lines = filter(lambda x: re.search('TRACKING>', x), lines)
+        track_lines = filter(lambda x: re.search(r'TRACKING>', x), lines)
         last_line = list(track_lines)[-1]
-        info = re.split(':|,', last_line)
+        info = re.split(r':|,', last_line)
         turn_info = info[1].split()
         part_info = info[-1].split()
         total_turn = ast.literal_eval(turn_info[-1])

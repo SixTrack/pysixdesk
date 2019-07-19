@@ -32,19 +32,19 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
         content = "The madx_out file for job %s doesn't exist! The job failed!" % item
         utils.message('Error', content, mes_level, log_file)
         task_table['status'] = 'Failed'
-    job_stdout = [s for s in contents if (re.match('htcondor\..+\.out', s) or
-                                          re.match('_condor_stdout', s))]
+    job_stdout = [s for s in contents if (re.match(r'htcondor\..+\.out', s) or
+                                          re.match(r'_condor_stdout', s))]
     if job_stdout:
         job_stdout = os.path.join(job_path, job_stdout[0])
         task_table['job_stdout'] = utils.evlt(utils.compress_buf,
                                               [job_stdout])
-    job_stderr = [s for s in contents if (re.match('htcondor\..+\.err', s) or
-                                          re.match('_condor_stderr', s))]
+    job_stderr = [s for s in contents if (re.match(r'htcondor\..+\.err', s) or
+                                          re.match(r'_condor_stderr', s))]
     if job_stderr:
         job_stderr = os.path.join(job_path, job_stderr[0])
         task_table['job_stderr'] = utils.evlt(utils.compress_buf,
                                               [job_stderr])
-    job_stdlog = [s for s in contents if re.match('htcondor\..+\.log', s)]
+    job_stdlog = [s for s in contents if re.match(r'htcondor\..+\.log', s)]
     if job_stdlog:
         job_stdlog = os.path.join(job_path, job_stdlog[0])
         task_table['job_stdlog'] = utils.evlt(utils.compress_buf,
@@ -100,19 +100,19 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names,
         fort3_in = os.path.join(job_path, fort3_in[0])
         task_table['fort3'] = utils.evlt(utils.compress_buf,
                                          [fort3_in, 'gzip'])
-    job_stdout = [s for s in contents if (re.match('htcondor\..+\.out', s) or
-                                          re.match('_condor_stdout', s))]
+    job_stdout = [s for s in contents if (re.match(r'htcondor\..+\.out', s) or
+                                          re.match(r'_condor_stdout', s))]
     if job_stdout:
         job_stdout = os.path.join(job_path, job_stdout[0])
         task_table['job_stdout'] = utils.evlt(utils.compress_buf,
                                               [job_stdout])
-    job_stderr = [s for s in contents if (re.match('htcondor\..+\.err', s) or
-                                          re.match('_condor_stderr', s))]
+    job_stderr = [s for s in contents if (re.match(r'htcondor\..+\.err', s) or
+                                          re.match(r'_condor_stderr', s))]
     if job_stderr:
         job_stderr = os.path.join(job_path, job_stderr[0])
         task_table['job_stderr'] = utils.evlt(utils.compress_buf,
                                               [job_stderr])
-    job_stdlog = [s for s in contents if re.match('htcondor\..+\.log', s)]
+    job_stdlog = [s for s in contents if re.match(r'htcondor\..+\.log', s)]
     if job_stdlog:
         job_stdlog = os.path.join(job_path, job_stdlog[0])
         task_table['job_stdlog'] = utils.evlt(utils.compress_buf,
