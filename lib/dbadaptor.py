@@ -4,12 +4,13 @@ import sqlite3
 import pymysql
 import collections
 import traceback
+from contextlib import closing
 from abc import ABC, abstractmethod
 
 
 class DatabaseAdaptor(ABC):
 
-    def __init__(self, mes_level, log_file):
+    def __init__(self, mes_level=1, log_file=None):
         self.mes_level = mes_level
         self.log_file = log_file
 
@@ -18,7 +19,7 @@ class DatabaseAdaptor(ABC):
         pass
 
     @abstractmethod
-    def setting(self, settings):
+    def setting(self, conn, settings):
         pass
 
     def create_table(self, conn, name, columns, keys, recreate):
@@ -52,13 +53,14 @@ class DatabaseAdaptor(ABC):
                     fill += fore_sql
         sql_cmd = sql % (name, fill)
         c.execute(sql_cmd)
+        c.close()
         conn.commit()
 
     def drop_table(self, conn, table_name):
         '''Drop an exist table'''
-        c = conn.cursor()
-        sql = 'DROP TABLE IF EXISTS %s' % table_name
-        c.execute(sql)
+        with closing(conn.cursor()) as c:
+            sql = 'DROP TABLE IF EXISTS %s' % table_name
+            c.execute(sql)
         conn.commit()
 
     def insert(self, conn, table_name, values, ph):
@@ -70,7 +72,6 @@ class DatabaseAdaptor(ABC):
         '''
         if len(values) == 0:
             return
-        c = conn.cursor()
         sql = 'INSERT INTO %s (%s) VALUES (%s)'
         keys = list(values.keys())
         vals = [values[key] for key in keys]
@@ -78,7 +79,8 @@ class DatabaseAdaptor(ABC):
         cols = ','.join(keys)
         ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
-        c.execute(sql_cmd, vals)
+        with closing(conn.cursor()) as c:
+            c.execute(sql_cmd, vals)
         conn.commit()
 
     def insertm(self, conn, table_name, values, ph):
@@ -90,7 +92,6 @@ class DatabaseAdaptor(ABC):
         '''
         if len(values) == 0:
             return
-        c = conn.cursor()
         sql = 'INSERT INTO %s (%s) VALUES (%s)'
         keys = list(values.keys())
         vals = [values[key] for key in keys]
@@ -99,10 +100,12 @@ class DatabaseAdaptor(ABC):
         ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
         vals = list(zip(*vals))
-        c.executemany(sql_cmd, vals)
+        with closing(conn.cursor()) as c:
+            c.executemany(sql_cmd, vals)
         conn.commit()
 
-    def select(self, conn, table_name, cols='*', where=None, orderby=None, **kwargs):
+    def select(self, conn, table_name, cols='*', where=None, orderby=None,
+               **kwargs):
         '''Select values with conditions
         @conn A connection of database
         @table_name(str) The table name
@@ -113,8 +116,8 @@ class DatabaseAdaptor(ABC):
         '''
         if len(cols) == 0:
             return []
-        c = conn.cursor()
-        if (isinstance(cols, collections.Iterable) and not isinstance(cols, str)):
+        if (isinstance(cols, collections.Iterable) and not isinstance(cols,
+                                                                      str)):
             cols = [i.replace('.', '_') for i in cols]
             cols = ','.join(cols)
         sql = 'SELECT %s FROM %s' % (cols, table_name)
@@ -124,8 +127,9 @@ class DatabaseAdaptor(ABC):
             sql += ' WHERE %s' % where
         if orderby is not None:
             sql += ' ORDER BY %s'(','.join(orderby))
-        c.execute(sql)
-        data = list(c)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+            data = c.fetchall()
         return data
 
     def update(self, conn, table_name, values, where, ph):
@@ -139,7 +143,6 @@ class DatabaseAdaptor(ABC):
 
         if len(values) == 0:
             return
-        c = conn.cursor()
         sql = 'UPDATE %s SET %s '
         keys = values.keys()
         vals = [values[key] for key in keys]
@@ -150,27 +153,26 @@ class DatabaseAdaptor(ABC):
         if where is not None:
             sql = sql + 'WHERE ' + where
         sql_cmd = sql % (table_name, sets)
-        c.execute(sql_cmd, vals)
+        with closing(conn.cursor()) as c:
+            c.execute(sql_cmd, vals)
         conn.commit()
 
     def delete(self, conn, table_name, where):
-        '''Update data in a table
+        '''Remove rows based on specified conditions
         @conn A connection of database
         @table_name(str) The table name
         @where(str) Selection condition which is mandatory here!
         '''
-        c = conn.cursor()
         sql = 'DELETE FROM %s WHERE %s' % (table_name, where)
-        c.execute(sql)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
         conn.commit()
 
 
 class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def __init__(self, mes_level=1, log_file=None):
-        DatabaseAdaptor.__init__(self, mes_level, log_file)
-        self.mes_level = mes_level
-        self.log_file = log_file
+        super().__init__(mes_level=mes_level, log_file=log_file)
 
     def new_connection(self, db_name, **kwargs):
         '''Create a new connection'''
@@ -181,10 +183,10 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def setting(self, conn, settings):
         '''Execute the settings of the database via pragma command'''
-        c = conn.cursor()
-        for key, value in settings.items():
-            sql = 'PRAGMA %s=%s' % (key, str(value))
-            c.execute(sql)
+        with closing(conn.cursor()) as c:
+            for key, value in settings.items():
+                sql = 'PRAGMA %s=%s' % (key, str(value))
+                c.execute(sql)
         conn.commit()
 
     def create_table(self, conn, name, columns, keys, recreate):
@@ -201,9 +203,10 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
-        c = conn.cursor()
-        c.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        return list(c)
+        with closing(conn.cursor()) as c:
+            c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            out = c.fetchall()
+        return list(out)
 
     def insert(self, conn, table_name, values):
         '''Insert a row of values'''
@@ -215,16 +218,14 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def update(self, conn, table_name, values, where):
         '''update values'''
-        super(SQLDatabaseAdaptor, self).update(
-            conn, table_name, values, where, '?')
+        super(SQLDatabaseAdaptor, self).update(conn, table_name, values, where,
+                                               '?')
 
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
     def __init__(self, mes_level=1, log_file=None):
-        DatabaseAdaptor.__init__(self, mes_level, log_file)
-        self.mes_level = mes_level
-        self.log_file = log_file
+        super().__init__(mes_level=mes_level, log_file=log_file)
 
     def create_db(self, host, user, passwd, db_name, **kwargs):
         '''Create a new database'''
@@ -234,12 +235,13 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
             sql = "SELECT schema_name FROM information_schema.schemata\
                     WHERE schema_name='%s'" % db_name
             c.execute(sql)
+            out = c.fetchall()
         except:
             content = traceback.print_exc()
             utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
 
-        if not list(c):
+        if not out:
             try:
                 sql = "CREATE DATABASE %s" % db_name
                 c.execute(sql)
@@ -251,22 +253,18 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
                 utils.message('Error', content, self.mes_level, self.log_file)
                 conn.rollback()
             finally:
+                c.close()
                 conn.close()
         else:
+            c.close()
+            conn.close()
             content = "The db %s already exist!" % db_name
             utils.message('Warning', content, self.mes_level, self.log_file)
 
     def new_connection(self, host, user, passwd, db_name, **kwargs):
-        '''Connect to an exist database'''
-        try:
-            conn = pymysql.connect(host, user, passwd, db_name, **kwargs)
-            return conn
-        except:
-            content = traceback.print_exc()
-            utils.message('Error', content, self.mes_level, self.log_file)
-            content = "Failed to connect to databae %s!" % db_name
-            utils.message('Error', content, self.mes_level, self.log_file)
-            return
+        '''Connect to an existing database'''
+        conn = pymysql.connect(host, user, passwd, db_name, **kwargs)
+        return conn
 
     def setting(self, conn, settings):
         pass
@@ -278,23 +276,22 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
     def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
-        c = conn.cursor()
-        # c.execute("show databases")
-        c.execute("show tables")
-        a = list(c)
+        with conn.cursor() as c:
+            c.execute("show tables")
+            a = list(c)
         return a
 
     def insert(self, conn, table_name, values):
         '''Insert a row of values'''
-        super(MySQLDatabaseAdaptor, self).insert(
-            conn, table_name, values, '%s')
+        super(MySQLDatabaseAdaptor, self).insert(conn, table_name, values,
+                                                 '%s')
 
     def insertm(self, conn, table_name, values):
         '''Insert multi rows of values'''
-        super(MySQLDatabaseAdaptor, self).insertm(
-            conn, table_name, values, '%s')
+        super(MySQLDatabaseAdaptor, self).insertm(conn, table_name, values,
+                                                  '%s')
 
     def update(self, conn, table_name, values, where):
         '''update values'''
-        super(MySQLDatabaseAdaptor, self).update(
-            conn, table_name, values, where, '%s')
+        super(MySQLDatabaseAdaptor, self).update(conn, table_name, values,
+                                                 where, '%s')

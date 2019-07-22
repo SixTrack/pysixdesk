@@ -171,7 +171,7 @@ def message(mes_type, content, level=1, log_file=None):
     if mes_type in MES_TYPE.keys():
         mes_level = MES_TYPE[mes_type]
     else:
-        mes_type = 'Unknow'
+        mes_type = 'Unknown'
         mes_level = 1
     if mes_level >= level:
         now = datetime.now()
