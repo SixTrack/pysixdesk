@@ -104,7 +104,8 @@ class DatabaseAdaptor(ABC):
             c.executemany(sql_cmd, vals)
         conn.commit()
 
-    def select(self, conn, table_name, cols='*', where=None, orderby=None, **kwargs):
+    def select(self, conn, table_name, cols='*', where=None, orderby=None,
+               **kwargs):
         '''Select values with conditions
         @conn A connection of database
         @table_name(str) The table name
@@ -115,7 +116,8 @@ class DatabaseAdaptor(ABC):
         '''
         if len(cols) == 0:
             return []
-        if (isinstance(cols, collections.Iterable) and not isinstance(cols, str)):
+        if (isinstance(cols, collections.Iterable) and not isinstance(cols,
+                                                                      str)):
             cols = [i.replace('.', '_') for i in cols]
             cols = ','.join(cols)
         sql = 'SELECT %s FROM %s' % (cols, table_name)
@@ -130,7 +132,7 @@ class DatabaseAdaptor(ABC):
             data = c.fetchall()
         return data
 
-    def update(self, conn, table_name, values, ph, where=None):
+    def update(self, conn, table_name, values, where, ph):
         '''Update data in a table
         @conn A connection of database
         @table_name(str) The table name
@@ -169,6 +171,9 @@ class DatabaseAdaptor(ABC):
 
 class SQLDatabaseAdaptor(DatabaseAdaptor):
 
+    def __init__(self, mes_level=1, log_file=None):
+        super().__init__(mes_level=mes_level, log_file=log_file)
+
     def new_connection(self, db_name, **kwargs):
         '''Create a new connection'''
         if '.db' not in db_name:
@@ -193,7 +198,8 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
                 for ky in auto_keys:
                     if ky in prim_keys and columns[ky] != 'INTEGER':
                         columns[ky] = 'INTEGER'
-        super(SQLDatabaseAdaptor, self).create_table(conn, name, columns, keys, recreate)
+        super(SQLDatabaseAdaptor, self).create_table(conn, name, columns, keys,
+                                                     recreate)
 
     def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
@@ -210,12 +216,16 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         '''Insert multi rows of values'''
         super(SQLDatabaseAdaptor, self).insertm(conn, table_name, values, '?')
 
-    def update(self, conn, table_name, values, where=None):
+    def update(self, conn, table_name, values, where):
         '''update values'''
-        super(SQLDatabaseAdaptor, self).update(conn, table_name, values, '?', where=where)
+        super(SQLDatabaseAdaptor, self).update(conn, table_name, values, where,
+                                               '?')
 
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
+
+    def __init__(self, mes_level=1, log_file=None):
+        super().__init__(mes_level=mes_level, log_file=log_file)
 
     def create_db(self, host, user, passwd, db_name, **kwargs):
         '''Create a new database'''
@@ -261,7 +271,8 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
     def create_table(self, conn, name, columns, keys, recreate):
         '''Create a new table'''
-        super(MySQLDatabaseAdaptor, self).create_table(conn, name, columns, keys, recreate)
+        super(MySQLDatabaseAdaptor, self).create_table(conn, name, columns,
+                                                       keys, recreate)
 
     def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
@@ -272,12 +283,15 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
     def insert(self, conn, table_name, values):
         '''Insert a row of values'''
-        super(MySQLDatabaseAdaptor, self).insert(conn, table_name, values, '%s')
+        super(MySQLDatabaseAdaptor, self).insert(conn, table_name, values,
+                                                 '%s')
 
     def insertm(self, conn, table_name, values):
         '''Insert multi rows of values'''
-        super(MySQLDatabaseAdaptor, self).insertm(conn, table_name, values, '%s')
+        super(MySQLDatabaseAdaptor, self).insertm(conn, table_name, values,
+                                                  '%s')
 
-    def update(self, conn, table_name, values, where=None):
+    def update(self, conn, table_name, values, where):
         '''update values'''
-        super(MySQLDatabaseAdaptor, self).update(conn, table_name, values, '%s', where=where)
+        super(MySQLDatabaseAdaptor, self).update(conn, table_name, values,
+                                                 where, '%s')

@@ -56,7 +56,7 @@ class SixDB(object):
                 utils.message('Error', content, self.mes_level, self.log_file)
                 sys.exit(1)
         else:
-            content = "Unkonw database type %s!" % dbtype
+            content = "Unkown database type %s!" % dbtype
             utils.message('Error', content, self.mes_level, self.log_file)
             sys.exit(1)
 
@@ -146,7 +146,8 @@ class SixDB(object):
 
     def __del__(self):
         try:
-            self.conn.commit()
-            self.conn.close()
+            self.close()
+            content = "Closed database connection."
+            utils.message('Message', content, self.mes_level, self.log_file)
         except Exception:
             pass
