@@ -11,44 +11,29 @@ from abc import ABC, abstractmethod
 
 class DatabaseAdaptor(ABC):
 
-    def __init__(self, db_info, settings=None, create=False, mes_level=1, log_file=None):
-        self.settings = settings
-        self.create = create
+    def __init__(self, mes_level=1, log_file=None):
         self.mes_level = mes_level
         self.log_file = log_file
-        self.db_info = db_info
-        self.conn = None
-        self._check()
-        self._setup()
-
-    @abstractmethod
-    def _check(self):
-        pass
-
-    def _setup(self):
-        self.conn = self.new_connection(**self.db_info)
-        if self.settings is not None:
-            self.setting(self.settings)
 
     @abstractmethod
     def new_connection(self, name):
         pass
 
     @abstractmethod
-    def setting(self, settings):
+    def setting(self, conn, settings):
         pass
 
-    def create_tables(self, tables, tables_keys={}, recreate=False):
+    def create_tables(self, conn, tables, tables_keys={}, recreate=False):
         '''Create multiple tables'''
         for key, value in tables.items():
             key_info = {}
             if key in tables_keys.keys():
                 key_info = tables_keys[key]
-            self.create_table(key, value, key_info, recreate)
+            self.create_table(conn, key, value, key_info, recreate)
 
-    def create_table(self, name, columns, keys, recreate):
+    def create_table(self, conn, name, columns, keys, recreate):
         '''Create a new table'''
-        c = self.conn.cursor()
+        c = conn.cursor()
         if recreate:
             c.execute("DROP TABLE IF EXISTS %s" % name)
         sql = 'CREATE TABLE IF NOT EXISTS %s (%s)'
@@ -78,16 +63,16 @@ class DatabaseAdaptor(ABC):
         sql_cmd = sql % (name, fill)
         c.execute(sql_cmd)
         c.close()
-        self.conn.commit()
+        conn.commit()
 
-    def drop_table(self, table_name):
+    def drop_table(self, conn, table_name):
         '''Drop an exist table'''
-        with closing(self.conn.cursor()) as c:
+        with closing(conn.cursor()) as c:
             sql = 'DROP TABLE IF EXISTS %s' % table_name
             c.execute(sql)
-        self.conn.commit()
+        conn.commit()
 
-    def insert(self, table_name, values, ph):
+    def insert(self, conn, table_name, values, ph):
         '''Insert a row of values
         @table_name(str) The table name
         @values(dict) The values required to insert into database
@@ -102,11 +87,11 @@ class DatabaseAdaptor(ABC):
         cols = ','.join(keys)
         ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
-        with closing(self.conn.cursor()) as c:
+        with closing(conn.cursor()) as c:
             c.execute(sql_cmd, vals)
-        self.conn.commit()
+        conn.commit()
 
-    def insertm(self, table_name, values, ph):
+    def insertm(self, conn, table_name, values, ph):
         '''Insert multiple rows once
         @table_name(str) The table name
         @values(dict) The values required to insert into database
@@ -122,11 +107,11 @@ class DatabaseAdaptor(ABC):
         ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
         vals = list(zip(*vals))
-        with closing(self.conn.cursor()) as c:
+        with closing(conn.cursor()) as c:
             c.executemany(sql_cmd, vals)
-        self.conn.commit()
+        conn.commit()
 
-    def select(self, table_name, cols='*', where=None, orderby=None, **kwargs):
+    def select(self, conn, table_name, cols='*', where=None, orderby=None, **kwargs):
         '''Select values with conditions
         @table_name(str) The table name
         @cols(list) The column names
@@ -146,12 +131,12 @@ class DatabaseAdaptor(ABC):
             sql += ' WHERE %s' % where
         if orderby is not None:
             sql += ' ORDER BY %s'(','.join(orderby))
-        with closing(self.conn.cursor()) as c:
+        with closing(conn.cursor()) as c:
             c.execute(sql)
-        data = list(c)
+            data = c.fetchall()
         return data
 
-    def update(self, table_name, values, ph, where=None):
+    def update(self, conn, table_name, values, ph, where=None):
         '''Update data in a table
         @table_name(str) The table name
         @values(dict) The column names with new values
@@ -171,59 +156,22 @@ class DatabaseAdaptor(ABC):
         if where is not None:
             sql = sql + 'WHERE ' + where
         sql_cmd = sql % (table_name, sets)
-        with closing(self.conn.cursor()) as c:
+        with closing(conn.cursor()) as c:
             c.execute(sql_cmd, vals)
-        self.conn.commit()
+        conn.commit()
 
-    def remove(self, table_name, where):
+    def remove(self, conn, table_name, where):
         '''Remove rows based on specified conditions
         @table_name(str) The table name
         @where(str) Selection condition which is mandatory here!
         '''
         sql = 'DELETE FROM %s WHERE %s' % (table_name, where)
-        with closing(self.conn.cursor()) as c:
+        with closing(conn.cursor()) as c:
             c.execute(sql)
-        self.conn.commit()
-
-    def close(self):
-        '''Disconnect the database, if a connection is active'''
-        if self.conn is not None:
-            try:
-                self.conn.commit()
-                self.conn.close()
-            except Exception:
-                pass
-
-    def __del__(self):
-        '''Disconnect before deletion'''
-        self.close()
+        conn.commit()
 
 
 class SQLDatabaseAdaptor(DatabaseAdaptor):
-
-    def _check(self):
-        if self._info_check():
-            name = self.db_info['db_name']
-            if not self.create and not os.path.exists(name):
-                content = "The database %s doesn't exist!" % name
-                utils.message('Error', content, self.mes_level, self.log_file)
-                sys.exit(1)
-        else:
-            content = "Something wrong with db info %s!" % str(self.db_info)
-            utils.message('Error', content, self.mes_level, self.log_file)
-            sys.exit(1)  # This used to not exit
-
-    def _info_check(self):
-        '''
-        Check if all the necessary information for database is there.
-        And check if the parameter's type is correct, if not, correct it
-        '''
-        if 'db_name' in self.db_info:
-            if not isinstance(self.db_info['db_name'], str):
-                self.db_info['db_name'] = str(self.db_info['db_name'])
-            return True
-        else:
-            return False
 
     def new_connection(self, db_name, **kwargs):
         '''Create a new connection'''
@@ -232,15 +180,15 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
         conn = sqlite3.connect(db_name)
         return conn
 
-    def setting(self, settings):
+    def setting(self, conn, settings):
         '''Execute the settings of the database via pragma command'''
-        with closing(self.conn.cursor()) as c:
+        with closing(conn.cursor()) as c:
             for key, value in settings.items():
                 sql = 'PRAGMA %s=%s' % (key, str(value))
                 c.execute(sql)
-        self.conn.commit()
+        conn.commit()
 
-    def create_table(self, name, columns, keys, recreate):
+    def create_table(self, conn, name, columns, keys, recreate):
         '''Create a new table'''
         if 'autoincrement' in keys.keys():
             auto_keys = keys.pop('autoincrement')
@@ -249,59 +197,29 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
                 for ky in auto_keys:
                     if ky in prim_keys and columns[ky] != 'INTEGER':
                         columns[ky] = 'INTEGER'
-        super(SQLDatabaseAdaptor, self).create_table(name, columns, keys, recreate)
+        super(SQLDatabaseAdaptor, self).create_table(conn, name, columns, keys, recreate)
 
-    def fetch_tables(self):
+    def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
-        with closing(self.conn.cursor()) as c:
+        with closing(conn.cursor()) as c:
             c.execute("SELECT name FROM sqlite_master WHERE type='table'")
             out = c.fetchall()
         return list(out)
 
-    def insert(self, table_name, values):
+    def insert(self, conn, table_name, values):
         '''Insert a row of values'''
-        super(SQLDatabaseAdaptor, self).insert(table_name, values, '?')
+        super(SQLDatabaseAdaptor, self).insert(conn, table_name, values, '?')
 
-    def insertm(self, table_name, values):
+    def insertm(self, conn, table_name, values):
         '''Insert multi rows of values'''
-        super(SQLDatabaseAdaptor, self).insertm(table_name, values, '?')
+        super(SQLDatabaseAdaptor, self).insertm(conn, table_name, values, '?')
 
-    def update(self, table_name, values, where=None):
+    def update(self, conn, table_name, values, where=None):
         '''update values'''
-        super(SQLDatabaseAdaptor, self).update(table_name, values, '?', where=where)
+        super(SQLDatabaseAdaptor, self).update(conn, table_name, values, '?', where=where)
 
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
-
-    def _check(self):
-        if self._info_check():
-            if self.create:
-                self.create_db(**self.db_info)
-        else:
-            content = "Something wrong with db info %s!" % str(self.db_info)
-            utils.message('Error', content, self.mes_level, self.log_file)
-            sys.exit(1)
-
-    def _info_check(self):
-        '''
-        Check if all the necessary information for database is there.
-        And check if the parameter's type is correct, if not, correct it
-        '''
-        keys = ['port', 'user', 'host', 'passwd', 'db_name']
-        if all([k in self.db_info for k in keys]):
-            if not isinstance(self.db_info['port'], int):
-                self.db_info['port'] = int(self.db_info['port'])
-            if not isinstance(self.db_info['user'], str):
-                self.db_info['user'] = str(self.db_info['user'])
-            if not isinstance(self.db_info['host'], str):
-                self.db_info['host'] = str(self.db_info['host'])
-            if not isinstance(self.db_info['passwd'], str):
-                self.db_info['passwd'] = str(self.db_info['passwd'])
-            if not isinstance(self.db_info['db_name'], str):
-                self.db_info['db_name'] = str(self.db_info['db_name'])
-            return True
-        else:
-            return False
 
     def create_db(self, host, user, passwd, db_name, **kwargs):
         '''Create a new database'''
@@ -342,28 +260,28 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
         conn = pymysql.connect(host, user, passwd, db_name, **kwargs)
         return conn
 
-    def setting(self, settings):
+    def setting(self, conn, settings):
         pass
 
-    def create_table(self, name, columns, keys, recreate):
+    def create_table(self, conn, name, columns, keys, recreate):
         '''Create a new table'''
-        super(MySQLDatabaseAdaptor, self).create_table(name, columns, keys, recreate)
+        super(MySQLDatabaseAdaptor, self).create_table(conn, name, columns, keys, recreate)
 
-    def fetch_tables(self):
+    def fetch_tables(self, conn):
         '''Fetch all the table names in the database'''
-        with self.conn.cursor() as c:
+        with conn.cursor() as c:
             c.execute("show tables")
             a = list(c)
         return a
 
-    def insert(self, table_name, values):
+    def insert(self, conn, table_name, values):
         '''Insert a row of values'''
-        super(MySQLDatabaseAdaptor, self).insert(table_name, values, '%s')
+        super(MySQLDatabaseAdaptor, self).insert(conn, table_name, values, '%s')
 
-    def insertm(self, table_name, values):
+    def insertm(self, conn, table_name, values):
         '''Insert multi rows of values'''
-        super(MySQLDatabaseAdaptor, self).insertm(table_name, values, '%s')
+        super(MySQLDatabaseAdaptor, self).insertm(conn, table_name, values, '%s')
 
-    def update(self, table_name, values, where=None):
+    def update(self, conn, table_name, values, where=None):
         '''update values'''
-        super(MySQLDatabaseAdaptor, self).update(table_name, values, '%s', where=where)
+        super(MySQLDatabaseAdaptor, self).update(conn, table_name, values, '%s', where=where)
