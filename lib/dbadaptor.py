@@ -155,7 +155,7 @@ class DatabaseAdaptor(ABC):
             c.execute(sql_cmd, vals)
         conn.commit()
 
-    def remove(self, conn, table_name, where):
+    def delete(self, conn, table_name, where):
         '''Remove rows based on specified conditions
         @conn A connection of database
         @table_name(str) The table name
