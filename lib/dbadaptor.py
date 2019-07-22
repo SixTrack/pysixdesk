@@ -1,4 +1,3 @@
-import os
 import sys
 import utils
 import sqlite3
@@ -22,14 +21,6 @@ class DatabaseAdaptor(ABC):
     @abstractmethod
     def setting(self, conn, settings):
         pass
-
-    def create_tables(self, conn, tables, tables_keys={}, recreate=False):
-        '''Create multiple tables'''
-        for key, value in tables.items():
-            key_info = {}
-            if key in tables_keys.keys():
-                key_info = tables_keys[key]
-            self.create_table(conn, key, value, key_info, recreate)
 
     def create_table(self, conn, name, columns, keys, recreate):
         '''Create a new table'''
@@ -74,6 +65,7 @@ class DatabaseAdaptor(ABC):
 
     def insert(self, conn, table_name, values, ph):
         '''Insert a row of values
+        @conn A connection of database
         @table_name(str) The table name
         @values(dict) The values required to insert into database
         @ph The placeholder for the selected database, e.g. ?, %s
@@ -93,6 +85,7 @@ class DatabaseAdaptor(ABC):
 
     def insertm(self, conn, table_name, values, ph):
         '''Insert multiple rows once
+        @conn A connection of database
         @table_name(str) The table name
         @values(dict) The values required to insert into database
         @ph The placeholder for the selected database, e.g. ?, %s
@@ -113,6 +106,7 @@ class DatabaseAdaptor(ABC):
 
     def select(self, conn, table_name, cols='*', where=None, orderby=None, **kwargs):
         '''Select values with conditions
+        @conn A connection of database
         @table_name(str) The table name
         @cols(list) The column names
         @where(str) Selection condition
@@ -138,6 +132,7 @@ class DatabaseAdaptor(ABC):
 
     def update(self, conn, table_name, values, ph, where=None):
         '''Update data in a table
+        @conn A connection of database
         @table_name(str) The table name
         @values(dict) The column names with new values
         @where(str) Selection condition
@@ -162,6 +157,7 @@ class DatabaseAdaptor(ABC):
 
     def remove(self, conn, table_name, where):
         '''Remove rows based on specified conditions
+        @conn A connection of database
         @table_name(str) The table name
         @where(str) Selection condition which is mandatory here!
         '''
