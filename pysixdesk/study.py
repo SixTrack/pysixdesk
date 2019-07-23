@@ -308,7 +308,7 @@ class Study(object):
             'count_changes': 'off'}
 
         self.tables['boinc_vars'] = collections.OrderedDict()
-        self.boinc_vars['workunitName'] = 'sixdesk'
+        self.boinc_vars['workunitName'] = 'pysixdesk'
         self.boinc_vars['fpopsEstimate'] = 30 * 2 * 10e5 / 2 * 10e6 * 6
         self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate'] * 1000
         self.boinc_vars['memBound'] = 100000000
@@ -722,7 +722,7 @@ class Study(object):
             raise ValueError(content)
 
         in_path = os.path.join(self.paths['gather'], str(typ))
-        out_path = in_path
+        # out_path = in_path
         if not os.path.isdir(in_path):
             os.makedirs(in_path)
         with open(task_input, 'w') as f_out:

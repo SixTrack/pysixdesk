@@ -196,13 +196,12 @@ def sixtrackjobs(config, fort3_config):
 
     # Calculate and write out the requested values
     chrom_eps = fort3_config['chrom_eps']
-    first = open('fort.10_first_oneturn')
-    a = first.readline()
-    valf = a.split()
-    first.close()
-    second = open('fort.10_second_oneturn')
-    b = second.readline()
-    vals = b.split()
+    with open('fort.10_first_oneturn', 'r') as first:
+        a = first.readline()
+        valf = a.split()
+    with open('fort.10_second_oneturn', 'r') as second:
+        b = second.readline()
+        vals = b.split()
     tunes = [chrom_eps, valf[2], valf[3], vals[2], vals[3]]
     chrom1 = (float(vals[2]) - float(valf[2])) / float(chrom_eps)
     chrom2 = (float(vals[3]) - float(valf[3])) / float(chrom_eps)

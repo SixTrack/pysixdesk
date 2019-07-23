@@ -178,8 +178,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         else:
             raise FileNotFoundError("The required file %s isn't found!" % infile)
 
-    fc3aux = open('fort.3.aux', 'r')
-    fc3aux_lines = fc3aux.readlines()
+    with open('fort.3.aux', 'r') as fc3aux:
+        fc3aux_lines = fc3aux.readlines()
     fc3aux_2 = fc3aux_lines[1]
     c = fc3aux_2.split()
     lhc_length = c[4]
@@ -320,9 +320,9 @@ def check_tracking(filename, surv_percent=1):
     with open(filename, 'r') as f_in:
         lines = f_in.readlines()
     try:
-        track_lines = filter(lambda x: re.search('TRACKING>', x), lines)
+        track_lines = filter(lambda x: re.search(r'TRACKING>', x), lines)
         last_line = list(track_lines)[-1]
-        info = re.split(':|,', last_line)
+        info = re.split(r':|,', last_line)
         turn_info = info[1].split()
         part_info = info[-1].split()
         total_turn = ast.literal_eval(turn_info[-1])

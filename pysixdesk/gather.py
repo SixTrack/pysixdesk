@@ -238,7 +238,7 @@ def download_from_boinc(info_sec):
     if not os.path.isdir(tmp_path):
         os.mkdir(tmp_path)
     for res in contents:
-        if re.match(st_pre + '.+\.zip', res):
+        if re.match(r'%s.+\.zip' % st_pre, res):
             try:
                 res_file = os.path.join(res_path, res)
                 zph = zipfile.ZipFile(res_file, mode='r')
