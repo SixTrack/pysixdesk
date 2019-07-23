@@ -51,7 +51,7 @@ class MyStudy(Study):
         self.oneturn_sixtrack_params.update(machine_params)
         self.oneturn_sixtrack_params['COLL'] = ''
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
-        self.sixtrack_params['turnss'] = 1e6  # number of turns to track
+        self.sixtrack_params['turnss'] = int(1e6)  # number of turns to track (must be int)
         amp = [8, 10, 12]  # The amplitude
         self.sixtrack_params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
         self.sixtrack_params['kang'] = list(range(1, 1 + 1))  # The angle
