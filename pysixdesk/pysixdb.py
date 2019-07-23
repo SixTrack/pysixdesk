@@ -1,7 +1,6 @@
 import os
-import sys
-import utils
-import dbadaptor
+import logging
+from . import dbadaptor
 
 
 class SixDB(object):
@@ -15,6 +14,7 @@ class SixDB(object):
         For MySQL db db_info should contain db_name(just name), user,
         password, host, port and other optional arguments.
         '''
+        self._logger = logging.getLogger(__name__)
         self.settings = settings
         self.create = create
         self.mes_level = mes_level
@@ -37,13 +37,10 @@ class SixDB(object):
                 name = db_info['db_name']
                 if not self.create and not os.path.exists(name):
                     content = "The database %s doesn't exist!" % name
-                    utils.message('Error', content, self.mes_level,
-                                  self.log_file)
-                    sys.exit(1)
+                    raise Exception(content)
             else:
                 content = "Something wrong with db info %s!" % str(db_info)
-                utils.message('Error', content, self.mes_level, self.log_file)
-                sys.exit(1)
+                raise ValueError(content)
         elif dbtype.lower() == 'mysql':
             self.adaptor = dbadaptor.MySQLDatabaseAdaptor(self.mes_level,
                                                           self.log_file)
@@ -53,12 +50,10 @@ class SixDB(object):
                     self.adaptor.create_db(**db_info)
             else:
                 content = "Something wrong with db info %s!" % str(db_info)
-                utils.message('Error', content, self.mes_level, self.log_file)
-                sys.exit(1)
+                raise ValueError(content)
         else:
             content = "Unkown database type %s!" % dbtype
-            utils.message('Error', content, self.mes_level, self.log_file)
-            sys.exit(1)
+            raise ValueError(content)
 
         self.conn = self.adaptor.new_connection(**db_info)
         if self.settings is not None:
@@ -148,6 +143,6 @@ class SixDB(object):
         try:
             self.close()
             content = "Closed database connection."
-            utils.message('Message', content, self.mes_level, self.log_file)
+            self._logger.info(content)
         except Exception:
             pass
