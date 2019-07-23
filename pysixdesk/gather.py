@@ -307,3 +307,10 @@ else:
     from .pysixdb import SixDB
     from . import utils
     from .resultparser import parse_preprocess, parse_sixtrack
+
+    logger = logging.getLogger(__name__)
+    sh = logging.StreamHandler()
+    sh.setFormatter(logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
+                                      datefmt='%H:%M:%S'))
+    logger.addHandler(sh)
+    logger.setLevel(logging.INFO)
