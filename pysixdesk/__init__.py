@@ -22,12 +22,6 @@ import logging
 # logger.addHandler(filehandler)
 # ---------------------------------------
 
-# To set the logging level, in your script do:
-# ---------------------------------------
-# logger = logging.getLogger('pysixdesk')
-# logger.setLevel(logger.WARNING)
-# ---------------------------------------
-
 logger = logging.getLogger(__name__)  # logger name: 'pysixdesk'
 sh = logging.StreamHandler()
 sh.setFormatter(logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
