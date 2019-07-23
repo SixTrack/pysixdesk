@@ -5,8 +5,7 @@ from . import dbadaptor
 
 class SixDB(object):
 
-    def __init__(self, db_info, settings=None, create=False, mes_level=1,
-                 log_file=None):
+    def __init__(self, db_info, settings=None, create=False):
         '''Constructor.
         db_info(dict): contain the information of the database,
                        such as db_name, type, user, password, host and so on
@@ -17,8 +16,6 @@ class SixDB(object):
         self._logger = logging.getLogger(__name__)
         self.settings = settings
         self.create = create
-        self.mes_level = mes_level
-        self.log_file = log_file
         info = {}
         info.update(db_info)
         self._setup(info)
@@ -30,8 +27,7 @@ class SixDB(object):
         else:
             dbtype = db_info.pop('db_type')
         if dbtype.lower() == 'sql':
-            self.adaptor = dbadaptor.SQLDatabaseAdaptor(self.mes_level,
-                                                        self.log_file)
+            self.adaptor = dbadaptor.SQLDatabaseAdaptor()
             status = self.info_check(dbtype, db_info)
             if status:
                 name = db_info['db_name']
@@ -42,8 +38,7 @@ class SixDB(object):
                 content = "Something wrong with db info %s!" % str(db_info)
                 raise ValueError(content)
         elif dbtype.lower() == 'mysql':
-            self.adaptor = dbadaptor.MySQLDatabaseAdaptor(self.mes_level,
-                                                          self.log_file)
+            self.adaptor = dbadaptor.MySQLDatabaseAdaptor()
             status = self.info_check(dbtype, db_info)
             if status:
                 if self.create:

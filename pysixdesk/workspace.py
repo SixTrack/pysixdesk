@@ -74,7 +74,7 @@ class WorkSpace(object):
         self._logger.info(content)
         return os.path.join(self.paths['studies'], input_study_name)
 
-    def _init_dirs(self, sanity_check=True, level=LEVEL):
+    def _init_dirs(self, sanity_check=True):
         '''Initialise directories of current workspace, including copy of
            template files'''
         if sanity_check:

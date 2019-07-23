@@ -8,10 +8,8 @@ from abc import ABC, abstractmethod
 
 class DatabaseAdaptor(ABC):
 
-    def __init__(self, mes_level=1, log_file=None):
+    def __init__(self):
         self._logger = logging.getLogger(__name__)
-        self.mes_level = mes_level
-        self.log_file = log_file
 
     @abstractmethod
     def new_connection(self, name):
@@ -170,8 +168,8 @@ class DatabaseAdaptor(ABC):
 
 class SQLDatabaseAdaptor(DatabaseAdaptor):
 
-    def __init__(self, mes_level=1, log_file=None):
-        super().__init__(mes_level=mes_level, log_file=log_file)
+    def __init__(self):
+        super().__init__()
 
     def new_connection(self, db_name, **kwargs):
         '''Create a new connection'''
@@ -223,8 +221,8 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
 
-    def __init__(self, mes_level=1, log_file=None):
-        super().__init__(mes_level=mes_level, log_file=log_file)
+    def __init__(self):
+        super().__init__()
 
     def create_db(self, host, user, passwd, db_name, **kwargs):
         '''Create a new database'''

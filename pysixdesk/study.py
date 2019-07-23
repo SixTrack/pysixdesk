@@ -57,13 +57,17 @@ class Study(object):
     @cluster_class.setter
     def cluster_class(self, value):
         '''
-        if user sets his own cluster_class, cluster_module and cluster_name update
+        if user sets his own cluster_class, cluster_module and cluster_name
+        update
         '''
         self._cluster_class = value
-        self._cluster_name = self._cluster_class.__name__      # returns 'HTCondor'
-        self._cluster_module = self._cluster_class.__module__  # returns 'pysixtrack.submission'
+        self._cluster_name = self._cluster_class.__name__
+        # returns 'HTCondor'
+        self._cluster_module = self._cluster_class.__module__
+        # returns 'pysixtrack.submission'
 
-    # the user cannot change these without going through the cluster_class setter
+    # the user cannot change these without going through the cluster_class
+    # setter
     # it might be best to leave these as hidden attributes?
     @property
     def cluster_name(self):
@@ -628,7 +632,7 @@ class Study(object):
         0: print madx, oneturn sixtrack job
         1: print sixtrack job
         2: print madx, oneturn sixtrack and sixtrack jobs
-        where: the filter condition for database query, e.g. "status='complete'" '''
+        where: the filter condition for database query, e.g. "status='complete'"'''
         query = ['wu_id', 'job_name', 'status', 'unique_id']
         if job == 0 or job == 2:
             wus = self.db.select('preprocess_wu', query, where)
