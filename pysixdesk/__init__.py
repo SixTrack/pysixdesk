@@ -1,8 +1,8 @@
-from .study import Study
-from .workspace import WorkSpace
-from .pysixdb import SixDB
-from .submission import HTCondor
-from .pysixdb import SixDB
+from .lib.study import Study
+from .lib.workspace import WorkSpace
+from .lib.pysixdb import SixDB
+from .lib.submission import HTCondor
+from .lib.pysixdb import SixDB
 
 
 import logging
