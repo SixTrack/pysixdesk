@@ -8,6 +8,7 @@ import getpass
 import itertools
 import collections
 import configparser
+from importlib.machinery import SourceFileLoader
 
 from . import dbtypedict
 from . import utils
@@ -50,33 +51,6 @@ class Study(object):
         Study._defaults(self)
         Study._structure(self)
 
-    @property
-    def cluster_class(self):
-        return self._cluster_class
-
-    @cluster_class.setter
-    def cluster_class(self, value):
-        '''
-        if user sets his own cluster_class, cluster_module and cluster_name
-        update
-        '''
-        self._cluster_class = value
-        self._cluster_name = self._cluster_class.__name__
-        # returns 'HTCondor'
-        self._cluster_module = self._cluster_class.__module__
-        # returns 'pysixtrack.submission'
-
-    # the user cannot change these without going through the cluster_class
-    # setter
-    # it might be best to leave these as hidden attributes?
-    @property
-    def cluster_name(self):
-        return self._cluster_name
-
-    @property
-    def cluster_module(self):
-        return self._cluster_module
-
     def _defaults(self):
         '''initialize a study with some default settings'''
         # full path to madx
@@ -96,6 +70,8 @@ class Study(object):
         self.paths["templates"] = self.study_path
         # self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
         self.env['test_turn'] = 1000
+        self.cluster_module = None
+        self.cluster_name = 'HTCondor'
 
         self.cluster_class = submission.HTCondor
 
@@ -423,12 +399,28 @@ class Study(object):
             self.db.create_tables(self.tables, self.table_keys)
 
         # Initialize the submission object
-        try:
-            self.submission = self.cluster_class(self.paths['templates'])
-        except Exception:
-            content = 'Failed to instantiate cluster class.'
-            self._logger.error(content, exc_info=True)
-            raise
+        cluster_module = self.cluster_module
+        classname = self.cluster_name
+        if cluster_module is None:
+            cluster_module = os.path.join(
+                utils.PYSIXDESK_ABSPATH, 'lib', 'submission.py')
+        if os.path.isfile(cluster_module):
+            module_name = os.path.abspath(cluster_module)
+            module_name = module_name.replace('.py', '')
+            try:
+                mod = SourceFileLoader(module_name,
+                                       cluster_module).load_module()
+                cluster_cls = getattr(mod, classname)
+                # pass temp path to submission class
+                self.submission = cluster_cls(self.mes_level, self.log_file,
+                                              self.paths['templates'])
+            except ImportError as e:
+                content = 'Failed to instantiate cluster class.'
+                self._logger.error(content)
+                raise e
+        else:
+            content = "The submission module %s doesn't exist!" % cluster_module
+            raise FileNotFoundError(content)
 
     def update_db(self):
         '''Update the database whith the user-defined parameters'''
