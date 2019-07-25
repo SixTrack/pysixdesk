@@ -274,18 +274,19 @@ def download_from_boinc(info_sec):
 
 if __name__ == '__main__':
 
-    # these separated imports are quite a hacky solution, as this file is imported in
-    # pysixtrack/study.py for a gather.run call, when collecting results locally.
-    # As it is used in the pacakge, these imports should be relative, but they can't be
-    # as this file is moved to htcondor to be ran independently from the package.
-    # With this, the imported files don't need to be moved to htcondor. As the pysixdesk
-    # package is in python path even on HTCondor.
+    # these separated imports are quite a hacky solution, as this file is
+    # imported in pysixtrack/study.py for a gather.run call, when collecting
+    # results locally. As it is used in the pacakge, these imports should be
+    # relative, but they can't be as this file is moved to htcondor to be ran
+    # independently from the package. With this, the imported files don't need
+    # to be moved to htcondor. As the pysixdesk package is in python path even
+    # on HTCondor.
 
-    # the better solution is to have this file (and the other files executed on htcondor)
-    # seperated completely from the package.
-    from pysixdesk.pysixdb import SixDB
-    from pysixdesk import utils
-    from pysixdesk.resultparser import parse_preprocess, parse_sixtrack
+    # the better solution is to have this file (and the other files executed on
+    # htcondor) seperated completely from the package.
+    from pysixdesk.lib.pysixdb import SixDB
+    from pysixdesk.lib import utils
+    from pysixdesk.lib.resultparser import parse_preprocess, parse_sixtrack
 
     logger = utils.condor_logger()
 

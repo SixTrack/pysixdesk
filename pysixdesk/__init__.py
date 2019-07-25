@@ -2,30 +2,16 @@ from .lib.study import Study
 from .lib.workspace import WorkSpace
 from .lib.pysixdb import SixDB
 from .lib.submission import HTCondor
-from .lib.pysixdb import SixDB
-
 
 import logging
 # The module level logger is 'pysixdesk'
-# to change the logging level, in your script do:
-# ---------------------------------------
-# logger = logging.getLogger('pysixdesk')
-# logger.setLevel(logging.ERROR)
-# ---------------------------------------
 
-# To add logging to file, in your script do:
-# ---------------------------------------
-# filehandler = logging.FileHandler(log_path)
-# filehandler.setFormatter(logging.Formatter(format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-#                                            datefmt='%H:%M:%S'))
-# filehandler.setLevel(logging.DEBUG)
-# logger.addHandler(filehandler)
-# ---------------------------------------
+default_frmt = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
+                                 datefmt='%H:%M:%S')
 
 logger = logging.getLogger(__name__)  # logger name: 'pysixdesk'
 sh = logging.StreamHandler()
-sh.setFormatter(logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
-                                  datefmt='%H:%M:%S'))
+sh.setFormatter(default_frmt)
 logger.addHandler(sh)
 logger.setLevel(logging.INFO)
 

@@ -4,7 +4,7 @@ import time
 import gzip
 import logging
 
-from pysixdesk.utils import evlt, compress_buf
+from pysixdesk.lib.utils import evlt, compress_buf
 
 '''Parse the results of preprocess jobs and sixtrack jobs'''
 

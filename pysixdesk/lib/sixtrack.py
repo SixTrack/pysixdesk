@@ -9,10 +9,9 @@ import zipfile
 import configparser
 from subprocess import Popen, PIPE
 
-# this is still quite a hacky solution
-from pysixdesk.pysixdb import SixDB
-from pysixdesk import utils
-from pysixdesk.resultparser import parse_sixtrack
+from pysixdesk.lib.pysixdb import SixDB
+from pysixdesk.lib import utils
+from pysixdesk.lib.resultparser import parse_sixtrack
 
 
 def run(wu_id, input_info):

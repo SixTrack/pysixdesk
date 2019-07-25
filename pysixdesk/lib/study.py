@@ -8,7 +8,7 @@ import getpass
 import itertools
 import collections
 import configparser
-from importlib.machinery import SourceFileLoader
+# from importlib.machinery import SourceFileLoader
 
 from . import dbtypedict
 from . import utils
@@ -853,7 +853,7 @@ class Study(object):
         tran_input.append(input_info)
         in_path = self.paths['sixtrack_in']
         out_path = self.paths['sixtrack_out']
-        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk', 'sixtrack.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'sixtrack.py')
         self.submission.prepare(wu_ids, tran_input, exe, 'db.ini', in_path,
                                 out_path, *args, **kwargs)
 
@@ -914,7 +914,7 @@ class Study(object):
         trans.append(input_info)
         in_path = self.paths['preprocess_in']
         out_path = self.paths['preprocess_out']
-        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk', 'preprocess.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'preprocess.py')
         self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
                                 out_path, *args, **kwargs)
 

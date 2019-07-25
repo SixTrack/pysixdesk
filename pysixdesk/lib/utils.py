@@ -8,7 +8,7 @@ import logging
 import traceback
 
 # Gobal variables
-PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def check(files):

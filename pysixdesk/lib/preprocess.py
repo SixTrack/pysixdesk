@@ -6,9 +6,9 @@ import copy
 import shutil
 import configparser
 
-from pysixdesk import utils
-from pysixdesk.pysixdb import SixDB
-from pysixdesk.resultparser import parse_preprocess
+from pysixdesk.lib import utils
+from pysixdesk.lib.pysixdb import SixDB
+from pysixdesk.lib.resultparser import parse_preprocess
 
 
 def run(wu_id, input_info):
