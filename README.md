@@ -115,6 +115,20 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
       myStudy.collect_result(1, True) # True: collect results from boinc spool directory
       ```
 
+In order to use a custom cluster, make sure the file containing your custom cluster class in your PYTHONPATH and simply change the cluster_class attribute in `config.py` to point to the desired class:
+
+`config.py:`
+
+  ```python
+   import cluster
+   ...
+   def __init__(self, name='study', location=os.getcwd()):
+       super(MyStudy, self).__init__(name, location)
+       self.cluster_class = cluster.custom
+       ...
+   ```
+
+
 ## Description for the database tables
 
 There are ten tables in the database:
