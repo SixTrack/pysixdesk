@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import re
 import os
-import sys
 import time
 import gzip
 import shutil
@@ -10,6 +9,12 @@ import zipfile
 import logging
 import configparser
 import importlib
+
+from .pysixdb import SixDB
+from . import utils
+from .resultparser import parse_preprocess, parse_sixtrack
+
+logger = logging.getLogger(__name__)
 
 
 def run(wu_id, infile):
@@ -270,48 +275,3 @@ def download_from_boinc(info_sec):
         wu_ids.append(wu_id)
     shutil.rmtree(tmp_path)
     return 1, wu_ids
-
-
-if __name__ == '__main__':
-
-    # these separated imports are quite a hacky solution, as this file is
-    # imported in pysixtrack/study.py for a gather.run call, when collecting
-    # results locally. As it is used in the pacakge, these imports should be
-    # relative, but they can't be as this file is moved to htcondor to be ran
-    # independently from the package. With this, the imported files don't need
-    # to be moved to htcondor. As the pysixdesk package is in python path even
-    # on HTCondor.
-
-    # the better solution is to have this file (and the other files executed on
-    # htcondor) seperated completely from the package.
-    from pysixdesk.lib.pysixdb import SixDB
-    from pysixdesk.lib import utils
-    from pysixdesk.lib.resultparser import parse_preprocess, parse_sixtrack
-
-    logger = utils.condor_logger()
-
-    args = sys.argv
-    num = len(args[1:])
-    if num == 0 or num == 1:
-        logger.error("The input file is missing!")
-        sys.exit(1)
-    elif num == 2:
-        wu_id = args[1]
-        in_file = args[2]
-        run(wu_id, in_file)
-        sys.exit(0)
-    else:
-        logger.error("Too many input arguments!")
-        sys.exit(1)
-else:
-    # relative imports for safe use in pysixdesk package
-    from .pysixdb import SixDB
-    from . import utils
-    from .resultparser import parse_preprocess, parse_sixtrack
-
-    logger = logging.getLogger(__name__)
-    sh = logging.StreamHandler()
-    sh.setFormatter(logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
-                                      datefmt='%H:%M:%S'))
-    logger.addHandler(sh)
-    logger.setLevel(logging.INFO)
