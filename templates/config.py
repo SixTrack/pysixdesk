@@ -36,13 +36,13 @@ class MyStudy(Study):
         self.env['study_type'] = 'collimation'
 
         # Add database informations
-        # self.db_info['db_type'] = 'sql'
-        self.db_info['db_type'] = 'mysql'
+        self.db_info['db_type'] = 'sql'
+        # self.db_info['db_type'] = 'mysql'
         # The follow information is needed when the db type is mysql
-        self.db_info['host'] = 'dbod-gc023'
-        self.db_info['port'] = '5500'
-        self.db_info['user'] = 'admin'
-        self.db_info['passwd'] = 'pysixdesk'
+        # self.db_info['host'] = 'dbod-gc023'
+        # self.db_info['port'] = '5500'
+        # self.db_info['user'] = 'admin'
+        # self.db_info['passwd'] = 'pysixdesk'
 
         ## Get the default values for specified machine with specified runtype
         #machine_params = MachineConfig('LHC').parameters('inj')
@@ -68,7 +68,7 @@ class MyStudy(Study):
         self.sixtrack_params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
         self.sixtrack_params['kang'] = list(range(1, 1 + 1))  # The angle
         self.sixtrack_input['temp'] = ['fort.3']
-        self.sixtrack_input['input'] = copy.deepcopy(madx_output)
+        self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
 
         ## The parameters for collimation job
         # self.madx_output = {

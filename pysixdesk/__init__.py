@@ -7,7 +7,7 @@ import logging
 # The module level logger is 'pysixdesk'
 
 default_frmt = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
-                                 datefmt='%H:%M:%S')
+                                 datefmt='%b/%d %H:%M:%S')
 
 logger = logging.getLogger(__name__)  # logger name: 'pysixdesk'
 sh = logging.StreamHandler()
