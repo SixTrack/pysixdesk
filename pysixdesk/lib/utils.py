@@ -4,13 +4,12 @@ import re
 import sys
 import gzip
 import shutil
+import logging
 import traceback
-from datetime import datetime
 
 # Gobal variables
-MES_TYPE = dict([['Progress', 0], ['Warning', 1],
-                 ['Message', 2], ['Error', 3]])
-PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
 
 
 def check(files):
@@ -43,11 +42,12 @@ def download_output(filenames, dest, zp=True):
     '''Download the requested files to the given destinaion.
     If zp is true, then zip the files before download.
     '''
-    status = False
     if not os.path.isdir(dest):
         os.makedirs(dest, 0o755)
 
     for filename in filenames:
+        if not os.path.isfile(filename):
+            raise FileNotFoundError("The file %s doesn't exist, download failed!" % filename)
         if os.path.isfile(filename):
             if zp:
                 out_name = os.path.join(dest, filename + '.gz')
@@ -55,11 +55,6 @@ def download_output(filenames, dest, zp=True):
                     shutil.copyfileobj(f_in, f_out)
             else:
                 shutil.copy(filename, dest)
-        else:
-            print("The file %s doesn't exist, download failed!" % filename)
-            return status
-    status = True
-    return status
 
 
 def check_fort3_block(fort3, block):
@@ -170,32 +165,13 @@ def decompress_buf(buf, out, des='file'):
                 out = f_in.read()
                 out = out.decode()
         else:
-            print("Unknow output type!")
+            print("Unknown output type!")
             return status
         status = True
         return status, out
     else:
         print("Invalid input data!")
         return status
-
-
-def message(mes_type, content, level=1, log_file=None):
-    '''Print the different type message to the destination'''
-    if mes_type in MES_TYPE.keys():
-        mes_level = MES_TYPE[mes_type]
-    else:
-        mes_type = 'Unknown'
-        mes_level = 1
-    if mes_level >= level:
-        now = datetime.now()
-        date_time = now.strftime("%Y/%b/%d %H:%M:%S")
-        message = "%s %s: %s" % (date_time, mes_type, content)
-        if log_file is not None:
-            with open(log_file, 'a') as f_out:
-                f_out.write(message)
-                f_out.write('\n')
-        else:
-            print(message)
 
 
 def concatenate_files(source, dest, ignore='ENDE'):
@@ -250,3 +226,35 @@ def evlt(fun, inputs, action=sys.exit):
     except:
         print(traceback.print_exc())
         return
+
+
+def condor_logger():
+    '''
+    Prepares a logger for job on HTCondor. It splits the levels to stdout
+    and stderr, and disables module level logging.
+
+    DEBUG, INFO go to stdout
+    WARNING, ERROR go to stderr
+    '''
+
+    # disable module level logging of pysixdesk
+    logger = logging.getLogger('pysixdesk')
+    logger.setLevel(logging.CRITICAL)
+
+    formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
+                                  datefmt='%H:%M:%S')
+    # enable local logging with stdout and stderr split
+    logger = logging.getLogger('preprocess_job')
+    h1 = logging.StreamHandler(sys.stdout)
+    h1.setFormatter(formatter)
+    h1.setLevel(logging.DEBUG)
+    h1.addFilter(lambda record: record.levelno <= logging.INFO)
+
+    h2 = logging.StreamHandler(sys.stderr)
+    h2.setFormatter(formatter)
+    h2.setLevel(logging.WARNING)
+
+    logger.addHandler(h1)
+    logger.addHandler(h2)
+    logger.setLevel(logging.DEBUG)
+    return logger
