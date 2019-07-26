@@ -12,7 +12,7 @@ class Cluster(ABC):
 
     def __init__(self, temp_path):
         '''Constructor'''
-        pass
+        self._logger = logging.getLogger(__name__)
 
     @abstractmethod
     def prepare(self, wu_ids, trans, exe, exe_args, input_path, output_path,
@@ -37,7 +37,7 @@ class HTCondor(Cluster):
 
     def __init__(self, temp_path=None):
         '''Constructor'''
-        self._logger = logging.getLogger(__name__)
+        super().__init__(temp_path)
         self.temp = temp_path
         self.sub_name = 'htcondor_run.sub'
 
