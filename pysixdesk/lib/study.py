@@ -654,18 +654,12 @@ class Study(object):
         @trials The maximum number of trials of submission'''
         if typ == 0:
             input_path = self.paths['preprocess_in']
-            # output_path = self.paths['preprocess_out']
-            # exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk', 'preprocess.py')
             jobname = 'preprocess'
             table_name = 'preprocess_wu'
-            # task_table_name = 'preprocess_task'
         elif typ == 1:
             input_path = self.paths['sixtrack_in']
-            # output_path = self.paths['sixtrack_out']
-            # exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk', 'sixtrack.py')
             jobname = 'sixtrack'
             table_name = 'sixtrack_wu'
-            # task_table_name = 'sixtrack_task'
         else:
             content = ("Unknown job type %s, must be either 0 "
                        "(preprocess job) or 1 (tracking job)") % typ
