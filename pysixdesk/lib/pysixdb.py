@@ -1,13 +1,11 @@
 import os
-import sys
-import utils
-import dbadaptor
+import logging
+from . import dbadaptor
 
 
 class SixDB(object):
 
-    def __init__(self, db_info, settings=None, create=False, mes_level=1,
-                 log_file=None):
+    def __init__(self, db_info, settings=None, create=False):
         '''Constructor.
         db_info(dict): contain the information of the database,
                        such as db_name, type, user, password, host and so on
@@ -15,10 +13,9 @@ class SixDB(object):
         For MySQL db db_info should contain db_name(just name), user,
         password, host, port and other optional arguments.
         '''
+        self._logger = logging.getLogger(__name__)
         self.settings = settings
         self.create = create
-        self.mes_level = mes_level
-        self.log_file = log_file
         info = {}
         info.update(db_info)
         self._setup(info)
@@ -30,35 +27,28 @@ class SixDB(object):
         else:
             dbtype = db_info.pop('db_type')
         if dbtype.lower() == 'sql':
-            self.adaptor = dbadaptor.SQLDatabaseAdaptor(self.mes_level,
-                                                        self.log_file)
+            self.adaptor = dbadaptor.SQLDatabaseAdaptor()
             status = self.info_check(dbtype, db_info)
             if status:
                 name = db_info['db_name']
                 if not self.create and not os.path.exists(name):
                     content = "The database %s doesn't exist!" % name
-                    utils.message('Error', content, self.mes_level,
-                                  self.log_file)
-                    sys.exit(1)
+                    raise Exception(content)
             else:
                 content = "Something wrong with db info %s!" % str(db_info)
-                utils.message('Error', content, self.mes_level, self.log_file)
-                sys.exit(1)
+                raise ValueError(content)
         elif dbtype.lower() == 'mysql':
-            self.adaptor = dbadaptor.MySQLDatabaseAdaptor(self.mes_level,
-                                                          self.log_file)
+            self.adaptor = dbadaptor.MySQLDatabaseAdaptor()
             status = self.info_check(dbtype, db_info)
             if status:
                 if self.create:
                     self.adaptor.create_db(**db_info)
             else:
                 content = "Something wrong with db info %s!" % str(db_info)
-                utils.message('Error', content, self.mes_level, self.log_file)
-                sys.exit(1)
+                raise ValueError(content)
         else:
             content = "Unkown database type %s!" % dbtype
-            utils.message('Error', content, self.mes_level, self.log_file)
-            sys.exit(1)
+            raise ValueError(content)
 
         self.conn = self.adaptor.new_connection(**db_info)
         if self.settings is not None:
@@ -148,6 +138,6 @@ class SixDB(object):
         try:
             self.close()
             content = "Closed database connection."
-            utils.message('Message', content, self.mes_level, self.log_file)
+            self._logger.info(content)
         except Exception:
             pass

@@ -2,13 +2,27 @@
 This is a template file of preparing parameters for madx and sixtracking jobs.
 '''
 import os
-import sys
 import ast
 import copy
-import traceback
-from study import Study
+import logging
+
+from pysixdesk.lib import submission
+from pysixdesk import Study
 from math import sqrt, pi, sin, cos
-from machineparams import MachineConfig
+from pysixdesk.lib.machineparams import MachineConfig
+
+# logger configuration
+logger = logging.getLogger('pysixdesk')
+logger.setLevel(logging.INFO)
+
+# To add logging to file, do:
+# -----------------------------------------------------------------------------
+# filehandler = logging.FileHandler(log_path)
+# filehandler.setFormatter(logging.Formatter(format='%(asctime)s %(name)s %(levelname)s: %(message)s',
+#                                            datefmt='%H:%M:%S'))
+# filehandler.setLevel(logging.DEBUG)
+# logger.addHandler(filehandler)
+# -----------------------------------------------------------------------------
 
 
 class MyStudy(Study):
@@ -16,14 +30,10 @@ class MyStudy(Study):
     def __init__(self, name='study', location=os.getcwd()):
         super(MyStudy, self).__init__(name, location)
         '''initialize a study'''
-        self.cluster_module = None  # default
-        self.cluster_name = 'HTCondor'
+        self.cluster_class = submission.HTCondor
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
 
-        # Echo message to the terminal, if not None, echo to log_file
-        self.log_file = None
-        self.mes_level = 1  # message level
         # Add database informations
         # self.db_info['db_type'] = 'sql'
         self.db_info['db_type'] = 'mysql'
@@ -67,8 +77,7 @@ class MyStudy(Study):
         # The angle should be calculated before amplitude
         status = []
         status.append(self.formulas('kang', 'angle', paramdict, pre_id))
-        status.append(self.formulas(
-            'amp', ['ax0s', 'ax1s'], paramdict, pre_id))
+        status.append(self.formulas('amp', ['ax0s', 'ax1s'], paramdict, pre_id))
         return all(status)
 
     def formulas(self, source, dest, paramdict, pre_id):
@@ -81,20 +90,20 @@ class MyStudy(Study):
         @pre_id The identified preprocess job id
         @return The status'''
         if source not in paramdict.keys():
-            print("Invalid parameter name %s!" % source)
+            self._logger.info("Invalid parameter name %s!" % source)
             return 0
         value = paramdict.pop(source)
         try:
             value = ast.literal_eval(value)
         except ValueError:
-            print("Invalid source value for job %s!" % pre_id)
+            self._logger.error("Invalid source value for job %s!" % pre_id)
             return 0
         except:
-            print("Unexpected error!\n", traceback.print_exc())
+            self._logger.error("Unexpected error!", exc_info=True)
             return 0
         if source == 'amp':
             if 'angle' not in paramdict.keys():
-                print("The angle should be calculated before amplitude!")
+                self._logger.error("The angle should be calculated before amplitude!")
                 return 0
             try:
                 values = self.getval(pre_id, ['betax'])
@@ -113,7 +122,7 @@ class MyStudy(Study):
                 paramdict[dest[1]] = str(value1)
                 return 1
             except:
-                print("Unexpected error!\n", traceback.print_exc())
+                self._logger("Unexpected error!", exc_info=True)
                 return 0
         elif source == 'kang':
             try:
@@ -121,11 +130,11 @@ class MyStudy(Study):
                 value1 = value / (kmax + 1)
                 paramdict[dest] = str(value1)
                 return 1
-            except:
-                print("Unexpected error!\n", traceback.print_exc())
+            except Exception:
+                self._logger.error("Unexpected error!", exc_info=True)
                 return 0
         else:
-            print("There isn't a formula for parameter %s!" % dest)
+            self._logger.error("There isn't a formula for parameter %s!" % dest)
             return 0
 
     def getval(self, pre_id, reqlist):
@@ -133,15 +142,12 @@ class MyStudy(Study):
         where = 'wu_id=%s' % pre_id
         ids = self.db.select('preprocess_wu', ['task_id'], where)
         if not ids:
-            print("Wrong preprocess job id %s!" % pre_id)
-            sys.exit(1)
+            raise ValueError("Wrong preprocess job id %s!" % pre_id)
         task_id = ids[0][0]
         if task_id is None:
-            print("Incomplete preprocess job id %s!" % pre_id)
-            sys.exit(1)
+            raise Exception("Incomplete preprocess job id %s!" % pre_id)
         where = 'task_id=%s' % task_id
         values = self.db.select('oneturn_sixtrack_result', reqlist, where)
         if not values:
-            print("Wrong task id %s!" % task_id)
-            sys.exit(1)
+            raise ValueError("Wrong task id %s!" % task_id)
         return values[0]
