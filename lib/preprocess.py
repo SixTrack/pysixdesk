@@ -33,7 +33,8 @@ def run(wu_id, input_info):
     cf.read_string(input_file)
     madx_config = cf['madx']
     mask_config = cf['mask']
-    oneturn = cf['oneturn']
+    oneturn = madx_config['oneturn']
+    collimation = madx_config['collimation']
     status = madxjob(madx_config, mask_config)
 
     if not status and dbtype.lower() == 'sql':
@@ -44,10 +45,14 @@ def run(wu_id, input_info):
     otpt = madx_config["output_files"]
     output_files = utils.evlt(utils.decode_strings, [otpt])
 
-    if status:
+    if status and oneturn.lower() == 'true':
         sixtrack_config = cf['sixtrack']
         fort3_config = cf._sections['fort3']
         status = sixtrackjobs(sixtrack_config, fort3_config)
+
+    if status and collimation.lower() == 'true':
+        coll_config = cf['collimation']
+        status = new_fort2(coll_config)
 
     if dbtype.lower() == 'mysql':
         dest_path = './result'
@@ -60,7 +65,10 @@ def run(wu_id, input_info):
     down_list = list(output_files.values())
     down_list.append('madx_in')
     down_list.append('madx_stdout')
-    down_list.append('oneturnresult')
+    if oneturn.lower == 'true':
+        down_list.append('oneturnresult')
+    if collimation.lower() == 'true':
+        down_list.append('fort3.limi')
     status = utils.download_output(down_list, dest_path)
 
     if status:
@@ -85,11 +93,9 @@ def run(wu_id, input_info):
                             oneturn_table, list(oneturn.keys()))
         where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
-        # where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
-        # task_id = db.select('preprocess_task', ['task_id'], where)
-        # task_id = task_id[0][0]
-        oneturn_table['task_id'] = task_id
-        db.insert('oneturn_sixtrack_result', oneturn_table)
+        if oneturn.lower() == 'true':
+            oneturn_table['task_id'] = task_id
+            db.insert('oneturn_sixtrack_result', oneturn_table)
         if task_table['status'] == 'Success':
             where = "wu_id=%s" % wu_id
             job_table['status'] = 'complete'
@@ -169,6 +175,26 @@ def madxjob(madx_config, mask_config):
     return madx_status
 
 
+def new_fort2(config):
+    '''Generate new fort.2 with aperture markers and survey and fort3.limit'''
+    inp = config['input_files']
+    inputfiles = utils.evlt(utils.decode_strings, [inp])
+    source_path = config["source_path"]
+    for fil in inputfiles.values():
+        fl = os.path.join(source_path, fil)
+        shutil.copy2(fl, fil)
+    fc2 = 'fc.2'
+    aperture = inputfiles['aperture']
+    survery = inputfiles['survey']
+    try:
+        generate_fort2.run(fc2, aperture, survery)
+        return 1
+    except Exception:
+        content = traceback.print_exc()
+        utils.message('Error', content)
+        return 0
+
+
 def sixtrackjobs(config, fort3_config):
     '''Manage all the one turn sixtrack job'''
     sixtrack_status = 1
@@ -218,7 +244,7 @@ def sixtrackjobs(config, fort3_config):
         beta_out[7] = chrom2
     beta_out = beta_out + mychrom + tunes
     lines = ' '.join(map(str, beta_out))
-    with open('oneturnresult', 'w') as f_out:
+    with open('oneturnoutput', 'w') as f_out:
         f_out.write(lines)
         f_out.write('\n')
     return sixtrack_status

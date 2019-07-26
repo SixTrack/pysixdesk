@@ -49,6 +49,10 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
         job_stdlog = os.path.join(job_path, job_stdlog[0])
         task_table['job_stdlog'] = utils.evlt(utils.compress_buf,
                                               [job_stdlog])
+    else:
+        content = "The madx_out file for job %s doesn't exist! The job failed!" % item
+        utils.message('Error', content, mes_level, log_file)
+        task_table['status'] = 'Failed'
     oneturn_result = [s for s in contents if 'oneturnresult' in s]
     if oneturn_result:
         oneturn_result = os.path.join(job_path, oneturn_result[0])

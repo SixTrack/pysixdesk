@@ -28,7 +28,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     else:
         sfile = open(survery, 'r')
 
-    ofile_name = 'fort.2'
+    ofile_name = 'new_fc.2'
     ofile = open(ofile_name, 'w')
     lfile = open('fort3.limi', 'w')
     # Parse structure of Fort.2 file

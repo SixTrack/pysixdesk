@@ -119,9 +119,6 @@ def run(wu_id, input_info):
                           f10_table, list(f10_sec.keys()))
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
-        # where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
-        # task_id = db.select('sixtrack_task', ['task_id'], where)
-        # task_id = task_id[0][0]
         f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
         db.insertm('six_results', f10_table)
         if task_table['status'] == 'Success':
@@ -158,11 +155,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     real_turn = fort3_config['turnss']
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     source_path = sixtrack_config["source_path"]
-    # dest_path = sixtrack_config["dest_path"]
     inp = sixtrack_config["temp_files"]
     temp_files = utils.evlt(utils.decode_strings, [inp])
-    # inp = sixtrack_config["output_files"]
-    # output_files = utils.evlt(utils.decode_strings, [inp])
     inp = sixtrack_config["input_files"]
     input_files = utils.evlt(utils.decode_strings, [inp])
     boinc = sixtrack_config["boinc"]
@@ -193,7 +187,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     # prepare the other input files
     if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
         os.symlink('../fort.2', 'fort.2')
-        os.symlink('../fort.16', 'fort.16')
+        if not os.path.isfile('../fort.16'):
+            os.symlink('../fort.16', 'fort.16')
         if not os.path.isfile('../fort.8'):
             open('fort.8', 'a').close()
         else:

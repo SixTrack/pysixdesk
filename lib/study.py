@@ -73,6 +73,8 @@ class Study(object):
         self.cluster_name = 'HTCondor'
         self.log_file = None
         self.mes_level = 1
+        self.oneturn = True
+        self.collimation = False
 
         self.madx_output = {
             'fc.2': 'fort.2',
@@ -118,7 +120,7 @@ class Study(object):
             ("chromx", 2),
             ("chromy", 2)])
         self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
-        self.oneturn_sixtrack_output = ['fort.10']
+        self.oneturn_sixtrack_output = 'oneturnresult'
         self.sixtrack_output = ['fort.10']
 
         self.db_info['db_type'] = 'sql'
@@ -474,27 +476,34 @@ class Study(object):
             self.db.update('boinc_vars', self.boinc_vars)
 
         self.config.clear()
-        self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
         self.config['madx'] = {}
         madx_sec = self.config['madx']
         self.config['mask'] = {}
         mask_sec = self.config['mask']
-        self.config['sixtrack'] = {}
-        six_sec = self.config['sixtrack']
         madx_sec['source_path'] = self.paths['templates']
         madx_sec['madx_exe'] = self.paths['madx_exe']
         madx_sec['mask_file'] = self.madx_input["mask_file"]
+        madx_sec['oneturn'] = str(self.oneturn)
+        madx_sec['collimation'] = str(self.collimation)
         inp = self.madx_output
         madx_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
-        six_sec['source_path'] = self.paths['templates']
-        six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-        inp = self.oneturn_sixtrack_input['temp']
-        six_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
-        inp = self.oneturn_sixtrack_input['input']
-        six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
-        inp = self.oneturn_sixtrack_output
-        six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
-        self.config['fort3'] = self.oneturn_sixtrack_params
+        if self.oneturn:
+            self.config['sixtrack'] = {}
+            six_sec = self.config['sixtrack']
+            self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
+            self.config['fort3'] = self.oneturn_sixtrack_params
+            six_sec['source_path'] = self.paths['templates']
+            six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+            inp = self.oneturn_sixtrack_input['temp']
+            six_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
+            inp = self.oneturn_sixtrack_input['input']
+            six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
+        if self.collimation:
+            self.config['collimation'] = {}
+            coll_sec = self.config['collimation']
+            coll_sec['source_path'] = self.paths['templates']
+            inp = self.collimation_input
+            coll_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
 
         keys = list(self.madx_params.keys())
         values = []

@@ -16,7 +16,7 @@ class MyStudy(Study):
     def __init__(self, name='study', location=os.getcwd()):
         super(MyStudy, self).__init__(name, location)
         '''initialize a study'''
-        self.cluster_module = None  # default
+        self.cluster_module = '/afs/cern.ch/...../pysixdes/lib/local.py'  # default
         self.cluster_name = 'HTCondor'
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
@@ -37,6 +37,8 @@ class MyStudy(Study):
         ## Get the default values for specified machine with specified runtype
         #machine_params = MachineConfig('LHC').parameters('inj')
         machine_params = MachineConfig('LHC').parameters('col')
+        self.oneturn = True # Switch for oneturn sixtrack job
+        # self.collimation = True
 
         ## All parameters are case-sensitive
         ## the name of mask file
@@ -47,7 +49,7 @@ class MyStudy(Study):
         # all octupole currents in the study
         self.madx_params["IOCT"] = list(range(100, 200 + 1, 100))
         self.oneturn_sixtrack_input['temp'] = ['fort.3']
-        self.oneturn_sixtrack_output = ['oneturnresult']
+        self.oneturn_sixtrack_output = 'oneturnresult'
         self.oneturn_sixtrack_params.update(machine_params)
         self.oneturn_sixtrack_params['COLL'] = ''
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
@@ -56,12 +58,19 @@ class MyStudy(Study):
         self.sixtrack_params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
         self.sixtrack_params['kang'] = list(range(1, 1 + 1))  # The angle
         self.sixtrack_input['temp'] = ['fort.3']
-        self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
+        self.sixtrack_input['input'] = copy.deepcopy(madx_output)
 
         ## The parameters for collimation job
-        # self.sixtrack_input['temp'] = ['fort.3']
-        # self.sixtrack_input['input'] = ['allapert.b1', 'CollDB.data',
-        #         'SurveyWithCrossing_XP_lowb.dat', 'fc.2']
+        # self.madx_output = {
+        #     'new_fc.2': 'fort.2',
+        #     'fc.3': 'fort.3.mad',
+        #     'fc.3.aux': 'fort.3.aux',
+        #     'fort3.limi': 'fort3.limi',
+        #     'fc.8': 'fort.8'}
+        # self.collimation_input = {'aperture':'allapert.b1',
+        #         'survey':'SurveyWithCrossing_XP_lowb.dat'}
+        # self.sixtrack_input['temp'] = ['fort.3', 'collDB.dat']
+        # self.sixtrack_input['input'] = copy.deepcopy(madx_output)
         # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat']
         # self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
         # self.sixtrack_params['COLL'] = '/'

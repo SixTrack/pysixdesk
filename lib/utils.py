@@ -62,6 +62,19 @@ def download_output(filenames, dest, zp=True):
     return status
 
 
+def check_fort3_block(fort3, block):
+    '''Check the existence of the given block in fort.3'''
+    if not os.path.isfile(fort3):
+        print("The file %s doesn't exist" % fort3)
+        return 0
+    with open(fort3, 'r') as f_in:
+        lines = f_in.readlines()
+    for line in lines:
+        if line.lower().startswith(block.lower()):
+            return 1
+    return 0
+
+
 def replace(patterns, replacements, source, dest):
     '''Reads a source file and writes the destination file.
     In each line, replaces patterns with repleacements.
@@ -185,18 +198,28 @@ def message(mes_type, content, level=1, log_file=None):
             print(message)
 
 
-def concatenate_files(source, dest):
+def concatenate_files(source, dest, ignore='ENDE'):
     '''Concatenate the given files'''
     f_out = open(dest, 'w')
     if type(source) is list:
         for s_in in source:
-            f_in = open(s_in, 'r')
-            f_out.writelines(f_in.readlines())
-            f_in.close()
+            with open(s_in, 'r') as f_in:
+                lines = f_in.readlines()
+                valid_lines = []
+                for line in lines:
+                    if valid_lines.lower().startswith(ignore.lower()):
+                        break
+                    valid_lines.append(line)
+                f_out.writelines(valid_lines)
     else:
-        f_in = open(source, 'r')
-        f_out.writelines(f_in.readlines())
-        f_in.close()
+        with open(source, 'r') as f_in:
+            lines = f_in.readlines()
+            valid_lines = []
+            for line in lines:
+                if valid_lines.lower().startswith(ignore.lower()):
+                    break
+                valid_lines.append(line)
+            f_out.writelines(valid_lines)
     f_out.close()
 
 
