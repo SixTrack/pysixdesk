@@ -43,9 +43,12 @@ def run(wu_id, input_info):
         if dbtype.lower() == 'sql':
             raise e
     else:
-        sixtrack_config = cf['sixtrack']
-        fort3_config = cf._sections['fort3']
-        sixtrackjobs(sixtrack_config, fort3_config)
+        try:
+            sixtrack_config = cf['sixtrack']
+            fort3_config = cf._sections['fort3']
+            sixtrackjobs(sixtrack_config, fort3_config)
+        except Exception as e:
+            logger.error(e)
 
     if dbtype.lower() == 'mysql':
         dest_path = './result'
@@ -346,5 +349,5 @@ if __name__ == '__main__':
         run(wu_id, db_name)
         sys.exit(0)
     else:
-        logger.error("To many input arguments!")
+        logger.error("Too many input arguments!")
         sys.exit(1)

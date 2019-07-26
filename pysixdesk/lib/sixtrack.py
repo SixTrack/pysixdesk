@@ -67,7 +67,7 @@ def run(wu_id, input_info):
         boinc_work = ''
         boinc_results = ''
         surv_percent = 1
-        logger.error("There isn't valid boinc path to submit this job!")
+        logger.error("There isn't a valid boinc path to submit this job!")
     else:
         boinc_work = boinc_infos[0][0]
         boinc_results = boinc_infos[0][1]
@@ -84,7 +84,6 @@ def run(wu_id, input_info):
         sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
     except Exception as e:
         logger.error(e)
-        pass
 
     if dbtype.lower() == 'sql':
         dest_path = sixtrack_config["dest_path"]
@@ -100,16 +99,14 @@ def run(wu_id, input_info):
     try:
         utils.download_output(down_list, dest_path)
         logger.info("All requested results have been stored in %s" % dest_path)
-        dl_done = True
     except Exception:
         logger.error("Job failed!", exc_info=True)
-        dl_done = False
-
-    if boinc.lower() == 'true' and dl_done:
-        down_list = ['fort.3']
-        dest_path = sixtrack_config["dest_path"]
-        utils.download_output(down_list, dest_path)
-        return
+    else:
+        if boinc.lower() == 'true':
+            down_list = ['fort.3']
+            dest_path = sixtrack_config["dest_path"]
+            utils.download_output(down_list, dest_path)
+            return
 
     if dbtype.lower() == 'sql':
         return
@@ -336,7 +333,7 @@ def check_tracking(filename, surv_percent=1):
             else:
                 return 1
     except Exception as e:
-        print(e)
+        logger.error(e)
         return 0
 
 
