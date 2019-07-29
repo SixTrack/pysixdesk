@@ -856,7 +856,7 @@ class Study(object):
         out_path = self.paths['sixtrack_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'sixtrack.py')
         self.submission.prepare(wu_ids, tran_input, exe, 'db.ini', in_path,
-                                out_path, *args, **kwargs)
+                                out_path, flavour='tomorrow', *args, **kwargs)
 
     def prepare_preprocess_input(self, *args, **kwargs):
         '''Prepare the input files for madx and one turn sixtrack job'''
@@ -917,7 +917,7 @@ class Study(object):
         out_path = self.paths['preprocess_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'preprocess.py')
         self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
-                                out_path, *args, **kwargs)
+                                out_path, flavour='espresso', *args, **kwargs)
 
     def pre_calc(self, **kwargs):
         '''Further calculations for the specified parameters'''
