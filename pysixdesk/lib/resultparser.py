@@ -4,7 +4,7 @@ import time
 import gzip
 import logging
 
-from pysixdesk.lib.utils import evlt, compress_buf
+from pysixdesk.lib.utils import compress_buf
 
 '''Parse the results of preprocess jobs and sixtrack jobs'''
 
@@ -21,7 +21,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
     madx_in = [s for s in contents if 'madx_in' in s]
     if madx_in:
         madx_in = os.path.join(job_path, madx_in[0])
-        task_table['madx_in'] = evlt(compress_buf, [madx_in, 'gzip'])
+        task_table['madx_in'] = compress_buf(madx_in, 'gzip')
     else:
         content = "The madx_in file for job %s dosen't exist! The job failed!" % item
         logger.error(content)
@@ -29,7 +29,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
     madx_out = [s for s in contents if 'madx_stdout' in s]
     if madx_out:
         madx_out = os.path.join(job_path, madx_out[0])
-        task_table['madx_stdout'] = evlt(compress_buf, [madx_out, 'gzip'])
+        task_table['madx_stdout'] = compress_buf(madx_out, 'gzip')
     else:
         content = "The madx_out file for job %s doesn't exist! The job failed!" % item
         logger.error(content)
@@ -38,16 +38,16 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
                                           re.match(r'_condor_stdout', s))]
     if job_stdout:
         job_stdout = os.path.join(job_path, job_stdout[0])
-        task_table['job_stdout'] = evlt(compress_buf, [job_stdout])
+        task_table['job_stdout'] = compress_buf(job_stdout)
     job_stderr = [s for s in contents if (re.match(r'htcondor\..+\.err', s) or
                                           re.match(r'_condor_stderr', s))]
     if job_stderr:
         job_stderr = os.path.join(job_path, job_stderr[0])
-        task_table['job_stderr'] = evlt(compress_buf, [job_stderr])
+        task_table['job_stderr'] = compress_buf(job_stderr)
     job_stdlog = [s for s in contents if re.match(r'htcondor\..+\.log', s)]
     if job_stdlog:
         job_stdlog = os.path.join(job_path, job_stdlog[0])
-        task_table['job_stdlog'] = evlt(compress_buf, [job_stdlog])
+        task_table['job_stdlog'] = compress_buf(job_stdlog)
     oneturn_result = [s for s in contents if 'oneturnresult' in s]
     # chrom = [s for s in contents if 'chrom' in s]
     # tunes = [s for s in contents if 'sixdesktunes' in s]
@@ -80,7 +80,7 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
         out_f = [s for s in contents if out in s]
         if out_f:
             out_f = os.path.join(job_path, out_f[0])
-            task_table[out] = evlt(compress_buf, [out_f, 'gzip'])
+            task_table[out] = compress_buf(out_f, 'gzip')
         else:
             task_table['status'] = 'Failed'
             content = "The madx output file %s for job %s doesn't exist! The job failed!" % (
@@ -98,21 +98,21 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names):
     fort3_in = [s for s in contents if 'fort.3' in s]
     if fort3_in:
         fort3_in = os.path.join(job_path, fort3_in[0])
-        task_table['fort3'] = evlt(compress_buf, [fort3_in, 'gzip'])
+        task_table['fort3'] = compress_buf(fort3_in, 'gzip')
     job_stdout = [s for s in contents if (re.match(r'htcondor\..+\.out', s) or
                                           re.match(r'_condor_stdout', s))]
     if job_stdout:
         job_stdout = os.path.join(job_path, job_stdout[0])
-        task_table['job_stdout'] = evlt(compress_buf, [job_stdout])
+        task_table['job_stdout'] = compress_buf(job_stdout)
     job_stderr = [s for s in contents if (re.match(r'htcondor\..+\.err', s) or
                                           re.match(r'_condor_stderr', s))]
     if job_stderr:
         job_stderr = os.path.join(job_path, job_stderr[0])
-        task_table['job_stderr'] = evlt(compress_buf, [job_stderr])
+        task_table['job_stderr'] = compress_buf(job_stderr)
     job_stdlog = [s for s in contents if re.match(r'htcondor\..+\.log', s)]
     if job_stdlog:
         job_stdlog = os.path.join(job_path, job_stdlog[0])
-        task_table['job_stdlog'] = evlt(compress_buf, [job_stdlog])
+        task_table['job_stdlog'] = compress_buf(job_stdlog)
     for out in file_list:
         out_f = [s for s in contents if out in s]
         if out_f:
@@ -142,7 +142,7 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names):
                     content = "There is something wrong with the output "\
                         "file %s for job %s!" % (out, item)
                     logger.error(content)
-            task_table[out] = evlt(compress_buf, [out_f, 'gzip'])
+            task_table[out] = compress_buf(out_f, 'gzip')
         else:
             task_table['status'] = 'Failed'
             content = "The sixtrack output file %s for job %s doesn't "\

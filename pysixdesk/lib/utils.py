@@ -5,7 +5,6 @@ import sys
 import gzip
 import shutil
 import logging
-import traceback
 
 # Gobal variables
 PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,25 +15,19 @@ def check(files):
     which looks like {'file1_oldName': 'file1_newName',
     'file2_oldName': 'file2_newName'}
     '''
-    status = False
     if isinstance(files, dict):
         for key, value in files.items():
             if os.path.isfile(key):
                 if key != value:
                     os.rename(key, value)
             else:
-                print("The file %s isn't generated successfully!" % key)
-                return status
+                raise FileNotFoundError("The file %s hasn't generated successfully!" % key)
     elif isinstance(files, list):
         for key in files:
             if not os.path.isfile(key):
-                print("The file %s isn't generated successfully!" % key)
-                return status
+                raise FileNotFoundError("The file %s hasn't generated successfully!" % key)
     else:
-        print("The input must be a list or dict!")
-        return status
-    status = True
-    return status
+        raise TypeError("The input must be a list or dict!")
 
 
 def download_output(filenames, dest, zp=True):
@@ -58,9 +51,11 @@ def download_output(filenames, dest, zp=True):
 
 def replace(patterns, replacements, source, dest):
     '''Reads a source file and writes the destination file.
-    In each line, replaces patterns with repleacements.
+    In each line, replaces patterns with replacements.
     '''
-    status = False
+    if not os.path.isfile(source):
+        raise FileNotFoundError("The file %s does not exist!" % source)
+
     if os.path.isfile(source):
         fin = open(source, 'r')
         fout = open(dest, 'w')
@@ -71,52 +66,39 @@ def replace(patterns, replacements, source, dest):
             fout.write(line)
         fin.close()
         fout.close()
-    else:
-        print("The file %s doesn't exist!" % source)
-        return status
-    status = True
-    return status
 
 
 def encode_strings(inputs):
     '''Convert list or directory to special-format string'''
-    status = False
     if isinstance(inputs, list):
         output = ','.join(map(str, inputs))
     elif isinstance(inputs, dict):
         a = [':'.join(map(str, i)) for i in inputs.items()]
         output = ','.join(map(str, a))
     else:
-        output = ''
-        return status, output
-    status = True
-    return status, output
+        raise TypeError(f'{inputs} is not a list or dict.')
+    return output
 
 
 def decode_strings(inputs):
     '''Convert special-format string to list or directory'''
-    status = False
-    if isinstance(inputs, str):
-        if ':' in inputs:
-            output = {}
-            a = inputs.split(',')
-            for i in a:
-                b = i.split(':')
-                output[b[0]] = b[1]
-        else:
-            output = inputs.split(',')
+    if not isinstance(inputs, str):
+        raise TypeError(f'{inputs} is not a string.')
+
+    if ':' in inputs:
+        output = {}
+        a = inputs.split(',')
+        for i in a:
+            b = i.split(':')
+            output[b[0]] = b[1]
     else:
-        print("The input is not string!")
-        output = []
-        return status, output
-    status = True
-    return status, output
+        output = inputs.split(',')
+    return output
 
 
 def compress_buf(data, source='file'):
     '''Data compression for storing in database
     The data source can be file,gzip,str'''
-    status = False
     zbuf = io.BytesIO()
     if source == 'file' and os.path.isfile(data):
         with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
@@ -131,62 +113,28 @@ def compress_buf(data, source='file'):
         with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
             zfile.write(buf)
     else:
-        print("Invalid data source!")
-        return status, zbuf.getvalue()
-    status = True
-    return status, zbuf.getvalue()
+        raise TypeError("Invalid data source!")
+    return zbuf.getvalue()
 
 
 def decompress_buf(buf, out, des='file'):
     '''Data decompression to retrieve from database'''
-    status = False
-    if isinstance(buf, bytes):
-        zbuf = io.BytesIO(buf)
-        if des == 'file':
-            with gzip.GzipFile(fileobj=zbuf) as f_in:
-                with open(out, 'wb') as f_out:
-                    f_out.write(f_in.read())
-        elif des == 'buf':
-            with gzip.GzipFile(fileobj=zbuf) as f_in:
-                out = f_in.read()
-                out = out.decode()
-        else:
-            print("Unknown output type!")
-            return status
-        status = True
-        return status, out
+
+    if not isinstance(buf, bytes):
+        raise TypeError(f"Invalid input data '{buf}'!")
+
+    zbuf = io.BytesIO(buf)
+    if des == 'file':
+        with gzip.GzipFile(fileobj=zbuf) as f_in:
+            with open(out, 'wb') as f_out:
+                f_out.write(f_in.read())
+    elif des == 'buf':
+        with gzip.GzipFile(fileobj=zbuf) as f_in:
+            out = f_in.read()
+            out = out.decode()
     else:
-        print("Invalid input data!")
-        return status
-
-
-def evlt(fun, inputs, action=sys.exit):
-    '''Evaluate the specified function'''
-    try:
-        outputs = fun(*inputs)
-        if isinstance(outputs, tuple):
-            num = len(outputs)
-        else:
-            num = 1
-        if outputs is None:
-            num = 0
-
-        if num == 0:
-            pass
-        elif num == 1:
-            status = outputs
-            if not status:
-                action()
-        elif num == 2:
-            status = outputs[0]
-            output = outputs[1]
-            if status:
-                return output
-            else:
-                action()
-    except:
-        print(traceback.print_exc())
-        return
+        raise ValueError(f"Unknown output type '{des}'!")
+    return out
 
 
 def condor_logger():
