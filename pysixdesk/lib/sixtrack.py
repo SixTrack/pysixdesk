@@ -210,8 +210,9 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     for s in temp_files:
         dest = s + '.temp'
         source = os.path.join('../', s)
-        status = utils.replace(patterns, values, source, dest)
-        if not status:
+        try:
+            utils.replace(patterns, values, source, dest)
+        except Exception:
             raise Exception("Failed to generate input file for oneturn sixtrack!")
 
         output.append(dest)
@@ -268,8 +269,9 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         # recreate the fort.3 file
         for s in temp_files:
             dest = s + '.temp'
-            status = utils.replace(patterns, values, s, dest)
-            if not status:
+            try:
+                utils.replace(patterns, values, s, dest)
+            except Exception:
                 raise Exception("Failed to generate input file for sixtrack!")
 
             output.append(dest)
