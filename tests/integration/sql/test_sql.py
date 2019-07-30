@@ -40,16 +40,20 @@ class SqlDB(unittest.TestCase):
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)), 4)
 
         print('waiting for preprocess job to finish...')
-        while len(self.st.submission.check_running(self.st.study_path)) >= 1:
+        while self.st.submission.check_running(self.st.study_path) is None\
+                or len(self.st.submission.check_running(self.st.study_path)) >= 1:
             # sleep for 5 mins
             time.sleep(60*5)
-        # add a check on output of preprocess job
+        # add a check on the output of the preprocess job
 
         self.prepare_sixtrack_input()
         # add assert here
         self.submit(1)
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)), 8)
-        while len(self.st.submission.check_running(self.st.study_path)) >= 1:
+
+        print('waiting for sixtrack job to finish...')
+        while self.st.submission.check_running(self.st.study_path) is None\
+                or len(self.st.submission.check_running(self.st.study_path)) >= 1:
             # sleep for 5 mins
             time.sleep(60*5)
         # add a check on the output of the sixtrack job
