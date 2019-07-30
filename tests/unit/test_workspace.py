@@ -1,16 +1,10 @@
 import unittest
 import shutil
-import logging
 from pathlib import Path
 import sys
 # give the test runner the import access
 sys.path.insert(0, Path(__file__).parents[1].absolute())
 from pysixdesk.lib import workspace
-
-# disable logging
-# one print remains as the config.py gets imported which
-# overrides these logger settings.
-logging.getLogger('pysixdesk').setLevel(logging.CRITICAL)
 
 
 class WorkSpaceTest(unittest.TestCase):
