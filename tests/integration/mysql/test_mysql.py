@@ -2,18 +2,27 @@ import unittest
 import os
 import shutil
 import time
-from ..context import pysixdesk
+import sys
+# give the test runner the import access
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+import pysixdesk
+from pathlib import Path
 
 
 class MySqlDB(unittest.TestCase):
     def setUp(self):
-        self.ws = pysixdesk.WorkSpace('unittest')
+        self.test_folder = Path('integration_test/mysql')
+        self.test_folder.mkdir(parents=True, exist_ok=True)
+        self.ws_name = 'mysql_ws'
+        self.ws = pysixdesk.WorkSpace(self.test_folder / self.ws_name)
+        self.st_name = 'mysql_st'
+        self.st = None
 
     def test_sql_study(self):
-        self.ws.init_study('mysql')
-        self.assertEqual(self.ws.studies, ['mysql'])
+        self.ws.init_study(self.st_name)
+        self.assertEqual(self.ws.studies, [self.st_name])
 
-        self.st = self.ws.load_study('mysql', module_path=os.path.join(os.path.dirname(__file__), 'config.py'))
+        self.st = self.ws.load_study(self.st_name, module_path=os.path.join(os.path.dirname(__file__), 'config.py'))
         self.assertEqual(self.st.db_info['db_type'], 'mysql')
 
         self.st.update_db()
@@ -23,7 +32,10 @@ class MySqlDB(unittest.TestCase):
                                            'preprocess_input'))
         out_folders = os.listdir(os.path.join(self.st.study_path,
                                               'preprocess_output'))
-        self.assertEqual(in_files, ['sub.db', 'db.ini', 'job_id.list', 'htcondor_run.sub'])
+        self.assertEqual(in_files, ['sub.db',
+                                    'db.ini',
+                                    'job_id.list',
+                                    'htcondor_run.sub'])
         self.assertEqual(out_folders, ['1', '2', '3', '4'])
 
         self.st.submit(0)
@@ -46,10 +58,14 @@ class MySqlDB(unittest.TestCase):
 
     def tearDown(self):
         # need to remove database
-        self.st.db.drop_table('mysql')
+        if self.st is not None and self.st.db_info['db_type'] == 'mysql':
+            conn = self.st.db.conn
+            with conn.cursor() as c:
+                sql = f"DROP DATABASE {self.ws_name}_{self.st_name};"
+                c.execute(sql)
 
         # remove directory
-        shutil.rmtree('unittest', ignore_errors=True)
+        shutil.rmtree('integration_test', ignore_errors=True)
 
 
 if __name__ == '__main__':

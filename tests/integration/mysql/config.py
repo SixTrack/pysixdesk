@@ -6,10 +6,13 @@ import ast
 import copy
 import logging
 from math import sqrt, pi, sin, cos
+import sys
+# give the test runner the import access
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+import pysixdesk
+from pysixdesk.lib import machineparams
+from pysixdesk.lib import submission
 
-from ..context import pysixdesk
-from ..context import submission
-from ..context import machineparams
 
 # logger configuration
 logger = logging.getLogger('pysixdesk')
