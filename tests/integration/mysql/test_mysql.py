@@ -44,10 +44,10 @@ class MySqlDB(unittest.TestCase):
                 or len(self.st.submission.check_running(self.st.study_path)) >= 1:
             # sleep for 5 mins
             time.sleep(60*5)
-        # add a check on the output of the preprocess job
+        # TODO: add a check on the output of the preprocess job
 
         self.prepare_sixtrack_input()
-        # add assert here
+        # TODO: add assert here
         self.submit(1)
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)), 8)
 
@@ -56,7 +56,7 @@ class MySqlDB(unittest.TestCase):
                 or len(self.st.submission.check_running(self.st.study_path)) >= 1:
             # sleep for 5 mins
             time.sleep(60*5)
-        # add a check on the output of the sixtrack job
+        # TODO: add a check on the output of the sixtrack job
 
     def tearDown(self):
         # need to remove database
