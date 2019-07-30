@@ -19,7 +19,7 @@ class SQLDatabaseAdaptorTest(unittest.TestCase):
         self.conn = self.db.new_connection(self.db_name)
         self.name = 'unit_test'
 
-    def test_db(self):
+    def test_sqldb(self):
         columns = {'a': 'INT', 'b': 'DOUBLE', 'c': 'BLOB', 'd': 'TEXT', 'e': 'NULL'}
         keys = {'autoincrement': ['a'],
                 'primary': ['a', 'b']}
@@ -64,7 +64,6 @@ class SQLDatabaseAdaptorTest(unittest.TestCase):
         self.assertEqual(out_select, out)
 
     def tearDown(self):
-        # remove testing folder
         self.conn.close()
         shutil.rmtree(self.test_folder.parents[0], ignore_errors=True)
 
@@ -91,8 +90,8 @@ class MySQLDatabaseAdaptorTest(unittest.TestCase):
                                            port=self.port)
         self.name = 'unit_test'
 
-    def test_db(self):
-        columns = {'a': 'INT', 'b': 'DOUBLE', 'c': 'BLOB', 'd': 'TEXT'}  # , 'e': 'NULL'} This breaks it...
+    def test_mysqldb(self):
+        columns = {'a': 'INT', 'b': 'DOUBLE', 'c': 'BLOB', 'd': 'TEXT'}  # , 'e': 'NULL'} NULL causses an error
         keys = {'autoincrement': ['a'],
                 'primary': ['a', 'b']}
                 # 'foreign': {'f': 'INT'}} # I don't know what this does
@@ -135,8 +134,7 @@ class MySQLDatabaseAdaptorTest(unittest.TestCase):
         self.assertEqual(out_select, out)
 
     def tearDown(self):
-        # remove testing folder
-
+        self.conn.close()
         with self.conn.cursor() as c:
             sql = "DROP DATABASE unit_test;"
             c.execute(sql)
