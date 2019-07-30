@@ -2,9 +2,8 @@ import unittest
 import shutil
 from pathlib import Path
 import sys
-import os
 # give the test runner the import access
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, Path(__file__).parents[1].absolute())
 from pysixdesk.lib import utils
 
 
@@ -67,7 +66,7 @@ class UtilsTest(unittest.TestCase):
 
     def test_compress_buf(self):
         # with strings
-        in_str = 'blablabla_s'
+        in_str = 'qwertyuiopasdfghjklzxcvbnm_-./'
         _, in_str_comp = utils.compress_buf(in_str, source='str')
         _, in_str_decomp = utils.decompress_buf(in_str_comp, None, des='buf')
         self.assertEqual(in_str, in_str_decomp)

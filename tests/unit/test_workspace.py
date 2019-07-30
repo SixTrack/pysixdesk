@@ -3,9 +3,8 @@ import shutil
 import logging
 from pathlib import Path
 import sys
-import os
 # give the test runner the import access
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, Path(__file__).parents[1].absolute())
 from pysixdesk.lib import workspace
 
 # disable logging
