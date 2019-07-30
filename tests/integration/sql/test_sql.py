@@ -23,7 +23,9 @@ class SqlDB(unittest.TestCase):
         self.ws.init_study(self.st_name)
         self.assertEqual(self.ws.studies, [self.st_name])
 
-        self.st = self.ws.load_study(self.st_name, module_path=str(Path(__file__).parent / 'config.py'))
+        self.st = self.ws.load_study(self.st_name,
+                                     module_path=str(Path(__file__).parents[1] / 'variable_config.py'),
+                                     class_name='SqlConfig')
         self.assertEqual(self.st.db_info['db_type'], 'sql')
 
         self.st.update_db()

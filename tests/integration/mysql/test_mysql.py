@@ -23,7 +23,9 @@ class MySqlDB(unittest.TestCase):
         self.ws.init_study(self.st_name)
         self.assertEqual(self.ws.studies, [self.st_name])
 
-        self.st = self.ws.load_study(self.st_name, module_path=str(Path(__file__).parent / 'config.py'))
+        self.st = self.ws.load_study(self.st_name,
+                                     module_path=str(Path(__file__).parents[1] / 'variable_config.py'),
+                                     class_name='MySqlConfig')
         self.assertEqual(self.st.db_info['db_type'], 'mysql')
 
         self.st.update_db()
@@ -31,8 +33,7 @@ class MySqlDB(unittest.TestCase):
         self.st.prepare_preprocess_input()
         in_files = os.listdir(Path(self.st.study_path) / 'preprocess_input')
         out_folders = os.listdir(Path(self.st.study_path) / 'preprocess_output')
-        self.assertEqual(in_files, ['sub.db',
-                                    'db.ini',
+        self.assertEqual(in_files, ['db.ini',
                                     'job_id.list',
                                     'htcondor_run.sub'])
         self.assertEqual(out_folders, ['1', '2', '3', '4'])
