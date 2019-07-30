@@ -14,7 +14,7 @@ class MySqlDB(unittest.TestCase):
         self.test_folder = Path('integration_test/mysql')
         self.test_folder.mkdir(parents=True, exist_ok=True)
         self.ws_name = 'mysql_ws'
-        self.ws = pysixdesk.WorkSpace(self.test_folder / self.ws_name)
+        self.ws = pysixdesk.WorkSpace(str(self.test_folder / self.ws_name))
         self.st_name = 'mysql_st'
         self.st = None
 
@@ -22,16 +22,14 @@ class MySqlDB(unittest.TestCase):
         self.ws.init_study(self.st_name)
         self.assertEqual(self.ws.studies, [self.st_name])
 
-        self.st = self.ws.load_study(self.st_name, module_path=os.path.join(os.path.dirname(__file__), 'config.py'))
+        self.st = self.ws.load_study(self.st_name, module_path=str(Path(__file__).parent / 'config.py'))
         self.assertEqual(self.st.db_info['db_type'], 'mysql')
 
         self.st.update_db()
 
         self.st.prepare_preprocess_input()
-        in_files = os.listdir(os.path.join(self.st.study_path,
-                                           'preprocess_input'))
-        out_folders = os.listdir(os.path.join(self.st.study_path,
-                                              'preprocess_output'))
+        in_files = os.listdir(Path(self.st.study_path) / 'preprocess_input')
+        out_folders = os.listdir(Path(self.st.study_path) / 'preprocess_output')
         self.assertEqual(in_files, ['sub.db',
                                     'db.ini',
                                     'job_id.list',
