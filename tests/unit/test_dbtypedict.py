@@ -19,9 +19,9 @@ class DBTypeDicTest(unittest.TestCase):
 
     def test_dbtypedict_sql_float(self):
         value = 1.23
-        self.assertEqual(self.sql_dict[value], 'float')
+        self.assertEqual(self.sql_dict[value], 'DOUBLE')
         value = 1.23e5
-        self.assertEqual(self.sql_dict[value], 'float')
+        self.assertEqual(self.sql_dict[value], 'DOUBLE')
 
     def test_dbtypedict_sql_str(self):
         value = 'blabla'
