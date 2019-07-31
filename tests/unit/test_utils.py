@@ -35,20 +35,24 @@ class UtilsTest(unittest.TestCase):
             f.writelines('\n'.join(self.contents))
 
     def test_encode_strings(self):
-        self.assertEqual(utils.encode_strings(self.str_list), self.str_list_out)
+        self.assertEqual(utils.encode_strings(self.str_list),
+                         (True, self.str_list_out))
 
-        self.assertEqual(utils.encode_strings(self.str_dic), self.str_dic_out)
+        self.assertEqual(utils.encode_strings(self.str_dic),
+                         (True, self.str_dic_out))
         # Expected failure case
-        with self.assertRaises(TypeError):
-            utils.encode_strings(10)
+        self.assertEqual(utils.encode_strings(10),
+                         (False, ''))
 
     def test_decode_strings(self):
-        self.assertEqual(utils.decode_strings(self.str_list_out), self.str_list)
+        self.assertEqual(utils.decode_strings(self.str_list_out),
+                         (True, self.str_list))
 
-        self.assertEqual(utils.decode_strings(self.str_dic_out), self.str_dic)
+        self.assertEqual(utils.decode_strings(self.str_dic_out),
+                         (True, self.str_dic))
         # Expected failure case
-        with self.assertRaises(TypeError):
-            utils.decode_strings(10)
+        self.assertEqual(utils.decode_strings(10),
+                         (False, []))
 
     def test_replace(self):
         utils.replace(self.patterns,
@@ -63,8 +67,8 @@ class UtilsTest(unittest.TestCase):
     def test_compress_buf(self):
         # with strings
         in_str = 'qwertyuiopasdfghjklzxcvbnm_-./'
-        in_str_comp = utils.compress_buf(in_str, source='str')
-        in_str_decomp = utils.decompress_buf(in_str_comp, None, des='buf')
+        _, in_str_comp = utils.compress_buf(in_str, source='str')
+        _, in_str_decomp = utils.decompress_buf(in_str_comp, None, des='buf')
         self.assertEqual(in_str, in_str_decomp)
         # with file ...
 
