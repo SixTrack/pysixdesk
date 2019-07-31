@@ -134,10 +134,10 @@ class MySQLDatabaseAdaptorTest(unittest.TestCase):
         self.assertEqual(out_select, out)
 
     def tearDown(self):
-        self.conn.close()
         with self.conn.cursor() as c:
             sql = "DROP DATABASE unit_test;"
             c.execute(sql)
+        self.conn.close()
 
 
 if __name__ == '__main__':
