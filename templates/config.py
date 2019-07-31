@@ -72,15 +72,15 @@ class MyStudy(Study):
 
         ## The parameters for collimation job
         # self.madx_output = {
-        #     'new_fc.2': 'fort.2',
+        #     'fc.2': 'fc.2',
         #     'fc.3': 'fort.3.mad',
         #     'fc.3.aux': 'fort.3.aux',
         #     'fort3.limi': 'fort3.limi',
         #     'fc.8': 'fort.8'}
         # self.collimation_input = {'aperture':'allapert.b1',
         #         'survey':'SurveyWithCrossing_XP_lowb.dat'}
-        # self.sixtrack_input['temp'] = ['fort.3', 'collDB.dat']
-        # self.sixtrack_input['input'] = copy.deepcopy(madx_output)
+        # self.sixtrack_input['temp'] = ['fort.3', 'CollDB.data']
+        # self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
         # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat']
         # self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
         # self.sixtrack_params['COLL'] = '/'

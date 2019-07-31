@@ -3,14 +3,16 @@ import os
 import sys
 import time
 import copy
-import utils
 import shutil
 import configparser
 
 from pysixdesk.lib import utils
+from pysixdesk.lib import generate_fort2
 from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib.resultparser import parse_preprocess
 
+
+logger = utils.condor_logger()
 
 def run(wu_id, input_info):
     cf = configparser.ConfigParser()
@@ -38,26 +40,27 @@ def run(wu_id, input_info):
     collimation = madx_config['collimation']
 
     try:
-        madxjob(madx_config, mask_config)
-    except Exception as e:
+        pass
+    #    madxjob(madx_config, mask_config)
+    except Exception:
         content = 'MADX job failed.'
         logger.error(content, exc_info=True)
         if dbtype.lower() == 'sql':
-            raise e
+            return
     else:
         if oneturn.lower() == 'true':
             try:
                 sixtrack_config = cf['sixtrack']
                 fort3_config = cf._sections['fort3']
                 sixtrackjobs(sixtrack_config, fort3_config)
-            except Exception as e:
-                logger.error(e)
+            except Exception:
+                logger.error('Oneturn job failed!', exc_info=True)
         if collimation.lower() == 'true':
             try:
                 coll_config = cf['collimation']
                 status = new_fort2(coll_config)
-            except Exception as e:
-                logger.error(e)
+            except Exception:
+                logger.error('Generate new fort2 failed!', exc_info=True)
 
     if dbtype.lower() == 'mysql':
         dest_path = './result'
@@ -345,7 +348,6 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
 
 if __name__ == '__main__':
 
-    logger = utils.condor_logger()
 
     args = sys.argv
     num = len(args[1:])

@@ -39,7 +39,6 @@ class Study(object):
         self.madx_output = {}
         self.oneturn_sixtrack_params = collections.OrderedDict()
         self.oneturn_sixtrack_input = {}
-        self.oneturn_sixtrack_output = []
         self.sixtrack_params = collections.OrderedDict()
         self.sixtrack_input = {}
         self.sixtrack_output = []
@@ -145,7 +144,6 @@ class Study(object):
             ("chromx", 2),
             ("chromy", 2)])
         self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
-        self.oneturn_sixtrack_output = 'oneturnresult'
         self.sixtrack_output = ['fort.10']
 
         self.db_info['db_type'] = 'sql'
@@ -411,8 +409,9 @@ class Study(object):
 
         for key in self.madx_input.keys():
             self.tables['templates'][key] = 'BLOB'
-        for key in self.oneturn_sixtrack_input['temp']:
-            self.tables['templates'][key] = 'BLOB'
+        if self.oneturn:
+            for key in self.oneturn_sixtrack_input['temp']:
+                self.tables['templates'][key] = 'BLOB'
         for key in self.sixtrack_input['temp']:
             self.tables['templates'][key] = 'BLOB'
 
@@ -443,7 +442,9 @@ class Study(object):
         temp = self.paths["templates"]
         cont = os.listdir(temp)
         require = []
-        require += self.oneturn_sixtrack_input["temp"]
+        if self.oneturn:
+            require += self.oneturn_sixtrack_input["temp"]
+        require += self.sixtrack_input['temp']
         require.append(self.madx_input["mask_file"])
         for r in require:
             if r not in cont:
@@ -455,9 +456,10 @@ class Study(object):
             for key, value in self.madx_input.items():
                 value = os.path.join(self.study_path, value)
                 tab[key] = utils.evlt(utils.compress_buf, [value])
-            for key in self.oneturn_sixtrack_input['temp']:
-                value = os.path.join(self.study_path, key)
-                tab[key] = utils.evlt(utils.compress_buf, [value])
+            if self.oneturn:
+                for key in self.oneturn_sixtrack_input['temp']:
+                    value = os.path.join(self.study_path, key)
+                    tab[key] = utils.evlt(utils.compress_buf, [value])
             for key in self.sixtrack_input['temp']:
                 value = os.path.join(self.study_path, key)
                 tab[key] = utils.evlt(utils.compress_buf, [value])
@@ -490,21 +492,21 @@ class Study(object):
         madx_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
         if self.oneturn:
             self.config['sixtrack'] = {}
-            six_sec = self.config['sixtrack']
+            cus_sec = self.config['sixtrack']
             self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
             self.config['fort3'] = self.oneturn_sixtrack_params
-            six_sec['source_path'] = self.paths['templates']
-            six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+            cus_sec['source_path'] = self.paths['templates']
+            cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
             inp = self.oneturn_sixtrack_input['temp']
-            six_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
+            cus_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
             inp = self.oneturn_sixtrack_input['input']
-            six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
+            cus_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
         if self.collimation:
             self.config['collimation'] = {}
-            coll_sec = self.config['collimation']
-            coll_sec['source_path'] = self.paths['templates']
+            cus_sec = self.config['collimation']
+            cus_sec['source_path'] = self.paths['templates']
             inp = self.collimation_input
-            coll_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
+            cus_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
 
         keys = list(self.madx_params.keys())
         values = []
@@ -540,7 +542,7 @@ class Study(object):
             n = str(wu_id)
             madx_sec['dest_path'] = os.path.join(
                 self.paths['preprocess_out'], n)
-            six_sec['dest_path'] = os.path.join(
+            cus_sec['dest_path'] = os.path.join(
                 self.paths['preprocess_out'], n)
             f_out = io.StringIO()
             self.config.write(f_out)
