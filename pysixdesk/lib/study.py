@@ -445,13 +445,13 @@ class Study(object):
             tab = {}
             for key, value in self.madx_input.items():
                 value = os.path.join(self.study_path, value)
-                tab[key] = utils.compress_buf(value)
+                tab[key] = utils.evlt(utils.compress_buf, [value])
             for key in self.oneturn_sixtrack_input['temp']:
                 value = os.path.join(self.study_path, key)
-                tab[key] = utils.compress_buf(value)
+                tab[key] = utils.evlt(utils.compress_buf, [value])
             for key in self.sixtrack_input['temp']:
                 value = os.path.join(self.study_path, key)
-                tab[key] = utils.compress_buf(value)
+                tab[key] = utils.evlt(utils.compress_buf, [value])
             self.db.insert('templates', tab)
         outputs = self.db.select('env', self.paths.keys())
         envs = {}
@@ -479,15 +479,15 @@ class Study(object):
         madx_sec['madx_exe'] = self.paths['madx_exe']
         madx_sec['mask_file'] = self.madx_input["mask_file"]
         inp = self.madx_output
-        madx_sec['output_files'] = utils.encode_strings(inp)
+        madx_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
         six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         inp = self.oneturn_sixtrack_input['temp']
-        six_sec['temp_files'] = utils.encode_strings(inp)
+        six_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
         inp = self.oneturn_sixtrack_input['input']
-        six_sec['input_files'] = utils.encode_strings(inp)
+        six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
         inp = self.oneturn_sixtrack_output
-        six_sec['output_files'] = utils.encode_strings(inp)
+        six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
         self.config['fort3'] = self.oneturn_sixtrack_params
 
         keys = list(self.madx_params.keys())
@@ -529,7 +529,8 @@ class Study(object):
             f_out = io.StringIO()
             self.config.write(f_out)
             out = f_out.getvalue()
-            madx_table['input_file'] = utils.compress_buf(out, 'str')
+            madx_table['input_file'] = utils.evlt(
+                utils.compress_buf, [out, 'str'])
             madx_table['status'] = 'incomplete'
             madx_table['job_name'] = job_name
             madx_table['mtime'] = int(time.time() * 1E7)
@@ -547,12 +548,12 @@ class Study(object):
         six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         inp = self.sixtrack_input['input']
-        six_sec['input_files'] = utils.encode_strings(inp)
+        six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
         six_sec['boinc_dir'] = self.paths['boinc_spool']
         inp = self.sixtrack_input['temp']
-        six_sec['temp_files'] = utils.encode_strings(inp)
+        six_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
         inp = self.sixtrack_output
-        six_sec['output_files'] = utils.encode_strings(inp)
+        six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
         six_sec['test_turn'] = str(self.env['test_turn'])
 
         madx_keys = list(self.madx_params.keys())
@@ -616,7 +617,8 @@ class Study(object):
             f_out = io.StringIO()
             self.config.write(f_out)
             out = f_out.getvalue()
-            job_table['input_file'] = utils.compress_buf(out, 'str')
+            job_table['input_file'] = utils.evlt(
+                utils.compress_buf, [out, 'str'])
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
             self.db.insert('sixtrack_wu', job_table)
@@ -698,7 +700,7 @@ class Study(object):
         if typ == 0:
             self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
             info_sec['path'] = self.paths['preprocess_out']
-            info_sec['outs'] = utils.encode_strings(self.madx_output)
+            info_sec['outs'] = utils.evlt(utils.encode_strings, [self.madx_output])
             job_name = 'collect preprocess result'
             in_name = 'preprocess.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
@@ -708,7 +710,7 @@ class Study(object):
             info_sec['boinc_results'] = self.env['boinc_results']
             info_sec['boinc'] = str(boinc)
             info_sec['st_pre'] = self.st_pre
-            info_sec['outs'] = utils.encode_strings(self.sixtrack_output)
+            info_sec['outs'] = utils.evlt(utils.encode_strings, [self.sixtrack_output])
             job_name = 'collect sixtrack result'
             in_name = 'sixtrack.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
@@ -763,7 +765,7 @@ class Study(object):
         input_buf_new = []
         for wu_id, pre_id, buf, job_name in zip(outputs[0], outputs[1],
                                                 outputs[2], outputs[3]):
-            in_fil = utils.decompress_buf(buf, None, 'buf')
+            in_fil = utils.evlt(utils.decompress_buf, [buf, None, 'buf'])
             self.config.clear()
             self.config.read_string(in_fil)
             paramsdict = self.config['fort3']
@@ -772,7 +774,7 @@ class Study(object):
                 f_out = io.StringIO()
                 self.config.write(f_out)
                 out = f_out.getvalue()
-                buf_new = utils.compress_buf(out, 'str')
+                buf_new = utils.evlt(utils.compress_buf, [out, 'str'])
                 input_buf_new.append(buf_new)
                 wu_ids.append(wu_id)
                 pre_ids.append(pre_id)

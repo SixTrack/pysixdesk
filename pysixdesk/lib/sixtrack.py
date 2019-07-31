@@ -37,12 +37,12 @@ def run(wu_id, input_info):
     input_buf = outputs[0][0]
     job_name = outputs[0][3]
     task_id = outputs[0][4]
-    input_file = utils.decompress_buf(input_buf, None, 'buf')
+    input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
     cf.clear()
     cf.read_string(input_file)
     sixtrack_config = cf['sixtrack']
     inp = sixtrack_config["input_files"]
-    input_files = utils.decode_strings(inp)
+    input_files = utils.evlt(utils.decode_strings, [inp])
     where = 'wu_id=%s' % str(preprocess_id)
     pre_task_id = db.select('preprocess_wu', ['task_id'], where)
     if not pre_task_id:
@@ -59,7 +59,7 @@ def run(wu_id, input_info):
     for infile in inputs:
         i = inputs.index(infile)
         buf = input_buf[0][i]
-        utils.decompress_buf(buf, infile)
+        utils.evlt(utils.decompress_buf, [buf, infile])
     fort3_config = cf['fort3']
     boinc_vars = cf['boinc']
     if not boinc_infos:
@@ -92,7 +92,7 @@ def run(wu_id, input_info):
     if not os.path.isdir(dest_path):
         os.makedirs(dest_path)
     inp = sixtrack_config["output_files"]
-    output_files = utils.decode_strings(inp)
+    output_files = utils.evlt(utils.decode_strings, [inp])
     down_list = list(output_files)
     down_list.append('fort.3')
 
@@ -161,11 +161,11 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     source_path = sixtrack_config["source_path"]
     # dest_path = sixtrack_config["dest_path"]
     inp = sixtrack_config["temp_files"]
-    temp_files = utils.decode_strings(inp)
+    temp_files = utils.evlt(utils.decode_strings, [inp])
     # inp = sixtrack_config["output_files"]
-    # output_files = utils.decode_strings(inp)
+    # output_files = utils.evlt(utils.decode_strings, [inp])
     inp = sixtrack_config["input_files"]
-    input_files = utils.decode_strings(inp)
+    input_files = utils.evlt(utils.decode_strings, [inp])
     boinc = sixtrack_config["boinc"]
     for infile in temp_files:
         infi = os.path.join(source_path, infile)

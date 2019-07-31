@@ -28,7 +28,7 @@ def run(wu_id, input_info):
         raise FileNotFoundError(content)
 
     input_buf = outputs[0][0]
-    input_file = utils.decompress_buf(input_buf, None, 'buf')
+    input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
     cf.clear()
     cf.read_string(input_file)
     madx_config = cf['madx']
@@ -58,7 +58,7 @@ def run(wu_id, input_info):
         os.makedirs(dest_path)
 
     otpt = madx_config["output_files"]
-    output_files = utils.decode_strings(otpt)
+    output_files = utils.evlt(utils.decode_strings, [otpt])
 
     # Download the requested files.
     down_list = list(output_files.values())
