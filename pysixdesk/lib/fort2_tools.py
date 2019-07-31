@@ -6,6 +6,7 @@
 # Warning: the reading of the file is not by any means complete, only reads the
 # elements at the top of the file
 
+import logging
 from copy import deepcopy
 
 FORT2_ELEMENT_FIELDS = [
@@ -22,6 +23,8 @@ FORT2_BLOCK_FIELDS = [
     'NAME',
     'ELEM'
 ]
+
+LOGGER = logging.getLogger("pysixdesk.fort2_tools")
 
 class Fort2Struct:
     '''Structure containing fort.2 information'''

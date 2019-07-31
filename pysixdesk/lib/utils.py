@@ -183,18 +183,18 @@ def concatenate_files(source, dest, ignore='ENDE'):
                 lines = f_in.readlines()
                 valid_lines = []
                 for line in lines:
-                    if valid_lines.lower().startswith(ignore.lower()):
-                        break
                     valid_lines.append(line)
+                    if line.lower().startswith(ignore.lower()):
+                        break
                 f_out.writelines(valid_lines)
     else:
         with open(source, 'r') as f_in:
             lines = f_in.readlines()
             valid_lines = []
             for line in lines:
-                if valid_lines.lower().startswith(ignore.lower()):
-                    break
                 valid_lines.append(line)
+                if line.lower().startswith(ignore.lower()):
+                    break
             f_out.writelines(valid_lines)
     f_out.close()
 
@@ -228,7 +228,7 @@ def evlt(fun, inputs, action=sys.exit):
         return
 
 
-def condor_logger():
+def condor_logger(name):
     '''
     Prepares a logger for job on HTCondor. It splits the levels to stdout
     and stderr, and disables module level logging.
@@ -238,13 +238,13 @@ def condor_logger():
     '''
 
     # disable module level logging of pysixdesk
-    logger = logging.getLogger('pysixdesk')
-    logger.setLevel(logging.CRITICAL)
+    #logger = logging.getLogger('pysixdesk')
+    #logger.setLevel(logging.CRITICAL)
 
     formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
                                   datefmt='%H:%M:%S')
     # enable local logging with stdout and stderr split
-    logger = logging.getLogger('preprocess_job')
+    logger = logging.getLogger(name)
     h1 = logging.StreamHandler(sys.stdout)
     h1.setFormatter(formatter)
     h1.setLevel(logging.DEBUG)

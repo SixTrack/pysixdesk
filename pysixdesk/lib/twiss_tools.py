@@ -4,6 +4,9 @@
 # Author: David Siñuela Pastor <dsinuela@cern.ch>
 
 import re
+import logging
+
+LOGGER = logging.getLogger("pysixdesk.twiss_tools")
 
 class TwissStruct:
     '''Structure containing Twiss file information'''

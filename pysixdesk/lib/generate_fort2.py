@@ -8,6 +8,7 @@
 # from a TWISS file, for the Sixtrack-FLUKA coupling
 import os
 import sys
+import logging
 from copy import deepcopy
 
 from .twiss_tools import *
@@ -16,31 +17,38 @@ from .fort2_tools import *
 
 # New keys for apertures with offsets
 VALUES_off = ['APER_1', 'APER_2', 'APER_3', 'APER_4', 'XOFF', 'YOFF']
+LOGGER = logging.getLogger("pysixdesk.generate_fort2")
 
 
 def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     # Open fc.2 file
-    rfile = open(fc2, 'r')
+    # Parse structure of Fort.2 file
+    with open(fc2, 'r') as rfile:
+        print('\nReading fort.2 file: %s ...' % (fc2))
+        F2struct = read_fort2(rfile)
     # Open aperture file
-    tfile = open(aperture, 'r')
+    with open(aperture, 'r') as tfile:
+        print('\nReading aperture file: %s ...' % (aperture))
+        TWstruct = read_twiss(tfile)
+        print('...read %i elements in total (including DRIFTs);' %
+                (len(TWstruct.elements)))
+
     if survery is None:
         sfile = False
     else:
-        sfile = open(survery, 'r')
+        with open(survery, 'r') as sfile:
+            print('\nReading survey file: %s ...' % (survery))
+            SUstruct, SUregions = read_survey(sfile)
+            print('...for a total of %s active markers;' % (len(SUstruct)))
+            if len(SUstruct) == 0:
+                sfile = False
 
-    ofile_name = 'fort.2'
-    ofile = open(ofile_name, 'w')
+
+    ofile = open('fort.2', 'w')
     lfile = open('fort3.limi', 'w')
-    # Parse structure of Fort.2 file
-    print('\nReading fort.2 file: %s ...' % (fc2))
-    F2struct = read_fort2(rfile)
     # get dimension of constitutive arrays (ie SINGLE ELEMENTs, BLOCs, LATTICE ELEMENTs)
     NSEorig, NBLorig, NLTorig = F2struct.echoDimensions()
     # Parse structure of Aperture Twiss file
-    print('\nReading aperture file: %s ...' % (aperture))
-    TWstruct = read_twiss(tfile)
-    print('...read %i elements in total (including DRIFTs);' %
-            (len(TWstruct.elements)))
     if ldebug:
         print('Dumping aperture makers in TWstruct0.dat ...')
         file0 = open("TWstruct0.dat", 'w')
@@ -66,14 +74,6 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
                          item['APER_1'], item['APER_2'], item['APER_3'], item['APER_4'],
                          str(item['XOFF']), str(item['YOFF'])))
         file1.close()
-    # here, TWstruct contains only the necessary markers as from aperture model
-    # Parse and clean survey file, if required
-    if sfile:
-        print('\nReading survey file: %s ...' % (survery))
-        SUstruct, SUregions = read_survey(sfile)
-        print('...for a total of %s active markers;' % (len(SUstruct)))
-        if len(SUstruct) == 0:
-            sfile = False
     if ldebug and sfile:
         print('Dumping info from survey file survey0.dat ...')
         file0 = open("survey0.dat", 'w')
@@ -183,7 +183,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     print('\n\nCheking name lengths...')
     F2sequence, Aperlimi = checkNameLengths(F2sequence, Aperlimi)
     # Transform twiss-like sequence back to fort.2
-    print('\n\nCreating %s file ... ' % (ofile_name))
+    print('\n\nCreating fort.2 file ... ')
     # convert sequence from twiss to fort.2
     newF2struct = twiss_to_fort2(F2sequence)
     # get dimension of constitutive arrays (ie SINGLE ELEMENTs, BLOCs, LATTICE ELEMENTs)
@@ -228,10 +228,6 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     print('...%i entries in LIMI block;' % (len(seenaper)))
     print('...delta BLOCs + entries in LIMI block = %i;' %
         (len(seenaper)+(NBLnew-NBLorig)))
-    tfile.close()
-    rfile.close()
-    if sfile:
-        sfile.close()
     ofile.close()
     lfile.close()
     # Some checks

@@ -12,7 +12,7 @@ from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib.resultparser import parse_preprocess
 
 
-logger = utils.condor_logger()
+logger = utils.condor_logger('preprocess')
 
 def run(wu_id, input_info):
     cf = configparser.ConfigParser()
@@ -40,14 +40,19 @@ def run(wu_id, input_info):
     collimation = madx_config['collimation']
 
     try:
-        pass
-    #    madxjob(madx_config, mask_config)
+        madxjob(madx_config, mask_config)
     except Exception:
         content = 'MADX job failed.'
         logger.error(content, exc_info=True)
         if dbtype.lower() == 'sql':
             return
     else:
+        if collimation.lower() == 'true':
+            try:
+                coll_config = cf['collimation']
+                status = new_fort2(coll_config)
+            except Exception:
+                logger.error('Generate new fort2 failed!', exc_info=True)
         if oneturn.lower() == 'true':
             try:
                 sixtrack_config = cf['sixtrack']
@@ -55,12 +60,6 @@ def run(wu_id, input_info):
                 sixtrackjobs(sixtrack_config, fort3_config)
             except Exception:
                 logger.error('Oneturn job failed!', exc_info=True)
-        if collimation.lower() == 'true':
-            try:
-                coll_config = cf['collimation']
-                status = new_fort2(coll_config)
-            except Exception:
-                logger.error('Generate new fort2 failed!', exc_info=True)
 
     if dbtype.lower() == 'mysql':
         dest_path = './result'
@@ -76,12 +75,10 @@ def run(wu_id, input_info):
     down_list = list(output_files.values())
     down_list.append('madx_in')
     down_list.append('madx_stdout')
-    if oneturn.lower == 'true':
+    if oneturn.lower() == 'true':
         down_list.append('oneturnresult')
     if collimation.lower() == 'true':
         down_list.append('fort3.limi')
-    status = utils.download_output(down_list, dest_path)
-
     try:
         utils.download_output(down_list, dest_path)
         logger.info("All requested results have been stored in %s" % dest_path)
@@ -192,7 +189,7 @@ def new_fort2(config):
     for fil in inputfiles.values():
         fl = os.path.join(source_path, fil)
         shutil.copy2(fl, fil)
-    fc2 = 'fc.2'
+    fc2 = 'fort.2'
     aperture = inputfiles['aperture']
     survery = inputfiles['survey']
     generate_fort2.run(fc2, aperture, survery)
