@@ -2,9 +2,9 @@ class SQLiteDict(object):
 
     def __init__(self):
         self.db_type = {}
-        self.db_type['None'] = 'NULL'
+        self.db_type['NoneType'] = 'NULL'
         self.db_type['int'] = 'INT'
-        self.db_type['float'] = 'float'
+        self.db_type['float'] = 'DOUBLE'
         self.db_type['str'] = 'TEXT'
         self.db_type['bytes'] = 'BLOB'
         self.db_type['tuple'] = 'INT'
@@ -21,7 +21,7 @@ class MySQLDict(object):
 
     def __init__(self):
         self.db_type = {}
-        self.db_type['None'] = 'NULL'
+        self.db_type['NoneType'] = 'NULL'
         self.db_type['int'] = 'INT'
         self.db_type['float'] = 'DOUBLE'
         self.db_type['str'] = 'TEXT'
