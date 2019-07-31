@@ -126,9 +126,8 @@ def madxjob(madx_config, mask_config):
     source_path = madx_config["source_path"]
     mask_name = madx_config["mask_file"]
     output_files = madx_config["output_files"]
-    try:
-        output_files = utils.decode_strings(output_files)
-    except Exception:
+    status, output_files = utils.decode_strings(output_files)
+    if not status:
         content = "Wrong setting of madx output!"
         raise ValueError(content)
 
@@ -144,9 +143,8 @@ def madxjob(madx_config, mask_config):
     patterns = ['%' + a for a in mask_config.keys()]
     values = list(mask_config.values())
     madx_in = 'madx_in'
-    try:
-        utils.replace(patterns, values, mask_name, madx_in)
-    except Exception:
+    status = utils.replace(patterns, values, mask_name, madx_in)
+    if not status:
         content = "Failed to generate actual madx input file!"
         raise Exception(content)
 
@@ -166,9 +164,8 @@ def madxjob(madx_config, mask_config):
         logger.info("MADX has completed properly!")
 
     # Check the existence of madx output
-    try:
-        utils.check(output_files)
-    except Exception:
+    status = utils.check(output_files)
+    if not status:
         content = 'MADX output files not found.'
         raise FileNotFoundError(content)
 
@@ -178,9 +175,8 @@ def sixtrackjobs(config, fort3_config):
     sixtrack_exe = config['sixtrack_exe']
     source_path = config["source_path"]
 
-    try:
-        temp_files = utils.decode_strings(config["temp_files"])
-    except Exception:
+    status, temp_files = utils.decode_strings(config["temp_files"])
+    if not status:
         content = "Wrong setting of oneturn sixtrack templates!"
         raise ValueError(content)
 
@@ -244,15 +240,13 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     # source_path = sixtrack_config["source_path"]
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
 
-    try:
-        temp_files = utils.decode_strings(sixtrack_config["temp_files"])
-    except Exception:
+    status, temp_files = utils.decode_strings(sixtrack_config["temp_files"])
+    if not status:
         content = "Wrong setting of oneturn sixtrack templates!"
         raise ValueError(content)
 
-    try:
-        input_files = utils.decode_strings(sixtrack_config["input_files"])
-    except Exception:
+    status, input_files = utils.decode_strings(sixtrack_config["input_files"])
+    if not status:
         content = "Wrong setting of oneturn sixtrack input!"
         raise ValueError(content)
 
@@ -279,9 +273,8 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     for s in temp_files:
         dest = s + ".t1"
         source = os.path.join('../', s)
-        try:
-            utils.replace(patterns, values, source, dest)
-        except Exception:
+        status = utils.replace(patterns, values, source, dest)
+        if not status:
             content = "Failed to generate input file for oneturn sixtrack!"
             raise Exception(content)
 
