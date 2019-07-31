@@ -389,10 +389,8 @@ class Study(object):
             boinc_spool, self.st_pre, 'results')
         self.env['surv_percent'] = 1
 
-        for key in self.madx_params.keys():
-            self.tables['preprocess_wu'][key] = 'INT'
-        for key in self.madx_output.values():
-            self.tables['preprocess_task'][key] = 'MEDIUMBLOB'
+        for key, val in self.madx_params.items():
+            self.tables['preprocess_wu'][key] = self.type_dict[val]
 
         for key, val in self.oneturn_sixtrack_params.items():
             self.tables['oneturn_sixtrack_wu'][key] = self.type_dict[val]
