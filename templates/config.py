@@ -33,7 +33,6 @@ class MyStudy(Study):
         self.cluster_class = submission.HTCondor
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
-        self.env['study_type'] = 'collimation'
 
         # Add database informations
         self.db_info['db_type'] = 'sql'
@@ -45,8 +44,8 @@ class MyStudy(Study):
         # self.db_info['passwd'] = 'pysixdesk'
 
         ## Get the default values for specified machine with specified runtype
-        #machine_params = MachineConfig('LHC').parameters('inj')
-        machine_params = MachineConfig('LHC').parameters('col')
+        machine_params = MachineConfig('LHC').parameters('inj')
+        #machine_params = MachineConfig('LHC').parameters('col')
         self.oneturn = True # Switch for oneturn sixtrack job
         # self.collimation = True
 
@@ -158,7 +157,7 @@ class MyStudy(Study):
                 paramdict[dest[1]] = str(value1)
                 return 1
             except:
-                self._logger("Unexpected error!", exc_info=True)
+                self._logger.error("Unexpected error!", exc_info=True)
                 return 0
         elif source == 'kang':
             try:

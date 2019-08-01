@@ -47,8 +47,6 @@ def run(wu_id, infile):
             preprocess_results(cf, cluster)
         elif str(wu_id) == '1':
             sixtrack_results(cf, cluster)
-        elif str(wu_id) == '2':
-            collimation_results(cf, cluster)
         else:
             content = "Unknown task!"
             logger.error(content)
@@ -194,8 +192,9 @@ def sixtrack_results(cf, cluster):
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], item)
             task_id = db.select('sixtrack_task', ['task_id'], where)
             task_id = task_id[0][0]
-            f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
-            db.insertm('six_results', f10_table)
+            if len(f10_table) != 0:
+                f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
+                db.insertm('six_results', f10_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['task_id'] = task_id

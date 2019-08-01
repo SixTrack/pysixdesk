@@ -253,7 +253,7 @@ def sixtrackjobs(config, fort3_config):
         beta_out[7] = chrom2
     beta_out = beta_out + mychrom + tunes
     lines = ' '.join(map(str, beta_out))
-    with open('oneturnoutput', 'w') as f_out:
+    with open('oneturnresult', 'w') as f_out:
         f_out.write(lines)
         f_out.write('\n')
 
