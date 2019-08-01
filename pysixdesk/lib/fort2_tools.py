@@ -45,46 +45,46 @@ class Fort2Struct:
         ELEMENTs
         '''
         if lDebug:
-            print('%s - %s' % ('getISingEl', tmpName))
+            LOGGER.info('%s - %s' % ('getISingEl', tmpName))
         ans = [iEl for iEl in range(len(self.elements)) if (
             tmpName == self.elements[iEl]['NAME'])]
         if len(ans) == 0:
-            print('unable to find %s in list of SINGLE ELEMENTs!' % (tmpName))
+            LOGGER.info('unable to find %s in list of SINGLE ELEMENTs!' % (tmpName))
             exit()
         elif len(ans) > 1:
-            print('%s found multiple times in list of SINGLE ELEMENTs!' %
+            LOGGER.info('%s found multiple times in list of SINGLE ELEMENTs!' %
                     (tmpName))
             exit()
         else:
             ans = ans[0]
             if lDebug:
-                print('%s has id %i in list of SINGLE ELEMENTs' % (tmpName,
+                LOGGER.info('%s has id %i in list of SINGLE ELEMENTs' % (tmpName,
                     ans))
         return ans
 
     def getIBlock(self, tmpName, key='NAME', lDebug=True):
         '''return index of BLOC named tmpName from list of BLOCks'''
         if lDebug:
-            print('%s - %s - key: %s' % ('getIBlock', tmpName, key))
+            LOGGER.info('%s - %s - key: %s' % ('getIBlock', tmpName, key))
         if len(self.blocks) == 0:
-            print('no BLOCks in current structure!')
+            LOGGER.info('no BLOCks in current structure!')
             exit()
         if key not in self.blocks[0]:
-            print('no key in BLOCk element named %s!' % (key))
+            LOGGER.info('no key in BLOCk element named %s!' % (key))
             exit()
         ans = [iEl for iEl in range(len(self.blocks)) if (
             tmpName == self.blocks[iEl][key])]
         if len(ans) == 0:
-            print('unable to find %s in list of BLOCks!' % (tmpName))
+            LOGGER.info('unable to find %s in list of BLOCks!' % (tmpName))
             exit()
         elif len(ans) > 1:
-            print('%s found multiple times in list of BLOCks (key=%s)!' %
+            LOGGER.info('%s found multiple times in list of BLOCks (key=%s)!' %
                     (tmpName, key))
             exit()
         else:
             ans = ans[0]
             if lDebug:
-                print('%s has id %i in list of BLOCKs' % (tmpName, ans))
+                LOGGER.info('%s has id %i in list of BLOCKs' % (tmpName, ans))
         return ans
 
     def getIDriftFromBlockName(self, tmpName, lDebug=True):
@@ -93,7 +93,7 @@ class Fort2Struct:
         '''
         iBlock = self.getIBlock(tmpName, lDebug=lDebug)
         if lDebug:
-            print('%s is actually %s' % (self.blocks[iBlock]['NAME'],
+            LOGGER.info('%s is actually %s' % (self.blocks[iBlock]['NAME'],
                 self.blocks[iBlock]['ELEM']))
         iSing = self.getISingEl(self.blocks[iBlock]['ELEM'], lDebug=lDebug)
         return iBlock, iSing
@@ -103,7 +103,7 @@ class Fort2Struct:
         if iSing and iBlock are not None, an existing one is cloned
         '''
         if lDebug:
-            print('%s - iSing,L,lDebug:' % ('createDrift'), iSing, L, lDebug)
+            LOGGER.info('%s - iSing,L,lDebug:' % ('createDrift'), iSing, L, lDebug)
         # new DRIFT
         if iSing is None:
             new_SE = {}
@@ -270,7 +270,7 @@ def fort2_to_twiss(struct):
         elif element not in senames and 'BLOC' not in element:
             msg = 'WARNING: Element in lattice: '+str(element)
             msg = msg+", with no corresponding single element.\n"
-            print(msg)
+            LOGGER.info(msg)
             dict = {'VAR5': '0.000000000e+00', 'VAR4': '0.000000000e+00',
                     'VAR6': '0.000000000e+00', 'LENG': '0.000000000e+00',
                     'NAME': element, 'VAR2': '0.000000000e+00', 'S': Spos,

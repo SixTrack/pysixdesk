@@ -24,22 +24,22 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     # Open fc.2 file
     # Parse structure of Fort.2 file
     with open(fc2, 'r') as rfile:
-        print('\nReading fort.2 file: %s ...' % (fc2))
+        LOGGER.info('Reading fort.2 file: %s ...' % (fc2))
         F2struct = read_fort2(rfile)
     # Open aperture file
     with open(aperture, 'r') as tfile:
-        print('\nReading aperture file: %s ...' % (aperture))
+        LOGGER.info('Reading aperture file: %s ...' % (aperture))
         TWstruct = read_twiss(tfile)
-        print('...read %i elements in total (including DRIFTs);' %
+        LOGGER.info('...read %i elements in total (including DRIFTs)' %
                 (len(TWstruct.elements)))
 
     if survery is None:
         sfile = False
     else:
         with open(survery, 'r') as sfile:
-            print('\nReading survey file: %s ...' % (survery))
+            LOGGER.info('Reading survey file: %s ...' % (survery))
             SUstruct, SUregions = read_survey(sfile)
-            print('...for a total of %s active markers;' % (len(SUstruct)))
+            LOGGER.info('...for a total of %s active markers;' % (len(SUstruct)))
             if len(SUstruct) == 0:
                 sfile = False
 
@@ -50,7 +50,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     NSEorig, NBLorig, NLTorig = F2struct.echoDimensions()
     # Parse structure of Aperture Twiss file
     if ldebug:
-        print('Dumping aperture makers in TWstruct0.dat ...')
+        LOGGER.info('Dumping aperture makers in TWstruct0.dat ...')
         file0 = open("TWstruct0.dat", 'w')
         for item in TWstruct.elements:
             file0.write("%-16s %12s %12s %12s %12s %12s %12s\n" %
@@ -58,15 +58,15 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
                          item['APER_1'], item['APER_2'], item['APER_3'], item['APER_4'],))
         file0.close()
     # Clean and compress apertures
-    print('\nCleaning apertures: removing redundances and zero apertures...')
+    LOGGER.info('Cleaning apertures: removing redundances and zero apertures...')
     TWstruct = clean_apertures(TWstruct)
-    print('   ...down to %i elements;' % (len(TWstruct.elements)))
+    LOGGER.info('...down to %i elements;' % (len(TWstruct.elements)))
     # Add offsets to TWstruct
     for item in TWstruct.elements:
         item['XOFF'] = 0.0
         item['YOFF'] = 0.0
     if ldebug:
-        print('Dumping aperture makers in TWstruct1.dat ...')
+        LOGGER.info('Dumping aperture makers in TWstruct1.dat ...')
         file1 = open("TWstruct1.dat", 'w')
         for item in TWstruct.elements:
             file1.write("%-16s %12s %12s %12s %12s %12s %12s %12s %12s\n" %
@@ -75,7 +75,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
                          str(item['XOFF']), str(item['YOFF'])))
         file1.close()
     if ldebug and sfile:
-        print('Dumping info from survey file survey0.dat ...')
+        LOGGER.info('Dumping info from survey file survey0.dat ...')
         file0 = open("survey0.dat", 'w')
         for item in SUstruct:
             file0.write("%12s %12s\n" % (str(item['s[m]']), str(item['Xs[m]'])))
@@ -87,7 +87,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     if sfile:
         TWstruct = merge_survey(TWstruct, SUstruct, SUregions)
         if ldebug:
-            print('Dumping aperture makers in TWstruct2.dat ...')
+            LOGGER.info('Dumping aperture makers in TWstruct2.dat ...')
             file1 = open("TWstruct2.dat", 'w')
             for item in TWstruct.elements:
                 file1.write("%-16s %12s %12s %12s %12s %12s %12s %12s %12s\n" %
@@ -101,13 +101,13 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     F2sequence = fort2_to_twiss(F2struct)
     F2names = [item['NAME'].upper() for item in F2sequence]
     if (ldebug):
-        print('Dumping oiginal sequence contained in fort.2 in fort.2_1.log ...')
+        LOGGER.info('Dumping oiginal sequence contained in fort.2 in fort.2_1.log ...')
         file1 = open("fort.2_1.log", 'w')
         for item in F2sequence:
             file1.write("%-16s %12.4f\n" % (item['NAME'], item['S']))
         file1.close()
     # Assign apertures to fort.2 lenses, interpolated as done in BeamLossPattern
-    print('\n\nAssigning apertures to fort.2 lenses interpolated as done in \
+    LOGGER.info('Assigning apertures to fort.2 lenses interpolated as done in \
             BeamLossPattern ...')
     Lenselist = assign_apertures(F2sequence, TWstruct)
     # here, TWstruct merges markers from survey onto list of necessary markers from aperture model
@@ -118,7 +118,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     # - lenses in fort.2 (type!=0 -> no drifts, including markers!);
     # Write out apertures
     if ldebug:
-        print('Dumping aperture makers in aper0.dat ...')
+        LOGGER.info('Dumping aperture makers in aper0.dat ...')
         file0 = open("aper0.dat", 'w')
         for item in TWstruct.elements:
             file0.write("%-16s %12s %12s %12s %12s %12s %12s %12s %12s\n" %
@@ -127,11 +127,11 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
                          str(item['XOFF']), str(item['YOFF'])))
         file0.close()
     # Rename apertures
-    print('\nRenaming apertures to reduce number of new single elements...')
+    LOGGER.info('Renaming apertures to reduce number of new single elements...')
     TWstruct = rename_apertures(TWstruct)
     # Write out apertures
     if ldebug:
-        print('Dumping aperture makers in aper1.dat ...')
+        LOGGER.info('Dumping aperture makers in aper1.dat ...')
         file1 = open("aper1.dat", 'w')
         for item in TWstruct.elements:
             file1.write("%-16s %12s %12s %12s %12s %12s %12s %12s %12s\n" %
@@ -144,7 +144,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     # Define list for apertures in the format of the LIMI block
     Aperlimi = []
     # Add non-zero apertures to fort.2 as markers
-    print('\nAdd non-zero apertures to fort.2 as markers...')
+    LOGGER.info('\nAdd non-zero apertures to fort.2 as markers...')
     idx = 0
     for aperture in TWstruct.elements:
         idx += 1
@@ -180,10 +180,10 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
             Aperlimi.append(aperture_type(s_name, aperture))
             Dftidx += 1
     # check name lengths and correct accordingly
-    print('\n\nCheking name lengths...')
+    LOGGER.info('Cheking name lengths...')
     F2sequence, Aperlimi = checkNameLengths(F2sequence, Aperlimi)
     # Transform twiss-like sequence back to fort.2
-    print('\n\nCreating fort.2 file ... ')
+    LOGGER.info('Creating fort.2 file ... ')
     # convert sequence from twiss to fort.2
     newF2struct = twiss_to_fort2(F2sequence)
     # get dimension of constitutive arrays (ie SINGLE ELEMENTs, BLOCs, LATTICE ELEMENTs)
@@ -215,18 +215,18 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
                              aperture['ANGLE'], ))
             seenaper.append(aperture['NAME'])
     # check some numbers for consistency
-    print('')
-    print(' dimensions of arrays in fort.2:')
-    print(' %16s | %10s | %10s | %10s' % ('', 'original', 'new', 'variation'))
-    print(' %16s | %10i | %10i | %10s' % ('SINGLE ELEMENTs', NSEorig, NSEnew,
+    LOGGER.info('')
+    LOGGER.info(' dimensions of arrays in fort.2:')
+    LOGGER.info(' %16s | %10s | %10s | %10s' % ('', 'original', 'new', 'variation'))
+    LOGGER.info(' %16s | %10i | %10i | %10s' % ('SINGLE ELEMENTs', NSEorig, NSEnew,
         NSEnew-NSEorig))
-    print(' %16s | %10i | %10i | %10s' % ('BLOCs', NBLorig, NBLnew,
+    LOGGER.info(' %16s | %10i | %10i | %10s' % ('BLOCs', NBLorig, NBLnew,
         NBLnew-NBLorig))
-    print(' %16s | %10i | %10i | %10s' %
+    LOGGER.info(' %16s | %10i | %10i | %10s' %
         ('LATTICE ELEMENTs', NLTorig, NLTnew, NLTnew-NLTorig))
-    print('')
-    print('...%i entries in LIMI block;' % (len(seenaper)))
-    print('...delta BLOCs + entries in LIMI block = %i;' %
+    LOGGER.info('')
+    LOGGER.info('...%i entries in LIMI block;' % (len(seenaper)))
+    LOGGER.info('...delta BLOCs + entries in LIMI block = %i;' %
         (len(seenaper)+(NBLnew-NBLorig)))
     ofile.close()
     lfile.close()
@@ -237,7 +237,7 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
         Index += 1
         file1.write("%6i %-16s %12.5f\n" % (Index, item['NAME'], item['S']))
     file1.close()
-    print('...done.')
+    LOGGER.info('...done.')
 
 
 def error_message(tmp_string, labort):
@@ -255,12 +255,12 @@ def error_message(tmp_string, labort):
     # strip strings:
     tmp_strings = tmp_string.split("\n")
     # print message:
-    print("!!")
+    LOGGER.error("!!")
     for single_string in tmp_strings:
-        print(" !! " + single_string.strip())
-    print(" !! ")
+        LOGGER.error(" !! " + single_string.strip())
+    LOGGER.error(" !! ")
     if labort:
-        exit(1)
+        raise Exception
 
 
 def read_survey(file1, dS=0.001):
@@ -284,8 +284,8 @@ def read_survey(file1, dS=0.001):
                 e+d for e in line[1:].strip().replace(' ', '').split(d) if e != ""]
             # If survey column not found, stop reading
             if 'Xs[m]' not in element_fields:
-                print('Error reading Survey file! Xs[m] column not found!')
-                print('The offset info will not be considered')
+                LOGGER.error('Error reading Survey file! Xs[m] column not found!')
+                LOGGER.warning('The offset info will not be considered')
                 break
             else:
                 continue
@@ -625,7 +625,7 @@ def checkNameLengths(tmpSequence, tmpAperLimi, maxLen=16):
                 if (origName not in changeNames):
                     # ...but only once!
                     changeNames.append(origName)
-                    print(' ...%s changed into %s !' % (origName,
+                    LOGGER.info('...%s changed into %s !' % (origName,
                         tmpSequence[jj]['NAME']))
     if lErr:
         msg = 'unable to shorten the following names:\n'
@@ -677,19 +677,3 @@ def assign_apertures(F2sequence, TWstruct):
                     break
             del F2aper
     return Lenselist
-
-'''
-    if len(args) >= 5:
-        if (args[4] == '--printOldFormat'):
-            print('\nrequested printing of aperture markers for SixTrack releases
-                    >= 5.1.0')
-            lold = True
-        else:
-            msg = 'Could not understand last terminal-line option. Did you mean --printOldFormat ?'
-            error_message(msg, True)
-            lold = None
-    else:
-        print('\nrequested printing of aperture markers for SixTrack releases <
-                5.1.0')
-        lold = False
-'''
