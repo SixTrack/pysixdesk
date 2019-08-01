@@ -314,13 +314,20 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     utils.concatenate_files(output, 'fort.3')
 
     # prepare the other input files
-    if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
-        os.symlink('../fort.2', 'fort.2')
-        os.symlink('../fort.16', 'fort.16')
-        if not os.path.isfile('../fort.8'):
-            open('fort.8', 'a').close()
+    for key in input_files.values():
+        key1 = os.path.join('../', key)
+        if os.path.isfile(key1):
+            os.symlink(key1, key)
         else:
-            os.symlink('../fort.8', 'fort.8')
+            raise FileNotFoundError("The required input file %s does not found!" %
+                    key)
+    #if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
+    #    os.symlink('../fort.2', 'fort.2')
+    #    os.symlink('../fort.16', 'fort.16')
+    #    if not os.path.isfile('../fort.8'):
+    #        open('fort.8', 'a').close()
+    #    else:
+    #        os.symlink('../fort.8', 'fort.8')
 
     # actually run
     logger.info('Sixtrack job %s is running...' % jobname)
@@ -330,7 +337,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     with open(output_name, 'w') as six_out:
         six_out.writelines(outputlines)
     if not os.path.isfile('fort.10'):
-        logger.error("The %s sixtrack job for chromaticity FAILED!" % jobname)
+        logger.error("The %s sixtrack job FAILED!" % jobname)
         logger.info("Check the file %s which contains the SixTrack fort.6 output." % output_name)
         raise FileNotFoundError('fort.10 not found.')
 
