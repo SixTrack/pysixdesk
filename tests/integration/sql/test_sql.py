@@ -55,21 +55,37 @@ class SqlDB(unittest.TestCase):
             time.sleep(10)
         # TODO: add a check on the output of the preprocess job
 
+<<<<<<< HEAD
         self.st.prepare_sixtrack_input()
         # getting the expected list of sixtrack wu_ids.
         # TODO: test this !
         where = "status='complete'"
         pre_wu_ids = self.st.db.select('preprocess_wu', ['wu_id'], where)
+=======
+        self.prepare_sixtrack_input()
+        # getting the expected list of sixtrack wu_ids.
+        # TODO: test this !
+        where = "status='complete'"
+        pre_wu_ids = self.db.select('preprocess_wu', ['wu_id'], where)
+>>>>>>> 8a7a303... improved integration tests
         pre_wu_ids = [p[0] for p in pre_wu_ids]
         if len(pre_wu_ids) == 1:
             where = "status='incomplete' and preprocess_id=%s" % str(pre_wu_ids[0])
         else:
             where = "status='incomplete' and preprocess_id in %s" % str(pre_wu_ids)
+<<<<<<< HEAD
         six_wu_ids = self.st.db.select('sixtrack_wu', ['wu_id'], where)
         six_wu_ids = [s[0] for s in six_wu_ids]
         # TODO: add assert here
 
         self.st.submit(1)
+=======
+        six_wu_ids = self.db.select('sixtrack_wu', ['wu_id'], where)
+        six_wu_ids = [s[0] for s in six_wu_ids]
+        # TODO: add assert here
+
+        self.submit(1)
+>>>>>>> 8a7a303... improved integration tests
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)),
                          len(six_wu_ids))
 
