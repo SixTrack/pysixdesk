@@ -74,6 +74,20 @@ class UtilsTest(unittest.TestCase):
 
         # with gzip ...
 
+    def test_merge_dicts(self):
+        a = {'a': 1, 'b': 2, 'c': 3}
+        b = {'a': 10}
+        self.assertEqual(utils.merge_dicts(a, b), {'a': 10, 'b': 2, 'c': 3})
+        # also check to make sure the dicts have not been changed
+        self.assertEqual(a, {'a': 1, 'b': 2, 'c': 3})
+        self.assertEqual(b, {'a': 10})
+
+        b = {'d': 10}
+        self.assertEqual(utils.merge_dicts(a, b), {'a': 1, 'b': 2,
+                                                   'c': 3, 'd': 10})
+        self.assertEqual(a, {'a': 1, 'b': 2, 'c': 3})
+        self.assertEqual(b, {'d': 10})
+
     def tearDown(self):
         # remove testing folder
         shutil.rmtree(self.test_folder.parents[0], ignore_errors=True)

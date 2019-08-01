@@ -1,69 +1,72 @@
-class ParentMachine(object):
-    '''Parent class representing an empty machine'''
+from .utils import merge_dicts
+# LHC settings
+LHC = {}
+# TODO: fill these in.
+# defaults
+_LHC_DEF = dict(phi_IR1=90.000,
+                phi_IR5=0.000,
+                b_t_dist=25.,
+                # bunch_charge=2.2e11,
+                # emit_norm=2.5e-6,
+                inttunex=62.0,
+                inttuney=60.0,
+                qprimex=3.0,
+                qprimey=3.0,
+                fraction_crab=0,
+                SEEDRAN=1,)
+# injection defaults
+_LHC_INJ = dict(rfvol=8.0,  # [MV]
+                sigz=0.11,  # [mm]
+                sige=4.5e-04,
+                e0=450.0,
+                # I_MO= ,
+                tunex=62.28,
+                tuney=60.31,
+                )
+# collision defaults
+_LHC_COL = dict(rfvol=16.0,  # [MV]
+                sigz=0.77e-1,  # [mm]
+                sige=1.1e-04,
+                e0=7000.0,
+                # I_MO= ,
+                tunex=62.31,
+                tuney=60.32,
+                )
+LHC['inj'] = merge_dicts(_LHC_DEF, _LHC_INJ)
+LHC['col'] = merge_dicts(_LHC_DEF, _LHC_COL)
 
-    def __init__(self):
-        self.params = {
-            'inj': {
-                'rfvol': None,
-                'sigz': None,
-                'sige': None
-            },
-            'col': {
-                'rfvol': None,
-                'sigz': None,
-                'sige': None
-            }
-        }
-        return
-
-    def parameters(self, runtype=None):
-        if runtype is None:
-            return self.params
-        else:
-            return self.params[runtype]
-
-
-class LHC(ParentMachine):
-
-    def __init__(self):
-        ParentMachine.__init__(self)
-
-        self.params['inj']['rfvol'] = 8.0  # [MV]
-        self.params['inj']['sigz'] = 0.11  # [mm]
-        self.params['inj']['sige'] = 4.5e-04  # []
-
-        self.params['col']['rfvol'] = 16.0  # [MV]
-        self.params['col']['sigz'] = 0.77e-1  # [mm]
-        self.params['col']['sige'] = 1.1e-04  # []
-
-
-class HLLHC(ParentMachine):
-
-    def __init__(self):
-        ParentMachine.__init__(self)
-
-        self.params['inj']['rfvol'] = 8.0  # [MV]
-        self.params['inj']['sigz'] = 0.11  # [mm]
-        self.params['inj']['sige'] = 4.5e-04  # []
-
-        self.params['col']['rfvol'] = 16.0  # [MV]
-        self.params['col']['sigz'] = 0.77e-1  # [mm]
-        self.params['col']['sige'] = 1.1e-04  # []
-
-
-class MachineConfig(object):
-
-    def __init__(self, machine):
-        self.params = {}
-        if machine.lower() == 'lhc':
-            self.params = LHC().parameters()
-        elif machine.lower() == 'hllhc':
-            self.params = LHC().parameters()
-        else:
-            print("Machine %s not available" % machine)
-
-    def parameters(self, runtype=None):
-        if runtype is None:
-            return self.params
-        else:
-            return self.params[runtype]
+# HLLHC settings
+HLLHC = {}
+# defaults
+_HLLHC_DEF = dict(phi_IR1=90.000,
+                  phi_IR5=0.000,
+                  b_t_dist=25.,
+                  bunch_charge=2.2e11,
+                  emit_norm=2.5e-6,
+                  inttunex=62.0,
+                  inttuney=60.0,
+                  qprimex=3.0,
+                  qprimey=3.0,
+                  fraction_crab=0,
+                  SEEDRAN=1,
+                  )
+# injection defaults
+_HLLHC_INJ = dict(rfvol=8.0,  # [MV]
+                  sigz=0.130,  # [mm]
+                  sige=4.5e-04,
+                  e0=450.0,
+                  I_MO=-20,
+                  tunex=62.28,
+                  tuney=60.31,
+                  )
+# collision defaults
+_HLLHC_COL = dict(rfvol=8.0,  # [MV]
+                  sigz=0.075,  # [mm]
+                  sige=1.1e-4,
+                  e0=7000.0,
+                  I_MO=-570,
+                  tunex=62.31,
+                  tuney=60.32,
+                  )
+HLLHC['inj'] = merge_dicts(_HLLHC_DEF, _HLLHC_INJ)
+HLLHC['col'] = merge_dicts(_HLLHC_DEF, _HLLHC_COL)

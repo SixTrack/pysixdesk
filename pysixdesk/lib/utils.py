@@ -219,3 +219,14 @@ def condor_logger():
     logger.addHandler(h2)
     logger.setLevel(logging.DEBUG)
     return logger
+
+
+def merge_dicts(x, y):
+    """Merges two dicts.
+
+    Returns:
+        dict: Merged dict
+    """
+    z = x.copy()
+    z.update(y)
+    return z

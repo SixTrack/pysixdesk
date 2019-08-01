@@ -13,7 +13,6 @@ import configparser
 from . import dbtypedict
 from . import utils
 from . import gather
-from . import constants
 from . import submission
 from .pysixdb import SixDB
 
@@ -34,13 +33,11 @@ class Study(object):
         # All the requested parameters for a study
         self.paths = {}
         self.env = {}
-        self.madx_params = collections.OrderedDict()
+        self.params = None
         self.madx_input = {}
         self.madx_output = {}
-        self.oneturn_sixtrack_params = collections.OrderedDict()
         self.oneturn_sixtrack_input = {}
         self.oneturn_sixtrack_output = []
-        self.sixtrack_params = collections.OrderedDict()
         self.sixtrack_input = {}
         self.sixtrack_output = []
         self.tables = {}
@@ -107,42 +104,6 @@ class Study(object):
             'fc.8': 'fort.8',
             'fc.16': 'fort.16',
             'fc.34': 'fort.34'}
-        self.oneturn_sixtrack_params = collections.OrderedDict([
-            ("turnss", 1),
-            ("nss", 1),
-            ("ax0s", 0.1),
-            ("ax1s", 0.1),
-            ("imc", 1),
-            ("iclo6", 2),
-            ("writebins", 1),
-            ("ratios", 1),
-            ("Runnam", 'FirstTurn'),
-            ("idfor", 0),
-            ("ibtype", 0),
-            ("ition", 0),
-            ("CHRO", '/'),
-            ("TUNE", '/'),
-            ("POST", 'POST'),
-            ("POS1", ''),
-            ("ndafi", 1),
-            ("tunex", 62.28),
-            ("tuney", 60.31),
-            ("inttunex", 62.28),
-            ("inttuney", 60.31),
-            ("DIFF", '/DIFF'),
-            ("DIF1", '/'),
-            ("pmass", constants.PROTON_MASS),
-            ("emit_beam", 3.75),
-            ("e0", 7000),
-            ("bunch_charge", 1.15E11),
-            ("CHROM", 0),
-            ("chrom_eps", 0.000001),
-            ("dp1", 0.000001),
-            ("dp2", 0.000001),
-            ("chromx", 2),
-            ("chromy", 2)])
-        # ("TUNEVAL", '/'),
-        # ("CHROVAL", '/')])
         self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
         self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
@@ -365,6 +326,9 @@ class Study(object):
         '''Update the column names of database tables  and initialize the
         submission module after the user define the necessary variables.
         '''
+        # drop Nones from the param dictionnaries to not have a any NULL types
+        # which cause problems for the database.
+        self.params.drop_none()
         stp = self.study_path
         studies = os.path.dirname(stp)
         wu_path = os.path.dirname(studies)
@@ -389,15 +353,15 @@ class Study(object):
             boinc_spool, self.st_pre, 'results')
         self.env['surv_percent'] = 1
 
-        for key in self.madx_params.keys():
+        for key in self.params.madx.keys():
             self.tables['preprocess_wu'][key] = 'INT'
         for key in self.madx_output.values():
             self.tables['preprocess_task'][key] = 'MEDIUMBLOB'
 
-        for key, val in self.oneturn_sixtrack_params.items():
+        for key, val in self.params.oneturn.items():
             self.tables['oneturn_sixtrack_wu'][key] = self.type_dict[val]
 
-        for key, val in self.sixtrack_params.items():
+        for key, val in self.params.sixtrack.items():
             self.tables['sixtrack_wu'][key] = self.type_dict[val]
         for key in self.sixtrack_output:
             self.tables['sixtrack_task'][key] = 'BLOB'
@@ -490,12 +454,12 @@ class Study(object):
         six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
         inp = self.oneturn_sixtrack_output
         six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
-        self.config['fort3'] = self.oneturn_sixtrack_params
+        self.config['fort3'] = self.params.oneturn
 
-        keys = list(self.madx_params.keys())
+        keys = list(self.params.madx.keys())
         values = []
         for key in keys:
-            val = self.madx_params[key]
+            val = self.params.madx[key]
             if not isinstance(val, collections.Iterable) or isinstance(val, str):
                 val = [val]  # wrap with list for a single element
             values.append(val)
@@ -558,7 +522,7 @@ class Study(object):
         six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
         six_sec['test_turn'] = str(self.env['test_turn'])
 
-        madx_keys = list(self.madx_params.keys())
+        madx_keys = list(self.params.madx.keys())
         madx_vals = self.db.select('preprocess_wu', ['wu_id'] + madx_keys)
         if not madx_vals:
             content = "The preprocess_wu table is empty!"
@@ -567,10 +531,10 @@ class Study(object):
         madx_vals = list(zip(*madx_vals))
         madx_ids = list(madx_vals[0])
         madx_params = madx_vals[1:]
-        keys = list(self.sixtrack_params.keys())
+        keys = list(self.params.sixtrack.keys())
         values = []
         for key in keys:
-            val = self.sixtrack_params[key]
+            val = self.params.sixtrack[key]
             if not isinstance(val, collections.Iterable) or isinstance(val, str):
                 val = [val]  # wrap with list for a single element
             values.append(val)
@@ -770,9 +734,15 @@ class Study(object):
             in_fil = utils.evlt(utils.decompress_buf, [buf, None, 'buf'])
             self.config.clear()
             self.config.read_string(in_fil)
-            paramsdict = self.config['fort3']
-            status = self.pre_calc(paramsdict, pre_id)  # further calculation
-            if status:
+            # paramsdict = self.config['fort3']
+            # status = self.pre_calc(paramsdict, pre_id)  # further calculation
+            # if status:
+            try:
+                self.config['fort3'] = self.params.calc(pre_id=pre_id)
+            except Exception:
+                pass
+            # if status
+            else:
                 f_out = io.StringIO()
                 self.config.write(f_out)
                 out = f_out.getvalue()
