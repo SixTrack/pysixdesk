@@ -104,8 +104,9 @@ def preprocess_results(cf, cluster):
                              oneturn_table, list(oneturn.keys()))
             where = 'task_id=%s' % task_id
             db.update('preprocess_task', task_table, where)
-            oneturn_table['task_id'] = task_id
-            db.insert('oneturn_sixtrack_result', oneturn_table)
+            if len(oneturn_table) != 0:
+                oneturn_table['task_id'] = task_id
+                db.insert('oneturn_sixtrack_result', oneturn_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['mtime'] = int(time.time() * 1E7)

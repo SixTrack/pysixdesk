@@ -151,13 +151,6 @@ class Study(object):
         # Default definition of the database tables
         self.tables['templates'] = collections.OrderedDict()
         self.tables['env'] = collections.OrderedDict()
-        self.tables['collimation_results'] = collections.OrderedDict([
-            ('task_id', 'INTEGER'),
-            ('mtime', 'bigint')])
-        self.table_keys['collimation_results'] = {
-            'primary': ['task_id'],
-            'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
-        }
         self.tables['preprocess_wu'] = collections.OrderedDict([
             ('wu_id', 'INTEGER'),
             ('job_name', 'text'),
@@ -307,6 +300,13 @@ class Study(object):
             ('dnms', 'float'),
             ('trttime', 'float'),
             ('mtime', 'bigint')])
+        self.tables['collimation_results'] = collections.OrderedDict([
+            ('task_id', 'int'),
+            ('mtime', 'bigint')])
+        self.table_keys['collimation_results'] = {
+            'primary': ['task_id'],
+            'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
+        }
         self.table_keys['six_results'] = {
             'primary': ['six_input_id', 'row_num'],
             'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},

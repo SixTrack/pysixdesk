@@ -125,8 +125,9 @@ def run(wu_id, input_info):
                        f10_table, list(f10_sec.keys()))
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
-        f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
-        db.insertm('six_results', f10_table)
+        if len(f10_table) != 0:
+            f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
+            db.insertm('six_results', f10_table)
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
