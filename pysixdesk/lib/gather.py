@@ -104,8 +104,9 @@ def preprocess_results(cf, cluster):
                              oneturn_table, list(oneturn.keys()))
             where = 'task_id=%s' % task_id
             db.update('preprocess_task', task_table, where)
-            oneturn_table['task_id'] = task_id
-            db.insert('oneturn_sixtrack_result', oneturn_table)
+            if len(oneturn_table) != 0:
+                oneturn_table['task_id'] = task_id
+                db.insert('oneturn_sixtrack_result', oneturn_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['mtime'] = int(time.time() * 1E7)
@@ -192,8 +193,9 @@ def sixtrack_results(cf, cluster):
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], item)
             task_id = db.select('sixtrack_task', ['task_id'], where)
             task_id = task_id[0][0]
-            f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
-            db.insertm('six_results', f10_table)
+            if len(f10_table) != 0:
+                f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
+                db.insertm('six_results', f10_table)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['task_id'] = task_id

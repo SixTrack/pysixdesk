@@ -39,9 +39,9 @@ class Study(object):
         self.madx_output = {}
         self.oneturn_sixtrack_params = collections.OrderedDict()
         self.oneturn_sixtrack_input = {}
-        self.oneturn_sixtrack_output = []
         self.sixtrack_params = collections.OrderedDict()
         self.sixtrack_input = {}
+        self.preprocess_ouput = {}
         self.sixtrack_output = []
         self.tables = {}
         self.table_keys = {}
@@ -97,7 +97,8 @@ class Study(object):
         self.paths["templates"] = self.study_path
         # self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
         self.env['test_turn'] = 1000
-
+        self.oneturn = True
+        self.collimation = False
         self.cluster_class = submission.HTCondor
 
         self.madx_output = {
@@ -134,6 +135,8 @@ class Study(object):
             ("pmass", constants.PROTON_MASS),
             ("emit_beam", 3.75),
             ("e0", 7000),
+            ("ilin", 2),
+            ("EI", 3.75),
             ("bunch_charge", 1.15E11),
             ("CHROM", 0),
             ("chrom_eps", 0.000001),
@@ -141,10 +144,7 @@ class Study(object):
             ("dp2", 0.000001),
             ("chromx", 2),
             ("chromy", 2)])
-        # ("TUNEVAL", '/'),
-        # ("CHROVAL", '/')])
         self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
-        self.oneturn_sixtrack_output = ['fort.10']
         self.sixtrack_output = ['fort.10']
 
         self.db_info['db_type'] = 'sql'
@@ -300,6 +300,13 @@ class Study(object):
             ('dnms', 'float'),
             ('trttime', 'float'),
             ('mtime', 'bigint')])
+        self.tables['collimation_results'] = collections.OrderedDict([
+            ('task_id', 'int'),
+            ('mtime', 'bigint')])
+        self.table_keys['collimation_results'] = {
+            'primary': ['task_id'],
+            'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
+        }
         self.table_keys['six_results'] = {
             'primary': ['six_input_id', 'row_num'],
             'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},
@@ -329,9 +336,8 @@ class Study(object):
 
     def _structure(self):
         '''Structure the workspace of this study.
-        Prepare the input and output folders.
         Copy the required template files.
-        Initialize the database.'''
+        '''
         temp = self.paths["templates"]
         if not os.path.isdir(temp) or not os.listdir(temp):
             if not os.path.exists(temp):
@@ -350,6 +356,10 @@ class Study(object):
                 content = "The default source templates folder %s is invalid!" % tem_path
                 raise NotADirectoryError(content)
 
+    def customize(self):
+        '''Update the column names of database tables  and initialize the
+        submission module after the user define the necessary variables.
+        '''
         if not os.path.isdir(self.paths["preprocess_in"]):
             os.makedirs(self.paths["preprocess_in"])
         if not os.path.isdir(self.paths["preprocess_out"]):
@@ -361,10 +371,6 @@ class Study(object):
         if not os.path.isdir(self.paths["gather"]):
             os.makedirs(self.paths["gather"])
 
-    def customize(self):
-        '''Update the column names of database tables  and initialize the
-        submission module after the user define the necessary variables.
-        '''
         stp = self.study_path
         studies = os.path.dirname(stp)
         wu_path = os.path.dirname(studies)
@@ -391,7 +397,9 @@ class Study(object):
 
         for key in self.madx_params.keys():
             self.tables['preprocess_wu'][key] = 'INT'
-        for key in self.madx_output.values():
+        if self.collimation:
+            self.preprocess_output['fort3.limi'] = 'fort3.limi'
+        for key in self.preprocess_output.values():
             self.tables['preprocess_task'][key] = 'MEDIUMBLOB'
 
         for key, val in self.oneturn_sixtrack_params.items():
@@ -400,12 +408,13 @@ class Study(object):
         for key, val in self.sixtrack_params.items():
             self.tables['sixtrack_wu'][key] = self.type_dict[val]
         for key in self.sixtrack_output:
-            self.tables['sixtrack_task'][key] = 'BLOB'
+            self.tables['sixtrack_task'][key] = 'MEDIUMBLOB'
 
         for key in self.madx_input.keys():
             self.tables['templates'][key] = 'BLOB'
-        for key in self.oneturn_sixtrack_input['temp']:
-            self.tables['templates'][key] = 'BLOB'
+        if self.oneturn:
+            for key in self.oneturn_sixtrack_input['temp']:
+                self.tables['templates'][key] = 'BLOB'
         for key in self.sixtrack_input['temp']:
             self.tables['templates'][key] = 'BLOB'
 
@@ -436,7 +445,9 @@ class Study(object):
         temp = self.paths["templates"]
         cont = os.listdir(temp)
         require = []
-        require += self.oneturn_sixtrack_input["temp"]
+        if self.oneturn:
+            require += self.oneturn_sixtrack_input["temp"]
+        require += self.sixtrack_input['temp']
         require.append(self.madx_input["mask_file"])
         for r in require:
             if r not in cont:
@@ -448,9 +459,10 @@ class Study(object):
             for key, value in self.madx_input.items():
                 value = os.path.join(self.study_path, value)
                 tab[key] = utils.evlt(utils.compress_buf, [value])
-            for key in self.oneturn_sixtrack_input['temp']:
-                value = os.path.join(self.study_path, key)
-                tab[key] = utils.evlt(utils.compress_buf, [value])
+            if self.oneturn:
+                for key in self.oneturn_sixtrack_input['temp']:
+                    value = os.path.join(self.study_path, key)
+                    tab[key] = utils.evlt(utils.compress_buf, [value])
             for key in self.sixtrack_input['temp']:
                 value = os.path.join(self.study_path, key)
                 tab[key] = utils.evlt(utils.compress_buf, [value])
@@ -470,27 +482,34 @@ class Study(object):
             self.db.update('boinc_vars', self.boinc_vars)
 
         self.config.clear()
-        self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
         self.config['madx'] = {}
         madx_sec = self.config['madx']
         self.config['mask'] = {}
         mask_sec = self.config['mask']
-        self.config['sixtrack'] = {}
-        six_sec = self.config['sixtrack']
         madx_sec['source_path'] = self.paths['templates']
         madx_sec['madx_exe'] = self.paths['madx_exe']
         madx_sec['mask_file'] = self.madx_input["mask_file"]
+        madx_sec['oneturn'] = str(self.oneturn)
+        madx_sec['collimation'] = str(self.collimation)
         inp = self.madx_output
         madx_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
-        six_sec['source_path'] = self.paths['templates']
-        six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-        inp = self.oneturn_sixtrack_input['temp']
-        six_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
-        inp = self.oneturn_sixtrack_input['input']
-        six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
-        inp = self.oneturn_sixtrack_output
-        six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
-        self.config['fort3'] = self.oneturn_sixtrack_params
+        if self.oneturn:
+            self.config['sixtrack'] = {}
+            cus_sec = self.config['sixtrack']
+            self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
+            self.config['fort3'] = self.oneturn_sixtrack_params
+            cus_sec['source_path'] = self.paths['templates']
+            cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+            inp = self.oneturn_sixtrack_input['temp']
+            cus_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
+            inp = self.oneturn_sixtrack_input['input']
+            cus_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
+        if self.collimation:
+            self.config['collimation'] = {}
+            cus_sec = self.config['collimation']
+            cus_sec['source_path'] = self.paths['templates']
+            inp = self.collimation_input
+            cus_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
 
         keys = list(self.madx_params.keys())
         values = []
@@ -526,7 +545,7 @@ class Study(object):
             n = str(wu_id)
             madx_sec['dest_path'] = os.path.join(
                 self.paths['preprocess_out'], n)
-            six_sec['dest_path'] = os.path.join(
+            cus_sec['dest_path'] = os.path.join(
                 self.paths['preprocess_out'], n)
             f_out = io.StringIO()
             self.config.write(f_out)
@@ -549,6 +568,10 @@ class Study(object):
         self.config['f10'] = self.tables['six_results']
         six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+        if 'additional_input' in self.sixtrack_input.keys():
+            inp = self.sixtrack_input['additional_input']
+            six_sec['additional_input'] = utils.evlt(utils.encode_strings,
+                    [inp])
         inp = self.sixtrack_input['input']
         six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
         six_sec['boinc_dir'] = self.paths['boinc_spool']
@@ -650,7 +673,8 @@ class Study(object):
 
     def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
-        @type(0 or 1) The job type, 0 is preprocess job, 1 is sixtrack job
+        @type(0,1 or 2) The job type, 0 is preprocess job, 1 is sixtrack job,
+                        2 is collimation job
         @trials The maximum number of trials of submission'''
         if typ == 0:
             input_path = self.paths['preprocess_in']
@@ -689,7 +713,7 @@ class Study(object):
             content = "Failed to submit %s job!" % jobname
             self._logger.warning(content)
 
-    def collect_result(self, typ, boinc=False, trials=5, platform='local'):
+    def collect_result(self, typ, boinc=False):
         '''Collect the results of preprocess or  sixtrack jobs'''
         self.config.clear()
         self.config['info'] = {}
@@ -702,7 +726,7 @@ class Study(object):
         if typ == 0:
             self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
             info_sec['path'] = self.paths['preprocess_out']
-            info_sec['outs'] = utils.evlt(utils.encode_strings, [self.madx_output])
+            info_sec['outs'] = utils.evlt(utils.encode_strings, [self.preprocess_output])
             job_name = 'collect preprocess result'
             in_name = 'preprocess.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
@@ -721,13 +745,14 @@ class Study(object):
             raise ValueError(content)
 
         in_path = os.path.join(self.paths['gather'], str(typ))
-        # out_path = in_path
         if not os.path.isdir(in_path):
             os.makedirs(in_path)
         with open(task_input, 'w') as f_out:
             self.config.write(f_out)
-        if platform == 'local':
+        try:
             gather.run(typ, task_input)
+        except Exception as e:
+            raise e
         # TODO: Submit gather job to htcondor is error-prone, so I block it for
         #       the moment. Acctually it's dispensable.
         # elif platform is 'htcondor':

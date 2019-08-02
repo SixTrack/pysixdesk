@@ -7,9 +7,12 @@ import shutil
 import configparser
 
 from pysixdesk.lib import utils
+from pysixdesk.lib import generate_fort2
 from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib.resultparser import parse_preprocess
 
+
+logger = utils.condor_logger('preprocess')
 
 def run(wu_id, input_info):
     cf = configparser.ConfigParser()
@@ -33,22 +36,32 @@ def run(wu_id, input_info):
     cf.read_string(input_file)
     madx_config = cf['madx']
     mask_config = cf['mask']
-    oneturn = cf['oneturn']
+    oneturn_config = {}
+    oneturn = madx_config['oneturn']
+    collimation = madx_config['collimation']
 
     try:
         madxjob(madx_config, mask_config)
-    except Exception as e:
+    except Exception:
         content = 'MADX job failed.'
         logger.error(content, exc_info=True)
         if dbtype.lower() == 'sql':
-            raise e
+            return
     else:
-        try:
-            sixtrack_config = cf['sixtrack']
-            fort3_config = cf._sections['fort3']
-            sixtrackjobs(sixtrack_config, fort3_config)
-        except Exception as e:
-            logger.error(e)
+        if collimation.lower() == 'true':
+            try:
+                coll_config = cf['collimation']
+                status = new_fort2(coll_config)
+            except Exception:
+                logger.error('Generate new fort2 failed!', exc_info=True)
+        if oneturn.lower() == 'true':
+            try:
+                sixtrack_config = cf['sixtrack']
+                oneturn_config = cf['oneturn']
+                fort3_config = cf._sections['fort3']
+                sixtrackjobs(sixtrack_config, fort3_config)
+            except Exception:
+                logger.error('Oneturn job failed!', exc_info=True)
 
     if dbtype.lower() == 'mysql':
         dest_path = './result'
@@ -64,8 +77,11 @@ def run(wu_id, input_info):
     down_list = list(output_files.values())
     down_list.append('madx_in')
     down_list.append('madx_stdout')
-    down_list.append('oneturnresult')
-
+    if oneturn.lower() == 'true':
+        down_list.append('oneturnresult')
+    if collimation.lower() == 'true':
+        output_files['fort3.limi'] = 'fort3.limi'
+        down_list.append('fort3.limi')
     try:
         utils.download_output(down_list, dest_path)
         logger.info("All requested results have been stored in %s" % dest_path)
@@ -87,14 +103,12 @@ def run(wu_id, input_info):
         task_table['status'] = 'Success'
         job_path = dest_path
         parse_preprocess(wu_id, job_path, output_files, task_table,
-                         oneturn_table, list(oneturn.keys()))
+                         oneturn_table, list(oneturn_config.keys()))
         where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
-        # where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
-        # task_id = db.select('preprocess_task', ['task_id'], where)
-        # task_id = task_id[0][0]
-        oneturn_table['task_id'] = task_id
-        db.insert('oneturn_sixtrack_result', oneturn_table)
+        if oneturn.lower() == 'true':
+            oneturn_table['task_id'] = task_id
+            db.insert('oneturn_sixtrack_result', oneturn_table)
         if task_table['status'] == 'Success':
             where = "wu_id=%s" % wu_id
             job_table['status'] = 'complete'
@@ -168,6 +182,20 @@ def madxjob(madx_config, mask_config):
     if not status:
         content = 'MADX output files not found.'
         raise FileNotFoundError(content)
+
+
+def new_fort2(config):
+    '''Generate new fort.2 with aperture markers and survey and fort3.limit'''
+    inp = config['input_files']
+    inputfiles = utils.evlt(utils.decode_strings, [inp])
+    source_path = config["source_path"]
+    for fil in inputfiles.values():
+        fl = os.path.join(source_path, fil)
+        shutil.copy2(fl, fil)
+    fc2 = 'fort.2'
+    aperture = inputfiles['aperture']
+    survery = inputfiles['survey']
+    generate_fort2.run(fc2, aperture, survery)
 
 
 def sixtrackjobs(config, fort3_config):
@@ -286,17 +314,23 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     else:
         content = "The %s file doesn't exist!" % temp1
         raise FileNotFoundError(content)
-
-    concatenate_files(output, 'fort.3')
+    utils.concatenate_files(output, 'fort.3')
 
     # prepare the other input files
-    if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
-        os.symlink('../fort.2', 'fort.2')
-        os.symlink('../fort.16', 'fort.16')
-        if not os.path.isfile('../fort.8'):
-            open('fort.8', 'a').close()
+    for key in input_files.values():
+        key1 = os.path.join('../', key)
+        if os.path.isfile(key1):
+            os.symlink(key1, key)
         else:
-            os.symlink('../fort.8', 'fort.8')
+            raise FileNotFoundError("The required input file %s does not found!" %
+                    key)
+    #if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
+    #    os.symlink('../fort.2', 'fort.2')
+    #    os.symlink('../fort.16', 'fort.16')
+    #    if not os.path.isfile('../fort.8'):
+    #        open('fort.8', 'a').close()
+    #    else:
+    #        os.symlink('../fort.8', 'fort.8')
 
     # actually run
     logger.info('Sixtrack job %s is running...' % jobname)
@@ -306,7 +340,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     with open(output_name, 'w') as six_out:
         six_out.writelines(outputlines)
     if not os.path.isfile('fort.10'):
-        logger.error("The %s sixtrack job for chromaticity FAILED!" % jobname)
+        logger.error("The %s sixtrack job FAILED!" % jobname)
         logger.info("Check the file %s which contains the SixTrack fort.6 output." % output_name)
         raise FileNotFoundError('fort.10 not found.')
 
@@ -319,24 +353,8 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     os.chdir('../')
 
 
-def concatenate_files(source, dest):
-    '''Concatenate the given files'''
-    f_out = open(dest, 'w')
-    if type(source) is list:
-        for s_in in source:
-            f_in = open(s_in, 'r')
-            f_out.writelines(f_in.readlines())
-            f_in.close()
-    else:
-        f_in = open(source, 'r')
-        f_out.writelines(f_in.readlines())
-        f_in.close()
-    f_out.close()
-
-
 if __name__ == '__main__':
 
-    logger = utils.condor_logger()
 
     args = sys.argv
     num = len(args[1:])

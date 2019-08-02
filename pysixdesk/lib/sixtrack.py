@@ -13,6 +13,7 @@ from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib import utils
 from pysixdesk.lib.resultparser import parse_sixtrack
 
+logger = utils.condor_logger('sixtrack')
 
 def run(wu_id, input_info):
     cf = configparser.ConfigParser()
@@ -82,8 +83,8 @@ def run(wu_id, input_info):
 
     try:
         sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
-    except Exception as e:
-        logger.error(e)
+    except Exception:
+        logger.error('sixtrackjob failed!', exc_info=True)
 
     if dbtype.lower() == 'sql':
         dest_path = sixtrack_config["dest_path"]
@@ -124,11 +125,9 @@ def run(wu_id, input_info):
                        f10_table, list(f10_sec.keys()))
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
-        # where = "mtime=%s and wu_id=%s"%(task_table['mtime'], wu_id)
-        # task_id = db.select('sixtrack_task', ['task_id'], where)
-        # task_id = task_id[0][0]
-        f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
-        db.insertm('six_results', f10_table)
+        if len(f10_table) != 0:
+            f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
+            db.insertm('six_results', f10_table)
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
@@ -159,15 +158,19 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     real_turn = fort3_config['turnss']
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     source_path = sixtrack_config["source_path"]
-    # dest_path = sixtrack_config["dest_path"]
     inp = sixtrack_config["temp_files"]
     temp_files = utils.evlt(utils.decode_strings, [inp])
-    # inp = sixtrack_config["output_files"]
-    # output_files = utils.evlt(utils.decode_strings, [inp])
     inp = sixtrack_config["input_files"]
     input_files = utils.evlt(utils.decode_strings, [inp])
+    inp = sixtrack_config["output_files"]
+    output_files = utils.evlt(utils.decode_strings, [inp])
+    add_inputs = []
+    if 'additional_input' in sixtrack_config.keys():
+        inp = sixtrack_config["additional_input"]
+        add_inputs = utils.evlt(utils.decode_strings, [inp])
     boinc = sixtrack_config["boinc"]
-    for infile in temp_files:
+    requires = temp_files + add_inputs
+    for infile in requires:
         infi = os.path.join(source_path, infile)
         if os.path.isfile(infi):
             shutil.copy2(infi, infile)
@@ -190,15 +193,22 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     logger.info("Preparing the sixtrack input files!")
 
     # prepare the other input files
-    if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
-        os.symlink('../fort.2', 'fort.2')
-        os.symlink('../fort.16', 'fort.16')
-        if not os.path.isfile('../fort.8'):
-            open('fort.8', 'a').close()
+    for key in list(input_files.values())+add_inputs:
+        key1 = os.path.join('../', key)
+        if os.path.isfile(key1):
+            os.symlink(key1, key)
         else:
-            os.symlink('../fort.8', 'fort.8')
-    else:
-        raise FileNotFoundError("There isn't the required input files for sixtrack!")
+            raise FileNotFoundError("The required input file %s does not found!" %
+                    key)
+
+    #if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
+    #    os.symlink('../fort.2', 'fort.2')
+    #    if not os.path.isfile('../fort.16'):
+    #        os.symlink('../fort.16', 'fort.16')
+    #    if not os.path.isfile('../fort.8'):
+    #        open('fort.8', 'a').close()
+    #    else:
+    #        os.symlink('../fort.8', 'fort.8')
 
     if boinc.lower() == 'true':
         test_turn = sixtrack_config["test_turn"]
@@ -221,8 +231,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         output.insert(1, temp1)
     else:
         raise FileNotFoundError("The %s file doesn't exist!" % temp1)
-
-    concatenate_files(output, 'fort.3')
+    utils.concatenate_files(output, 'fort.3')
 
     # actually run
     wu_id = sixtrack_config['wu_id']
@@ -232,13 +241,17 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     output_name = os.path.join('../', 'sixtrack.output')
     with open(output_name, 'w') as six_out:
         six_out.writelines(outputlines)
-    if not os.path.isfile('fort.10'):
-        content = ("The sixtrack job %s for chromaticity FAILED! "
-                   "Check the file %s which contains the SixTrack output.")
-        raise Exception(content % (wu_id, output_name))
-    else:
-        shutil.move('fort.10', '../fort.10')
-        logger.info('Sixtrack job %s has completed normally!' % wu_id)
+    #if not os.path.isfile('fort.10'):
+    #    content = ("The sixtrack job %s for chromaticity FAILED! "
+    #               "Check the file %s which contains the SixTrack output.")
+    #    raise Exception(content % (wu_id, output_name))
+    #else:
+    #    shutil.move('fort.10', '../fort.10')
+    #    logger.info('Sixtrack job %s has completed normally!' % wu_id)
+    status = utils.check(output_files)
+    if status:
+        for out in output_files:
+            shutil.move(out, os.path.join('../', out))
     os.chdir('../')  # get out of junk folder
     if boinc.lower() != 'true':
         shutil.move('junk/fort.3', 'fort.3')
@@ -278,8 +291,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             output.insert(1, temp1)
         else:
             raise FileNotFoundError("The %s file doesn't exist!" % temp1)
-
-        concatenate_files(output, 'fort.3')
+        utils.concatenate_files(output, 'fort.3')
 
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'
@@ -337,24 +349,8 @@ def check_tracking(filename, surv_percent=1):
         return 0
 
 
-def concatenate_files(source, dest):
-    '''Concatenate the given files'''
-    f_out = open(dest, 'w')
-    if type(source) is list:
-        for s_in in source:
-            f_in = open(s_in, 'r')
-            f_out.writelines(f_in.readlines())
-            f_in.close()
-    else:
-        f_in = open(source, 'r')
-        f_out.writelines(f_in.readlines())
-        f_in.close()
-    f_out.close()
-
-
 if __name__ == '__main__':
 
-    logger = utils.condor_logger()
 
     args = sys.argv
     num = len(args[1:])
