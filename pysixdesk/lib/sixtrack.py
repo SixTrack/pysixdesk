@@ -291,7 +291,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             output.insert(1, temp1)
         else:
             raise FileNotFoundError("The %s file doesn't exist!" % temp1)
-        concatenate_files(output, 'fort.3')
+        utils.concatenate_files(output, 'fort.3')
 
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'
