@@ -177,25 +177,29 @@ def decompress_buf(buf, out, des='file'):
 def concatenate_files(source, dest, ignore='ENDE'):
     '''Concatenate the given files'''
     f_out = open(dest, 'w')
+    endline = ignore + '\n'
     if type(source) is list:
         for s_in in source:
             with open(s_in, 'r') as f_in:
                 lines = f_in.readlines()
                 valid_lines = []
                 for line in lines:
-                    valid_lines.append(line)
                     if line.lower().startswith(ignore.lower()):
+                        endline = line
                         break
+                    valid_lines.append(line)
                 f_out.writelines(valid_lines)
     else:
         with open(source, 'r') as f_in:
             lines = f_in.readlines()
             valid_lines = []
             for line in lines:
-                valid_lines.append(line)
                 if line.lower().startswith(ignore.lower()):
+                    endline = line
                     break
+                valid_lines.append(line)
             f_out.writelines(valid_lines)
+    f_out.writelines(endline)
     f_out.close()
 
 

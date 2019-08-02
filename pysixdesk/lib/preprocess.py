@@ -85,7 +85,6 @@ def run(wu_id, input_info):
     try:
         utils.download_output(down_list, dest_path)
         logger.info("All requested results have been stored in %s" % dest_path)
-        os.system('ls')
     except Exception:
         logger.warning("Job failed!", exc_info=True)
 
