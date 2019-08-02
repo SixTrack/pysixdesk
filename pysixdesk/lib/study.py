@@ -408,7 +408,7 @@ class Study(object):
         for key, val in self.sixtrack_params.items():
             self.tables['sixtrack_wu'][key] = self.type_dict[val]
         for key in self.sixtrack_output:
-            self.tables['sixtrack_task'][key] = 'BLOB'
+            self.tables['sixtrack_task'][key] = 'MEDIUMBLOB'
 
         for key in self.madx_input.keys():
             self.tables['templates'][key] = 'BLOB'
