@@ -5,9 +5,11 @@ import time
 import sys
 from pathlib import Path
 # give the test runner the import access
-sys.path.insert(0, Path(__file__).parents[2].absolute())
+pysixdesk_path = str(Path(__file__).parents[3].absolute())
+sys.path.insert(0, pysixdesk_path)
+# setting environment variable for htcondor job.
+os.environ['PYTHONPATH'] = f"{pysixdesk_path}:{os.environ['PYTHONPATH']}"
 import pysixdesk
-from pathlib import Path
 
 
 class SqlDB(unittest.TestCase):
@@ -32,17 +34,17 @@ class SqlDB(unittest.TestCase):
         self.st.update_db()
 
         self.st.prepare_preprocess_input()
-        in_files = os.listdir(Path(self.st.study_path) / 'preprocess_input')
-        out_folders = os.listdir(Path(self.st.study_path) / 'preprocess_output')
-        self.assertEqual(in_files, ['sub.db',
-                                    'db.ini',
-                                    'job_id.list',
-                                    'htcondor_run.sub'])
+        in_files = set(os.listdir(Path(self.st.study_path) / 'preprocess_input'))
+        out_folders = set(os.listdir(Path(self.st.study_path) / 'preprocess_output'))
+        self.assertEqual(in_files, set(['sub.db',
+                                        'db.ini',
+                                        'job_id.list',
+                                        'htcondor_run.sub']))
         # getting the expected list of preprocess wu_ids.
         where = "status='incomplete'"
         wu_ids = self.st.db.select('preprocess_wu', ['wu_id'], where)
         wu_ids = [str(o[0]) for o in wu_ids]
-        self.assertEqual(out_folders, wu_ids)
+        self.assertEqual(out_folders, set(wu_ids))
 
         self.st.submit(0)
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)),
@@ -51,50 +53,38 @@ class SqlDB(unittest.TestCase):
         print('waiting for preprocess job to finish...')
         while self.st.submission.check_running(self.st.study_path) is None\
                 or len(self.st.submission.check_running(self.st.study_path)) >= 1:
-            # sleep for 5 mins
-            time.sleep(10)
+            time.sleep(30)
         # TODO: add a check on the output of the preprocess job
 
-<<<<<<< HEAD
+        self.st.collect_result(0)
+        # TODO: add check on result collection
+
         self.st.prepare_sixtrack_input()
+
         # getting the expected list of sixtrack wu_ids.
-        # TODO: test this !
         where = "status='complete'"
         pre_wu_ids = self.st.db.select('preprocess_wu', ['wu_id'], where)
-=======
-        self.prepare_sixtrack_input()
-        # getting the expected list of sixtrack wu_ids.
-        # TODO: test this !
-        where = "status='complete'"
-        pre_wu_ids = self.db.select('preprocess_wu', ['wu_id'], where)
->>>>>>> 8a7a303... improved integration tests
-        pre_wu_ids = [p[0] for p in pre_wu_ids]
+        pre_wu_ids = tuple([p[0] for p in pre_wu_ids])
         if len(pre_wu_ids) == 1:
-            where = "status='incomplete' and preprocess_id=%s" % str(pre_wu_ids[0])
+            where = f"status='incomplete' and preprocess_id={pre_wu_ids[0]}"
         else:
-            where = "status='incomplete' and preprocess_id in %s" % str(pre_wu_ids)
-<<<<<<< HEAD
+            where = f"status='incomplete' and preprocess_id in {pre_wu_ids}"
         six_wu_ids = self.st.db.select('sixtrack_wu', ['wu_id'], where)
         six_wu_ids = [s[0] for s in six_wu_ids]
         # TODO: add assert here
 
         self.st.submit(1)
-=======
-        six_wu_ids = self.db.select('sixtrack_wu', ['wu_id'], where)
-        six_wu_ids = [s[0] for s in six_wu_ids]
-        # TODO: add assert here
-
-        self.submit(1)
->>>>>>> 8a7a303... improved integration tests
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)),
                          len(six_wu_ids))
 
         print('waiting for sixtrack job to finish...')
         while self.st.submission.check_running(self.st.study_path) is None\
                 or len(self.st.submission.check_running(self.st.study_path)) >= 1:
-            # sleep for 5 mins
-            time.sleep(60*5)
+            time.sleep(60)
         # TODO: add a check on the output of the sixtrack job
+
+        self.st.collect_result(1)
+        # TODO: add check on result collection
 
     def tearDown(self):
         # remove directory

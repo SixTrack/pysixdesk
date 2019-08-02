@@ -5,6 +5,7 @@ import sys
 import gzip
 import shutil
 import logging
+import difflib
 import traceback
 
 # Gobal variables
@@ -122,6 +123,7 @@ def diff(file1, file2, logger=None, **kwargs):
     for line in difflib.unified_diff(file1_data, file2_data, **kwargs):
         display(line)
     display(f'▲▲▲▲▲▲▲▲▲▲▲▲▲ {file1} --> {file2} diff ▲▲▲▲▲▲▲▲▲▲▲▲▲')
+
 
 def encode_strings(inputs):
     '''Convert list or directory to special-format string'''
