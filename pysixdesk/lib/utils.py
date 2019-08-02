@@ -8,7 +8,8 @@ import logging
 import traceback
 
 # Gobal variables
-PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
 
 
 def check(files):
@@ -54,6 +55,19 @@ def download_output(filenames, dest, zp=True):
                     shutil.copyfileobj(f_in, f_out)
             else:
                 shutil.copy(filename, dest)
+
+
+def check_fort3_block(fort3, block):
+    '''Check the existence of the given block in fort.3'''
+    if not os.path.isfile(fort3):
+        print("The file %s doesn't exist" % fort3)
+        return 0
+    with open(fort3, 'r') as f_in:
+        lines = f_in.readlines()
+    for line in lines:
+        if line.lower().startswith(block.lower()):
+            return 1
+    return 0
 
 
 def replace(patterns, replacements, source, dest):
@@ -160,6 +174,35 @@ def decompress_buf(buf, out, des='file'):
         return status
 
 
+def concatenate_files(source, dest, ignore='ENDE'):
+    '''Concatenate the given files'''
+    f_out = open(dest, 'w')
+    endline = ignore + '\n'
+    if type(source) is list:
+        for s_in in source:
+            with open(s_in, 'r') as f_in:
+                lines = f_in.readlines()
+                valid_lines = []
+                for line in lines:
+                    if line.lower().startswith(ignore.lower()):
+                        endline = line
+                        break
+                    valid_lines.append(line)
+                f_out.writelines(valid_lines)
+    else:
+        with open(source, 'r') as f_in:
+            lines = f_in.readlines()
+            valid_lines = []
+            for line in lines:
+                if line.lower().startswith(ignore.lower()):
+                    endline = line
+                    break
+                valid_lines.append(line)
+            f_out.writelines(valid_lines)
+    f_out.writelines(endline)
+    f_out.close()
+
+
 def evlt(fun, inputs, action=sys.exit):
     '''Evaluate the specified function'''
     try:
@@ -189,7 +232,7 @@ def evlt(fun, inputs, action=sys.exit):
         return
 
 
-def condor_logger():
+def condor_logger(name):
     '''
     Prepares a logger for job on HTCondor. It splits the levels to stdout
     and stderr, and disables module level logging.
@@ -199,13 +242,13 @@ def condor_logger():
     '''
 
     # disable module level logging of pysixdesk
-    logger = logging.getLogger('pysixdesk')
-    logger.setLevel(logging.CRITICAL)
+    #logger = logging.getLogger('pysixdesk')
+    #logger.setLevel(logging.CRITICAL)
 
     formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
                                   datefmt='%H:%M:%S')
     # enable local logging with stdout and stderr split
-    logger = logging.getLogger('preprocess_job')
+    logger = logging.getLogger(name)
     h1 = logging.StreamHandler(sys.stdout)
     h1.setFormatter(formatter)
     h1.setLevel(logging.DEBUG)

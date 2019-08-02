@@ -32,17 +32,18 @@ class WorkSpaceTest(unittest.TestCase):
         # default config.py
         self.st = self.ws.load_study('unit_test_st')
 
-        load_tables = [('boinc_vars',),
-                       ('env',),
-                       ('oneturn_sixtrack_result',),
-                       ('oneturn_sixtrack_wu',),
-                       ('preprocess_task',),
-                       ('preprocess_wu',),
-                       ('six_results',),
-                       ('sixtrack_task',),
-                       ('sixtrack_wu',),
-                       ('templates',)]
-        self.assertEqual(self.st.db.fetch_tables(), load_tables)
+        load_tables = set([('boinc_vars',),
+                           ('collimation_results',),
+                           ('env',),
+                           ('oneturn_sixtrack_result',),
+                           ('oneturn_sixtrack_wu',),
+                           ('preprocess_task',),
+                           ('preprocess_wu',),
+                           ('six_results',),
+                           ('sixtrack_task',),
+                           ('sixtrack_wu',),
+                           ('templates',)])
+        self.assertEqual(set(self.st.db.fetch_tables()), load_tables)
         # is there a better way to test this ?
         self.assertIsNotNone(self.st)
 
