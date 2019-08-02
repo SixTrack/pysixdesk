@@ -36,6 +36,7 @@ def run(wu_id, input_info):
     cf.read_string(input_file)
     madx_config = cf['madx']
     mask_config = cf['mask']
+    oneturn_config = {}
     oneturn = madx_config['oneturn']
     collimation = madx_config['collimation']
 
@@ -56,6 +57,7 @@ def run(wu_id, input_info):
         if oneturn.lower() == 'true':
             try:
                 sixtrack_config = cf['sixtrack']
+                oneturn_config = cf['oneturn']
                 fort3_config = cf._sections['fort3']
                 sixtrackjobs(sixtrack_config, fort3_config)
             except Exception:
@@ -78,10 +80,12 @@ def run(wu_id, input_info):
     if oneturn.lower() == 'true':
         down_list.append('oneturnresult')
     if collimation.lower() == 'true':
+        output_files['fort3.limi'] = 'fort3.limi'
         down_list.append('fort3.limi')
     try:
         utils.download_output(down_list, dest_path)
         logger.info("All requested results have been stored in %s" % dest_path)
+        os.system('ls')
     except Exception:
         logger.warning("Job failed!", exc_info=True)
 
@@ -100,7 +104,7 @@ def run(wu_id, input_info):
         task_table['status'] = 'Success'
         job_path = dest_path
         parse_preprocess(wu_id, job_path, output_files, task_table,
-                         oneturn_table, list(oneturn.keys()))
+                         oneturn_table, list(oneturn_config.keys()))
         where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
         if oneturn.lower() == 'true':
