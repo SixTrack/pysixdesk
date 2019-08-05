@@ -15,6 +15,7 @@ from pysixdesk.lib.resultparser import parse_sixtrack
 
 logger = utils.condor_logger('sixtrack')
 
+
 def run(wu_id, input_info):
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
@@ -199,7 +200,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             os.symlink(key1, key)
         else:
             raise FileNotFoundError("The required input file %s does not found!" %
-                    key)
+                                    key)
 
     #if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
     #    os.symlink('../fort.2', 'fort.2')
@@ -350,7 +351,6 @@ def check_tracking(filename, surv_percent=1):
 
 
 if __name__ == '__main__':
-
 
     args = sys.argv
     num = len(args[1:])

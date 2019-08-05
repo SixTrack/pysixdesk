@@ -14,6 +14,7 @@ from pysixdesk.lib.resultparser import parse_preprocess
 
 logger = utils.condor_logger('preprocess')
 
+
 def run(wu_id, input_info):
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
@@ -354,7 +355,6 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
 
 
 if __name__ == '__main__':
-
 
     args = sys.argv
     num = len(args[1:])

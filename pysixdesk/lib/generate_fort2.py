@@ -6,8 +6,6 @@
 
 # Program created for including aperture markers in Sixtrack fort.2 file
 # from a TWISS file, for the Sixtrack-FLUKA coupling
-import os
-import sys
 import logging
 from copy import deepcopy
 
@@ -42,7 +40,6 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
             LOGGER.info('...for a total of %s active markers;' % (len(SUstruct)))
             if len(SUstruct) == 0:
                 sfile = False
-
 
     ofile = open('fort.2', 'w')
     lfile = open('fort3.limi', 'w')
@@ -536,6 +533,7 @@ def aperture_type(name, aperture):
     newaperture['XOFF'] = aper[4]
     newaperture['YOFF'] = aper[5]
     return newaperture
+
 
 def clean_apertures(struct):
     '''Clean apertures (take only non-zero apertures and remove redundant ones)

@@ -5,6 +5,7 @@
 
 import re
 
+
 class TwissStruct:
     '''Structure containing Twiss file information'''
     APER_COLUMNS = ['APERTYPE', 'APER_1', 'APER_2', 'APER_3', 'APER_4']
@@ -34,7 +35,7 @@ def split_line(line):
     '''Splits a line in fields, keeping quoted strings as a single field and
     striping out the quotes (double quotes only)'''
     return (string.strip('"') for string in re.findall(r'(?:")[^"]*(?:")|\S+',
-        line))
+                                                       line))
 
 
 def read_twiss(file):
