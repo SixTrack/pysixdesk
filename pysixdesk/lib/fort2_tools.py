@@ -51,13 +51,11 @@ class Fort2Struct:
         ans = [iEl for iEl in range(len(self.elements)) if (
             tmpName == self.elements[iEl]['NAME'])]
         if len(ans) == 0:
-            LOGGER.info('unable to find %s in list of SINGLE ELEMENTs!' %
-                        (tmpName))
-            exit()
+            raise ValueError('unable to find %s in list of SINGLE ELEMENTs!' %
+                             (tmpName))
         elif len(ans) > 1:
-            LOGGER.info('%s found multiple times in list of SINGLE ELEMENTs!' %
-                        (tmpName))
-            exit()
+            raise ValueError('%s found multiple times in list of SINGLE ELEMENTs!'
+                             % (tmpName))
         else:
             ans = ans[0]
             if lDebug:
@@ -70,20 +68,17 @@ class Fort2Struct:
         if lDebug:
             LOGGER.info('%s - %s - key: %s' % ('getIBlock', tmpName, key))
         if len(self.blocks) == 0:
-            LOGGER.info('no BLOCks in current structure!')
-            exit()
+            raise ValueError('no BLOCks in current structure!')
         if key not in self.blocks[0]:
-            LOGGER.info('no key in BLOCk element named %s!' % (key))
-            exit()
+            raise ValueError('no key in BLOCk element named %s!' % (key))
         ans = [iEl for iEl in range(len(self.blocks)) if (
             tmpName == self.blocks[iEl][key])]
         if len(ans) == 0:
-            LOGGER.info('unable to find %s in list of BLOCks!' % (tmpName))
-            exit()
+            raise ValueError('unable to find %s in list of BLOCks!' %
+                             (tmpName))
         elif len(ans) > 1:
-            LOGGER.info('%s found multiple times in list of BLOCks (key=%s)!'
-                        % (tmpName, key))
-            exit()
+            raise ValueError('%s found multiple times in list of BLOCks (key=%s)!'
+                             % (tmpName, key))
         else:
             ans = ans[0]
             if lDebug:
