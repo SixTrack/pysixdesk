@@ -252,11 +252,11 @@ def condor_logger(name):
     h1 = logging.StreamHandler(sys.stdout)
     h1.setFormatter(formatter)
     h1.setLevel(logging.DEBUG)
-    h1.addFilter(lambda record: record.levelno <= logging.INFO)
+    h1.addFilter(lambda record: record.levelno <= logging.WARNING)
 
     h2 = logging.StreamHandler(sys.stderr)
     h2.setFormatter(formatter)
-    h2.setLevel(logging.WARNING)
+    h2.setLevel(logging.ERROR)
 
     logger.addHandler(h1)
     logger.addHandler(h2)

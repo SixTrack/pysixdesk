@@ -7,6 +7,7 @@
 # elements at the top of the file
 
 import logging
+from . import utils
 from copy import deepcopy
 
 FORT2_ELEMENT_FIELDS = [
@@ -24,7 +25,7 @@ FORT2_BLOCK_FIELDS = [
     'ELEM'
 ]
 
-LOGGER = logging.getLogger("pysixdesk.fort2_tools")
+LOGGER = utils.condor_logger("fort2_tools")
 
 class Fort2Struct:
     '''Structure containing fort.2 information'''

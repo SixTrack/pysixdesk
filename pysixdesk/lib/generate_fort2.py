@@ -6,18 +6,16 @@
 
 # Program created for including aperture markers in Sixtrack fort.2 file
 # from a TWISS file, for the Sixtrack-FLUKA coupling
-import os
-import sys
-import logging
 from copy import deepcopy
 
+from . import utils
 from .twiss_tools import *
 from .fort2_tools import *
 
 
 # New keys for apertures with offsets
 VALUES_off = ['APER_1', 'APER_2', 'APER_3', 'APER_4', 'XOFF', 'YOFF']
-LOGGER = logging.getLogger("pysixdesk.generate_fort2")
+LOGGER = utils.condor_logger("generate_fort2")
 
 
 def run(fc2, aperture, survery=None, ldebug=False, lold=False):
