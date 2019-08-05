@@ -395,8 +395,8 @@ class Study(object):
             boinc_spool, self.st_pre, 'results')
         self.env['surv_percent'] = 1
 
-        for key in self.madx_params.keys():
-            self.tables['preprocess_wu'][key] = 'INT'
+        for key, val in self.madx_params.items():
+            self.tables['preprocess_wu'][key] = self.type_dict[val]
         if self.collimation:
             self.preprocess_output['fort3.limi'] = 'fort3.limi'
         for key in self.preprocess_output.values():
@@ -571,7 +571,7 @@ class Study(object):
         if 'additional_input' in self.sixtrack_input.keys():
             inp = self.sixtrack_input['additional_input']
             six_sec['additional_input'] = utils.evlt(utils.encode_strings,
-                    [inp])
+                                                     [inp])
         inp = self.sixtrack_input['input']
         six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
         six_sec['boinc_dir'] = self.paths['boinc_spool']
@@ -883,7 +883,7 @@ class Study(object):
         out_path = self.paths['sixtrack_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'sixtrack.py')
         self.submission.prepare(wu_ids, tran_input, exe, 'db.ini', in_path,
-                                out_path, *args, **kwargs)
+                                out_path, flavour='tomorrow', *args, **kwargs)
 
     def prepare_preprocess_input(self, *args, **kwargs):
         '''Prepare the input files for madx and one turn sixtrack job'''
@@ -944,7 +944,7 @@ class Study(object):
         out_path = self.paths['preprocess_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'preprocess.py')
         self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
-                                out_path, *args, **kwargs)
+                                out_path, flavour='espresso', *args, **kwargs)
 
     def pre_calc(self, **kwargs):
         '''Further calculations for the specified parameters'''

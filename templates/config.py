@@ -43,14 +43,14 @@ class MyStudy(Study):
         # self.db_info['user'] = 'admin'
         # self.db_info['passwd'] = 'pysixdesk'
 
-        ## Get the default values for specified machine with specified runtype
+        # Get the default values for specified machine with specified runtype
         machine_params = MachineConfig('LHC').parameters('inj')
-        #machine_params = MachineConfig('LHC').parameters('col')
-        self.oneturn = True # Switch for oneturn sixtrack job
+        # machine_params = MachineConfig('LHC').parameters('col')
+        self.oneturn = True  # Switch for oneturn sixtrack job
         # self.collimation = True
 
-        ## All parameters are case-sensitive
-        ## the name of mask file
+        # All parameters are case-sensitive
+        # the name of mask file
         self.madx_input["mask_file"] = 'hl10.mask'
         self.madx_params["SEEDRAN"] = [1, 2]  # all seeds in the study
         # all chromaticity in the study

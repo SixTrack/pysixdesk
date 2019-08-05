@@ -12,5 +12,5 @@ transfer_input_files = %func
 transfer_output_files = ""
 ShouldTransferFiles = YES
 WhenToTransferOutput = ON_EXIT_OR_EVICT
-+JobFlavour = "tomorrow"
++JobFlavour = "%flavour"
 queue wu_id from %joblist

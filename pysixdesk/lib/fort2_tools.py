@@ -27,6 +27,7 @@ FORT2_BLOCK_FIELDS = [
 
 LOGGER = utils.condor_logger("fort2_tools")
 
+
 class Fort2Struct:
     '''Structure containing fort.2 information'''
 
@@ -160,8 +161,9 @@ class Fort2Struct:
         del(new_BK)
         return iSing, iBlock
 
-# Reads fort.2 file in a Fort2Struct
+
 def read_fort2(file):
+    # Reads fort.2 file in a Fort2Struct
     struct = Fort2Struct()
     line = file.readline()
     while(line != ''):
@@ -191,6 +193,7 @@ def read_fort2(file):
                 line = file.readline()
         line = file.readline()
     return struct
+
 
 def write_fort2(file, struct):
     '''Writes the modified fort.2 file'''
@@ -245,6 +248,7 @@ def write_fort2(file, struct):
     file.write("%s\n" % msg)
     # End function
 
+
 def fort2_to_twiss(struct):
     '''Transforms fort.2 in a Twiss-like structure, including the extra field
     S'''
@@ -294,6 +298,7 @@ def fort2_to_twiss(struct):
                             sequence.append(dict)
     # End of function
     return sequence
+
 
 def twiss_to_fort2(sequence):
     '''Transforms a twiss-like structure into fort.2. The twiss structure

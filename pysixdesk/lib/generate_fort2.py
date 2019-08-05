@@ -41,7 +41,6 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
             if len(SUstruct) == 0:
                 sfile = False
 
-
     ofile = open('fort.2', 'w')
     lfile = open('fort3.limi', 'w')
     # get dimension of constitutive arrays (ie SINGLE ELEMENTs, BLOCs, LATTICE ELEMENTs)
@@ -534,6 +533,7 @@ def aperture_type(name, aperture):
     newaperture['XOFF'] = aper[4]
     newaperture['YOFF'] = aper[5]
     return newaperture
+
 
 def clean_apertures(struct):
     '''Clean apertures (take only non-zero apertures and remove redundant ones)

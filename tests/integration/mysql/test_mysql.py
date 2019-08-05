@@ -48,9 +48,9 @@ class MySqlDB(unittest.TestCase):
             time.sleep(60*5)
         # TODO: add a check on the output of the preprocess job
 
-        self.prepare_sixtrack_input()
+        self.st.prepare_sixtrack_input()
         # TODO: add assert here
-        self.submit(1)
+        self.st.submit(1)
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)), 8)
 
         print('waiting for sxitrack job to finish...')

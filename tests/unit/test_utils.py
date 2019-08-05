@@ -34,6 +34,18 @@ class UtilsTest(unittest.TestCase):
         with open(self.replace_file_in, 'w') as f:
             f.writelines('\n'.join(self.contents))
 
+        # concatenate file
+        self.concat_file_in_1 = self.test_folder / 'concat_test.in'
+        self.concat_file_in_2 = self.test_folder / 'concat_test_2.in'
+        self.concat_contents_1 = [f'{i}\n' for i in range(10)]
+        self.concat_contents_1 += ['ENDE\n'] + [f'{i}\n' for i in range(10, 20)]
+        self.concat_contents_2 = [f'{i}\n' for i in range(5)]
+        with open(self.concat_file_in_1, 'w') as f_1:
+            f_1.writelines(''.join(self.concat_contents_1))
+        with open(self.concat_file_in_2, 'w') as f_2:
+            f_2.writelines(''.join(self.concat_contents_2))
+        self.concat_file_out = self.test_folder / 'concat_test.out'
+
     def test_encode_strings(self):
         self.assertEqual(utils.encode_strings(self.str_list),
                          (True, self.str_list_out))
@@ -73,6 +85,15 @@ class UtilsTest(unittest.TestCase):
         # with file ...
 
         # with gzip ...
+
+    def test_concatenate_files(self):
+        utils.concatenate_files([self.concat_file_in_1, self.concat_file_in_2],
+                                self.concat_file_out)
+        with open(self.concat_file_out, 'r') as f_out:
+            content = f_out.readlines()
+        end_i = self.concat_contents_1.index('ENDE\n')
+        out = self.concat_contents_1[:end_i] + self.concat_contents_2 + ['ENDE\n']
+        self.assertSequenceEqual(content, out)
 
     def tearDown(self):
         # remove testing folder
