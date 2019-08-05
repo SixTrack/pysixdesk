@@ -24,7 +24,8 @@ class SqlDB(unittest.TestCase):
         self.assertEqual(self.ws.studies, [self.st_name])
 
         self.st = self.ws.load_study(self.st_name,
-                                     module_path=str(Path(__file__).parents[1] / 'variable_config.py'),
+                                     module_path=str(Path(__file__).parents[1] /
+                                                     'variable_config.py'),
                                      class_name='SqlConfig')
         self.assertEqual(self.st.db_info['db_type'], 'sql')
 
@@ -37,22 +38,40 @@ class SqlDB(unittest.TestCase):
                                     'db.ini',
                                     'job_id.list',
                                     'htcondor_run.sub'])
-        self.assertEqual(out_folders, ['1', '2', '3', '4'])
+        # getting the expected list of preprocess wu_ids.
+        where = "status='incomplete'"
+        wu_ids = self.st.db.select('preprocess_wu', ['wu_id'], where)
+        wu_ids = [str(o[0]) for o in wu_ids]
+        self.assertEqual(out_folders, wu_ids)
 
         self.st.submit(0)
-        self.assertEqual(len(self.st.submission.check_running(self.st.study_path)), 4)
+        self.assertEqual(len(self.st.submission.check_running(self.st.study_path)),
+                         len(wu_ids))
 
         print('waiting for preprocess job to finish...')
         while self.st.submission.check_running(self.st.study_path) is None\
                 or len(self.st.submission.check_running(self.st.study_path)) >= 1:
             # sleep for 5 mins
-            time.sleep(60*5)
+            time.sleep(10)
         # TODO: add a check on the output of the preprocess job
 
-        self.prepare_sixtrack_input()
+        self.st.prepare_sixtrack_input()
+        # getting the expected list of sixtrack wu_ids.
+        # TODO: test this !
+        where = "status='complete'"
+        pre_wu_ids = self.st.db.select('preprocess_wu', ['wu_id'], where)
+        pre_wu_ids = [p[0] for p in pre_wu_ids]
+        if len(pre_wu_ids) == 1:
+            where = "status='incomplete' and preprocess_id=%s" % str(pre_wu_ids[0])
+        else:
+            where = "status='incomplete' and preprocess_id in %s" % str(pre_wu_ids)
+        six_wu_ids = self.st.db.select('sixtrack_wu', ['wu_id'], where)
+        six_wu_ids = [s[0] for s in six_wu_ids]
         # TODO: add assert here
-        self.submit(1)
-        self.assertEqual(len(self.st.submission.check_running(self.st.study_path)), 8)
+
+        self.st.submit(1)
+        self.assertEqual(len(self.st.submission.check_running(self.st.study_path)),
+                         len(six_wu_ids))
 
         print('waiting for sixtrack job to finish...')
         while self.st.submission.check_running(self.st.study_path) is None\
