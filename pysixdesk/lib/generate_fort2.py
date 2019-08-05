@@ -9,8 +9,15 @@
 import logging
 from copy import deepcopy
 
-from .twiss_tools import *
-from .fort2_tools import *
+from .fort2_tools import read_fort2
+from .fort2_tools import fort2_to_twiss
+from .fort2_tools import twiss_to_fort2
+from .fort2_tools import write_fort2
+
+from .twiss_tools import read_twiss
+from .twiss_tools import TwissStruct
+from .twiss_tools import empty_aperture
+from .twiss_tools import compare_aperture
 
 
 # New keys for apertures with offsets
@@ -28,8 +35,8 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     with open(aperture, 'r') as tfile:
         LOGGER.info('Reading aperture file: %s ...' % (aperture))
         TWstruct = read_twiss(tfile)
-        LOGGER.info('...read %i elements in total (including DRIFTs)' %
-                (len(TWstruct.elements)))
+        LOGGER.info('...read %i elements in total (including DRIFTs)'
+                    % (len(TWstruct.elements)))
 
     if survery is None:
         sfile = False
@@ -196,15 +203,16 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     seenaper = []
     for aperture in Aperlimi:
         if aperture['NAME'] not in seenaper:
+            pattern = "%-16s %-3s %10.4e %10.4e %10.4e %10.4e %10.4e %10.4e %10.4e\n"
             if lold:
-                lfile.write("%-16s %-3s %10.4e %10.4e %10.4e %10.4e %10.4e %10.4e %10.4e\n" %
+                lfile.write(pattern %
                             (aperture['NAME'], aperture['APERTYPE'],
                              MtoMM*aperture['APER_1'], MtoMM*aperture['APER_2'],
                              MtoMM*aperture['APER_3'], MtoMM*aperture['APER_4'],
                              aperture['ANGLE'], MtoMM*aperture['XOFF'],
                              MtoMM*aperture['YOFF']))
             else:
-                lfile.write("%-16s %-3s %10.4e %10.4e %10.4e %10.4e %10.4e %10.4e %10.4e\n" %
+                lfile.write(pattern %
                             (aperture['NAME'], aperture['APERTYPE'],
                              MtoMM*aperture['APER_1'], MtoMM*aperture['APER_2'],
                              MtoMM*aperture['APER_3'], MtoMM*aperture['APER_4'],
@@ -212,19 +220,17 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
                              aperture['ANGLE'], ))
             seenaper.append(aperture['NAME'])
     # check some numbers for consistency
+    pattern = ' %16s | %10s | %10s | %10s'
     LOGGER.info('')
     LOGGER.info(' dimensions of arrays in fort.2:')
-    LOGGER.info(' %16s | %10s | %10s | %10s' % ('', 'original', 'new', 'variation'))
-    LOGGER.info(' %16s | %10i | %10i | %10s' % ('SINGLE ELEMENTs', NSEorig, NSEnew,
-        NSEnew-NSEorig))
-    LOGGER.info(' %16s | %10i | %10i | %10s' % ('BLOCs', NBLorig, NBLnew,
-        NBLnew-NBLorig))
-    LOGGER.info(' %16s | %10i | %10i | %10s' %
-        ('LATTICE ELEMENTs', NLTorig, NLTnew, NLTnew-NLTorig))
+    LOGGER.info(pattern % ('', 'original', 'new', 'variation'))
+    LOGGER.info(pattern % ('SINGLE ELEMENTs', NSEorig, NSEnew, NSEnew-NSEorig))
+    LOGGER.info(pattern % ('BLOCs', NBLorig, NBLnew, NBLnew-NBLorig))
+    LOGGER.info(pattern % ('LATTICE ELEMENTs', NLTorig, NLTnew, NLTnew-NLTorig))
     LOGGER.info('')
     LOGGER.info('...%i entries in LIMI block;' % (len(seenaper)))
     LOGGER.info('...delta BLOCs + entries in LIMI block = %i;' %
-        (len(seenaper)+(NBLnew-NBLorig)))
+                (len(seenaper) + (NBLnew-NBLorig)))
     ofile.close()
     lfile.close()
     # Some checks
@@ -303,7 +309,7 @@ def read_survey(file1, dS=0.001):
             zeroit = item
             # Add last nonzero value
             if not iszero:
-                max = float(struct[-1]['s[m]'])+dS
+                max = float(struct[-1]['s[m]']) + dS
                 regions.append((min, max))
                 struct.append(zeroit)
                 struct[-1]['s[m]'] = str(max)
@@ -366,8 +372,8 @@ def merge_survey(TWstruct, SUstruct, SUregions):
                 # Take care if we have a thick element
                 if SUpos < (TWpos-TWlng) and SUpos >= TWpre:
                     # Interpolate, careful with the length of the next element
-                    # the interpolation must go from the latest point of the previous aperture to the
-                    # earliest point of the next aperture!!!
+                    # the interpolation must go from the latest point of the
+                    # previous aperture to the earliest point of the next aperture!!!
                     param = (SUpos-TWpre)/(TWpos-TWlng-TWpre)
                     for kw in TWstruct.APER_VALUES:
                         apre = float(TWstruct.elements[j-1][kw])
@@ -403,7 +409,7 @@ def add_aperture(sequence, name, position, index, precision=1.e-04):
     temp = deepcopy(zeroel)
     temp['NAME'] = name
     temp['S'] = position
-    names = [item['NAME'].lower() for item in sequence]
+    # names = [item['NAME'].lower() for item in sequence]
 
     for j in range(len(sequence)):
         item = sequence[j]
@@ -623,8 +629,8 @@ def checkNameLengths(tmpSequence, tmpAperLimi, maxLen=16):
                 if (origName not in changeNames):
                     # ...but only once!
                     changeNames.append(origName)
-                    LOGGER.info('...%s changed into %s !' % (origName,
-                        tmpSequence[jj]['NAME']))
+                    LOGGER.info('...%s changed into %s !'
+                                % (origName, tmpSequence[jj]['NAME']))
     if lErr:
         msg = 'unable to shorten the following names:\n'
         for impossibleName in impossibleNames:

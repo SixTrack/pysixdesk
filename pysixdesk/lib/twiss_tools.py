@@ -49,14 +49,12 @@ def read_twiss(file):
             line_chunks = []
             for tmp in tmps:
                 line_chunks.append(tmp)
-            prefix, kw, fmt, value, suffix = \
-                line_chunks[0], line_chunks[1], line_chunks[2], \
-                line_chunks[3], line_chunks[4:]
+
         elif line.startswith('*'):
             # Reading elements
             # Header with element fields
             line_chunks = line.split()
-            prefix, struct.element_fields = line_chunks[0], line_chunks[1:]
+            _, struct.element_fields = line_chunks[0], line_chunks[1:]
             # Skip formats line
             file.readline()
             # Now read each element properties
@@ -94,7 +92,7 @@ def read_icosim_csv(file):
         else:
             # Global variables
             line_chunks = line.split(_separator)
-            kw, value, suffix = line_chunks[0], line_chunks[1], line_chunks[2:]
+            kw, value, _ = line_chunks[0], line_chunks[1], line_chunks[2:]
             struct.globals[kw] = value
         line = file.readline().strip()
     return struct
