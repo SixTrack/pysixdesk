@@ -52,7 +52,7 @@ def run(wu_id, input_info):
         if collimation.lower() == 'true':
             try:
                 coll_config = cf['collimation']
-                status = new_fort2(coll_config)
+                new_fort2(coll_config)
             except Exception:
                 logger.error('Generate new fort2 failed!', exc_info=True)
         if oneturn.lower() == 'true':

@@ -7,7 +7,7 @@
 # elements at the top of the file
 
 import logging
-from generate_fort2 import error_message
+from . import utils
 from copy import deepcopy
 
 FORT2_ELEMENT_FIELDS = [
@@ -25,7 +25,7 @@ FORT2_BLOCK_FIELDS = [
     'ELEM'
 ]
 
-LOGGER = logging.getLogger("pysixdesk.fort2_tools")
+LOGGER = utils.condor_logger("fort2_tools")
 
 
 class Fort2Struct:
@@ -122,8 +122,10 @@ class Fort2Struct:
         # . define new name
         new_SE['NAME'] = 'drift_%i' % maxID
         if new_SE['NAME'] in self.elements:
-            error_message('Duplication of name in list of SINGLE ELEMENTs: %s'
-                          % (new_SE['NAME']), True)
+            LOGGER.error('Duplication of name in list of SINGLE ELEMENTS: %s' %
+                    (new_SE['NAME']))
+            LOGGER.error('Aborting....')
+            raise Exception
         # . define new length, in case
         if L is not None:
             new_SE['LENG'] = "%.9e" % L
@@ -147,8 +149,10 @@ class Fort2Struct:
         # . define new name
         new_BK['NAME'] = 'BLOC%i' % maxID
         if new_BK['NAME'] in self.blocks:
-            error_message('Duplication of name in list of BLOCks: %s' %
-                          (new_BK['NAME']), True)
+            LOGGER.error('Duplication of name in list of BLOCks: %s' %
+                    (new_BK['NAME']))
+            LOGGER.error('Aborting....')
+            raise Exception
         new_BK['ELEM'] = self.elements[iSing]['NAME']
         # . append it to list of SINGLE ELEMENTs:
         self.blocks.append(new_BK)

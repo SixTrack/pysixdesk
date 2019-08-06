@@ -6,9 +6,9 @@
 
 # Program created for including aperture markers in Sixtrack fort.2 file
 # from a TWISS file, for the Sixtrack-FLUKA coupling
-import logging
 from copy import deepcopy
 
+from . import utils
 from .fort2_tools import read_fort2
 from .fort2_tools import fort2_to_twiss
 from .fort2_tools import twiss_to_fort2
@@ -19,10 +19,9 @@ from .twiss_tools import TwissStruct
 from .twiss_tools import empty_aperture
 from .twiss_tools import compare_aperture
 
-
 # New keys for apertures with offsets
 VALUES_off = ['APER_1', 'APER_2', 'APER_3', 'APER_4', 'XOFF', 'YOFF']
-LOGGER = logging.getLogger("pysixdesk.generate_fort2")
+LOGGER = utils.condor_logger("generate_fort2")
 
 
 def run(fc2, aperture, survery=None, ldebug=False, lold=False):
@@ -243,27 +242,27 @@ def run(fc2, aperture, survery=None, ldebug=False, lold=False):
     LOGGER.info('...done.')
 
 
-def error_message(tmp_string, labort):
-    '''function for printing on screen an error message:
-    labort = True:  python job abort is called;
-    labort = False: the message is printed only, the job will go on
-    '''
-    tmp_string = tmp_string.strip()
-    # in case of aborting, add a clear abort message on screen
-    if labort:
-        if len(tmp_string) > 0:
-            tmp_string = tmp_string + "\n" + "Aborting" + "... "
-        else:
-            tmp_string = "Aborting" + "... "
-    # strip strings:
-    tmp_strings = tmp_string.split("\n")
-    # print message:
-    LOGGER.error("!!")
-    for single_string in tmp_strings:
-        LOGGER.error(" !! " + single_string.strip())
-    LOGGER.error(" !! ")
-    if labort:
-        raise Exception
+#def error_message(tmp_string, labort):
+#    '''function for printing on screen an error message:
+#    labort = True:  python job abort is called;
+#    labort = False: the message is printed only, the job will go on
+#    '''
+#    tmp_string = tmp_string.strip()
+#    # in case of aborting, add a clear abort message on screen
+#    if labort:
+#        if len(tmp_string) > 0:
+#            tmp_string = tmp_string + "\n" + "Aborting" + "... "
+#        else:
+#            tmp_string = "Aborting" + "... "
+#    # strip strings:
+#    tmp_strings = tmp_string.split("\n")
+#    # print message:
+#    LOGGER.error("!!")
+#    for single_string in tmp_strings:
+#        LOGGER.error(" !! " + single_string.strip())
+#    LOGGER.error(" !! ")
+#    if labort:
+#        raise Exception
 
 
 def read_survey(file1, dS=0.001):
@@ -446,7 +445,8 @@ def add_aperture(sequence, name, position, index, precision=1.e-04):
                 item['NAME'] = 'dft_a' + str(index)
             if float(item['S'])-position < 0.e0:
                 msg = 'Negative drift: Error'
-                error_message(msg, True)
+                LOGGER.error(msg)
+                raise ValueError
             # Aperture marker
             sequence.insert(j, temp)
             # Add drift before marker
@@ -472,7 +472,8 @@ def add_aperture(sequence, name, position, index, precision=1.e-04):
                 sequence.insert(j, drift)
                 if d_length-float(item['LENG']) < 0.e0:
                     msg = 'Negative drift: Error'
-                    error_message(msg, True)
+                    LOGGER.error(msg)
+                    raise ValueError
                 del drift
             break
     del temp
@@ -493,7 +494,8 @@ def aperture_type(name, aperture):
             (aper[0] == 0.e0 and aper[1] != 0.e0)):
         msg = "ERROR: Invalid aperture definition for "+name
         msg = msg + " ... apertures: " + str(aper)
-        error_message(msg, True)
+        LOGGER.error(msg)
+        raise Exception
     # Now we redefine the apertures as read by SixTrack
     # There is no ELLIPSE definition, probably absorbed into
     # the RECTELLIPSE aperture
@@ -534,7 +536,8 @@ def aperture_type(name, aperture):
     if newaperture['APERTYPE'] == '':
         msg = 'ERROR: Unknown aperture type for '+name
         msg = msg + " ... apertures: " + str(aper)
-        error_message(msg, True)
+        LOGGER.error(msg)
+        raise Exception
     # Copy offsets
     newaperture['XOFF'] = aper[4]
     newaperture['YOFF'] = aper[5]
@@ -636,7 +639,8 @@ def checkNameLengths(tmpSequence, tmpAperLimi, maxLen=16):
         for impossibleName in impossibleNames:
             msg = msg + '%s\n' % (impossibleName)
         msg = msg + "they are longer than %i chars" % (maxLen)
-        error_message(msg, True)
+        LOGGER.error(msg)
+        raise Exception
     return tmpSequence, tmpAperLimi
 
 
