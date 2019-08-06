@@ -60,15 +60,13 @@ def download_output(filenames, dest, zp=True):
 
 def check_fort3_block(fort3, block):
     '''Check the existence of the given block in fort.3'''
-    if not os.path.isfile(fort3):
-        print("The file %s doesn't exist" % fort3)
-        return 0
+
     with open(fort3, 'r') as f_in:
         lines = f_in.readlines()
     for line in lines:
         if line.lower().startswith(block.lower()):
-            return 1
-    return 0
+            return True
+    return False
 
 
 def replace(patterns, replacements, source, dest):

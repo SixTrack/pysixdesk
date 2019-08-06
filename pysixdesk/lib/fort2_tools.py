@@ -51,17 +51,16 @@ class Fort2Struct:
         ans = [iEl for iEl in range(len(self.elements)) if (
             tmpName == self.elements[iEl]['NAME'])]
         if len(ans) == 0:
-            LOGGER.info('unable to find %s in list of SINGLE ELEMENTs!' % (tmpName))
-            exit()
+            raise ValueError('unable to find %s in list of SINGLE ELEMENTs!' %
+                             (tmpName))
         elif len(ans) > 1:
-            LOGGER.info('%s found multiple times in list of SINGLE ELEMENTs!' %
-                    (tmpName))
-            exit()
+            raise ValueError('%s found multiple times in list of SINGLE ELEMENTs!'
+                             % (tmpName))
         else:
             ans = ans[0]
             if lDebug:
-                LOGGER.info('%s has id %i in list of SINGLE ELEMENTs' % (tmpName,
-                    ans))
+                LOGGER.info('%s has id %i in list of SINGLE ELEMENTs' %
+                            (tmpName, ans))
         return ans
 
     def getIBlock(self, tmpName, key='NAME', lDebug=True):
@@ -69,20 +68,17 @@ class Fort2Struct:
         if lDebug:
             LOGGER.info('%s - %s - key: %s' % ('getIBlock', tmpName, key))
         if len(self.blocks) == 0:
-            LOGGER.info('no BLOCks in current structure!')
-            exit()
+            raise ValueError('no BLOCks in current structure!')
         if key not in self.blocks[0]:
-            LOGGER.info('no key in BLOCk element named %s!' % (key))
-            exit()
+            raise ValueError('no key in BLOCk element named %s!' % (key))
         ans = [iEl for iEl in range(len(self.blocks)) if (
             tmpName == self.blocks[iEl][key])]
         if len(ans) == 0:
-            LOGGER.info('unable to find %s in list of BLOCks!' % (tmpName))
-            exit()
+            raise ValueError('unable to find %s in list of BLOCks!' %
+                             (tmpName))
         elif len(ans) > 1:
-            LOGGER.info('%s found multiple times in list of BLOCks (key=%s)!' %
-                    (tmpName, key))
-            exit()
+            raise ValueError('%s found multiple times in list of BLOCks (key=%s)!'
+                             % (tmpName, key))
         else:
             ans = ans[0]
             if lDebug:
@@ -96,7 +92,7 @@ class Fort2Struct:
         iBlock = self.getIBlock(tmpName, lDebug=lDebug)
         if lDebug:
             LOGGER.info('%s is actually %s' % (self.blocks[iBlock]['NAME'],
-                self.blocks[iBlock]['ELEM']))
+                                               self.blocks[iBlock]['ELEM']))
         iSing = self.getISingEl(self.blocks[iBlock]['ELEM'], lDebug=lDebug)
         return iBlock, iSing
 
@@ -105,7 +101,8 @@ class Fort2Struct:
         if iSing and iBlock are not None, an existing one is cloned
         '''
         if lDebug:
-            LOGGER.info('%s - iSing,L,lDebug:' % ('createDrift'), iSing, L, lDebug)
+            LOGGER.info('%s - iSing,L,lDebug:'
+                        % ('createDrift'), iSing, L, lDebug)
         # new DRIFT
         if iSing is None:
             new_SE = {}
@@ -125,8 +122,10 @@ class Fort2Struct:
         # . define new name
         new_SE['NAME'] = 'drift_%i' % maxID
         if new_SE['NAME'] in self.elements:
-            error_message('Duplication of name in list of SINGLE ELEMENTs: %s' % (
-                new_SE['NAME']), True)
+            LOGGER.error('Duplication of name in list of SINGLE ELEMENTS: %s' %
+                    (new_SE['NAME']))
+            LOGGER.error('Aborting....')
+            raise Exception
         # . define new length, in case
         if L is not None:
             new_SE['LENG'] = "%.9e" % L
@@ -150,8 +149,10 @@ class Fort2Struct:
         # . define new name
         new_BK['NAME'] = 'BLOC%i' % maxID
         if new_BK['NAME'] in self.blocks:
-            error_message('Duplication of name in list of BLOCks: %s' %
-                          (new_BK['NAME']), True)
+            LOGGER.error('Duplication of name in list of BLOCks: %s' %
+                    (new_BK['NAME']))
+            LOGGER.error('Aborting....')
+            raise Exception
         new_BK['ELEM'] = self.elements[iSing]['NAME']
         # . append it to list of SINGLE ELEMENTs:
         self.blocks.append(new_BK)
@@ -173,14 +174,14 @@ def read_fort2(file):
             line = file.readline()
             while(not line.startswith('NEXT')):
                 struct.elements.append(dict(zip(FORT2_ELEMENT_FIELDS,
-                    line.split())))
+                                                line.split())))
                 line = file.readline()
         elif line.startswith('BLOC'):
             # Reading block definitions
             line = file.readline()
             while(not line.startswith('NEXT')):
                 struct.blocks.append(dict(zip(FORT2_BLOCK_FIELDS,
-                    line.split())))
+                                              line.split())))
                 line = file.readline()
         elif line.startswith('STRU'):
             # Reading lattice structure
@@ -237,11 +238,12 @@ def write_fort2(file, struct):
     for i in range(0, len(struct.lattice), 3):
         try:
             file.write("%-17s %-17s %-17s \n" % (struct.lattice[i],
-                struct.lattice[i + 1], struct.lattice[i + 2]))
+                                                 struct.lattice[i + 1],
+                                                 struct.lattice[i + 2]))
         except IndexError:
             try:
                 file.write("%-17s %-17s \n" % (struct.lattice[i],
-                    struct.lattice[i + 1]))
+                                               struct.lattice[i + 1]))
             except IndexError:
                 file.write("%-17s \n" % (struct.lattice[i]))
     msg = 'NEXT'
