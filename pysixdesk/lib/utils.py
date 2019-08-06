@@ -5,6 +5,7 @@ import sys
 import gzip
 import shutil
 import logging
+import difflib
 import traceback
 
 # Gobal variables
@@ -90,6 +91,38 @@ def replace(patterns, replacements, source, dest):
         return status
     status = True
     return status
+
+
+def diff(file1, file2, logger=None, **kwargs):
+    '''
+    Displays the diff of two files.
+
+    Args:
+        file1 (str/path): path to first file for the diff.
+        file2 (str/path): path to second file for the diff.
+        logger (logging.logger, optional): logger with which to display the
+        diff, if None, will use `print`.
+        **kwargs: additional arguments for `difflib.unified_diff`.
+    '''
+
+    if logger is not None and isinstance(logger, logging.Logger):
+        display = logger.info
+    else:
+        display = print
+
+    def get_lines(file):
+        '''Returns the contents of `file`.'''
+        with open(file) as f:
+            f_lines = f.read().split('\n')
+        return f_lines
+
+    file1_data = get_lines(file1)
+    file2_data = get_lines(file2)
+
+    display(f'▼▼▼▼▼▼▼▼▼▼▼▼▼ {file1} --> {file2} diff ▼▼▼▼▼▼▼▼▼▼▼▼▼')
+    for line in difflib.unified_diff(file1_data, file2_data, **kwargs):
+        display(line)
+    display(f'▲▲▲▲▲▲▲▲▲▲▲▲▲ {file1} --> {file2} diff ▲▲▲▲▲▲▲▲▲▲▲▲▲')
 
 
 def encode_strings(inputs):
