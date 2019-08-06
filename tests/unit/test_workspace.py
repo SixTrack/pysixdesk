@@ -3,7 +3,8 @@ import shutil
 from pathlib import Path
 import sys
 # give the test runner the import access
-sys.path.insert(0, Path(__file__).parents[1].absolute())
+pysixdesk_path = str(Path(__file__).parents[2].absolute())
+sys.path.insert(0, pysixdesk_path)
 from pysixdesk.lib import workspace
 
 

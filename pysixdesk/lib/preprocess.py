@@ -163,6 +163,8 @@ def madxjob(madx_config, mask_config):
         content = "Failed to generate actual madx input file!"
         raise Exception(content)
 
+    utils.diff(mask_name, madx_in, logger=logger)
+
     # Begin to execute madx job
     command = madxexe + " " + madx_in
     logger.info("Calling madx %s" % madxexe)
@@ -315,7 +317,9 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     else:
         content = "The %s file doesn't exist!" % temp1
         raise FileNotFoundError(content)
+
     utils.concatenate_files(output, 'fort.3')
+    utils.diff(source, 'fort.3', logger=logger)
 
     # prepare the other input files
     for key in input_files.values():
@@ -324,7 +328,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
             os.symlink(key1, key)
         else:
             raise FileNotFoundError("The required input file %s does not found!" %
-                    key)
+                                    key)
     #if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
     #    os.symlink('../fort.2', 'fort.2')
     #    os.symlink('../fort.16', 'fort.16')
