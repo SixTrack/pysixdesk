@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = 'pysixdesk'
-copyright = '2019, Xiaohan Lu'
-author = 'Xiaohan Lu'
+copyright = '2019, Xiaohan Lu, Alession Mereghetti'
+author = 'Xiaohan Lu(CSNS, CERN), Alessio Mereghetti (CERN), Loic Thomas Davies Coyle (CERN)'
 
 # The full version, including alpha/beta/rc tags
 release = '1.0'
