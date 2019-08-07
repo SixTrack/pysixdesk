@@ -42,16 +42,18 @@ class HTCondor(Cluster):
         self.sub_name = 'htcondor_run.sub'
 
     def prepare(self, wu_ids, trans, exe, exe_args, input_path, output_path,
-                flavour='tomorrow', *args, **kwargs):
-        '''Prepare the submission file
-        @wu_ids(tuple) The job ids for submission
-        @trans(list) The python modules needed by the executables
-        @exe(str) The executable
-        @exe_args(str) The additional arguments for executable except for wu_id
-        @input_path(str) The folder with input files
-        @output_path(str) The output folder
-        @*args and **kwargs Other necessary arguments'''
+            flavour='tomorrow', *args, **kwargs):
+        '''Prepare the submission file.
 
+        Args:
+            wu_ids (int): The job ids for submission
+            trans (list): The python modules needed by the executables
+            exe (str): The executable
+            exe_args (str): The additional arguments for executable except for wu_id
+            input_path (str): The folder with input files
+            output_path (str): The output folder
+            flavour (str): The queue types of HTCondor
+        '''
         job_list = os.path.join(input_path, 'job_id.list')
         if os.path.exists(job_list):
             os.remove(job_list)
@@ -94,7 +96,9 @@ class HTCondor(Cluster):
         '''Submit the job to the cluster
         @input_path The input path to hold the input files
         @job_name The job name (also is the batch_name for HTCondor)
-        @trails The maximum number of resubmission when submit failed'''
+        @trails The maximum number of resubmission when submit failed
+        '''
+
         sub = os.path.join(input_path, self.sub_name)
         joblist = os.path.join(input_path, 'job_id.list')
         if not os.path.isfile(joblist):
@@ -148,7 +152,8 @@ class HTCondor(Cluster):
     def check_format(self, unique_id):
         '''Check the job status with fixed format
         @unique_id(int or str) The unique id of the job, e.g: cluster_id.proc_id
-        @return(int or None) The job status'''
+        @return(int or None) The job status
+        '''
 
         args = ['-format', '%d\n', 'JobStatus']
         Id = str(unique_id)
@@ -179,7 +184,8 @@ class HTCondor(Cluster):
     def check_running(self, studypath):
         '''Check the unfininshed job
         @studypath The absolute path of the study
-        @return(list or None) The unique id (ClusterId.ProcId) list'''
+        @return(list or None) The unique id (ClusterId.ProcId) list
+        '''
 
         args = ['-constraint', 'regexp("%s", JobBatchName)' % studypath,
                 '-constraint', 'JobStatus != 4', '-format', '%d.',

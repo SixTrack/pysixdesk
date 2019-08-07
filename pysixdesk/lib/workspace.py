@@ -9,19 +9,20 @@ from . import utils
 class WorkSpace(object):
     '''
     class for handling workspaces.
-    Current structure:
-    ./sandbox/
-       |_ studies/
-       |    |_ test/
-       |    |_ study_000/
-       |    |_ study_001/
-       |    |_ study_002/
-       |_ templates/
-            |_ htcondor_run.sub
-            |_ hl10.mask
-            |_ fort.3.mother2
-            |_ fort.3.mother1
-            |_ config.py
+
+    | Current structure:
+    | ./sandbox/
+    |    \|_ studies/
+    |         \|_ test/
+    |         \|_ study_000/
+    |         \|_ study_001/
+    |         \|_ study_002/
+    |    \|_ templates/
+    |         \|_ htcondor_run.sub
+    |         \|_ hl10.mask
+    |         \|_ fort.3.mother2
+    |         \|_ fort.3.mother1
+    |         \|_ config.py
     '''
 
     def __init__(self, workspace_name='./sandbox'):
