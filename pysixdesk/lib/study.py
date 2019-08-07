@@ -674,8 +674,9 @@ class Study(object):
     def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
         @type(0,1 or 2) The job type, 0 is preprocess job, 1 is sixtrack job,
-                        2 is collimation job
-        @trials The maximum number of trials of submission'''
+        2 is collimation job
+        @trials The maximum number of trials of submission
+        '''
         if typ == 0:
             input_path = self.paths['preprocess_in']
             jobname = 'preprocess'

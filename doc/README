@@ -1,0 +1,7 @@
+## How to use sphinx
+
+At first, run the following command:
+```
+sphinx-quickstart
+```
+to generate the necessary configure files
