@@ -260,6 +260,33 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
     def setting(self, conn, settings):
         pass
 
+    def create_user(self, conn, username, passwd, host='%'):
+        '''Create a new user'''
+        sql = "CREATE USER '%s'@'%s' IDENTIFIED BY '%s'" % (
+                username, host, passwd)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def remove_user(self, conn, username):
+        '''Remove an user permanently'''
+        sql = "DROP USER %s" % (username)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def grant(self, conn, username, privileges, pattern, host='%'):
+        '''Grant specified privileges on given pattern(db.table) to an user'''
+        sql = "GRANT %s ON %s To '%s'@'%s'" % (
+                privileges, pattern, username, host)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def revoke(self, conn, username, privileges, pattern, host='%'):
+        '''Revoke specified privileges on given pattern(db.table) from an user'''
+        sql = "REVOKE %s ON %s To '%s'@'%s'" % (
+                privileges, pattern, username, host)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
     def create_table(self, conn, name, columns, keys, recreate):
         '''Create a new table'''
         super(MySQLDatabaseAdaptor, self).create_table(conn, name, columns,
