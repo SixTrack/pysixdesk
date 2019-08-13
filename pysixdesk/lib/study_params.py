@@ -12,8 +12,8 @@ class StudyParams:
     '''
     Looks for any placeholders in the provided paths and extracts the
     placeholder if no default values found, use None.
-    This implements __setitem__ and __getitem__ so the user can interact with
-    the StudyParams object similarly to a dict.
+    This class implements __setitem__ and __getitem__ so the user can interact
+    with the StudyParams object similarly to a dict.
 
     To get the placeholder patterns for the mask file use `self.madx`.
     To get the placeholder patterns for the oneturn sixtrack job use
@@ -23,12 +23,14 @@ class StudyParams:
     '''
 
     def __init__(self, mask_path,
-                 fort_path=f'{PYSIXDESK_ABSPATH}/templates/fort.3',
+                 fort_path=os.path.join(PYSIXDESK_ABSPATH, 'templates/fort.3'),
                  machine_defaults=machineparams.HLLHC['col']):
         """
         Args:
             mask_path (str): path to the mask file
             fort_path (str): path to the fort file
+            machine_defaults (dict): dictionary containing the default
+            parameters of the desired machine/configuration.
         """
         self._logger = logging.getLogger(__name__)
         # comment regexp
@@ -39,7 +41,13 @@ class StudyParams:
         self.mask_path = mask_path
         # initialize empty calculation queue
         self.calc_queue = []
-        # default parameters for the sixtrack specific placeholders
+        # TODO: Figure out how to nicely handle the 'chrom_eps' and 'CHROM'
+        # parameters, they are not substituting any placeholders, they are only
+        # used in the preprocessing job to do some calculations for the
+        # oneturnresult file. They shouldn't really be included in the
+        # f3_defaults dict, as they are not values for placeholders in fort.3.
+
+        # default parameters for sixtrack specific placeholders
         self.f3_defaults = dict([
                                 ("ax0s", 0.1),
                                 ("ax1s", 0.1),
@@ -47,20 +55,24 @@ class StudyParams:
                                 ("CHROM", 0),  # this is not a placeholder
                                 ("dp1", 0.000001),
                                 ("dp2", 0.000001),
+                                ("EI", 3.5),
                                 ("turnss", 1e5),
                                 ("ibtype", 0),
                                 ("iclo6", 2),
                                 ("idfor", 0),
                                 ("imc", 1),
+                                ("ilin", 1),
                                 ("ition", 0),
                                 ("length", 26658.864),
                                 ("ndafi", 1),
-                                ("nss", 60),  # I think this should be 60?
+                                ("nss", 60),  # should this be 60? 30?
                                 ("pmass", PROTON_MASS),
                                 ("Runnam", 'FirstTurn'),
                                 ("ratios", 1),
-                                ("toggle_post/", ''),
-                                ("toggle_diff/", '/'),
+                                # these toggle_* aren't very pretty.
+                                ("toggle_post/", ''),  # '' --> on, '/' --> off
+                                ("toggle_diff/", '/'),  # '' --> on, '/' --> off
+                                ("toggle_coll/", ''),  # '' --> off, '/' --> on
                                 ("writebins", 1),
                                 ])
         self.machine_defaults = machine_defaults
@@ -104,7 +116,7 @@ class StudyParams:
             file (str): path to the file from which to extract the placeholder
             patterns.
         Returns:
-            list: list containing the matches
+            list: list containing the regexp matches, i.e. the placeholders
         '''
         with open(file) as f:
             lines = f.read()
@@ -124,6 +136,9 @@ class StudyParams:
             in all files in the `file_path` fodler.
             keep_none (bool, optional): if True, keeps the None entries in the
             output dict.
+            mandatory (list, optional): if provided will add the keys in the
+            provided list to the output dict, regardless is they are found in
+            the file.
 
         Returns:
             OrderedDict: dictionnary of the extracted placeholder patterns with
@@ -150,7 +165,7 @@ class StudyParams:
             for k in mandatory:
                 out[k] = self.defaults[k]
 
-        self._logger.debug(f'Found {len(matches)} placeholders.')
+        self._logger.debug(f'Found {len(matches)} placeholders in {file_path}.')
         self._logger.debug(f'With {len(set(matches))} unique placeholders.')
         for k, v in out.items():
             self._logger.debug(f'{k}: {v}')
@@ -244,13 +259,6 @@ class StudyParams:
         if key in self.sixtrack.keys():
             return self.sixtrack[key]
 
-    # def update(self, *args, **kwargs):
-    #     '''
-    #     Updates both dictionnaries.
-    #     '''
-    #     self.madx.update(*args, **kwargs)
-    #     self.sixtrack.update(*args, **kwargs)
-
     @staticmethod
     def _find_none(dic):
         """Finds the keys of any entry in `dic` with a None value.
@@ -279,10 +287,3 @@ class StudyParams:
         self._remove_none(self.madx)
         self._remove_none(self.sixtrack)
         self._remove_none(self.phasespace)
-
-
-# for testing
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    test = StudyParams('../templates/lhc_aperture/hl13B1_elens_aper.mask')
-    print(test.params)

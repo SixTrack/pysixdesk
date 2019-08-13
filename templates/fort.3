@@ -29,7 +29,7 @@ SYNCHROTRON OSCILLATIONS--------'PLACE AFTER TRACKING PARAMETERS'-------
       1.       1.
 NEXT
 BEAM
-%bunch_charge   %emit_norm  %emit_norm  %sigz  %sige  1  %ibtype 1 0
+%bunch_charge   %emit_norm_x  %emit_norm_y  %sigz  %sige  1  %ibtype 1 0
 
 NEXT
 ITERATION-ACCURACY------------------------------------------------------
@@ -42,17 +42,19 @@ NEXT
 FLUCTUATION
 100000 1 7 3
 NEXT
+
 %toggle_post/POSTPROCESSING----------------------------------------------------------
 %toggle_post/LHC Dynamic Aperture at Injection Version 5 (1998)
 %toggle_post/120 0 0 1 .08 .08 1 0 0 1. 1.
 %toggle_post/%inttunex %inttuney 1 1 10 .005 1 .050
 %toggle_post/0 1 0 1 1 1 1 1 %ndafi
 %toggle_post/NEXT
+
 %toggle_diff/DIFERENTIAL ALGEBRA---------------------------------------------------
 %toggle_diff/%NO  %NV 1E-38 %nsix 0
 %toggle_diff/NEXT
 
-%COLLENDE====================================================================
+%toggle_coll/ENDE====================================================================
 /
 / linear optics functions
 LINE

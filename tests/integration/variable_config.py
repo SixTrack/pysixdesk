@@ -14,7 +14,7 @@ class SqlConfig(MyStudy):
 
     def customize(self, fake=True):
         '''
-        Override customize to make the call in super().__init__ useless
+        Override customize to inhibit the call in super().__init__.
         '''
         if not fake:
             super().customize()
@@ -33,7 +33,7 @@ class MySqlConfig(MyStudy):
 
     def customize(self, fake=True):
         '''
-        Override customize to make the call in super().__init__ useless
+        Override customize to inhibit the call in super().__init__.
         '''
         if not fake:
             super().customize()

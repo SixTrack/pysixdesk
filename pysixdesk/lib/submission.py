@@ -42,7 +42,7 @@ class HTCondor(Cluster):
         self.sub_name = 'htcondor_run.sub'
 
     def prepare(self, wu_ids, trans, exe, exe_args, input_path, output_path,
-            flavour='tomorrow', *args, **kwargs):
+                flavour='tomorrow', *args, **kwargs):
         '''Prepare the submission file.
 
         Args:
@@ -96,7 +96,7 @@ class HTCondor(Cluster):
         '''Submit the job to the cluster
         @input_path The input path to hold the input files
         @job_name The job name (also is the batch_name for HTCondor)
-        @trails The maximum number of resubmission when submit failed
+        @trials The maximum number of resubmission when submit failed
         '''
 
         sub = os.path.join(input_path, self.sub_name)

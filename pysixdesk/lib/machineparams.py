@@ -1,4 +1,8 @@
 from .utils import merge_dicts
+'''
+these default settings really need to be checked
+'''
+
 # LHC settings
 LHC = {}
 # TODO: fill these in.
@@ -7,7 +11,8 @@ _LHC_DEF = dict(phi_IR1=90.000,
                 phi_IR5=0.000,
                 b_t_dist=25.,
                 # bunch_charge=2.2e11,
-                # emit_norm=2.5e-6,
+                # emit_norm_x=2.5,
+                # emit_norm_y=2.5,
                 inttunex=62.0,
                 inttuney=60.0,
                 qprimex=3.0,
@@ -21,7 +26,7 @@ _LHC_INJ = dict(rfvol=8.0,  # [MV]
                 sigz=0.11,  # [mm]
                 sige=4.5e-04,
                 e0=450.0,
-                # I_MO= ,
+                # I_MO= -40,  # ?
                 tunex=62.28,
                 tuney=60.31,
                 )
@@ -40,11 +45,12 @@ LHC['col'] = merge_dicts(_LHC_DEF, _LHC_COL)
 # HLLHC settings
 HLLHC = {}
 # defaults
-_HLLHC_DEF = dict(phi_IR1=90.000,
-                  phi_IR5=0.000,
+_HLLHC_DEF = dict(phi_IR1=90.0,  # flat optics: 0.0
+                  phi_IR5=0.0,  # flat optics: 90.0
                   b_t_dist=25.,
                   bunch_charge=2.2e11,
-                  emit_norm=2.5,
+                  emit_norm_x=2.5,
+                  emit_norm_y=2.5,
                   inttunex=62.0,
                   inttuney=60.0,
                   qprimex=3.0,
@@ -63,7 +69,7 @@ _HLLHC_INJ = dict(rfvol=8.0,  # [MV]
                   tuney=60.31,
                   )
 # collision defaults
-_HLLHC_COL = dict(rfvol=8.0,  # [MV]
+_HLLHC_COL = dict(rfvol=16.0,  # [MV]
                   sigz=0.075,  # [mm]
                   sige=1.1e-4,
                   e0=7000.0,

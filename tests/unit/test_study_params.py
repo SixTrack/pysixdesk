@@ -59,7 +59,10 @@ test=%test1; test=%test2; test=%test3
         params = StudyParams(self.mask_file, fort_path=self.fort_file)
         self.assertTrue((self.mask_ph | self.fort_ph).issubset(set(params.keys())))
         self.assertEqual(set(params.madx.keys()), self.mask_ph)
-        self.assertEqual(set(params.sixtrack.keys()), self.fort_ph)
+        # they are not equal because of the 'CHROM' and 'chrom_eps'
+        # which are not placeholders in the fort.3 but mandatory for the
+        # oneturnresult file created in the preprocessing job.
+        self.assertTrue(self.fort_ph < set(params.sixtrack.keys()))
 
     def test_oneturn(self):
         params = StudyParams(self.mask_file, fort_path=self.fort_file)
