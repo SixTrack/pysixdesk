@@ -56,8 +56,6 @@ class BashStudy(Study):
         self.madx_input["mask_file"] = 'hl10.mask'
         self.oneturn_sixtrack_input['temp'] = [
             'fort.3.mother1', 'fort.3.mother2']
-        self.oneturn_sixtrack_output = [
-            'mychrom', 'betavalues', 'sixdesktunes']
         self.sixtrack_input['temp'] = ['fort.3.mother1', 'fort.3.mother2']
         self.sixtrack_input['input'] = copy.deepcopy(self.madx_output)
         self.update_tables()

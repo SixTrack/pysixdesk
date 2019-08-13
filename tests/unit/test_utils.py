@@ -3,7 +3,8 @@ import shutil
 from pathlib import Path
 import sys
 # give the test runner the import access
-sys.path.insert(0, Path(__file__).parents[1].absolute())
+pysixdesk_path = str(Path(__file__).parents[2].absolute())
+sys.path.insert(0, pysixdesk_path)
 from pysixdesk.lib import utils
 
 
@@ -33,6 +34,18 @@ class UtilsTest(unittest.TestCase):
         self.replace = [1, 2.5, 1e11]
         with open(self.replace_file_in, 'w') as f:
             f.writelines('\n'.join(self.contents))
+
+        # concatenate file
+        self.concat_file_in_1 = self.test_folder / 'concat_test.in'
+        self.concat_file_in_2 = self.test_folder / 'concat_test_2.in'
+        self.concat_contents_1 = [f'{i}\n' for i in range(10)]
+        self.concat_contents_1 += ['ENDE\n'] + [f'{i}\n' for i in range(10, 20)]
+        self.concat_contents_2 = [f'{i}\n' for i in range(5)]
+        with open(self.concat_file_in_1, 'w') as f_1:
+            f_1.writelines(''.join(self.concat_contents_1))
+        with open(self.concat_file_in_2, 'w') as f_2:
+            f_2.writelines(''.join(self.concat_contents_2))
+        self.concat_file_out = self.test_folder / 'concat_test.out'
 
     def test_encode_strings(self):
         self.assertEqual(utils.encode_strings(self.str_list),
@@ -87,6 +100,15 @@ class UtilsTest(unittest.TestCase):
                                                    'c': 3, 'd': 10})
         self.assertEqual(a, {'a': 1, 'b': 2, 'c': 3})
         self.assertEqual(b, {'d': 10})
+
+    def test_concatenate_files(self):
+        utils.concatenate_files([self.concat_file_in_1, self.concat_file_in_2],
+                                self.concat_file_out)
+        with open(self.concat_file_out, 'r') as f_out:
+            content = f_out.readlines()
+        end_i = self.concat_contents_1.index('ENDE\n')
+        out = self.concat_contents_1[:end_i] + self.concat_contents_2 + ['ENDE\n']
+        self.assertSequenceEqual(content, out)
 
     def tearDown(self):
         # remove testing folder

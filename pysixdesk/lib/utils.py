@@ -5,10 +5,12 @@ import sys
 import gzip
 import shutil
 import logging
+import difflib
 import traceback
 
 # Gobal variables
-PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
 
 
 def check(files):
@@ -56,6 +58,17 @@ def download_output(filenames, dest, zp=True):
                 shutil.copy(filename, dest)
 
 
+def check_fort3_block(fort3, block):
+    '''Check the existence of the given block in fort.3'''
+
+    with open(fort3, 'r') as f_in:
+        lines = f_in.readlines()
+    for line in lines:
+        if line.lower().startswith(block.lower()):
+            return True
+    return False
+
+
 def replace(patterns, replacements, source, dest):
     '''Reads a source file and writes the destination file.
     In each line, replaces patterns with repleacements.
@@ -76,6 +89,38 @@ def replace(patterns, replacements, source, dest):
         return status
     status = True
     return status
+
+
+def diff(file1, file2, logger=None, **kwargs):
+    '''
+    Displays the diff of two files.
+
+    Args:
+        file1 (str/path): path to first file for the diff.
+        file2 (str/path): path to second file for the diff.
+        logger (logging.logger, optional): logger with which to display the
+        diff, if None, will use `print`.
+        **kwargs: additional arguments for `difflib.unified_diff`.
+    '''
+
+    if logger is not None and isinstance(logger, logging.Logger):
+        display = logger.info
+    else:
+        display = print
+
+    def get_lines(file):
+        '''Returns the contents of `file`.'''
+        with open(file) as f:
+            f_lines = f.read().split('\n')
+        return f_lines
+
+    file1_data = get_lines(file1)
+    file2_data = get_lines(file2)
+
+    display(f'▼▼▼▼▼▼▼▼▼▼▼▼▼ {file1} --> {file2} diff ▼▼▼▼▼▼▼▼▼▼▼▼▼')
+    for line in difflib.unified_diff(file1_data, file2_data, **kwargs):
+        display(line)
+    display(f'▲▲▲▲▲▲▲▲▲▲▲▲▲ {file1} --> {file2} diff ▲▲▲▲▲▲▲▲▲▲▲▲▲')
 
 
 def encode_strings(inputs):
@@ -160,6 +205,35 @@ def decompress_buf(buf, out, des='file'):
         return status
 
 
+def concatenate_files(source, dest, ignore='ENDE'):
+    '''Concatenate the given files'''
+    f_out = open(dest, 'w')
+    endline = ignore + '\n'
+    if type(source) is list:
+        for s_in in source:
+            with open(s_in, 'r') as f_in:
+                lines = f_in.readlines()
+                valid_lines = []
+                for line in lines:
+                    if line.lower().startswith(ignore.lower()):
+                        endline = line
+                        break
+                    valid_lines.append(line)
+                f_out.writelines(valid_lines)
+    else:
+        with open(source, 'r') as f_in:
+            lines = f_in.readlines()
+            valid_lines = []
+            for line in lines:
+                if line.lower().startswith(ignore.lower()):
+                    endline = line
+                    break
+                valid_lines.append(line)
+            f_out.writelines(valid_lines)
+    f_out.writelines(endline)
+    f_out.close()
+
+
 def evlt(fun, inputs, action=sys.exit):
     '''Evaluate the specified function'''
     try:
@@ -189,7 +263,7 @@ def evlt(fun, inputs, action=sys.exit):
         return
 
 
-def condor_logger():
+def condor_logger(name):
     '''
     Prepares a logger for job on HTCondor. It splits the levels to stdout
     and stderr, and disables module level logging.
@@ -199,21 +273,21 @@ def condor_logger():
     '''
 
     # disable module level logging of pysixdesk
-    logger = logging.getLogger('pysixdesk')
-    logger.setLevel(logging.CRITICAL)
+    #logger = logging.getLogger('pysixdesk')
+    #logger.setLevel(logging.CRITICAL)
 
     formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
                                   datefmt='%H:%M:%S')
     # enable local logging with stdout and stderr split
-    logger = logging.getLogger('preprocess_job')
+    logger = logging.getLogger(name)
     h1 = logging.StreamHandler(sys.stdout)
     h1.setFormatter(formatter)
     h1.setLevel(logging.DEBUG)
-    h1.addFilter(lambda record: record.levelno <= logging.INFO)
+    h1.addFilter(lambda record: record.levelno <= logging.WARNING)
 
     h2 = logging.StreamHandler(sys.stderr)
     h2.setFormatter(formatter)
-    h2.setLevel(logging.WARNING)
+    h2.setLevel(logging.ERROR)
 
     logger.addHandler(h1)
     logger.addHandler(h2)

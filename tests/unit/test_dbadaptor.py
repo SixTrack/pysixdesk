@@ -4,7 +4,8 @@ from contextlib import closing
 from pathlib import Path
 import sys
 # give the test runner the import access
-sys.path.insert(0, Path(__file__).parents[1].absolute())
+pysixdesk_path = str(Path(__file__).parents[2].absolute())
+sys.path.insert(0, pysixdesk_path)
 from pysixdesk.lib import dbadaptor
 
 
@@ -46,9 +47,9 @@ class SQLDatabaseAdaptorTest(unittest.TestCase):
 
         data_m = {'a': [2, 3, 4, 5, 6],
                   'b': [2.23, 3.34, 4.45, 5.56, 6.67],
-                  'c': [b'blabla']*5,
-                  'd': ['blabla']*5,
-                  'e': ['']*5}
+                  'c': [b'blabla'] * 5,
+                  'd': ['blabla'] * 5,
+                  'e': [''] * 5}
         self.db.insertm(self.conn, self.name, data_m)
         with closing(self.conn.cursor()) as c:
             c.execute(f'SELECT * FROM {self.name};')
@@ -117,8 +118,8 @@ class MySQLDatabaseAdaptorTest(unittest.TestCase):
 
         data_m = {'a': [2, 3, 4, 5, 6],
                   'b': [2.23, 3.34, 4.45, 5.56, 6.67],
-                  'c': [b'blabla']*5,
-                  'd': ['blabla']*5}
+                  'c': [b'blabla'] * 5,
+                  'd': ['blabla'] * 5}
                   # 'e': ['']*5}
         self.db.insertm(self.conn, self.name, data_m)
         with closing(self.conn.cursor()) as c:
@@ -134,10 +135,10 @@ class MySQLDatabaseAdaptorTest(unittest.TestCase):
         self.assertEqual(out_select, out)
 
     def tearDown(self):
-        self.conn.close()
         with self.conn.cursor() as c:
             sql = "DROP DATABASE unit_test;"
             c.execute(sql)
+        self.conn.close()
 
 
 if __name__ == '__main__':
