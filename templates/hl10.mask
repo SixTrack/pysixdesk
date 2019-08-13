@@ -7,11 +7,8 @@
 !			FLAGS
 !---------------------------------------------------------------;
 
-mylhcbeam=1 ;! LHC beam 1 (clockwise)
-!mylhcbeam=2 ;! LHC beam 2 (clockwise)
-!mylhcbeam=4 ;! LHC beam 2 (counterclockwise)
+mylhcbeam = %lhcbeam ;! LHC beam 1 (clockwise)
 
-this_is_a_mask=1;
 correct_for_MCBX=1;
 nominal_MCBXF_signs=0;
 ON_MBH=0;
@@ -148,16 +145,8 @@ if (mylhcbeam<3){
 seqedit,sequence=lhcb2;flatten;cycle,start=IP3;flatten;endedit;
 
 !********************************************
-!NRJ= 450.0  ; ! injection
-NRJ= %e0 ; ! collision
-
-
-! A Laundau octupole current 20A inj, -570A col
-if (NRJ<4999.9999){
-	I_MO=%I_MO; !-20
-} else {
-	I_MO=%I_MO; !-570
-};
+NRJ= %e0 ;
+I_MO=%I_MO; !-570
 
 !General switch to select collision (0/1)
 ON_COLLISION:=0;
@@ -165,16 +154,12 @@ ON_COLLISION:=0;
 ON_BB_SWITCH:=0;
 
 b_t_dist := %b_t_dist; !25 bunch separation [ns]
-!b_t_dist :=50.;!bunch separation [ns]
-emit_norm := %emit_norm * 1e-6; Nb_0:=%bunch_charge;
-!if (b_t_dist < 26 ) {emit_norm := %emit_norm * 1e-6; Nb_0:=%bunch_charge;};
-!if (b_t_dist > 49 ) {emit_norm := %emit_norm * 1e-6; Nb_0:=%bunch_charge;};
-
+emit_norm := %emit_norm * 1e-6;
+Nb_0 := %bunch_charge;
 sigt_col=%sigz; ! bunch length [m] in collision
-
-gamma_rel      := NRJ/pmass;
-epsx:=emit_norm /gamma_rel;
-epsy:=emit_norm /gamma_rel;
+gamma_rel := NRJ/pmass;
+epsx := emit_norm /gamma_rel;
+epsy := emit_norm /gamma_rel;
 
 !********************************************
 
@@ -182,17 +167,10 @@ qx00  = %inttunex;  !integer h tune
 qy00  = %inttuney;  !integer v tune
 tsplit= qx00 - qy00;   !new tune split
 
-
 if (NRJ<4999.9999){
 	!Inj. optics in thin lens
 	call,file="slhc/opt_inj_thin.madx";  ! beta* [m]=6/10/6/10 in IR1/2/5/8
-	qx0 = %tunex;   qy0 = %tuney;  qprimex = %qprimex; qprimey = %qprimey;
-	if (mylhcbeam<3){
-		Beam, particle=proton, sequence=lhcb1, energy=NRJ, sigt=%sigz, bv=1, NPART=Nb_0, sige=%sige, ex=epsx, ey=epsy;
-	};
-	Beam, particle=proton, sequence=lhcb2, energy=NRJ, sigt=%sigz, bv=bvaux, NPART=Nb_0, sige=%sige, ex=epsx, ey=epsy;
 };
-
 if (NRJ>5000.0000){
 	!Coll. optics in thin lens for IR1&5 (various possible beta*_x/y in IR1/5)
 	call,file="slhc/opt_round_thin.madx";  ! beta*=15cm in IR1/5, beta*=10 m in IR2, 3m in IR8.
@@ -210,14 +188,16 @@ if (NRJ>5000.0000){
 	!call,file="slhc/opt_420_420_420_420_thin.madx";
 	!call,file="slhc/opt_presqueeze_thin.madx";
 	!call,file="slhc/opt_presqueeze1000_thin.madx";
-	qx0 = %tunex;   qy0 = %tuney;  qprimex = %qprimex; qprimey = %qprimey;
 	ON_QPP     :=0;  ! Correction of residual Q'' by MO's
 	ON_DISP    :=1;  ! Correction of spurious dispersion
-	if (mylhcbeam<3){
-		Beam, particle=proton, sequence=lhcb1, energy=NRJ, sigt=sigt_col, bv=1, NPART=Nb_0, sige=%sige, ex=epsx, ey=epsy;
-	};
-	Beam, particle=proton, sequence=lhcb2, energy=NRJ, sigt=sigt_col, bv=bvaux, NPART=Nb_0, sige=%sige, ex=epsx, ey=epsy;
 };
+
+if (mylhcbeam<3){
+	Beam, particle=proton, sequence=lhcb1, energy=NRJ, sigt=%sigz, bv=1, NPART=Nb_0, sige=%sige, ex=epsx, ey=epsy;
+};
+Beam, particle=proton, sequence=lhcb2, energy=NRJ, sigt=%sigz, bv=bvaux, NPART=Nb_0, sige=%sige, ex=epsx, ey=epsy;
+
+
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++;
 !   Rematch IP1 IP5 phase
@@ -719,13 +699,9 @@ ON_LSF=1;
 ! and call the corresponding measured error table for nominal LHC magnets
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-if (this_is_a_mask==1){
-	if (NRJ<4999.999) {readtable, file="wise/injection_errors-emfqcs-%SEEDRAN.tfs" ;};
-	if (NRJ>5000.000) {readtable, file="wise/collision_errors-emfqcs-%SEEDRAN.tfs" ;};
-	} else {
-	if (NRJ<4999.999) {readtable, file="wise/injection_errors-emfqcs-1.tfs" ;};
-	if (NRJ>5000.000) {readtable, file="wise/collision_errors-emfqcs-1.tfs" ;};
-};
+
+if (NRJ<4999.999) {readtable, file="wise/injection_errors-emfqcs-%SEEDRAN.tfs" ;};
+if (NRJ>5000.000) {readtable, file="wise/collision_errors-emfqcs-%SEEDRAN.tfs" ;};
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 !             apply field errors to MB magnets
@@ -764,11 +740,9 @@ ON_B2Saux=on_B2S;on_B2S=0*ON_B2Saux;call,file="db5/measured_errors/Efcomp_MQ.mad
 call,file="db5/measured_errors/Set_alignment_errors.madx";
 
 ! New IT/D1/D2/Q4/Q5
-if (this_is_a_mask==1){
-	myseed=%SEEDRAN;
-} else {
-	myseed=1;
-};
+
+myseed=%SEEDRAN;
+
 /*
 eoption,seed=myseed+101;
 if (chooseMQXF==1) {

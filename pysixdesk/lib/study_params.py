@@ -43,7 +43,8 @@ class StudyParams:
         self.f3_defaults = dict([
                                 ("ax0s", 0.1),
                                 ("ax1s", 0.1),
-                                ("chrom_eps", 0.000001),
+                                ("chrom_eps", 0.000001),  # this is not a placeholder
+                                ("CHROM", 0),  # this is not a placeholder
                                 ("dp1", 0.000001),
                                 ("dp2", 0.000001),
                                 ("turnss", 1e5),
@@ -58,7 +59,7 @@ class StudyParams:
                                 ("pmass", PROTON_MASS),
                                 ("Runnam", 'FirstTurn'),
                                 ("ratios", 1),
-                                ("toggle_post/", '/'),
+                                ("toggle_post/", ''),
                                 ("toggle_diff/", '/'),
                                 ("writebins", 1),
                                 ])
@@ -74,7 +75,8 @@ class StudyParams:
                                ])
 
         self.madx = self.find_patterns(self.mask_path)
-        self.sixtrack = self.find_patterns(self.fort_path)
+        self.sixtrack = self.find_patterns(self.fort_path,
+                                           mandatory=['chrom_eps', 'CHROM'])
 
     @property
     def oneturn(self):
@@ -110,7 +112,8 @@ class StudyParams:
         matches = re.findall(self._reg, lines_no_comments)
         return matches
 
-    def find_patterns(self, file_path, folder=False, keep_none=True):
+    def find_patterns(self, file_path, folder=False, keep_none=True,
+                      mandatory=None):
         '''
         Reads file at `file_path` and populates a dict with the matched
         patterns and values taken from `self.defaults`.
@@ -143,6 +146,9 @@ class StudyParams:
                 out[ph] = self.defaults[ph]
             elif keep_none:
                 out[ph] = None
+        if mandatory is not None:
+            for k in mandatory:
+                out[k] = self.defaults[k]
 
         self._logger.debug(f'Found {len(matches)} placeholders.')
         self._logger.debug(f'With {len(set(matches))} unique placeholders.')
