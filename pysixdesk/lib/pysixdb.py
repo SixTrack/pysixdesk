@@ -29,6 +29,7 @@ class SixDB(object):
         if dbtype.lower() == 'sql':
             self.adaptor = dbadaptor.SQLDatabaseAdaptor()
             status = self.info_check(dbtype, db_info)
+            db_info['db_name'] = '%s_%s' % (db_info['user'], db_info['db_name'])
             if status:
                 name = db_info['db_name']
                 if not self.create and not os.path.exists(name):
