@@ -252,13 +252,69 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
             content = "The db %s already exist!" % db_name
             self._logger.warning(content)
 
-    def new_connection(self, host, user, passwd, db_name, **kwargs):
+    def new_connection(self, host, user, passwd, db_name=None, **kwargs):
         '''Connect to an existing database'''
         conn = pymysql.connect(host, user, passwd, db_name, **kwargs)
         return conn
 
     def setting(self, conn, settings):
         pass
+
+    def create_user(self, conn, username, passwd, host='%'):
+        '''Create a new user'''
+        if self.check_user(conn, username):
+            self._logger.info('The user %s already exists!' % username)
+            return
+        sql = "CREATE USER '%s'@'%s' IDENTIFIED BY '%s'" % (
+                username, host, passwd)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def check_user(self, conn, username):
+        '''Check the existence of the given username'''
+        sql = "SELECT user FROM mysql.user"
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+            out = c.fetchall()
+        out = list(zip(*out))
+        return username in out[0]
+
+    def remove_user(self, conn, username):
+        '''Remove an user permanently'''
+        if not self.check_user(conn, username):
+            self._logger.info("The user %s doesn't exist!" % username)
+            return
+        sql = "DROP USER %s" % (username)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def grant(self, conn, username, privileges, pattern, grant=False, host='%'):
+        '''Grant specified privileges on given pattern(db.table) to an user'''
+        sql = "GRANT %s ON %s To '%s'@'%s'" % (
+                privileges, pattern, username, host)
+        if isinstance(grant, bool) and grant:
+            sql += ' WITH GRANT OPTION'
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def show_grants(self, conn, username):
+        '''Show the grants for the given user'''
+        if not self.check_user(conn, username):
+            self._logger.info("The user %s doesn't exist!" % username)
+            return
+        sql = "SHOW GRANTS FOR %s" % (username)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+            out = c.fetchall()
+        out = list(zip(*out))
+        return list(out[0])
+
+    def revoke(self, conn, username, privileges, pattern, host='%'):
+        '''Revoke specified privileges on given pattern(db.table) from an user'''
+        sql = "REVOKE %s ON %s FROM '%s'@'%s'" % (
+                privileges, pattern, username, host)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
 
     def create_table(self, conn, name, columns, keys, recreate):
         '''Create a new table'''
