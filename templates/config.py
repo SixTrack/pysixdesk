@@ -7,7 +7,7 @@ import logging
 
 from pysixdesk.lib import submission
 from pysixdesk import Study
-from pysixdesk.lib.study_params import StudyParams
+from pysixdesk.lib.study_params import StudyParams, set_property
 from math import sqrt, pi, sin, cos
 from pysixdesk.lib import machineparams
 
@@ -62,42 +62,23 @@ class MyStudy(Study):
         self.params['kmax'] = 5
         self.params['toggle_coll/'] = ''
 
-        # TODO: talk with Xiaohan to figure out how the angle/amplitude stuff
-        # works and how this should be implemented
+        @set_property('input_keys', ['kang', 'kmax'])
+        @set_property('output_keys', ['angle'])
         def calc_angle(kang, kmax):
-            return [k / (kmax + 1) for k in kang]
+            return kang / (kmax + 1)
+        self.params.calc_queue.append(calc_angle)
 
-        self.params.add_calc(['kang', 'kmax'], ['angle'], calc_angle)
-
-        def calc_amp(angle, emit, e0, pmass, amp, pre_id=None):
-
-            def getval(pre_id, reqlist):
-                '''Get required values from oneturn sixtrack results'''
-                where = 'wu_id=%s' % pre_id
-                ids = self.db.select('preprocess_wu', ['task_id'], where)
-                if not ids:
-                    raise ValueError("Wrong preprocess job id %s!" % pre_id)
-                task_id = ids[0][0]
-                if task_id is None:
-                    raise Exception("Incomplete preprocess job id %s!" % pre_id)
-                where = 'task_id=%s' % task_id
-                values = self.db.select('oneturn_sixtrack_result', reqlist, where)
-                if not values:
-                    raise ValueError("Wrong task id %s!" % task_id)
-                return values[0]
-
-            values = getval(pre_id, ['betax'])
-            beta_x = values[0]
+        @set_property('require', {'oneturn_sixtrack_result': 'betax'})
+        @set_property('input_keys', ['angle', 'emit_norm_x', 'e0', 'pmass', 'amp'])
+        @set_property('output_keys', ['ax0s', 'ax1s'])
+        def calc_amp(angle, emit, e0, pmass, amp, betax=None):
             tt = abs(sin(pi / 2 * angle) / cos(pi / 2 * angle))
             ratio = 0.0 if tt < 1.0E-15 else tt**2
-            gamma = e0 / pmass
+            gamma = (e0 * 1e3) / pmass
             factor = sqrt(emit / gamma)
-            ax0t = factor * (sqrt(beta_x) + sqrt(beta_x * ratio) * cos(pi / 2 * angle))
-            return [a * ax0t for a in amp]
-
-        self.params.add_calc(['angle', 'emit', 'e0', 'pmass', 'amp'],
-                             ['ax0s', 'ax1s'],
-                             calc_amp)
+            ax0t = factor * (sqrt(betax) + sqrt(betax * ratio) * cos(pi / 2 * angle))
+            return amp[0] * ax0t, amp[1] * ax0t
+        self.params.calc_queue.append(calc_amp)
 
         self.oneturn_sixtrack_input['temp'] = ['fort.3']
         self.oneturn_sixtrack_output = ['oneturnresult']

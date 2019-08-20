@@ -2,6 +2,7 @@ import re
 import os
 import logging
 from collections import OrderedDict
+from itertools import product
 
 from . import machineparams
 from .constants import PROTON_MASS
@@ -11,15 +12,15 @@ from .utils import PYSIXDESK_ABSPATH, merge_dicts
 class StudyParams:
     '''
     Looks for any placeholders in the provided paths and extracts the
-    placeholder if no default values found, use None.
+    placeholder assigns values from the machine_defaults parameters and the
+    f3_defaults attribute. If no default values found, use None.
     This class implements __setitem__ and __getitem__ so the user can interact
     with the StudyParams object similarly to a dict.
 
-    To get the placeholder patterns for the mask file use `self.madx`.
+    To get the placeholder patterns for the mask file use self.madx.
     To get the placeholder patterns for the oneturn sixtrack job use
-    `self.oneturn`.
-    To get the placeholder patterns for the sixtrack file use
-    `self.sixtrack`.
+    self.oneturn.
+    To get the placeholder patterns for the fort.3 file use self.sixtrack.
     '''
 
     def __init__(self, mask_path,
@@ -47,7 +48,7 @@ class StudyParams:
         # oneturnresult file. They shouldn't really be included in the
         # f3_defaults dict, as they are not values for placeholders in fort.3.
 
-        # default parameters for sixtrack specific placeholders
+        # default parameters for sixtrack/fort.3 specific placeholders
         self.f3_defaults = dict([
                                 ("ax0s", 0.1),
                                 ("ax1s", 0.1),
@@ -171,57 +172,153 @@ class StudyParams:
             self._logger.debug(f'{k}: {v}')
         return out
 
-    def add_calc(self, in_keys, out_keys, fun):
+    def calc(self, get_val_db=None, require=None, **kwargs):
         '''
-        Add calculations to the calc queue. Any extra arguments of
-        fun can be given in the *args/**kwargs of the self.calc call.
-
-        Args:
-            in_keys (list): keys to the input data of `fun`.
-            out_keys (list): keys to place the output `fun` in
-            `self.sixtrack`. The `len(out_keys)` must match the number of
-            outputs of `fun`.
-            fun (function): function to run, must take as input the values
-            given by the `in_keys` and outputs to the `out_keys` in
-            `self.sixtrack`. Can also have **kwargs which will be
-            passed to it when calling `self.calc`
-        '''
-        if not isinstance(in_keys, list):
-            in_keys = [in_keys]
-        if not isinstance(out_keys, list):
-            out_keys = [out_keys]
-        self.calc_queue.append([in_keys, out_keys, fun])
-
-    def calc(self, **kwargs):
-        '''
-        Runs the queued calculations, in order. *args and **kwargs are passed
+        Runs the queued calculations, in order.**kwargs are passed
         to the queued function at run time. The output of the queue is put
-        in `self.sixtrack`.
+        in self.sixtrack, and a dictionnary containing the calculation results
+        is returned.
 
         Args:
-            *args: passed to the `fun` in the queued calculations
+            get_val_db (SixDB, optional): SixDB object to fecth values from db
+            in for the calculations.
+            require (list, str optional): If 'all' will run all function in
+            calculation queue.
+            If None, will run all calculations which don't require any
+            database.
+            If list of table names, will run calculations whose 'require'
+            attribute's keys are a subset of the provided list.
+            whose "requires" attribute dict's keys
             **kwargs: passed to the `fun` in the queued calculations
 
         Returns:
-            OrderedDict: `self.sixtrack` after running the calculation
-            queue
-        '''
-        for in_keys, out_keys, fun in self.calc_queue:
-            # get the input values with __getitem__
-            inp = [self.__getitem__(k) for k in in_keys]
+            dict: results of calculation queue.
 
-            out = fun(*inp, **kwargs)
-            if not isinstance(out, list):
-                out = [out]
-            if len(out) != len(out_keys):
-                content = (f'The number of outputs of {fun} does not match the'
-                           f' number of keys in {out_keys}.')
-                raise ValueError(content)
-            for i, k in enumerate(out_keys):
-                self.sixtrack[k] = out[i]
-        # reset calculation queue
-        self.calc_queue = []
-        return self.sixtrack
+        Raises:
+            ValueError: If the number of output values of a function does not
+            match the number of output keys.
+        '''
+
+        if require == 'all':
+            # all the functions
+            queue = self.calc_queue
+        elif require is None:
+            # the functions which don't require db
+            queue = [f for f in self.calc_queue if not hasattr(self.calc_queue,
+                                                               'require')]
+        else:
+            queue = self._filter_queue(require)
+
+        out_dict = {}
+        for fun in queue:
+            # get the input values with __getitem__
+            inp = [self.__getitem__(k) for k in getattr(fun, 'input_keys', [])]
+            inp = [[i] if not isinstance(i, list) else i for i in inp]
+            # get the values in the function 'require' attribute from
+            # the database.
+            required = self._get_required_values(get_val_db, fun)
+            # cartesian product of dict of lists --> list of dicts
+            required = list(self._product_dict(**required))
+            # add any kwargs
+            [r.update(kwargs) for r in required]
+            # add kwarg dicts to the inp list
+            inp.append(required)
+            # run calculations
+            out = []
+            for inputs in product(*inp):
+                o = fun(*inputs[:-1], **inputs[-1])
+                if not isinstance(o, tuple):
+                    o = [o]
+                if len(o) != len(fun.output_keys):
+                    content = (f'The number of outputs of "{fun.__name__}" does'
+                               ' not match the number of keys in '
+                               f'"{fun.output_keys}".')
+                    raise ValueError(content)
+                out.append(o)
+            # convert columns to list of lists
+            out = zip(*out)
+            o_dict = {}
+            for k, v in zip(fun.output_keys, out):
+                self._logger.debug(f'Inserting "{k}": {v}')
+                o_dict[k] = v[0] if len(v) == 1 else list(v)
+            # update sixtrack as we go, so that calculations which depend on
+            # the output of other calcs have their inputs.
+            self.sixtrack.update(o_dict)
+            # update output dict
+            out_dict.update(o_dict)
+
+        # remove complete calculations
+        self.calc_queue = [f for f in self.calc_queue if f not in queue]
+        return out_dict
+
+    def _product_dict(self, **kwargs):
+        '''
+        Cartesian product of dict of lists.
+        From:
+        https://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
+
+        Args:
+            inp (dict): dict of lists on which to do the product.
+
+        Returns:
+            list : list of dicts.
+
+        Example:
+            list(self._product_dict(**{"number": [1,2,3],
+                                       "color": ["orange","blue"]}))
+            >>[{"number": 1, "color": "orange"},
+               {"number": 1, "color": "blue"},
+               {"number": 2, "color": "orange"},
+               {"number": 2, "color": "blue"},
+               {"number": 3, "color": "orange"},
+               {"number": 3, "color": "blue"}]
+        '''
+        keys = kwargs.keys()
+        vals = kwargs.values()
+        for instance in product(*vals):
+            yield dict(zip(keys, instance))
+
+    def _filter_queue(self, require):
+        '''
+        Filters the calculation queue based on the 'require' attribute.
+
+        Args:
+            require (list): list of keys which must be contained in the
+            'require' attribute dictionnary for the function to be included.
+
+        Returns:
+            list: subset of the calculation queue.
+        '''
+        queue = []
+        for f in self.calc_queue:
+            # if the required tables are a subset of the require list
+            req_table = getattr(f, 'require', None)
+            if req_table is not None:
+                if set(req_table.keys()).issubset(set(require)):
+                    queue.append(f)
+        return queue
+
+    def _get_required_values(self, db, fun):
+        '''
+        Gets the values needed in the dict fun.require from the database.
+
+        Args:
+            db (SicDB): Databse from which to extract the values.
+            fun (callable): calculation queue function.
+
+        Returns:
+            dict: dictionnary containing the values of the required parameters.
+        '''
+        required = {}
+        if hasattr(fun, 'require'):
+            for r_table, r_list in fun.require.items():
+                if not isinstance(r_list, list):
+                    r_list = [r_list]
+                r_values = db.select(r_table, r_list)
+                # convert columns to list of list
+                r_values = zip(*r_values)
+                required.update({k: v for k, v in zip(r_list, r_values)})
+        return required
 
     def __repr__(self):
         '''
@@ -287,3 +384,13 @@ class StudyParams:
         self._remove_none(self.madx)
         self._remove_none(self.sixtrack)
         self._remove_none(self.phasespace)
+
+
+def set_property(key, value):
+    '''
+    Simple decorator to add attributes to functions.
+    '''
+    def decorated_func(func):
+        setattr(func, key, value)
+        return func
+    return decorated_func

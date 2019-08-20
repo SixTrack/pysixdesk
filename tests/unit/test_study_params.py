@@ -1,10 +1,13 @@
-import unittest
 import shutil
+import unittest
+import itertools
 from pathlib import Path
 import sys
 # give the test runner the import access
 sys.path.insert(0, Path(__file__).parents[1].absolute())
 from pysixdesk.lib.study_params import StudyParams
+from pysixdesk.lib.study_params import set_property
+from pysixdesk.lib.pysixdb import SixDB
 
 
 class ParamsTest(unittest.TestCase):
@@ -115,25 +118,96 @@ test=%test1; test=%test2; test=%test3
     def test_calc_queue(self):
         params = StudyParams(self.mask_file, fort_path=self.fort_file)
         e0_init = params['e0']
-        factor = 10
+        factor = 2
 
+        @set_property('input_keys', ['e0'])
+        @set_property('output_keys', ['e0_2'])
         def times(x, factor=2):
             return x*factor
-        params.add_calc('e0', 'e0_2', times)
+        params.calc_queue.append(times)
+
         self.assertEqual(len(params.calc_queue), 1)
-        params.calc(factor=factor)
-        self.assertTrue('e0_2' in params.sixtrack.keys())
-        self.assertTrue(params['e0_2'] == e0_init*factor)
+        out_dict = params.calc(factor=factor)
+        self.assertTrue('e0_2' in out_dict.keys())
+        self.assertTrue(out_dict['e0_2'] == e0_init * factor)
+        # check that the calc_queue has been reset.
         self.assertEqual(params.calc_queue, [])
 
         # expected exceptions, returning more values than out_keys
-
+        @set_property('input_keys', ['e0'])
+        @set_property('output_keys', ['e0_2'])
         def times(x, factor=2):
-            return [x*factor]*2
-        params.add_calc('e0', 'e0_2', times)
-        self.assertEqual(len(params.calc_queue), 1)
+            return x*factor, x*factor
+        params.calc_queue.append(times)
+
         with self.assertRaises(ValueError):
             params.calc(factor=2)
+        self.assertEqual(len(params.calc_queue), 1)
+
+        # this tests to see if the output of one calcution can be used as
+        # input of another.
+        # reset queue
+        params.calc_queue = []
+        @set_property('input_keys', ['e0_2'])
+        @set_property('output_keys', ['e0_4'])
+        def times(x, factor=2):
+            return x*factor
+        params.calc_queue.append(times)
+
+        @set_property('input_keys', ['e0_4'])
+        @set_property('output_keys', ['e0_8'])
+        def times(x, factor=2):
+            return x*factor
+        params.calc_queue.append(times)
+
+        out_dict = params.calc(factor=2)
+        self.assertTrue({'e0_4', 'e0_8'}.issubset(set(out_dict.keys())))
+        self.assertTrue({'e0_2', 'e0_4', 'e0_8'}.issubset(set(params.sixtrack.keys())))
+
+    def test_calc_queue_db(self):
+        # this tests the reading data from database as calculation input. Using
+        # the require function attribute.
+        # initializing the test database
+        db_info = {'db_type': 'sql',
+                   'db_name': self.test_folder / 'data.db'}
+        db = SixDB(db_info, create=True)
+        db.create_table('test_table', {'x': 'int', 'y': 'int'}, key_info={})
+        x_vals = [1, 2, 3, 4]
+        y_vals = [5, 6, 7, 8]
+        db.insertm('test_table', {'x': x_vals, 'y': y_vals})
+        params = StudyParams(self.mask_file, fort_path=self.fort_file)
+
+        # this calculation takes input from data in the test table
+        @set_property('require', {'test_table': ['x', 'y']})
+        @set_property('output_keys', ['xy', 'xyy'])
+        def times_table(x=None, y=None):
+            return x * y, x * y * y
+        params.calc_queue.append(times_table)
+
+        @set_property('input_keys', ['nss'])
+        @set_property('output_keys', ['nss_2'])
+        def nss_2_calc(nss):
+            return nss*2
+        params.calc_queue.append(nss_2_calc)
+
+        # only run calculations which require 'test_table'
+        out_dict = params.calc(get_val_db=db, require=['test_table'])
+        self.assertTrue('xy' in out_dict.keys())
+        expected_out = [times_table(x=i, y=j) for i, j in itertools.product(x_vals, y_vals)]
+
+        self.assertEqual(out_dict['xy'], [i[0] for i in expected_out])
+        self.assertTrue('xyy' in out_dict.keys())
+        self.assertEqual(out_dict['xyy'], [i[1] for i in expected_out])
+        # check that the calculation queue has been updated
+        # i.e. only nss_2_calc remaining
+        self.assertTrue(len(params.calc_queue) == 1)
+        self.assertTrue(params.calc_queue[0] == nss_2_calc)
+        # run remaining calculations
+        out_dict.update(params.calc(require='all'))
+        self.assertTrue('nss_2' in out_dict.keys())
+        self.assertEqual(out_dict['nss_2'], nss_2_calc(params['nss']))
+
+        print(out_dict)
 
     def tearDown(self):
         shutil.rmtree(self.test_folder.parent, ignore_errors=True)
