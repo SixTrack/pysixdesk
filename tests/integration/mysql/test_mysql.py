@@ -86,7 +86,7 @@ class MySqlDB(unittest.TestCase):
         if self.st is not None and self.st.db_info['db_type'] == 'mysql':
             conn = self.st.db.conn
             with conn.cursor() as c:
-                sql = f"DROP DATABASE {self.ws_name}_{self.st_name};"
+                sql = f"DROP DATABASE admin_{self.ws_name}_{self.st_name};"
                 c.execute(sql)
 
         # remove directory

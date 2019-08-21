@@ -1,7 +1,7 @@
 import sqlite3
 import pymysql
 import logging
-import collections
+from collections.abc import Iterable
 from contextlib import closing
 from abc import ABC, abstractmethod
 
@@ -113,8 +113,7 @@ class DatabaseAdaptor(ABC):
         '''
         if len(cols) == 0:
             return []
-        if (isinstance(cols, collections.Iterable) and not isinstance(cols,
-                                                                      str)):
+        if (isinstance(cols, Iterable) and not isinstance(cols, str)):
             cols = [i.replace('.', '_') for i in cols]
             cols = ','.join(cols)
         sql = 'SELECT %s FROM %s' % (cols, table_name)
