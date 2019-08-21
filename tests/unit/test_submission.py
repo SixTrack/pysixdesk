@@ -52,9 +52,8 @@ class SubmissionTest(unittest.TestCase):
         self.assertEqual(contents['error'], f'{output_path}/$(wu_id)/htcondor.$(ClusterId).$(ProcId).err')
         self.assertEqual(contents['log'], f'{output_path}/$(wu_id)/htcondor.$(ClusterId).$(ProcId).log')
 
-        status, out = self.cluster.submit(self.sub_folder_in, 'unit_test_submission')
+        out = self.cluster.submit(self.sub_folder_in, 'unit_test_submission')
         self.jobs = out
-        self.assertTrue(status)
         self.assertEqual(list(out.keys()), [str(i) for i in self.wu_ids])
 
     def tearDown(self):

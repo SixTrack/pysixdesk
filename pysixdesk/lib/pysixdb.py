@@ -28,8 +28,7 @@ class SixDB(object):
             dbtype = db_info.pop('db_type')
         if dbtype.lower() == 'sql':
             self.adaptor = dbadaptor.SQLDatabaseAdaptor()
-            status = self.info_check(dbtype, db_info)
-            if status:
+            if self.info_check(dbtype, db_info):
                 name = db_info['db_name']
                 if not self.create and not os.path.exists(name):
                     content = "The database %s doesn't exist!" % name
@@ -39,9 +38,8 @@ class SixDB(object):
                 raise ValueError(content)
         elif dbtype.lower() == 'mysql':
             self.adaptor = dbadaptor.MySQLDatabaseAdaptor()
-            status = self.info_check(dbtype, db_info)
             db_info['db_name'] = '%s_%s' % (db_info['user'], db_info['db_name'])
-            if status:
+            if self.info_check(dbtype, db_info):
                 if self.create:
                     self.adaptor.create_db(**db_info)
             else:
