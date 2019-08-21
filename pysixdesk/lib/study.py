@@ -559,12 +559,14 @@ class Study(object):
         info_sec['cluster_module'] = self.cluster_module
         info_sec['cluster_name'] = self.cluster_name
         if typ == 0:
-            self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
+            if self.oneturn:
+                # The section name should be same with the table name
+                self.config['oneturn_sixtrack_result'] = self.tables['oneturn_sixtrack_result']
             info_sec['path'] = self.paths['preprocess_out']
             info_sec['outs'] = utils.encode_strings(self.preprocess_output)
-            job_name = 'collect preprocess result'
-            in_name = 'preprocess.ini'
-            task_input = os.path.join(self.paths['gather'], str(typ), in_name)
+            #job_name = 'collect preprocess result'
+            #in_name = 'preprocess.ini'
+            #task_input = os.path.join(self.paths['gather'], str(typ), in_name)
         elif typ == 1:
             self.config['f10'] = self.tables['six_results']
             info_sec['path'] = self.paths['sixtrack_out']
@@ -572,32 +574,22 @@ class Study(object):
             info_sec['boinc'] = str(boinc)
             info_sec['st_pre'] = self.st_pre
             info_sec['outs'] = utils.encode_strings(self.sixtrack_output)
-            job_name = 'collect sixtrack result'
-            in_name = 'sixtrack.ini'
-            task_input = os.path.join(self.paths['gather'], str(typ), in_name)
+            #job_name = 'collect sixtrack result'
+            #in_name = 'sixtrack.ini'
+            #task_input = os.path.join(self.paths['gather'], str(typ), in_name)
         else:
             content = "Unkown job type %s" % typ
             raise ValueError(content)
 
-        in_path = os.path.join(self.paths['gather'], str(typ))
-        if not os.path.isdir(in_path):
-            os.makedirs(in_path)
-        with open(task_input, 'w') as f_out:
-            self.config.write(f_out)
+        #in_path = os.path.join(self.paths['gather'], str(typ))
+        #if not os.path.isdir(in_path):
+        #    os.makedirs(in_path)
+        #with open(task_input, 'w') as f_out:
+        #    self.config.write(f_out)
         try:
-            gather.run(typ, task_input)
+            gather.run(typ, self.config)
         except Exception as e:
             raise e
-        # TODO: Submit gather job to htcondor is error-prone, so I block it for
-        #       the moment. Acctually it's dispensable.
-        # elif platform is 'htcondor':
-        #    tran_input =[]
-        #    tran_input.append(task_input)
-        #    exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')
-        #    wu_ids = [typ]
-        #    self.submission.prepare(wu_ids, tran_input, exe, in_name, in_path,
-        #            out_path)
-        #    self.submission.submit(in_path, job_name, trials)
 
     def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
