@@ -8,12 +8,11 @@ from pysixdesk.lib.utils import evlt, compress_buf
 
 '''Parse the results of preprocess jobs and sixtrack jobs'''
 
+logger = logging.getLogger(__name__)
 
 def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
                      oneturn_param_names):
     '''Parse the results of preprocess jobs'''
-    logger = logging.getLogger(__name__)
-
     task_table['wu_id'] = item
     task_table['mtime'] = int(time.time() * 1E7)
 
@@ -79,8 +78,6 @@ def parse_preprocess(item, job_path, file_list, task_table, oneturn_table,
 
 def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names):
     '''Parse the results of sixtrack job'''
-    logger = logging.getLogger(__name__)
-
     task_table['wu_id'] = item
     task_table['mtime'] = int(time.time() * 1E7)
     contents = os.listdir(job_path)
@@ -106,34 +103,105 @@ def parse_sixtrack(item, job_path, file_list, task_table, f10_table, f10_names):
         out_f = [s for s in contents if out in s]
         if out_f:
             out_f = os.path.join(job_path, out_f[0])
+            def fail_parse():
+                task_table['status'] = 'Failed'
+                content = "There is something wrong with the output "\
+                    "file %s for job %s!" % (out, item)
+                logger.error(content)
             if 'fort.10' in out_f:
-                countl = 1
                 try:
-                    mtime = int(os.path.getmtime(out_f) * 1E7)
-                    f10_data = []
-                    with gzip.open(out_f, 'rt') as f_in:
-                        for lines in f_in:
-                            line = lines.split()
-                            countl += 1
-                            if len(line) != 60:
-                                logger.info(line)
-                                content = 'Error in %s' % out_f
-                                logger.warning(content)
-                                task_table['status'] = 'Failed'
-                                line = [countl] + 60 * ['None'] + [mtime]
-                                f10_data.append(line)
-                            else:
-                                line = [countl] + line + [mtime]
-                                f10_data.append(line)
-                    f10_table.update(dict(zip(f10_names[1:], zip(*f10_data))))
+                    fort10(out_f, task_table, f10_names, f10_table)
                 except:
-                    task_table['status'] = 'Failed'
-                    content = "There is something wrong with the output "\
-                        "file %s for job %s!" % (out, item)
-                    logger.error(content)
+                    fail_parse()
+            elif 'aperture_losses.dat' in out_f:
+                try:
+                    aperture_losses(out_f, task_table, names, aper_loss_table)
+                except:
+                    fail_parse()
+            elif 'Coll_Scatter.dat' in out_f:
+                try:
+                    collimation_losses(out_f, task_table, names, coll_loss_table)
+                except:
+                    fail_parse()
             task_table[out] = evlt(compress_buf, [out_f, 'gzip'])
         else:
             task_table['status'] = 'Failed'
             content = "The sixtrack output file %s for job %s doesn't "\
                 "exist! The job failed!" % (out, item)
             logger.warning(content)
+
+
+def fort10(out_f, task_table, f10_names, f10_table):
+    '''Parse the fort.10 file'''
+    countl = 0
+    mtime = int(os.path.getmtime(out_f) * 1E7)
+    f10_data = []
+    with gzip.open(out_f, 'rt') as f_in:
+        for lines in f_in:
+            line = lines.split()
+            countl += 1
+            if len(line) != 60:
+                logger.info(line)
+                content = 'Error in %s' % out_f
+                logger.warning(content)
+                task_table['status'] = 'Failed'
+                line = [countl] + 60 * ['None'] + [mtime]
+                f10_data.append(line)
+            else:
+                line = [countl] + line + [mtime]
+                f10_data.append(line)
+    f10_table.update(dict(zip(f10_names[1:], zip(*f10_data))))
+
+
+def init_state(out_f, task_table, names, result_table):
+    '''Parse the initial_state.dat file'''
+    pass
+
+
+def final_sate(out_f, task_table, names, result_table):
+    '''Parse the final_state.dat file'''
+    pass
+
+
+def aperture_losses(out_f, task_table, names, loss_table):
+    '''Parse the aperture_losses.dat file'''
+    countl = 0
+    mtime = int(os.path.getmtime(out_f) * 1E7)
+    loss_data = []
+    with gzip.open(out_f, 'rt') as f_in:
+        for lines in f_in:
+            line = lines.split()
+            countl += 1
+            if len(line) != 18:
+                logger.info(line)
+                content = 'Error in %s' % out_f
+                logger.warning(content)
+                task_table['status'] = 'Failed'
+                line = [countl] + 17 * ['None'] + [mtime]
+                loss_data.append(line)
+            else:
+                line = [countl] + line + [mtime]
+                loss_data.append(line)
+    loss_table.update(dict(zip(names[1:], zip(*loss_data))))
+
+
+def coll_losses(out_f, task_table, names, loss_table):
+    '''Parse the Coll_Scatter.dat file'''
+    countl = 0
+    mtime = int(os.path.getmtime(out_f) * 1E7)
+    loss_data = []
+    with gzip.open(out_f, 'rt') as f_in:
+        for lines in f_in:
+            line = lines.split()
+            countl += 1
+            if len(line) != 7:
+                logger.info(line)
+                content = 'Error in %s' % out_f
+                logger.warning(content)
+                task_table['status'] = 'Failed'
+                line = [countl] + 7 * ['None'] + [mtime]
+                loss_data.append(line)
+            else:
+                line = [countl] + line + [mtime]
+                loss_data.append(line)
+    loss_table.update(dict(zip(names[1:], zip(*loss_data))))
