@@ -3,12 +3,13 @@ import re
 import os
 import time
 import gzip
+import copy
 import shutil
 import getpass
 import zipfile
 import logging
-import configparser
 import importlib
+import configparser
 
 from .pysixdb import SixDB
 from . import utils
@@ -16,44 +17,38 @@ from .resultparser import parse_preprocess, parse_sixtrack
 
 logger = logging.getLogger(__name__)
 
-
-def run(wu_id, infile):
+def run(wu_id, info):
     cf = configparser.ConfigParser()
-    if os.path.isfile(infile):
-        cf.read(infile)
-        info_sec = cf['info']
-        boinc = 'false'
-        if str(wu_id) == '1':
-            boinc = info_sec['boinc']
+    cf.read_dict(info)
+    info_sec = cf['info']
+    boinc = 'false'
+    if str(wu_id) == '1':
+        boinc = info_sec['boinc']
 
-        db_info = cf['db_info']
-        dbtype = db_info['db_type']
-        if dbtype.lower() == 'mysql' and str(boinc).lower() == 'false':
-            content = "No need to gather results manually with MySQL!"
-            logger.info(content)
-            return
+    db_info = cf['db_info']
+    dbtype = db_info['db_type']
+    if dbtype.lower() == 'mysql' and str(boinc).lower() == 'false':
+        content = "No need to gather results manually with MySQL!"
+        logger.info(content)
+        return
 
-        cluster_module = info_sec['cluster_module']  # pysixtrack.submission
-        classname = info_sec['cluster_name']  # HTCondor
-        try:
-            module = importlib.import_module(cluster_module)
-            cluster_cls = getattr(module, classname)
-            cluster = cluster_cls()
-        except ModuleNotFoundError as e:
-            content = "Failed to instantiate cluster class %s!" % cluster_module
-            logger.error(content)
-            raise e
-        if str(wu_id) == '0':
-            preprocess_results(cf, cluster)
-        elif str(wu_id) == '1':
-            sixtrack_results(cf, cluster)
-        else:
-            content = "Unknown task!"
-            logger.error(content)
-    else:
-        content = "The input file %s doesn't exist!" % infile
+    cluster_module = info_sec['cluster_module']  # pysixtrack.submission
+    classname = info_sec['cluster_name']  # HTCondor
+    try:
+        module = importlib.import_module(cluster_module)
+        cluster_cls = getattr(module, classname)
+        cluster = cluster_cls()
+    except ModuleNotFoundError as e:
+        content = "Failed to instantiate cluster class %s!" % cluster_module
         logger.error(content)
-
+        raise e
+    if str(wu_id) == '0':
+        preprocess_results(cf, cluster)
+    elif str(wu_id) == '1':
+        sixtrack_results(cf, cluster)
+    else:
+        content = "Unknown task!"
+        logger.error(content)
 
 def preprocess_results(cf, cluster):
     '''Gather the results of madx and oneturn sixtrack jobs and store in
@@ -69,7 +64,6 @@ def preprocess_results(cf, cluster):
     # contents = os.listdir(preprocess_path)
     set_sec = cf['db_setting']
     db_info = cf['db_info']
-    oneturn = cf['oneturn']
     db = SixDB(db_info, settings=set_sec, create=False)
     file_list = utils.decode_strings(info_sec['outs'])
     where = "status='submitted'"
@@ -82,7 +76,12 @@ def preprocess_results(cf, cluster):
     if running_jobs:
         content = "The preprocess jobs %s aren't completed yet!" % str(running_jobs)
         logger.warning(content)
-
+    parent_cf = {}
+    for sec in cf:
+        parent_cf[sec] = dict(cf[sec])
+    parent_cf.pop('info')
+    parent_cf.pop('db_setting')
+    parent_cf.pop('db_info')
     for item in os.listdir(preprocess_path):
         if item not in job_index.values():
             continue
@@ -91,22 +90,21 @@ def preprocess_results(cf, cluster):
             content = "The preprocess job %s is empty!" % item
             logger.warning(content)
             continue
+        result_cf = copy.deepcopy(parent_cf)
         job_table = {}
         task_table = {}
-        oneturn_table = {}
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
             # parse the results
             where = 'wu_id=%s' % item
             task_id = db.select('preprocess_wu', ['task_id'], where)
             task_id = task_id[0][0]
-            parse_preprocess(item, job_path, file_list, task_table,
-                             oneturn_table, list(oneturn.keys()))
+            parse_preprocess(item, job_path, file_list, task_table, result_cf)
             where = 'task_id=%s' % task_id
             db.update('preprocess_task', task_table, where)
-            if len(oneturn_table) != 0:
-                oneturn_table['task_id'] = task_id
-                db.insert('oneturn_sixtrack_result', oneturn_table)
+            for sec, vals in result_cf.items():
+                vals['task_id'] = [task_id,]*len(vals['mtime'])
+                db.insertm(sec, vals)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['mtime'] = int(time.time() * 1E7)
@@ -139,7 +137,6 @@ def sixtrack_results(cf, cluster):
         logger.warning(content)
         return
     set_sec = cf['db_setting']
-    f10_sec = cf['f10']
     db_info = cf['db_info']
     db = SixDB(db_info, settings=set_sec, create=False)
     file_list = utils.decode_strings(info_sec['outs'])
@@ -173,6 +170,13 @@ def sixtrack_results(cf, cluster):
             content = "Sixtrack jobs %s on Boinc aren't completed yet!" % str(unfn_wu_ids)
             logger.warning(content)
         valid_wu_ids = wu_ids
+
+    parent_cf = {}
+    for sec in cf:
+        parent_cf[sec] = dict(cf[sec])
+    parent_cf.pop('info')
+    parent_cf.pop('db_setting')
+    parent_cf.pop('db_info')
     for item in os.listdir(six_path):
         if item not in valid_wu_ids:
             continue
@@ -181,21 +185,20 @@ def sixtrack_results(cf, cluster):
             content = "The sixtrack job %s is empty!" % item
             logger.warning(content)
             continue
+        result_cf = copy.deepcopy(parent_cf)
         job_table = {}
         task_table = {}
-        f10_table = {}
         task_table['status'] = 'Success'
         if os.path.isdir(job_path) and os.listdir(job_path):
             # parse the result
-            parse_sixtrack(item, job_path, file_list, task_table, f10_table,
-                           list(f10_sec.keys()))
+            parse_sixtrack(item, job_path, file_list, task_table, result_cf)
             db.insert('sixtrack_task', task_table)
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], item)
             task_id = db.select('sixtrack_task', ['task_id'], where)
             task_id = task_id[0][0]
-            if len(f10_table) != 0:
-                f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
-                db.insertm('six_results', f10_table)
+            for sec, vals in result_cf.items():
+                vals['task_id'] = [task_id,]*len(vals['mtime'])
+                db.insertm(sec, vals)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
                 job_table['task_id'] = task_id
