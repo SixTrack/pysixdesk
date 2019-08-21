@@ -8,7 +8,10 @@ from pathlib import Path
 pysixdesk_path = str(Path(__file__).parents[3].absolute())
 sys.path.insert(0, pysixdesk_path)
 # setting environment variable for htcondor job.
-os.environ['PYTHONPATH'] = f"{pysixdesk_path}:{os.environ['PYTHONPATH']}"
+if 'PYTHONPATH' in os.environ.keys():
+    os.environ['PYTHONPATH'] = f"{pysixdesk_path}:{os.environ['PYTHONPATH']}"
+else:
+    os.environ['PYTHONPATH'] = f"{pysixdesk_path}"
 import pysixdesk
 
 
@@ -16,9 +19,9 @@ class SqlDB(unittest.TestCase):
     def setUp(self):
         self.test_folder = Path('integration_test/sql')
         self.test_folder.mkdir(parents=True, exist_ok=True)
-        self.ws_name = 'sql_ws'
+        self.ws_name = 'integration_test'
         self.ws = pysixdesk.WorkSpace(str(self.test_folder / self.ws_name))
-        self.st_name = 'sql_st'
+        self.st_name = 'sql'
         self.st = None
 
     def test_sql_study(self):
