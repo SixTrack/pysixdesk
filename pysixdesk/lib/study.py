@@ -6,9 +6,10 @@ import shutil
 import logging
 import getpass
 import itertools
-import collections
 import configparser
 # from importlib.machinery import SourceFileLoader
+from collections import OrderedDict
+from collections.abc import Iterable
 
 from . import dbtypedict
 from . import utils
@@ -34,19 +35,19 @@ class Study(object):
         # All the requested parameters for a study
         self.paths = {}
         self.env = {}
-        self.madx_params = collections.OrderedDict()
+        self.madx_params = OrderedDict()
         self.madx_input = {}
         self.madx_output = {}
-        self.oneturn_sixtrack_params = collections.OrderedDict()
+        self.oneturn_sixtrack_params = OrderedDict()
         self.oneturn_sixtrack_input = {}
-        self.sixtrack_params = collections.OrderedDict()
+        self.sixtrack_params = OrderedDict()
         self.sixtrack_input = {}
         self.preprocess_ouput = {}
         self.sixtrack_output = []
         self.tables = {}
         self.table_keys = {}
-        self.pragma = collections.OrderedDict()
-        self.boinc_vars = collections.OrderedDict()
+        self.pragma = OrderedDict()
+        self.boinc_vars = OrderedDict()
         # initialize default values
         Study._defaults(self)
         Study._structure(self)
@@ -108,7 +109,7 @@ class Study(object):
             'fc.8': 'fort.8',
             'fc.16': 'fort.16',
             'fc.34': 'fort.34'}
-        self.oneturn_sixtrack_params = collections.OrderedDict([
+        self.oneturn_sixtrack_params = OrderedDict([
             ("turnss", 1),
             ("nss", 1),
             ("ax0s", 0.1),
@@ -149,9 +150,9 @@ class Study(object):
 
         self.db_info['db_type'] = 'sql'
         # Default definition of the database tables
-        self.tables['templates'] = collections.OrderedDict()
-        self.tables['env'] = collections.OrderedDict()
-        self.tables['preprocess_wu'] = collections.OrderedDict([
+        self.tables['templates'] = OrderedDict()
+        self.tables['env'] = OrderedDict()
+        self.tables['preprocess_wu'] = OrderedDict([
             ('wu_id', 'INTEGER'),
             ('job_name', 'text'),
             ('input_file', 'blob'),
@@ -165,7 +166,7 @@ class Study(object):
             'autoincrement': ['wu_id'],
             'foreign': {},
         }
-        self.tables['preprocess_task'] = collections.OrderedDict([
+        self.tables['preprocess_task'] = OrderedDict([
             ('task_id', 'INTEGER'),
             ('wu_id', 'int'),
             ('madx_in', 'blob'),
@@ -180,8 +181,8 @@ class Study(object):
             'autoincrement': ['task_id'],
             'foreign': {'preprocess_wu': [['wu_id'], ['wu_id']]},
         }
-        self.tables['oneturn_sixtrack_wu'] = collections.OrderedDict()
-        self.tables['oneturn_sixtrack_result'] = collections.OrderedDict([
+        self.tables['oneturn_sixtrack_wu'] = OrderedDict()
+        self.tables['oneturn_sixtrack_result'] = OrderedDict([
             ('task_id', 'int'),
             ('wu_id', 'int'),
             ('betax', 'float'),
@@ -206,7 +207,7 @@ class Study(object):
             ('tunex2', 'float'),
             ('tuney2', 'float'),
             ('mtime', 'bigint')])
-        self.tables['sixtrack_wu'] = collections.OrderedDict([
+        self.tables['sixtrack_wu'] = OrderedDict([
             ('wu_id', 'INTEGER'),
             ('preprocess_id', 'int'),
             ('job_name', 'text'),
@@ -222,7 +223,7 @@ class Study(object):
             'autoincrement': ['wu_id'],
             'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
         }
-        self.tables['sixtrack_task'] = collections.OrderedDict([
+        self.tables['sixtrack_task'] = OrderedDict([
             ('task_id', 'INTEGER'),
             ('wu_id', 'int'),
             ('fort3', 'blob'),
@@ -236,7 +237,7 @@ class Study(object):
             'autoincrement': ['task_id'],
             'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
         }
-        self.tables['six_results'] = collections.OrderedDict([
+        self.tables['six_results'] = OrderedDict([
             ('six_input_id', 'int'),
             ('row_num', 'int'),
             ('turn_max', 'int'),
@@ -300,7 +301,7 @@ class Study(object):
             ('dnms', 'float'),
             ('trttime', 'float'),
             ('mtime', 'bigint')])
-        self.tables['collimation_results'] = collections.OrderedDict([
+        self.tables['collimation_results'] = OrderedDict([
             ('task_id', 'int'),
             ('mtime', 'bigint')])
         self.table_keys['collimation_results'] = {
@@ -319,7 +320,7 @@ class Study(object):
             'temp_store': 'memory',
             'count_changes': 'off'}
 
-        self.tables['boinc_vars'] = collections.OrderedDict()
+        self.tables['boinc_vars'] = OrderedDict()
         self.boinc_vars['workunitName'] = 'pysixdesk'
         self.boinc_vars['fpopsEstimate'] = 30 * 2 * 10e5 / 2 * 10e6 * 6
         self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate'] * 1000
@@ -515,7 +516,7 @@ class Study(object):
         values = []
         for key in keys:
             val = self.madx_params[key]
-            if not isinstance(val, collections.Iterable) or isinstance(val, str):
+            if not isinstance(val, Iterable) or isinstance(val, str):
                 val = [val]  # wrap with list for a single element
             values.append(val)
 
@@ -525,7 +526,7 @@ class Study(object):
 
         wu_id = len(check_params)
         for element in itertools.product(*values):
-            madx_table = collections.OrderedDict()
+            madx_table = OrderedDict()
             if element in check_params:
                 i = check_params.index(element)
                 name = check_jobs[i][1]
@@ -594,7 +595,7 @@ class Study(object):
         values = []
         for key in keys:
             val = self.sixtrack_params[key]
-            if not isinstance(val, collections.Iterable) or isinstance(val, str):
+            if not isinstance(val, Iterable) or isinstance(val, str):
                 val = [val]  # wrap with list for a single element
             values.append(val)
 
@@ -604,10 +605,10 @@ class Study(object):
         namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'])
         wu_id = len(namevsid)
         for element in itertools.product(*values):
-            job_table = collections.OrderedDict()
+            job_table = OrderedDict()
             a = []
             for i in element:
-                if isinstance(i, collections.Iterable):
+                if isinstance(i, Iterable):
                     i = str(i)
                 a.append(i)
             element = tuple(a)
@@ -621,7 +622,7 @@ class Study(object):
                 ky = keys[i]
                 vl = element[i]
                 fort3_sec[ky] = str(vl)
-                if isinstance(vl, collections.Iterable):
+                if isinstance(vl, Iterable):
                     vl = str(vl)
                 job_table[ky] = vl
             vl = element[len(element) - 1]  # the last one is madx_id(wu_id)
