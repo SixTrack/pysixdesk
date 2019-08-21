@@ -95,7 +95,7 @@ class Table(object):
             'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
         }
         self.tables['six_results'] = OrderedDict([
-            ('six_input_id', 'int'),
+            ('task_id', 'int'),
             ('row_num', 'int'),
             ('turn_max', 'int'),
             ('sflag', 'int'),
@@ -159,8 +159,8 @@ class Table(object):
             ('trttime', 'float'),
             ('mtime', 'bigint')])
         self.table_keys['six_results'] = {
-            'primary': ['six_input_id', 'row_num'],
-            'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},
+            'primary': ['task_id', 'row_num'],
+            'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
         }
 
     def init_oneturn_tables(self):
