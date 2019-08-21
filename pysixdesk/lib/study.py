@@ -10,12 +10,13 @@ import collections
 import configparser
 # from importlib.machinery import SourceFileLoader
 
-from . import dbtypedict
+#from . import dbtypedict
 from . import utils
 from . import gather
 from . import constants
 from . import submission
 from .pysixdb import SixDB
+from .dbtable import Table
 
 
 class Study(object):
@@ -41,7 +42,7 @@ class Study(object):
         self.oneturn_sixtrack_input = {}
         self.sixtrack_params = collections.OrderedDict()
         self.sixtrack_input = {}
-        self.preprocess_ouput = {}
+        self.preprocess_output = {}
         self.sixtrack_output = []
         self.tables = {}
         self.table_keys = {}
@@ -148,169 +149,6 @@ class Study(object):
         self.sixtrack_output = ['fort.10']
 
         self.db_info['db_type'] = 'sql'
-        # Default definition of the database tables
-        self.tables['templates'] = collections.OrderedDict()
-        self.tables['env'] = collections.OrderedDict()
-        self.tables['preprocess_wu'] = collections.OrderedDict([
-            ('wu_id', 'INTEGER'),
-            ('job_name', 'text'),
-            ('input_file', 'blob'),
-            ('batch_name', 'text'),
-            ('unique_id', 'text'),
-            ('status', 'text'),
-            ('task_id', 'int'),
-            ('mtime', 'bigint')])
-        self.table_keys['preprocess_wu'] = {
-            'primary': ['wu_id'],
-            'autoincrement': ['wu_id'],
-            'foreign': {},
-        }
-        self.tables['preprocess_task'] = collections.OrderedDict([
-            ('task_id', 'INTEGER'),
-            ('wu_id', 'int'),
-            ('madx_in', 'blob'),
-            ('madx_stdout', 'blob'),
-            ('job_stdout', 'blob'),
-            ('job_stderr', 'blob'),
-            ('job_stdlog', 'blob'),
-            ('status', 'text'),
-            ('mtime', 'bigint')])
-        self.table_keys['preprocess_task'] = {
-            'primary': ['task_id'],
-            'autoincrement': ['task_id'],
-            'foreign': {'preprocess_wu': [['wu_id'], ['wu_id']]},
-        }
-        self.tables['oneturn_sixtrack_wu'] = collections.OrderedDict()
-        self.tables['oneturn_sixtrack_result'] = collections.OrderedDict([
-            ('task_id', 'int'),
-            ('wu_id', 'int'),
-            ('betax', 'float'),
-            ('betax2', 'float'),
-            ('betay', 'float'),
-            ('betay2', 'float'),
-            ('tunex', 'float'),
-            ('tuney', 'float'),
-            ('chromx', 'float'),
-            ('chromy', 'float'),
-            ('x', 'float'),
-            ('xp', 'float'),
-            ('y', 'float'),
-            ('yp', 'float'),
-            ('z', 'float'),
-            ('zp', 'float'),
-            ('chromx_s', 'float'),
-            ('chromy_s', 'float'),
-            ('chrom_eps', 'float'),
-            ('tunex1', 'float'),
-            ('tuney1', 'float'),
-            ('tunex2', 'float'),
-            ('tuney2', 'float'),
-            ('mtime', 'bigint')])
-        self.tables['sixtrack_wu'] = collections.OrderedDict([
-            ('wu_id', 'INTEGER'),
-            ('preprocess_id', 'int'),
-            ('job_name', 'text'),
-            ('input_file', 'blob'),
-            ('batch_name', 'text'),
-            ('unique_id', 'text'),
-            ('status', 'text'),
-            ('task_id', 'int'),
-            ('boinc', 'text'),
-            ('mtime', 'bigint')])
-        self.table_keys['sixtrack_wu'] = {
-            'primary': ['wu_id'],
-            'autoincrement': ['wu_id'],
-            'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
-        }
-        self.tables['sixtrack_task'] = collections.OrderedDict([
-            ('task_id', 'INTEGER'),
-            ('wu_id', 'int'),
-            ('fort3', 'blob'),
-            ('job_stdout', 'blob'),
-            ('job_stderr', 'blob'),
-            ('job_stdlog', 'blob'),
-            ('status', 'text'),
-            ('mtime', 'bigint')])
-        self.table_keys['sixtrack_task'] = {
-            'primary': ['task_id'],
-            'autoincrement': ['task_id'],
-            'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
-        }
-        self.tables['six_results'] = collections.OrderedDict([
-            ('six_input_id', 'int'),
-            ('row_num', 'int'),
-            ('turn_max', 'int'),
-            ('sflag', 'int'),
-            ('qx', 'float'),
-            ('qy', 'float'),
-            ('betx', 'float'),
-            ('bety', 'float'),
-            ('sigx1', 'float'),
-            ('sigy1', 'float'),
-            ('deltap', 'float'),
-            ('dist', 'float'),
-            ('distp', 'float'),
-            ('qx_det', 'float'),
-            ('qx_spread', 'float'),
-            ('qy_det', 'float'),
-            ('qy_spread', 'float'),
-            ('resxfact', 'float'),
-            ('resyfact', 'float'),
-            ('resorder', 'int'),
-            ('smearx', 'float'),
-            ('smeary', 'float'),
-            ('smeart', 'float'),
-            ('sturns1', 'int'),
-            ('sturns2', 'int'),
-            ('sseed', 'float'),
-            ('qs', 'float'),
-            ('sigx2', 'float'),
-            ('sigy2', 'float'),
-            ('sigxmin', 'float'),
-            ('sigxavg', 'float'),
-            ('sigxmax', 'float'),
-            ('sigymin', 'float'),
-            ('sigyavg', 'float'),
-            ('sigymax', 'float'),
-            ('sigxminld', 'float'),
-            ('sigxavgld', 'float'),
-            ('sigxmaxld', 'float'),
-            ('sigyminld', 'float'),
-            ('sigyavgld', 'float'),
-            ('sigymaxld', 'float'),
-            ('sigxminnld', 'float'),
-            ('sigxavgnld', 'float'),
-            ('sigxmaxnld', 'float'),
-            ('sigyminnld', 'float'),
-            ('sigyavgnld', 'float'),
-            ('sigymaxnld', 'float'),
-            ('emitx', 'float'),
-            ('emity', 'float'),
-            ('betx2', 'float'),
-            ('bety2', 'float'),
-            ('qpx', 'float'),
-            ('qpy', 'float'),
-            ('version', 'float'),
-            ('cx', 'float'),
-            ('cy', 'float'),
-            ('csigma', 'float'),
-            ('xp', 'float'),
-            ('yp', 'float'),
-            ('delta', 'float'),
-            ('dnms', 'float'),
-            ('trttime', 'float'),
-            ('mtime', 'bigint')])
-        self.tables['collimation_results'] = collections.OrderedDict([
-            ('task_id', 'int'),
-            ('mtime', 'bigint')])
-        self.table_keys['collimation_results'] = {
-            'primary': ['task_id'],
-            'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
-        }
-        self.table_keys['six_results'] = {
-            'primary': ['six_input_id', 'row_num'],
-            'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},
-        }
         self.db_settings = {
             # 'synchronous': 'off',
             'foreign_keys': 'on',
@@ -319,7 +157,6 @@ class Study(object):
             'temp_store': 'memory',
             'count_changes': 'off'}
 
-        self.tables['boinc_vars'] = collections.OrderedDict()
         self.boinc_vars['workunitName'] = 'pysixdesk'
         self.boinc_vars['fpopsEstimate'] = 30 * 2 * 10e5 / 2 * 10e6 * 6
         self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate'] * 1000
@@ -379,10 +216,10 @@ class Study(object):
 
         db_type = self.db_info['db_type']
         if db_type.lower() == 'sql':
-            self.type_dict = dbtypedict.SQLiteDict()
+            table = Table(self.tables, self.table_keys, 'sql')
             self.db_info['db_name'] = os.path.join(self.study_path, 'data.db')
         elif db_type.lower() == 'mysql':
-            self.type_dict = dbtypedict.MySQLDict()
+            table = Table(self.tables, self.table_keys, 'mysql')
             self.db_info['db_name'] = wu_name + '_' + st_name
         else:
             content = "Unknown database type %s! Must be either 'sql' or 'mysql'." % db_type
@@ -395,36 +232,33 @@ class Study(object):
             boinc_spool, self.st_pre, 'results')
         self.env['surv_percent'] = 1
 
-        for key, val in self.madx_params.items():
-            self.tables['preprocess_wu'][key] = self.type_dict[val]
+        # initialize the database table
+        table.init_preprocess_tables()
+        table.init_sixtrack_tables()
+        table.init_state_tables()
+        if self.oneturn:
+            table.init_oneturn_tables()
+            table.customize_tables('oneturn_sixtrack_wu',
+                    self.oneturn_sixtrack_params)
+            table.customize_tables('templates',
+                    list(self.oneturn_sixtrack_input['temp']), 'BLOB')
+
         if self.collimation:
             self.preprocess_output['fort3.limi'] = 'fort3.limi'
-        for key in self.preprocess_output.values():
-            self.tables['preprocess_task'][key] = 'MEDIUMBLOB'
+            table.init_collimation_tables()
 
-        for key, val in self.oneturn_sixtrack_params.items():
-            self.tables['oneturn_sixtrack_wu'][key] = self.type_dict[val]
-
-        for key, val in self.sixtrack_params.items():
-            self.tables['sixtrack_wu'][key] = self.type_dict[val]
-        for key in self.sixtrack_output:
-            self.tables['sixtrack_task'][key] = 'MEDIUMBLOB'
-
-        for key in self.madx_input.keys():
-            self.tables['templates'][key] = 'BLOB'
-        if self.oneturn:
-            for key in self.oneturn_sixtrack_input['temp']:
-                self.tables['templates'][key] = 'BLOB'
-        for key in self.sixtrack_input['temp']:
-            self.tables['templates'][key] = 'BLOB'
-
-        for key in self.paths.keys():
-            self.tables['env'][key] = 'TEXT'
-        for key, val in self.env.items():
-            self.tables['env'][key] = self.type_dict[val]
-
-        for key, val in self.boinc_vars.items():
-            self.tables['boinc_vars'][key] = self.type_dict[val]
+        table.customize_tables('templates', list(self.madx_input.keys()),
+                'BLOB')
+        table.customize_tables('templates', list(self.sixtrack_input['temp']),
+                'BLOB')
+        table.customize_tables('env', self.env)
+        table.customize_tables('env', list(self.paths.keys()), 'text')
+        table.customize_tables('preprocess_wu', self.madx_params)
+        table.customize_tables('preprocess_task',
+                list(self.preprocess_output.values()), 'MEDIUMBLOB')
+        table.customize_tables('sixtrack_wu', self.sixtrack_params)
+        table.customize_tables('sixtrack_task', list(self.sixtrack_output), 'MEDIUMBLOB')
+        table.customize_tables('boinc_vars', self.boinc_vars)
 
         # Initialize the database
         self.db = SixDB(self.db_info, settings=self.db_settings, create=True)
@@ -867,6 +701,7 @@ class Study(object):
         else:
             job_table = {}
             job_table['boinc'] = str(boinc)
+            job_table['input_file'] = input_buf_new
             if len(wu_ids) == 1:
                 where = "wu_id=%s" % wu_ids[0]
             else:
