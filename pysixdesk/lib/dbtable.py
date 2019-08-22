@@ -19,6 +19,26 @@ class Table(object):
         self.init_preprocess_tables()
         self.init_sixtrack_tables()
 
+    @staticmethod
+    def result_table(filelist):
+        '''Retrun the map between the result files and database tables
+        fileName --> tableName'''
+        relation = {}
+        relation['fort.10'] = 'six_results'
+        relation['aperture_losses.dat'] = 'aperture_losses'
+        relation['oneturnresult'] = 'oneturn_sixtrack_results'
+        relation['Coll_Scatter.dat'] = 'collimation_losses'
+        relation['final_state.dat'] = 'final_state'
+        relation['initial_state.dat'] = 'init_state'
+
+        filemap = {}
+        for fil in filelist:
+            if fil in relation.keys():
+                filemap[fil] = relation[fil]
+            else:
+                filemap[fil] = None
+        return filemap
+
     def customize_tables(self, table_names, info, dtype=None):
         '''Customize the tables'''
         if isinstance(info, dict):
@@ -165,7 +185,7 @@ class Table(object):
 
     def init_oneturn_tables(self):
         self.tables['oneturn_sixtrack_wu'] = OrderedDict()
-        self.tables['oneturn_sixtrack_result'] = OrderedDict([
+        self.tables['oneturn_sixtrack_results'] = OrderedDict([
             ('task_id', 'int'),
             ('wu_id', 'int'),
             ('betax', 'float'),
