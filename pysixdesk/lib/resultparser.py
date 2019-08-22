@@ -49,6 +49,7 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
         job_stdlog = os.path.join(job_path, job_stdlog[0])
         task_table['job_stdlog'] = compress_buf(job_stdlog)
 
+    valid_tname = []
     for out, tname in file_list.items():
         out_f = [s for s in contents if out in s]
         if out_f:
@@ -56,6 +57,7 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
             if tname is not None:
                 try:
                     parse_file(out_f, task_table, result_cf[tname], tname)
+                    valid_tname.append(tname)
                 except:
                     task_table['status'] = 'Failed'
                     content = "There is something wrong with the output "\
@@ -67,6 +69,10 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
             content = f"The {jobtype} output file {out} for job {item} "\
                     "doesn't exist! The job failed!"
             logger.warning(content)
+    # clean the redundant sections
+    for tname in result_cf.keys():
+        if tname not in valid_tname:
+            result_cf.pop(tname)
 
 def parse_file(out_f, task_table, result_table, tname):
     '''parse the files'''

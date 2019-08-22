@@ -238,6 +238,7 @@ class Study(object):
         table.init_sixtrack_tables()
         table.init_state_tables()
         if self.oneturn:
+            self.preprocess_output['oneturnresult'] = 'oneturnresult'
             table.init_oneturn_tables()
             table.customize_tables('oneturn_sixtrack_wu',
                     self.oneturn_sixtrack_params)
@@ -331,7 +332,8 @@ class Study(object):
         if self.oneturn:
             self.config['sixtrack'] = {}
             cus_sec = self.config['sixtrack']
-            self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
+            self.config['oneturn_sixtrack_results'] = self.tables[
+                    'oneturn_sixtrack_results']
             self.config['fort3'] = self.oneturn_sixtrack_params
             cus_sec['source_path'] = self.paths['templates']
             cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
@@ -561,31 +563,28 @@ class Study(object):
         if typ == 0:
             if self.oneturn:
                 # The section name should be same with the table name
-                self.config['oneturn_sixtrack_result'] = self.tables['oneturn_sixtrack_result']
+                self.config['oneturn_sixtrack_results'] = self.tables[
+                        'oneturn_sixtrack_results']
             info_sec['path'] = self.paths['preprocess_out']
-            info_sec['outs'] = utils.encode_strings(self.preprocess_output)
-            #job_name = 'collect preprocess result'
-            #in_name = 'preprocess.ini'
-            #task_input = os.path.join(self.paths['gather'], str(typ), in_name)
+            fileout = list(self.preprocess_out.values())
+            info_sec['outs'] = utils.encode_strings(Table.result_table(fileout))
         elif typ == 1:
-            self.config['f10'] = self.tables['six_results']
+            self.config['six_results'] = self.tables['six_results']
             info_sec['path'] = self.paths['sixtrack_out']
             info_sec['boinc_results'] = self.env['boinc_results']
             info_sec['boinc'] = str(boinc)
             info_sec['st_pre'] = self.st_pre
-            info_sec['outs'] = utils.encode_strings(self.sixtrack_output)
-            #job_name = 'collect sixtrack result'
-            #in_name = 'sixtrack.ini'
-            #task_input = os.path.join(self.paths['gather'], str(typ), in_name)
+            info_sec['outs'] = utils.encode_strings(Table.result_table(
+                self.sixtrack_output))
+            if self.collimation:
+                self.config['aperture_losses'] = self.tables['aperture_losses']
+                self.config['collimation_losses'] = self.tables['collimation_losses']
+                self.config['init_state'] = self.tables['init_state']
+                self.config['final_state'] = self.tables['final_state']
         else:
             content = "Unkown job type %s" % typ
             raise ValueError(content)
 
-        #in_path = os.path.join(self.paths['gather'], str(typ))
-        #if not os.path.isdir(in_path):
-        #    os.makedirs(in_path)
-        #with open(task_input, 'w') as f_out:
-        #    self.config.write(f_out)
         try:
             gather.run(typ, self.config)
         except Exception as e:

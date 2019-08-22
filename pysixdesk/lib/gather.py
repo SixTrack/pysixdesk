@@ -13,7 +13,7 @@ import configparser
 
 from .pysixdb import SixDB
 from . import utils
-from .resultparser import parse_preprocess, parse_sixtrack
+from .resultparser import parse_result
 
 logger = logging.getLogger(__name__)
 
@@ -90,9 +90,6 @@ def gather_results(jobtype, cf, cluster):
     parent_cf = {}
     for sec in cf:
         parent_cf[sec] = dict(cf[sec])
-    parent_cf.pop('info')
-    parent_cf.pop('db_setting')
-    parent_cf.pop('db_info')
     for item in os.listdir(type_path):
         if item not in valid_wu_ids:
             continue
