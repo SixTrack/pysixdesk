@@ -11,7 +11,8 @@ from subprocess import Popen, PIPE
 
 from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib import utils
-from pysixdesk.lib.resultparser import parse_sixtrack
+from pysixdesk.lib.dbtable import Table
+from pysixdesk.lib.resultparser import parse_result
 
 logger = utils.condor_logger('sixtrack')
 
@@ -119,16 +120,18 @@ def run(wu_id, input_info):
         f10_sec = cf['f10']
         job_table = {}
         task_table = {}
-        f10_table = {}
         task_table['status'] = 'Success'
         job_path = dest_path
-        parse_sixtrack(wu_id, job_path, output_files, task_table,
-                       f10_table, list(f10_sec.keys()))
+        result_cf = {}
+        for sec in cf:
+            result_cf[sec] = dict(cf[sec])
+        filelist = Table.result_table(output_files.values())
+        parse_result(wu_id, job_path, filelist, task_table, result_cf))
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
-        if len(f10_table) != 0:
-            f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
-            db.insertm('six_results', f10_table)
+        for sec, vals in result_cf.items():
+            vals['task_id'] = [task_id,]*len(vals['mtime'])
+            db.insertm(sec, vals)
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
