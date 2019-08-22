@@ -75,7 +75,7 @@ class MySqlDB(unittest.TestCase):
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)),
                          len(six_wu_ids))
 
-        print('waiting for sxitrack job to finish...')
+        print('waiting for sixtrack job to finish...')
         while self.st.submission.check_running(self.st.study_path) is None\
                 or len(self.st.submission.check_running(self.st.study_path)) >= 1:
             time.sleep(60)

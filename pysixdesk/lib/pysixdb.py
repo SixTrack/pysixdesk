@@ -15,41 +15,40 @@ class SixDB(object):
         '''
         self._logger = logging.getLogger(__name__)
         self.settings = settings
-        self.create = create
         info = {}
         info.update(db_info)
-        self._setup(info)
+        self.info = info
+        if self.info['db_type'] == 'mysql':
+            self.info['db_name'] = '_'.join([self.info['user'],
+                                             self.info['db_name']])
+        # if db_type in info's keys pop it's value, if not sql
+        db_type = self.info.pop('db_type', 'sql')
+        self.db_type = db_type.lower()
+        self.open(create=create)
 
-    def _setup(self, db_info):
+    def open(self, create=False):
         '''Setup the database'''
-        if 'db_type' not in db_info.keys():
-            dbtype = 'sql'
-        else:
-            dbtype = db_info.pop('db_type')
-        if dbtype.lower() == 'sql':
-            self.adaptor = dbadaptor.SQLDatabaseAdaptor()
-            if self.info_check(dbtype, db_info):
-                name = db_info['db_name']
-                if not self.create and not os.path.exists(name):
-                    content = "The database %s doesn't exist!" % name
-                    raise Exception(content)
-            else:
-                content = "Something wrong with db info %s!" % str(db_info)
-                raise ValueError(content)
-        elif dbtype.lower() == 'mysql':
-            self.adaptor = dbadaptor.MySQLDatabaseAdaptor()
-            db_info['db_name'] = '%s_%s' % (db_info['user'], db_info['db_name'])
-            if self.info_check(dbtype, db_info):
-                if self.create:
-                    self.adaptor.create_db(**db_info)
-            else:
-                content = "Something wrong with db info %s!" % str(db_info)
-                raise ValueError(content)
-        else:
-            content = "Unkown database type %s!" % dbtype
+        if self.db_type not in ['sql', 'mysql']:
+            content = "Unkown database type %s!" % self.db_type
             raise ValueError(content)
 
-        self.conn = self.adaptor.new_connection(**db_info)
+        if not self.info_check():
+            content = "Something wrong with db info %s!" % str(self.info)
+            raise ValueError(content)
+
+        if self.db_type == 'sql':
+            self.adaptor = dbadaptor.SQLDatabaseAdaptor()
+            name = self.info['db_name']
+            if not create and not os.path.exists(name):
+                content = "The database %s doesn't exist!" % name
+                raise Exception(content)
+
+        elif self.db_type == 'mysql':
+            self.adaptor = dbadaptor.MySQLDatabaseAdaptor()
+            if create:
+                self.adaptor.create_db(**self.info)
+
+        self.conn = self.adaptor.new_connection(**self.info)
         if self.settings is not None:
             self.setting(self.settings)
 
@@ -57,29 +56,29 @@ class SixDB(object):
         '''Execute the settings of the database'''
         self.adaptor.setting(self.conn, settings)
 
-    def info_check(self, dbtype, db_info):
+    def info_check(self):
         '''Check if all the necessary information for database is there.
         And  check if the parameter's type is correct, if not, correct it'''
-        if dbtype == 'sql':
-            if 'db_name' in db_info:
-                if not isinstance(db_info['db_name'], str):
-                    db_info['db_name'] = str(db_info['db_name'])
+        if self.db_type == 'sql':
+            if 'db_name' in self.info:
+                if not isinstance(self.info['db_name'], str):
+                    self.info['db_name'] = str(self.info['db_name'])
                 return True
             else:
                 return False
-        elif dbtype == 'mysql':
-            if ('port' in db_info and 'user' in db_info and 'host' in db_info
-                    and 'passwd' in db_info and 'db_name' in db_info):
-                if not isinstance(db_info['port'], int):
-                    db_info['port'] = int(db_info['port'])
-                if not isinstance(db_info['user'], str):
-                    db_info['user'] = str(db_info['user'])
-                if not isinstance(db_info['host'], str):
-                    db_info['host'] = str(db_info['host'])
-                if not isinstance(db_info['passwd'], str):
-                    db_info['passwd'] = str(db_info['passwd'])
-                if not isinstance(db_info['db_name'], str):
-                    db_info['db_name'] = str(db_info['db_name'])
+        elif self.db_type == 'mysql':
+            if ('port' in self.info and 'user' in self.info and 'host' in self.info
+                    and 'passwd' in self.info and 'db_name' in self.info):
+                if not isinstance(self.info['port'], int):
+                    self.info['port'] = int(self.info['port'])
+                if not isinstance(self.info['user'], str):
+                    self.info['user'] = str(self.info['user'])
+                if not isinstance(self.info['host'], str):
+                    self.info['host'] = str(self.info['host'])
+                if not isinstance(self.info['passwd'], str):
+                    self.info['passwd'] = str(self.info['passwd'])
+                if not isinstance(self.info['db_name'], str):
+                    self.info['db_name'] = str(self.info['db_name'])
                 return True
             else:
                 return False

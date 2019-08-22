@@ -413,11 +413,13 @@ class Study(object):
 
         for key in self.madx_input.keys():
             self.tables['templates'][key] = 'BLOB'
+
         if self.oneturn:
-            for key in self.oneturn_sixtrack_input['temp']:
-                self.tables['templates'][key] = 'BLOB'
-        for key in self.sixtrack_input['temp']:
-            self.tables['templates'][key] = 'BLOB'
+            k = self.oneturn_sixtrack_input['fort_file']
+            self.tables['templates'][k] = 'BLOB'
+
+        k = self.sixtrack_input['fort_file']
+        self.tables['templates'][k] = 'BLOB'
 
         for key in self.paths.keys():
             self.tables['env'][key] = 'TEXT'
@@ -447,8 +449,8 @@ class Study(object):
         cont = os.listdir(temp)
         require = []
         if self.oneturn:
-            require += self.oneturn_sixtrack_input["temp"]
-        require += self.sixtrack_input['temp']
+            require += [self.oneturn_sixtrack_input["fort_file"]]
+        require += [self.sixtrack_input['fort_file']]
         require.append(self.madx_input["mask_file"])
         for r in require:
             if r not in cont:
@@ -461,12 +463,13 @@ class Study(object):
                 value = os.path.join(self.study_path, value)
                 tab[key] = utils.compress_buf(value)
             if self.oneturn:
-                for key in self.oneturn_sixtrack_input['temp']:
-                    value = os.path.join(self.study_path, key)
-                    tab[key] = utils.compress_buf(value)
-            for key in self.sixtrack_input['temp']:
+                key = self.oneturn_sixtrack_input['fort_file']
                 value = os.path.join(self.study_path, key)
                 tab[key] = utils.compress_buf(value)
+            key = self.sixtrack_input['fort_file']
+            value = os.path.join(self.study_path, key)
+            tab[key] = utils.compress_buf(value)
+
             self.db.insert('templates', tab)
         outputs = self.db.select('env', self.paths.keys())
         envs = {}
@@ -501,8 +504,7 @@ class Study(object):
             self.config['fort3'] = self.oneturn_sixtrack_params
             cus_sec['source_path'] = self.paths['templates']
             cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-            inp = self.oneturn_sixtrack_input['temp']
-            cus_sec['temp_files'] = utils.encode_strings(inp)
+            cus_sec['fort_file'] = self.oneturn_sixtrack_input['fort_file']
             inp = self.oneturn_sixtrack_input['input']
             cus_sec['input_files'] = utils.encode_strings(inp)
         if self.collimation:
@@ -574,8 +576,7 @@ class Study(object):
         inp = self.sixtrack_input['input']
         six_sec['input_files'] = utils.encode_strings(inp)
         six_sec['boinc_dir'] = self.paths['boinc_spool']
-        inp = self.sixtrack_input['temp']
-        six_sec['temp_files'] = utils.encode_strings(inp)
+        six_sec['fort_file'] = self.sixtrack_input['fort_file']
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.encode_strings(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])

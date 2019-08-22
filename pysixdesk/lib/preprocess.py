@@ -1,380 +1,352 @@
 #!/usr/bin/env python3
 import os
-import sys
-import time
-import copy
 import shutil
 import configparser
+import argparse
 
+from pathlib import Path
+
+from pysixdesk.lib.sixtrack_job import SixtrackJob
 from pysixdesk.lib import utils
 from pysixdesk.lib import generate_fort2
 from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib.resultparser import parse_preprocess
 
 
-logger = utils.condor_logger('preprocess')
+class PreprocessJob(SixtrackJob):
+    def __init__(self, wu_id, db_name):
+        '''Class to handle the execution of the preprocessing job.
 
+        Args:
+            wu_id (int): Current work unit ID.
+            db_name (str/path): Path to the database configuration file.
 
-def run(wu_id, input_info):
-    cf = configparser.ConfigParser()
-    cf.optionxform = str  # preserve case
-    cf.read(input_info)
-    db_info = {}
-    db_info.update(cf['db_info'])
-    dbtype = db_info['db_type']
-    db = SixDB(db_info)
-    wu_id = str(wu_id)
-    where = 'wu_id=%s' % wu_id
-    outputs = db.select('preprocess_wu', ['input_file'], where)
-    db.close()
-    if not outputs[0]:
-        content = "Input file not found for preprocess job %s!" % wu_id
-        raise FileNotFoundError(content)
+        Raises:
+            FileNotFoundError: If required input file is not found in database.
+            ValueError: If the provided output files are incorect.
+        '''
+        self._logger = utils.condor_logger('preprocess')
+        self.wu_id = wu_id
+        cf = configparser.ConfigParser()
+        cf.optionxform = str
+        cf.read(db_name)
+        self.db = SixDB(cf['db_info'].items())
+        db_type = cf['db_info']['db_type']
+        self.db_type = db_type.lower()
+        cf.clear()
+        outputs = self.db.select('preprocess_wu',
+                                 ['input_file', 'task_id'],
+                                 f'wu_id={wu_id}')
+        if not outputs[0]:
+            content = "Input file not found for preprocess job %s!" % wu_id
+            raise FileNotFoundError(content)
 
-    input_buf = outputs[0][0]
-    input_file = utils.decompress_buf(input_buf, None, 'buf')
-    cf.clear()
-    cf.read_string(input_file)
-    madx_config = cf['madx']
-    mask_config = cf['mask']
-    oneturn_config = {}
-    oneturn = madx_config['oneturn']
-    collimation = madx_config['collimation']
+        self.task_id = outputs[0][1]
+        intput_buf = outputs[0][0]
+        in_files = utils.decompress_buf(intput_buf, None, 'buf')
+        cf.read_string(in_files)
+        self.madx_cfg = cf['madx']
 
-    try:
-        madxjob(madx_config, mask_config)
-    except Exception:
-        content = 'MADX job failed.'
-        logger.error(content, exc_info=True)
-        if dbtype.lower() == 'sql':
-            return
-    else:
-        if collimation.lower() == 'true':
-            try:
-                coll_config = cf['collimation']
-                new_fort2(coll_config)
-            except Exception:
-                logger.error('Generate new fort2 failed!', exc_info=True)
-        if oneturn.lower() == 'true':
-            try:
-                sixtrack_config = cf['sixtrack']
-                oneturn_config = cf['oneturn']
-                fort3_config = cf._sections['fort3']
-                sixtrackjobs(sixtrack_config, fort3_config)
-            except Exception:
-                logger.error('Oneturn job failed!', exc_info=True)
+        output_files = self.madx_cfg["output_files"]
+        try:
+            output_files = utils.decode_strings(output_files)
+        except Exception:
+            content = "Wrong setting of madx output!"
+            raise ValueError(content)
+        self.madx_out = output_files
+        self.mask_cfg = cf['mask']
 
-    if dbtype.lower() == 'mysql':
-        dest_path = './result'
-    else:
-        dest_path = madx_config["dest_path"]
-    if not os.path.isdir(dest_path):
-        os.makedirs(dest_path)
+        self.six_cfg = cf['sixtrack']
+        self.fort_cfg = cf['fort3']
+        self.oneturn_flag = self.madx_cfg.getboolean('oneturn')
+        self.coll_flag = self.madx_cfg.getboolean('collimation')
 
-    otpt = madx_config["output_files"]
-    output_files = utils.decode_strings(otpt)
+        if self.oneturn_flag:
+            self.oneturn_cfg = cf['oneturn']
+        else:
+            self.oneturn_cfg = {}
+        if self.coll_flag:
+            self.coll_cfg = cf['collimation']
+        else:
+            self.coll_cfg = {}
+        # close db to avoid unexpected timeouts
+        self.db.close()
 
-    # Download the requested files.
-    down_list = list(output_files.values())
-    down_list.append('madx_in')
-    down_list.append('madx_stdout')
-    if oneturn.lower() == 'true':
-        down_list.append('oneturnresult')
-    if collimation.lower() == 'true':
-        output_files['fort3.limi'] = 'fort3.limi'
-        down_list.append('fort3.limi')
-    try:
-        utils.download_output(down_list, dest_path)
-        logger.info("All requested results have been stored in %s" % dest_path)
-    except Exception:
-        logger.warning("Job failed!", exc_info=True)
+    def dl_output(self, dest_path):
+        """Downloads the output of the job.
 
-    if dbtype.lower() == 'sql':
-        return
+        Args:
+            dest_path (str): Path to download location.
+        """
+        # Download the requested files.
+        madx_outputs = list(self.madx_out.values())
+        madx_outputs.append('madx_in')
+        madx_outputs.append('madx_stdout')
+        if self.oneturn_flag:
+            madx_outputs.append('oneturnresult')
+        if self.coll_flag:
+            madx_outputs.append('fort3.limi')
+        try:
+            utils.download_output(madx_outputs, dest_path)
+            content = f"All requested results have been stored in {dest_path}"
+            self._logger.info(content)
+        except Exception:
+            self._logger.warning("Job failed!", exc_info=True)
 
-    # reconnect after jobs finished
-    try:
-        db = SixDB(db_info)
-        where = "wu_id=%s" % wu_id
-        task_id = db.select('preprocess_wu', ['task_id'], where)
-        task_id = task_id[0][0]
-        job_table = {}
+    def _push_to_db_results(self, dest_path):
+        '''
+        Runs the parsing and pushes results to db. Is called in push_to_db.
+        '''
         task_table = {}
         oneturn_table = {}
         task_table['status'] = 'Success'
-        job_path = dest_path
-        parse_preprocess(wu_id, job_path, output_files, task_table,
-                         oneturn_table, list(oneturn_config.keys()))
-        where = "task_id=%s" % task_id
-        db.update('preprocess_task', task_table, where)
-        if oneturn.lower() == 'true':
-            oneturn_table['task_id'] = task_id
-            db.insert('oneturn_sixtrack_result', oneturn_table)
-        if task_table['status'] == 'Success':
-            where = "wu_id=%s" % wu_id
-            job_table['status'] = 'complete'
-            job_table['mtime'] = int(time.time() * 1E7)
-            db.update('preprocess_wu', job_table, where)
-            content = "Preprocess job %s has completed normally!" % wu_id
-            logger.info(content)
-        else:
-            where = "wu_id=%s" % wu_id
-            job_table['status'] = 'incomplete'
-            job_table['mtime'] = int(time.time() * 1E7)
-            db.update('preprocess_wu', job_table, where)
-            content = "This is a failed job!"
-            logger.warning(content)
-        return
-    except Exception as e:
-        where = "wu_id=%s" % wu_id
-        job_table['status'] = 'incomplete'
-        job_table['mtime'] = int(time.time() * 1E7)
-        db.update('preprocess_wu', job_table, where)
-        raise e
-    finally:
-        db.close()
+        parse_preprocess(self.wu_id, dest_path, self.madx_out, task_table,
+                         oneturn_table, list(self.oneturn_cfg.keys()))
+        self.db.update(f'preprocess_task', task_table, f'task_id={self.task_id}')
 
+        if self.oneturn_flag:
+            oneturn_table['task_id'] = self.task_id
+            self.db.insert('oneturn_sixtrack_result', oneturn_table)
+        return task_table
 
-def madxjob(madx_config, mask_config):
-    '''MADX job to generate input files for sixtrack'''
-    madxexe = madx_config["madx_exe"]
-    source_path = madx_config["source_path"]
-    mask_name = madx_config["mask_file"]
-    output_files = madx_config["output_files"]
-    try:
-        output_files = utils.decode_strings(output_files)
-    except Exception:
-        content = "Wrong setting of madx output!"
-        raise ValueError(content)
-
-    if 'mask' not in mask_name:
-        mask_name = mask_name + '.mask'
-    mask_file = os.path.join(source_path, mask_name)
-    shutil.copy2(mask_file, mask_name)
-    dest_path = madx_config["dest_path"]
-    if not os.path.isdir(dest_path):
-        os.mkdir(dest_path)
-
-    # Generate the actual madx file from mask file
-    patterns = ['%' + a for a in mask_config.keys()]
-    values = list(mask_config.values())
-    madx_in = 'madx_in'
-    try:
-        utils.replace(patterns, values, mask_name, madx_in)
-    except Exception:
-        content = "Failed to generate actual madx input file!"
-        raise Exception(content)
-
-    utils.diff(mask_name, madx_in, logger=logger)
-
-    # Begin to execute madx job
-    command = madxexe + " " + madx_in
-    logger.info("Calling madx %s" % madxexe)
-    logger.info("MADX job is running...")
-    output = os.popen(command)
-    outputlines = output.readlines()
-    with open('madx_stdout', 'w') as mad_out:
-        mad_out.writelines(outputlines)
-    if 'finished normally' not in outputlines[-2]:
-        content = "MADX has not completed properly!"
-        raise Exception(content)
-
-    else:
-        logger.info("MADX has completed properly!")
-
-    # Check the existence of madx output
-    if not utils.check(output_files):
-        content = 'MADX output files not found.'
-        raise FileNotFoundError(content)
-
-
-def new_fort2(config):
-    '''Generate new fort.2 with aperture markers and survey and fort3.limit'''
-    inp = config['input_files']
-    inputfiles = utils.decode_strings(inp)
-    source_path = config["source_path"]
-    for fil in inputfiles.values():
-        fl = os.path.join(source_path, fil)
-        shutil.copy2(fl, fil)
-    fc2 = 'fort.2'
-    aperture = inputfiles['aperture']
-    survery = inputfiles['survey']
-    generate_fort2.run(fc2, aperture, survery)
-
-
-def sixtrackjobs(config, fort3_config):
-    '''Manage all the one turn sixtrack job'''
-    sixtrack_exe = config['sixtrack_exe']
-    source_path = config["source_path"]
-
-    try:
-        temp_files = utils.decode_strings(config["temp_files"])
-    except Exception:
-        content = "Wrong setting of oneturn sixtrack templates!"
-        raise ValueError(content)
-
-    for s in temp_files:
-        source = os.path.join(source_path, s)
-        shutil.copy2(source, s)
-    logger.info('Calling sixtrack %s' % sixtrack_exe)
-
-    try:
-        sixtrackjob(config, fort3_config, 'first_oneturn', dp1='.0', dp2='.0')
-    except Exception as e:
-        logger.error('SixTrack first oneturn failed.')
-        raise e
-
-    try:
-        sixtrackjob(config, fort3_config, 'second_oneturn')
-    except Exception as e:
-        logger.error('SixTrack second oneturn failed.')
-        raise e
-
-    # Calculate and write out the requested values
-    chrom_eps = fort3_config['chrom_eps']
-    with open('fort.10_first_oneturn', 'r') as first:
-        a = first.readline()
-        valf = a.split()
-    with open('fort.10_second_oneturn', 'r') as second:
-        b = second.readline()
-        vals = b.split()
-    tunes = [chrom_eps, valf[2], valf[3], vals[2], vals[3]]
-    chrom1 = (float(vals[2]) - float(valf[2])) / float(chrom_eps)
-    chrom2 = (float(vals[3]) - float(valf[3])) / float(chrom_eps)
-    mychrom = [chrom1, chrom2]
-
-    try:
-        sixtrackjob(config, fort3_config, 'beta_oneturn', dp1='.0', dp2='.0')
-    except Exception as e:
-        logger.error('SixTrack beta oneturn failed.')
-        raise e
-
-    f_in = open('fort.10_beta_oneturn', 'r')
-    beta_line = f_in.readline()
-    f_in.close()
-    beta = beta_line.split()
-    beta_out = [beta[4], beta[47], beta[5], beta[48], beta[2], beta[3],
-                beta[49], beta[50], beta[52], beta[53], beta[54], beta[55],
-                beta[56], beta[57]]
-    if fort3_config['CHROM'] == '0':
-        beta_out[6] = chrom1
-        beta_out[7] = chrom2
-    beta_out = beta_out + mychrom + tunes
-    lines = ' '.join(map(str, beta_out))
-    with open('oneturnresult', 'w') as f_out:
-        f_out.write(lines)
-        f_out.write('\n')
-
-
-def sixtrackjob(config, config_re, jobname, **kwargs):
-    '''One turn sixtrack job'''
-    sixtrack_config = config
-    fort3_config = copy.deepcopy(config_re)
-    # source_path = sixtrack_config["source_path"]
-    sixtrack_exe = sixtrack_config["sixtrack_exe"]
-
-    try:
-        temp_files = utils.decode_strings(sixtrack_config["temp_files"])
-    except Exception:
-        content = "Wrong setting of oneturn sixtrack templates!"
-        raise ValueError(content)
-
-    try:
-        input_files = utils.decode_strings(sixtrack_config["input_files"])
-    except Exception:
-        content = "Wrong setting of oneturn sixtrack input!"
-        raise ValueError(content)
-
-    fc3aux = open('fort.3.aux', 'r')
-    fc3aux_lines = fc3aux.readlines()
-    fc3aux_2 = fc3aux_lines[1]
-    c = fc3aux_2.split()
-    lhc_length = c[4]
-    fort3_config['length'] = lhc_length
-    fort3_config.update(kwargs)
-
-    # Create a temp folder to excute sixtrack
-    if os.path.isdir('junk'):
-        shutil.rmtree('junk')
-    os.mkdir('junk')
-    os.chdir('junk')
-
-    logger.info("Preparing the sixtrack input files!")
-
-    keys = list(fort3_config.keys())
-    patterns = ['%' + a for a in keys]
-    values = [fort3_config[key] for key in keys]
-    output = []
-    for s in temp_files:
-        dest = s + ".t1"
-        source = os.path.join('../', s)
+    def run(self):
+        '''
+        Main execution logic.
+        '''
         try:
-            utils.replace(patterns, values, source, dest)
+            self.madx_job()
+        except Exception as e:
+            if self.db_type == 'sql':
+                # madx failed and sql --> stop here
+                content = 'MADX job failed.'
+                self._logger.error(content)
+                raise e
+            else:
+                # madx failed and mysql --> store in database
+                content = 'MADX job failed.'
+                self._logger.error(content, exc_info=True)
+        else:
+            # madx did not fail --> run sixtrack
+            if self.coll_flag:
+                try:
+                    self.new_fort2()
+                except Exception:
+                    self._logger.error('Generation of new fort2 failed!',
+                                       exc_info=True)
+            if self.oneturn_flag:
+                try:
+                    self.sixtrack_job()
+                    self.write_oneturnresult()
+                except Exception:
+                    self._logger.error('Oneturn job failed!', exc_info=True)
+        finally:
+            # if failed and mysql or if success --> store results
+            # result store location
+            if self.db_type == 'mysql':
+                dest_path = Path('./result')
+            else:
+                dest_path = Path(self.madx_cfg["dest_path"])
+            if not dest_path.is_dir():
+                dest_path.mkdir(parents=True, exist_ok=True)
+            # download results
+            self.dl_output(dest_path)
+            # push results to mysql db
+            if self.db_type == 'mysql':
+                if self.coll_flag:
+                    self.madx_out['fort3.limi'] = 'fort3.limi'
+                self.push_to_db(dest_path, job_type='preprocess')
+
+    def madx_copy_mask(self):
+        '''
+        Copies madx mask file to cwd.
+        '''
+        mask_name = self.madx_cfg["mask_file"]
+        source_path = Path(self.madx_cfg['source_path'])
+        shutil.copy2(source_path / mask_name, mask_name)
+        # make destination folder
+        Path(self.madx_cfg['dest_path']).mkdir(parents=True, exist_ok=True)
+
+    def madx_prep(self, output_file='madx_in'):
+        '''Replaces the placeholders in the mask_file and prints diff.
+
+        Args:
+            output_file (str, optional): Name of the prepared mask_file.
+
+        Raises:
+            Exception: if failure to generate mask file.
+        '''
+        patterns = ['%' + a for a in self.mask_cfg.keys()]
+        values = list(self.mask_cfg.values())
+        try:
+            utils.replace(patterns,
+                          values,
+                          self.madx_cfg["mask_file"],
+                          output_file)
         except Exception:
-            content = "Failed to generate input file for oneturn sixtrack!"
+            content = "Failed to generate actual madx input file!"
             raise Exception(content)
 
-        output.append(dest)
-    temp1 = input_files['fc.3']
-    temp1 = os.path.join('../', temp1)
-    if os.path.isfile(temp1):
-        output.insert(1, temp1)
-    else:
-        content = "The %s file doesn't exist!" % temp1
-        raise FileNotFoundError(content)
+        # show diff
+        mask_name = self.madx_cfg["mask_file"]
+        utils.diff(mask_name, output_file, logger=self._logger)
 
-    utils.concatenate_files(output, 'fort.3')
-    utils.diff(source, 'fort.3', logger=logger)
+    def madx_run(self, mask):
+        """Runs madx.
 
-    # prepare the other input files
-    for key in input_files.values():
-        key1 = os.path.join('../', key)
-        if os.path.isfile(key1):
-            os.symlink(key1, key)
+        Args:
+            mask (str): mask file on which to run madx.
+
+        Raises:
+            Exception: If 'finished normally' is not in Madx output.
+        """
+        exe = self.madx_cfg['madx_exe']
+        command = exe + " " + mask
+        self._logger.info("Calling madx %s" % exe)
+        self._logger.info("MADX job is running...")
+        output = os.popen(command)
+        output = output.readlines()
+        with open('madx_stdout', 'w') as mad_out:
+            mad_out.writelines(output)
+        if 'finished normally' not in output[-2]:
+            content = "MADX has not completed properly!"
+            raise Exception(content)
         else:
-            raise FileNotFoundError("The required input file %s does not found!" %
-                                    key)
-    #if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
-    #    os.symlink('../fort.2', 'fort.2')
-    #    os.symlink('../fort.16', 'fort.16')
-    #    if not os.path.isfile('../fort.8'):
-    #        open('fort.8', 'a').close()
-    #    else:
-    #        os.symlink('../fort.8', 'fort.8')
+            self._logger.info("MADX has completed properly!")
 
-    # actually run
-    logger.info('Sixtrack job %s is running...' % jobname)
-    six_output = os.popen(sixtrack_exe)
-    outputlines = six_output.readlines()
-    output_name = '../' + jobname + '.output'
-    with open(output_name, 'w') as six_out:
-        six_out.writelines(outputlines)
-    if not os.path.isfile('fort.10'):
-        logger.error("The %s sixtrack job FAILED!" % jobname)
-        logger.info("Check the file %s which contains the SixTrack fort.6 output." % output_name)
-        raise FileNotFoundError('fort.10 not found.')
+    def madx_job(self):
+        """
+        Controls madx job execution.
+        """
+        self.madx_copy_mask()
+        # replace placeholders
+        ready_mask = 'madx_in'
+        self.madx_prep(output_file=ready_mask)
+        # run job
+        self.madx_run(ready_mask)
+        # check the output
+        if not utils.check(self.madx_out):
+            content = 'MADX output files not found.'
+            raise FileNotFoundError(content)
 
-    else:
-        result_name = '../fort.10' + '_' + jobname
-        shutil.move('fort.10', result_name)
-        logger.info('Sixtrack job %s has completed normally!' % jobname)
+    def new_fort2(self):
+        '''
+        Generate new fort.2 with aperture markers and survey and fort3.limit.
+        '''
+        # copy the collimation input files over
+        inp = self.coll_cfg['input_files']
+        inputfiles = utils.decode_strings(inp)
+        source_path = Path(self.coll_cfg["source_path"])
+        for fil in inputfiles.values():
+            fl = source_path / fil
+            shutil.copy2(fl, fil)
+        fc2 = 'fort.2'
+        aperture = inputfiles['aperture']
+        survery = inputfiles['survey']
+        # generate fort2
+        generate_fort2.run(fc2, aperture, survery)
 
-    # Get out the temp folder
-    os.chdir('../')
+    def sixtrack_check(self, job_name):
+        """Checks for fort.10 and moves it out of temp folder.
+        fort.10 --> ../fort.10_job_name
+
+        Args:
+            job_name (str): name of the sixtrack job.
+
+        Raises:
+            FileNotFoundError: if fort.10 is not found.
+        """
+        # check for fort.10
+        output_name = Path.cwd().parent / (job_name + '.output')
+        # TODO: it is possible for sixtrack to run correctly but there not be a
+        # fort.10
+        if not Path('fort.10').is_file:
+            self._logger.error("The %s sixtrack job FAILED!" % job_name)
+            self._logger.error("Check the file %s which contains the SixTrack fort.6 output." % output_name)
+            raise FileNotFoundError('fort.10 not found.')
+        else:
+            # move fort.10 out of temp folder
+            result_name = Path.cwd().parent / ('fort.10' + '_' + job_name)
+            shutil.move('fort.10', result_name)
+            self._logger.info('Sixtrack job %s has completed normally!' % job_name)
+
+    def _sixtrack_job(self, job_name, **kwargs):
+        '''One turn sixtrack job.
+
+        Args:
+            job_name (str): name of the sixtrack job.
+            **kwargs: forwarded to sixtrack_prep_cfg, used as key value pairs
+            in fort_cfg.
+        '''
+        fort_dic = self.sixtrack_prep_cfg(**kwargs)
+        with self.sixtrack_temp_folder():
+            self.sixtrack_prep_job(fort_dic,
+                                   source_prefix=Path.cwd().parent,
+                                   symlink_parent=True,
+                                   output_file='fort.3')
+            self.sixtrack_run(job_name)
+            # check and move output files
+            self.sixtrack_check(job_name)
+
+    def sixtrack_job(self):
+        ''''
+        Controls sixtrack job execution.
+        '''
+        self.sixtrack_copy_input()
+
+        try:
+            self._sixtrack_job('first_oneturn', dp1='.0', dp2='.0')
+        except Exception as e:
+            self._logger.error('SixTrack first oneturn failed.')
+            raise e
+
+        try:
+            self._sixtrack_job('second_oneturn')
+        except Exception as e:
+            self._logger.error('SixTrack second oneturn failed.')
+            raise e
+
+        # try:
+        #     self._sixtrack_job('beta_oneturn', dp1='.0', dp2='.0')
+        # except Exception as e:
+        #     self._logger.error('SixTrack beta oneturn failed.')
+        #     raise e
+
+    def write_oneturnresult(self):
+        '''
+        Writes the oneturnresult file.
+        '''
+        # Calculate and write out the requested values
+        chrom_eps = self.fort_cfg['chrom_eps']
+        with open('fort.10_first_oneturn', 'r') as first:
+            val_1 = first.readline().split()
+        with open('fort.10_second_oneturn', 'r') as second:
+            val_2 = second.readline().split()
+        tunes = [chrom_eps, val_1[2], val_1[3], val_2[2], val_2[3]]
+        chrom1 = (float(val_2[2]) - float(val_1[2])) / float(chrom_eps)
+        chrom2 = (float(val_2[3]) - float(val_1[3])) / float(chrom_eps)
+        mychrom = [chrom1, chrom2]
+        # with open('fort.10_beta_oneturn', 'r') as f_in:
+        #     beta = f_in.readline().split()
+        # print(beta)
+        beta_out = [val_1[4], val_1[47], val_1[5], val_1[48], val_1[2], val_1[3],
+                    val_1[49], val_1[50], val_1[52], val_1[53], val_1[54], val_1[55],
+                    val_1[56], val_1[57]]
+        if self.fort_cfg['CHROM'] == '0':
+            beta_out[6] = chrom1
+            beta_out[7] = chrom2
+        beta_out = beta_out + mychrom + tunes
+        lines = ' '.join(map(str, beta_out))
+        with open('oneturnresult', 'w') as f_out:
+            f_out.write(lines)
+            f_out.write('\n')
 
 
 if __name__ == '__main__':
-
-    args = sys.argv
-    num = len(args[1:])
-    if num == 0 or num == 1:
-        logger.error("The input file is missing!")
-        sys.exit(1)
-    elif num == 2:
-        wu_id = args[1]
-        db_name = args[2]
-        run(wu_id, db_name)
-        sys.exit(0)
-    else:
-        logger.error("Too many input arguments!")
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('wu_id', type=int,
+                        help='Current work unit ID')
+    parser.add_argument('db_config', type=str,
+                        help='Path to the db config file.')
+    args = parser.parse_args()
+    job = PreprocessJob(args.wu_id, args.db_config)
+    job.run()
