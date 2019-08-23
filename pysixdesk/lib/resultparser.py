@@ -85,7 +85,7 @@ def parse_file(out_f, task_table, result_table, tname):
     lines = []
     postlines = []
     for lin in raw_lines:
-        if lin[0] == '#':
+        if lin.lstrip()[0] == '#':
             continue
         lines.append(lin)
     status = globals()[tname](lines, postlines)
@@ -165,13 +165,13 @@ def aperture_losses(lines, postlines):
         postlines.append(line)
     return status
 
-def collimation_losses(out_f, task_table, names, loss_table):
+def collimation_losses(lines, postlines):
     '''process the lines of Coll_Scatter.dat'''
     status = True
     for perline in lines:
         line = perline.split()
         if len(line) != 7:
-           # logger.info(perline)
+            logger.info(perline)
             line = 7*['None']
             status = False
         postlines.append(line)
