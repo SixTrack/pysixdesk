@@ -9,25 +9,24 @@ import getpass
 import zipfile
 import logging
 import importlib
-import configparser
 
 from .pysixdb import SixDB
 from . import utils
-from .resultparser import parse_result
+from .resultparser import parse_results
 
 logger = logging.getLogger(__name__)
 
 def run(wu_id, info):
-    cf = configparser.ConfigParser()
-    cf.read_dict(info)
+    cf = {}
+    cf.update(info)
     info_sec = cf['info']
-    boinc = 'false'
+    boinc = False
     if str(wu_id) == '1':
         boinc = info_sec['boinc']
 
     db_info = cf['db_info']
     dbtype = db_info['db_type']
-    if dbtype.lower() == 'mysql' and str(boinc).lower() == 'false':
+    if dbtype.lower() == 'mysql' and not boinc:
         content = "No need to gather results manually with MySQL!"
         logger.info(content)
         return
@@ -62,7 +61,7 @@ def gather_results(jobtype, cf, cluster):
     set_sec = cf['db_setting']
     db_info = cf['db_info']
     db = SixDB(db_info, settings=set_sec, create=False)
-    file_list = utils.decode_strings(info_sec['outs'])
+    file_list = info_sec['outs']
     where = "status='submitted'"
     job_ids = db.select(f'{jobtype}_wu', ['wu_id', 'unique_id'], where)
     job_ids = [(str(j), str(i)) for i, j in job_ids]
@@ -75,7 +74,7 @@ def gather_results(jobtype, cf, cluster):
         logger.warning(content)
     valid_wu_ids = list(job_index.values())
 
-    if cf.has_option('info', 'boinc') and cf.getboolean('info', 'boinc'):
+    if ('boinc' in cf['info'].keys()) and cf['info']['boinc']:
         content = "Downloading results from boinc spool!"
         logger.info(content)
         stat, wu_ids = download_from_boinc(info_sec)
@@ -89,7 +88,7 @@ def gather_results(jobtype, cf, cluster):
 
     parent_cf = {}
     for sec in cf:
-        parent_cf[sec] = dict(cf[sec])
+        parent_cf[sec] = cf[sec]
     for item in os.listdir(type_path):
         if item not in valid_wu_ids:
             continue
@@ -107,7 +106,7 @@ def gather_results(jobtype, cf, cluster):
             where = 'wu_id=%s' % item
             task_id = db.select(f'{jobtype}_wu', ['task_id'], where)
             task_id = task_id[0][0]
-            parse_result(jobtype, item, job_path, file_list, task_table,
+            parse_results(jobtype, item, job_path, file_list, task_table,
                     result_cf)
             where = 'task_id=%s' % task_id
             db.update(f'{jobtype}_task', task_table, where)

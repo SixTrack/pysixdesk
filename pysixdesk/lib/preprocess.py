@@ -10,7 +10,7 @@ from pysixdesk.lib import utils
 from pysixdesk.lib.dbtable import Table
 from pysixdesk.lib import generate_fort2
 from pysixdesk.lib.pysixdb import SixDB
-from pysixdesk.lib.resultparser import parse_result
+from pysixdesk.lib.resultparser import parse_results
 
 
 logger = utils.condor_logger('preprocess')
@@ -106,8 +106,8 @@ def run(wu_id, input_info):
         for sec in cf:
             result_cf[sec] = dict(cf[sec])
         filelist = Table.result_table(output_files.values())
-        parse_result('preprocess', wu_id, job_path, filelist, task_table,
-                result_cf))
+        parse_results('preprocess', wu_id, job_path, filelist, task_table,
+                result_cf)
         where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
         for sec, vals in result_cf.items():
@@ -168,7 +168,7 @@ def madxjob(madx_config, mask_config):
         content = "Failed to generate actual madx input file!"
         raise Exception(content)
 
-    utils.diff(mask_name, madx_in, logger=logger)
+    #utils.diff(mask_name, madx_in, logger=logger)
 
     # Begin to execute madx job
     command = madxexe + " " + madx_in
@@ -327,7 +327,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
         raise FileNotFoundError(content)
 
     utils.concatenate_files(output, 'fort.3')
-    utils.diff(source, 'fort.3', logger=logger)
+    #utils.diff(source, 'fort.3', logger=logger)
 
     # prepare the other input files
     for key in input_files.values():

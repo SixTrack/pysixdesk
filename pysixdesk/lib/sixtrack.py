@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib import utils
 from pysixdesk.lib.dbtable import Table
-from pysixdesk.lib.resultparser import parse_result
+from pysixdesk.lib.resultparser import parse_results
 
 logger = utils.condor_logger('sixtrack')
 
@@ -126,7 +126,7 @@ def run(wu_id, input_info):
         for sec in cf:
             result_cf[sec] = dict(cf[sec])
         filelist = Table.result_table(output_files.values())
-        parse_result(wu_id, job_path, filelist, task_table, result_cf))
+        parse_results(wu_id, job_path, filelist, task_table, result_cf)
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
         for sec, vals in result_cf.items():
@@ -238,7 +238,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         raise FileNotFoundError("The %s file doesn't exist!" % temp1)
 
     utils.concatenate_files(output, 'fort.3')
-    utils.diff(source, 'fort.3', logger=logger)
+    #utils.diff(source, 'fort.3', logger=logger)
 
     # actually run
     wu_id = sixtrack_config['wu_id']
@@ -300,7 +300,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             raise FileNotFoundError("The %s file doesn't exist!" % temp1)
 
         utils.concatenate_files(output, 'fort.3')
-        utils.diff(source, 'fort.3', logger=logger)
+        #utils.diff(source, 'fort.3', logger=logger)
 
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'

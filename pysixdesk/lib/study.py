@@ -551,41 +551,40 @@ class Study(object):
 
     def collect_result(self, typ, boinc=False):
         '''Collect the results of preprocess or  sixtrack jobs'''
-        self.config.clear()
-        self.config['info'] = {}
-        info_sec = self.config['info']
-        self.config['db_setting'] = self.db_settings
-        self.config['db_info'] = self.db_info
+        config ={}
+        info_sec = {}
+        config['info'] = info_sec
+        config['db_setting'] = self.db_settings
+        config['db_info'] = self.db_info
 
         info_sec['cluster_module'] = self.cluster_module
         info_sec['cluster_name'] = self.cluster_name
         if typ == 0:
             if self.oneturn:
                 # The section name should be same with the table name
-                self.config['oneturn_sixtrack_results'] = self.tables[
+                config['oneturn_sixtrack_results'] = self.tables[
                         'oneturn_sixtrack_results']
             info_sec['path'] = self.paths['preprocess_out']
-            fileout = list(self.preprocess_out.values())
-            info_sec['outs'] = utils.encode_strings(Table.result_table(fileout))
+            fileout = list(self.preprocess_output.values())
+            info_sec['outs'] = Table.result_table(fileout)
         elif typ == 1:
-            self.config['six_results'] = self.tables['six_results']
+            config['six_results'] = self.tables['six_results']
             info_sec['path'] = self.paths['sixtrack_out']
             info_sec['boinc_results'] = self.env['boinc_results']
-            info_sec['boinc'] = str(boinc)
+            info_sec['boinc'] = boinc
             info_sec['st_pre'] = self.st_pre
-            info_sec['outs'] = utils.encode_strings(Table.result_table(
-                self.sixtrack_output))
+            info_sec['outs'] = Table.result_table(self.sixtrack_output)
             if self.collimation:
-                self.config['aperture_losses'] = self.tables['aperture_losses']
-                self.config['collimation_losses'] = self.tables['collimation_losses']
-                self.config['init_state'] = self.tables['init_state']
-                self.config['final_state'] = self.tables['final_state']
+                config['aperture_losses'] = self.tables['aperture_losses']
+                config['collimation_losses'] = self.tables['collimation_losses']
+                config['init_state'] = self.tables['init_state']
+                config['final_state'] = self.tables['final_state']
         else:
             content = "Unkown job type %s" % typ
             raise ValueError(content)
 
         try:
-            gather.run(typ, self.config)
+            gather.run(typ, config)
         except Exception as e:
             raise e
 

@@ -187,6 +187,7 @@ class Table(object):
         self.tables['oneturn_sixtrack_wu'] = OrderedDict()
         self.tables['oneturn_sixtrack_results'] = OrderedDict([
             ('task_id', 'int'),
+            ('row_num', 'int'),
             ('wu_id', 'int'),
             ('betax', 'float'),
             ('betax2', 'float'),
@@ -214,6 +215,7 @@ class Table(object):
     def init_collimation_tables(self):
         self.tables['aperture_losses'] = OrderedDict([
             ('task_id', 'int'),
+            ('row_num', 'int'),
             ('turn', 'int'),
             ('block', 'int'),
             ('bezid', 'int'),
@@ -233,11 +235,12 @@ class Table(object):
             ('Z_atom', 'int'),
             ('mtime', 'bigint')])
         self.table_keys['aperture_losses'] = {
-            'primary': ['task_id'],
+            'primary': ['task_id', 'row_num'],
             'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
         }
         self.tables['collimation_losses'] = OrderedDict([
             ('task_id', 'int'),
+            ('row_num', 'int'),
             ('icoll', 'int'),
             ('iturn', 'int'),
             ('np', 'int'),
@@ -247,13 +250,14 @@ class Table(object):
             ('dyp', 'float'),
             ('mtime', 'bigint')])
         self.table_keys['collimation_losses'] = {
-            'primary': ['task_id'],
+            'primary': ['task_id', 'row_num'],
             'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
         }
 
     def init_state_tables(self):
         self.tables['init_state'] = OrderedDict([
             ('task_id', 'int'),
+            ('row_num', 'int'),
             ('part_id', 'int'),
             ('parent_id', 'int'),
             ('lost', 'text'),
@@ -267,11 +271,12 @@ class Table(object):
             ('e', 'float'),
             ('mtime', 'bigint')])
         self.table_keys['init_state'] = {
-            'primary': ['task_id'],
+            'primary': ['task_id', 'row_num'],
             'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
         }
         self.tables['final_state'] = OrderedDict([
             ('task_id', 'int'),
+            ('row_num', 'int'),
             ('part_id', 'int'),
             ('parent_id', 'int'),
             ('lost', 'text'),
@@ -285,6 +290,6 @@ class Table(object):
             ('e', 'float'),
             ('mtime', 'bigint')])
         self.table_keys['final_state'] = {
-            'primary': ['task_id'],
+            'primary': ['task_id', 'row_num'],
             'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
         }
