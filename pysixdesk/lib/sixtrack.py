@@ -117,7 +117,6 @@ def run(wu_id, input_info):
     try:
         # Reconnect after job finished
         db = SixDB(db_info)
-        f10_sec = cf['f10']
         job_table = {}
         task_table = {}
         task_table['status'] = 'Success'
@@ -125,8 +124,8 @@ def run(wu_id, input_info):
         result_cf = {}
         for sec in cf:
             result_cf[sec] = dict(cf[sec])
-        filelist = Table.result_table(output_files.values())
-        parse_results(wu_id, job_path, filelist, task_table, result_cf)
+        filelist = Table.result_table(output_files)
+        parse_results('sixtrack', wu_id, job_path, filelist, task_table, result_cf)
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
         for sec, vals in result_cf.items():

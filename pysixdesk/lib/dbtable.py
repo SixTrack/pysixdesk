@@ -188,7 +188,6 @@ class Table(object):
         self.tables['oneturn_sixtrack_results'] = OrderedDict([
             ('task_id', 'int'),
             ('row_num', 'int'),
-            ('wu_id', 'int'),
             ('betax', 'float'),
             ('betax2', 'float'),
             ('betay', 'float'),

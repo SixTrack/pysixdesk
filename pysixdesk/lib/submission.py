@@ -103,7 +103,7 @@ class HTCondor(Cluster):
         joblist = os.path.join(input_path, 'job_id.list')
         if not os.path.isfile(joblist):
             content = "There isn't %s job for submission!" % job_name
-            logger.warning(content)
+            self._logger.warning(content)
             return False, None
         scont = 1
         while scont <= trials:
