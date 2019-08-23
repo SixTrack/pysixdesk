@@ -18,17 +18,17 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
     contents = os.listdir(job_path)
 
     madx_in = [s for s in contents if 'madx_in' in s]
-    if madx_in:
+    if madx_in and jobtype == 'preprocess':
         madx_in = os.path.join(job_path, madx_in[0])
         task_table['madx_in'] = compress_buf(madx_in, 'gzip')
 
     madx_out = [s for s in contents if 'madx_stdout' in s]
-    if madx_out:
+    if madx_out and jobtype == 'preprocess':
         madx_out = os.path.join(job_path, madx_out[0])
         task_table['madx_stdout'] = compress_buf(madx_out, 'gzip')
 
     fort3_in = [s for s in contents if 'fort.3' in s]
-    if fort3_in:
+    if fort3_in and jobtype == 'sixtrack':
         fort3_in = os.path.join(job_path, fort3_in[0])
         task_table['fort3'] = compress_buf(fort3_in, 'gzip')
 
@@ -58,11 +58,12 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
                 try:
                     parse_file(out_f, task_table, result_cf[tname], tname)
                     valid_tname.append(tname)
-                except:
+                except Exception as e:
                     task_table['status'] = 'Failed'
                     content = "There is something wrong with the output "\
                         "file %s for job %s!" % (out, item)
                     logger.error(content)
+                    logger.error(e, exc_info=True)
             task_table[out] = compress_buf(out_f, 'gzip')
         else:
             task_table['status'] = 'Failed'
@@ -70,7 +71,8 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
                     "doesn't exist! The job failed!"
             logger.warning(content)
     # clean the redundant sections
-    for tname in result_cf.keys():
+    keys = list(result_cf.keys())
+    for tname in keys:
         if tname not in valid_tname:
             result_cf.pop(tname)
 
@@ -79,9 +81,14 @@ def parse_file(out_f, task_table, result_table, tname):
     countl = 0
     mtime = int(os.path.getmtime(out_f) * 1E7)
     with gzip.open(out_f, 'rt') as f_in:
-        lines = f_in.readlines()
+        raw_lines = f_in.readlines()
+    lines = []
     postlines = []
-    status = locals()[tname](lines, postlines)
+    for lin in raw_lines:
+        if lin[0] == '#':
+            continue
+        lines.append(lin)
+    status = globals()[tname](lines, postlines)
     if not status:
         task_table['status'] = 'Failed'
         content = 'Error in %s' % out_f
@@ -140,7 +147,7 @@ def final_sate(lines, postlines):
     for perline in lines:
         line = perline.split()
         if len(line) != 12:
-            logger.info(perline)
+           # logger.info(perline)
             line = 12*['None']
             status = False
         postlines.append(line)
@@ -151,9 +158,9 @@ def aperture_losses(lines, postlines):
     status = True
     for perline in lines:
         line = perline.split()
-        if len(line) != 12:
+        if len(line) != 17:
             logger.info(perline)
-            line = 12*['None']
+            line = 17*['None']
             status = False
         postlines.append(line)
     return status
@@ -163,9 +170,9 @@ def collimation_losses(out_f, task_table, names, loss_table):
     status = True
     for perline in lines:
         line = perline.split()
-        if len(line) != 12:
-            logger.info(perline)
-            line = 12*['None']
+        if len(line) != 7:
+           # logger.info(perline)
+            line = 7*['None']
             status = False
         postlines.append(line)
     return status
