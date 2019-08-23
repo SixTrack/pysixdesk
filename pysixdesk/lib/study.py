@@ -95,7 +95,6 @@ class Study(object):
             self.study_path, "sixtrack_input")
         self.paths["sixtrack_out"] = os.path.join(
             self.study_path, "sixtrack_output")
-        self.paths["gather"] = os.path.join(self.study_path, "gather")
         self.paths["templates"] = self.study_path
         # self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
         self.env['test_turn'] = 1000
@@ -206,8 +205,6 @@ class Study(object):
             os.makedirs(self.paths["sixtrack_in"])
         if not os.path.isdir(self.paths["sixtrack_out"]):
             os.makedirs(self.paths["sixtrack_out"])
-        if not os.path.isdir(self.paths["gather"]):
-            os.makedirs(self.paths["gather"])
 
         stp = self.study_path
         studies = os.path.dirname(stp)
@@ -281,8 +278,8 @@ class Study(object):
         temp = self.paths["templates"]
         cont = os.listdir(temp)
         require = []
-        if self.oneturn:
-            require += self.oneturn_sixtrack_input["temp"]
+        #if self.oneturn:
+        #    require += self.oneturn_sixtrack_input["temp"]
         require += self.sixtrack_input['temp']
         require.append(self.madx_input["mask_file"])
         for r in require:
@@ -295,10 +292,10 @@ class Study(object):
             for key, value in self.madx_input.items():
                 value = os.path.join(self.study_path, value)
                 tab[key] = utils.compress_buf(value)
-            if self.oneturn:
-                for key in self.oneturn_sixtrack_input['temp']:
-                    value = os.path.join(self.study_path, key)
-                    tab[key] = utils.compress_buf(value)
+            #if self.oneturn:
+            #    for key in self.oneturn_sixtrack_input['temp']:
+            #        value = os.path.join(self.study_path, key)
+            #        tab[key] = utils.compress_buf(value)
             for key in self.sixtrack_input['temp']:
                 value = os.path.join(self.study_path, key)
                 tab[key] = utils.compress_buf(value)
@@ -415,6 +412,11 @@ class Study(object):
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.encode_strings(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])
+        if self.collimation:
+            self.config['aperture_losses'] = self.tables['aperture_losses']
+            self.config['collimation_losses'] = self.tables['collimation_losses']
+            self.config['init_state'] = self.tables['init_state']
+            self.config['final_state'] = self.tables['final_state']
 
         madx_keys = list(self.madx_params.keys())
         madx_vals = self.db.select('preprocess_wu', ['wu_id'] + madx_keys)
