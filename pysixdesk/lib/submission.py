@@ -103,8 +103,8 @@ class HTCondor(Cluster):
         joblist = os.path.join(input_path, 'job_id.list')
         if not os.path.isfile(joblist):
             content = "There isn't %s job for submission!" % job_name
-            raise FileNotFoundError(content)
-
+            logger.warning(content)
+            return False, None
         scont = 1
         while scont <= trials:
             args = list(args)
@@ -141,12 +141,14 @@ class HTCondor(Cluster):
                         out = dict(comb)
                         # remove job list after successful submission
                         os.remove(joblist)
-                        return out
+                        return True, out
                 except Exception as e:
                     # this will catch the excpetion raised or any unexpected
                     # exception in the try block.
+                    self._logger.error(e, exc_info=True)
                     self._logger.error(outs)
-                    raise e
+                    return False, None
+        return False, None
 
     def check_format(self, unique_id):
         '''Check the job status with fixed format

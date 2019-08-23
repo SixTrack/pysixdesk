@@ -532,23 +532,22 @@ class Study(object):
         ibatch += 1
         batch_name = batch_name + '_' + str(ibatch)
 
-        try:
-            out = self.submission.submit(input_path, batch_name,
-                                         trials, *args, **kwargs)
-        except Exception as e:
+        status, out = self.submission.submit(input_path, batch_name, trials,
+                *args, **kwargs)
+
+        if status:
+            content = "Submit %s job successfully!" % jobname
+            self._logger.info(content)
+            table = {}
+            table['status'] = 'submitted'
+            for ky, vl in out.items():
+                where = 'wu_id=%s' % ky
+                table['unique_id'] = vl
+                table['batch_name'] = batch_name
+                self.db.update(table_name, table, where)
+        else:
             content = "Failed to submit %s job!" % jobname
             self._logger.error(content)
-            raise e
-
-        content = "Submit %s job successfully!" % jobname
-        self._logger.info(content)
-        table = {}
-        table['status'] = 'submitted'
-        for ky, vl in out.items():
-            where = 'wu_id=%s' % ky
-            table['unique_id'] = vl
-            table['batch_name'] = batch_name
-            self.db.update(table_name, table, where)
 
     def collect_result(self, typ, boinc=False):
         '''Collect the results of preprocess or  sixtrack jobs'''
