@@ -128,7 +128,7 @@ class MyStudy(Study):
         if source not in paramdict.keys():
             self._logger.info("Invalid parameter name %s!" % source)
             return 0
-        value = paramdict.pop(source)
+        value = paramdict[source]
         try:
             value = ast.literal_eval(value)
         except ValueError:
