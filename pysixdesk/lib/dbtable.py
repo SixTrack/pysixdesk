@@ -46,11 +46,11 @@ class Table(object):
                 self.tables[table_names][key] = self.type_dict[val]
         elif isinstance(info, list):
             if dtype is None:
-                raise Exception("Data type information needed!")
+                raise TypeError("Data type information needed!")
             for key in info:
                 self.tables[table_names][key] = dtype
         else:
-            raise Exception("Unsupported input format!")
+            raise TypeError("Unsupported input type!")
 
     def init_preprocess_tables(self):
         self.tables['preprocess_wu'] = OrderedDict([
