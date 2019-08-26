@@ -107,6 +107,12 @@ class Table(object):
             ('job_stdout', 'blob'),
             ('job_stderr', 'blob'),
             ('job_stdlog', 'blob'),
+            ('cr_status', 'blob'),
+            ('cr_stdout', 'blob'),
+            ('cr_stderr', 'blob'),
+            ('fort6', 'MEDIUMBLOB'),
+            ('crpoint_pri', 'MEDIUMBLOB'),
+            ('crpoint_sec', 'MEDIUMBLOB'),
             ('status', 'text'),
             ('mtime', 'bigint')])
         self.table_keys['sixtrack_task'] = {
