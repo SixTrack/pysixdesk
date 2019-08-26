@@ -98,8 +98,10 @@ class Study(object):
         self.paths["templates"] = self.study_path
         # self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
         self.env['test_turn'] = 1000
+        self.env['surv_percent'] = 1
         self.oneturn = True
         self.collimation = False
+        self.checkpoint_restart = False
         self.cluster_class = submission.HTCondor
 
         self.madx_output = {
@@ -228,7 +230,6 @@ class Study(object):
         self.env['boinc_work'] = os.path.join(boinc_spool, self.st_pre, 'work')
         self.env['boinc_results'] = os.path.join(
             boinc_spool, self.st_pre, 'results')
-        self.env['surv_percent'] = 1
 
         # initialize the database table
         table.init_preprocess_tables()
