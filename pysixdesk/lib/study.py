@@ -398,7 +398,6 @@ class Study(object):
         six_sec = self.config['sixtrack']
         self.config['fort3'] = {}
         fort3_sec = self.config['fort3']
-        self.config['f10'] = self.tables['six_results']
         six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         if 'additional_input' in self.sixtrack_input.keys():
@@ -412,6 +411,7 @@ class Study(object):
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.encode_strings(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])
+        self.config['six_results'] = self.tables['six_results']
         if self.collimation:
             self.config['aperture_losses'] = self.tables['aperture_losses']
             self.config['collimation_losses'] = self.tables['collimation_losses']
