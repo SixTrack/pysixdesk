@@ -101,11 +101,11 @@ def gather_results(jobtype, cf, cluster):
         job_table = {}
         task_table = {}
         task_table['status'] = 'Success'
+        where = 'wu_id=%s' % item
+        task_id = db.select(f'{jobtype}_wu', ['task_id'], where)
+        task_id = task_id[0][0]
         if os.path.isdir(job_path) and os.listdir(job_path):
             # parse the results
-            where = 'wu_id=%s' % item
-            task_id = db.select(f'{jobtype}_wu', ['task_id'], where)
-            task_id = task_id[0][0]
             parse_results(jobtype, item, job_path, file_list, task_table,
                     result_cf)
             where = 'task_id=%s' % task_id
@@ -125,8 +125,9 @@ def gather_results(jobtype, cf, cluster):
                 job_table['status'] = 'incomplete'
                 db.update(f'{jobtype}_wu', job_table, where)
         else:
+            where = 'task_id=%s' % task_id
             task_table['status'] = 'Failed'
-            db.insert(f'{jobtype}_task', task_table)
+            db.update(f'{jobtype}_task', task_table, where)
             content = "This is a failed job!"
             logger.warning(content)
         shutil.rmtree(job_path)
