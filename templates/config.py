@@ -68,6 +68,7 @@ class MyStudy(Study):
         self.sixtrack_input['temp'] = ['fort.3']
         self.preprocess_output = copy.deepcopy(self.madx_output)
         self.sixtrack_input['input'] = self.preprocess_output
+        self.synonym_map['tracking_turn'] = 'turnss'
 
         ## The parameters for collimation job
         # self.madx_output = {

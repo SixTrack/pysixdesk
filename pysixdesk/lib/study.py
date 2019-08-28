@@ -43,6 +43,7 @@ class Study(object):
         self.oneturn_sixtrack_input = {}
         self.sixtrack_params = OrderedDict()
         self.sixtrack_input = {}
+        self.synonym_map = {}
         self.preprocess_output = {}
         self.sixtrack_output = []
         self.tables = {}
@@ -102,6 +103,8 @@ class Study(object):
         self.oneturn = True
         self.collimation = False
         self.checkpoint_restart = False
+        self.start_point = 1000
+        self.prolong_turn = 1000
         self.cluster_class = submission.HTCondor
 
         self.madx_output = {
@@ -374,7 +377,6 @@ class Study(object):
                 madx_table[ky] = vl
             prefix = self.madx_input['mask_file'].split('.')[0]
             job_name = self.name_conven(prefix, keys, element, '')
-            # madx_input = self.paths['preprocess_in']
             wu_id += 1
             madx_table['wu_id'] = wu_id
             n = str(wu_id)

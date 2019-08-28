@@ -86,6 +86,7 @@ class Table(object):
     def init_sixtrack_tables(self):
         self.tables['sixtrack_wu'] = OrderedDict([
             ('wu_id', 'INTEGER'),
+            ('tracking_turn', 'int'),
             ('preprocess_id', 'int'),
             ('job_name', 'text'),
             ('input_file', 'blob'),
@@ -97,7 +98,7 @@ class Table(object):
             ('mtime', 'bigint')])
         self.table_keys['sixtrack_wu'] = {
             'primary': ['wu_id'],
-            'autoincrement': ['wu_id'],
+            #'autoincrement': ['wu_id'],
             'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
         }
         self.tables['sixtrack_task'] = OrderedDict([
