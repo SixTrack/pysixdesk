@@ -171,7 +171,7 @@ def download_from_boinc(info_sec):
             content = 'Something wrong with the result %s' % f10
             logger.warning(content)
             continue
-        task_id = f10[match.end() + 1:match.end() + 2]
+        task_id = f10[match.end() + 1:].split('_')[0]
         job_path = os.path.join(out_path, task_id)
         if not os.path.isdir(job_path):
             content = "Output path for sixtrack task %s doesn't exist!" % task_id
