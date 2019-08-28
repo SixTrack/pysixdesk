@@ -51,7 +51,7 @@ class MyStudy(Study):
         mask_file = 'hl10.mask'
         self.madx_input["mask_file"] = mask_file
         # All parameters are case-sensitive
-        self.params = StudyParams(os.path.join(self.study_path, mask_file),
+        self.params = StudyParams(mask_path=os.path.join(self.study_path, mask_file),
                                   fort_path=os.path.join(self.study_path, 'fort.3'),
                                   machine_defaults=machineparams.HLLHC['col'])
         self.params['Runnam'] = name

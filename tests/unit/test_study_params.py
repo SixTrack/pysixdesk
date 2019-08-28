@@ -59,7 +59,8 @@ test=%test1; test=%test2; test=%test3
             f_f.write(fort_content)
 
     def test_placeholder_pattern(self):
-        params = StudyParams(self.mask_file, fort_path=self.fort_file)
+        params = StudyParams(mask_path=self.mask_file,
+                             fort_path=self.fort_file)
         self.assertTrue((self.mask_ph | self.fort_ph).issubset(set(params.keys())))
         self.assertEqual(set(params.madx.keys()), self.mask_ph)
         # they are not equal because of the 'CHROM' and 'chrom_eps'
@@ -68,7 +69,8 @@ test=%test1; test=%test2; test=%test3
         self.assertTrue(self.fort_ph < set(params.sixtrack.keys()))
 
     def test_oneturn(self):
-        params = StudyParams(self.mask_file, fort_path=self.fort_file)
+        params = StudyParams(mask_path=self.mask_file,
+                             fort_path=self.fort_file)
         oneturn = params.oneturn
         self.assertEqual(oneturn['turnss'], 1)
         self.assertEqual(oneturn['Runnam'], 'FirstTurn')
@@ -77,13 +79,15 @@ test=%test1; test=%test2; test=%test3
     def test_drop_none(self):
         # check that params with None as values, i.e. no defaults values and no
         # user set values through __set_item__, are removed from the params.
-        params = StudyParams(self.mask_file, fort_path=self.fort_file)
+        params = StudyParams(mask_path=self.mask_file,
+                             fort_path=self.fort_file)
         params.drop_none()
         no_values = ['test1', 'test2', 'test3']
         keys = params.keys()
         self.assertTrue([k not in keys for k in no_values])
 
-        params = StudyParams(self.mask_file, fort_path=self.fort_file)
+        params = StudyParams(mask_path=self.mask_file,
+                             fort_path=self.fort_file)
         params['test1'] = 1
         params.drop_none()
         no_values = ['test2', 'test3']  # these should be removed by drop_none
@@ -93,7 +97,8 @@ test=%test1; test=%test2; test=%test3
         self.assertTrue([k in keys for k in with_values])
 
     def test_setitem(self):
-        params = StudyParams(self.mask_file, fort_path=self.fort_file)
+        params = StudyParams(mask_path=self.mask_file,
+                             fort_path=self.fort_file)
         for k in self.mask_ph:
             params[k] = 1.23
         # check that the params were changed
@@ -116,7 +121,8 @@ test=%test1; test=%test2; test=%test3
             params['not_in_files'] = 123
 
     def test_calc_queue(self):
-        params = StudyParams(self.mask_file, fort_path=self.fort_file)
+        params = StudyParams(mask_path=self.mask_file,
+                             fort_path=self.fort_file)
         e0_init = params['e0']
 
         @set_property('input_keys', ['e0'])
@@ -178,7 +184,8 @@ test=%test1; test=%test2; test=%test3
         db.insertm('test_table', {'x': x_vals,
                                   'y': y_vals,
                                   'wu_id': [1, 2, 3, 4]})
-        params = StudyParams(self.mask_file, fort_path=self.fort_file)
+        params = StudyParams(mask_path=self.mask_file,
+                             fort_path=self.fort_file)
 
         # this calculation takes input from data in the test table
         @set_property('require', {'test_table': ['x', 'y']})

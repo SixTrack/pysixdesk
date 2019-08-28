@@ -1,6 +1,7 @@
 import re
-import os
 import logging
+
+from pathlib import Path
 from collections import OrderedDict
 from collections.abc import Iterable
 from itertools import product
@@ -24,16 +25,22 @@ class StudyParams:
     To get the placeholder patterns for the fort.3 file use self.sixtrack.
     '''
 
-    def __init__(self, mask_path,
-                 fort_path=os.path.join(PYSIXDESK_ABSPATH, 'templates/fort.3'),
+    def __init__(self,
+                 mask_path=Path(PYSIXDESK_ABSPATH) / 'templates/hl10.mask',
+                 fort_path=Path(PYSIXDESK_ABSPATH) / 'templates/fort.3',
                  machine_defaults=machineparams.HLLHC['col']):
         """
         Args:
-            mask_path (str): path to the mask file
-            fort_path (str): path to the fort file
+            mask_path (str, path): path to the mask file
+            fort_path (str, path): path to the fort file
             machine_defaults (dict): dictionary containing the default
             parameters of the desired machine/configuration.
         """
+        if not isinstance(mask_path, Path):
+            mask_path = Path(mask_path)
+        if not isinstance(fort_path, Path):
+            fort_path = Path(fort_path)
+
         self._logger = logging.getLogger(__name__)
         # comment regexp
         self._reg_comment = re.compile(r'^(\s?!|\s?/).*', re.MULTILINE)
@@ -50,43 +57,41 @@ class StudyParams:
         # f3_defaults dict, as they are not values for placeholders in fort.3.
 
         # default parameters for sixtrack/fort.3 specific placeholders
-        self.f3_defaults = dict([
-                                ("ax0s", 0.1),
-                                ("ax1s", 0.1),
-                                ("chrom_eps", 0.000001),  # this is not a placeholder
-                                ("CHROM", 0),  # this is not a placeholder
-                                ("dp1", 0.000001),
-                                ("dp2", 0.000001),
-                                ("EI", 3.5),
-                                ("turnss", 1e5),
-                                ("ibtype", 0),
-                                ("iclo6", 2),
-                                ("idfor", 0),
-                                ("imc", 1),
-                                ("ilin", 1),
-                                ("ition", 0),
-                                ("length", 26658.864),
-                                ("ndafi", 1),
-                                ("nss", 60),  # should this be 60? 30?
-                                ("pmass", PROTON_MASS),
-                                ("Runnam", 'FirstTurn'),
-                                ("ratios", 1),
-                                # these toggle_* aren't very pretty.
-                                ("toggle_post/", ''),  # '' --> on, '/' --> off
-                                ("toggle_diff/", '/'),  # '' --> on, '/' --> off
-                                ("toggle_coll/", ''),  # '' --> off, '/' --> on
-                                ("writebins", 1),
-                                ])
+        self.f3_defaults = {"ax0s": 0.1,
+                            "ax1s": 0.1,
+                            "chrom_eps": 0.000001,  # this is not a placeholder is it the same as dp1/2 ?
+                            "CHROM": 0,  # this is not a placeholder, it's a toggle for the preprocess job
+                            "dp1": 0.000001,
+                            "dp2": 0.000001,
+                            "EI": 3.5,  # figure out if this should be the same as the emittance
+                            "ibtype": 0,
+                            "iclo6": 2,
+                            "idfor": 0,
+                            "imc": 1,
+                            "ilin": 1,
+                            "ition": 0,
+                            "length": 26658.864,
+                            "ndafi": 1,
+                            "nss": 30,  # should this be 60? 30?
+                            "pmass": PROTON_MASS,
+                            "Runnam": 'FirstTurn',
+                            "ratios": 1,
+                            "turnss": 1e5,
+                            # these toggle_*: aren't very pretty.
+                            "toggle_post/": '',  # '' --> on, '/' --> off
+                            "toggle_diff/": '/',  # '' --> on, '/' --> off
+                            "toggle_coll/": '',  # '' --> off, '/' --> on
+                            "writebins": 1,
+                            }
         self.machine_defaults = machine_defaults
         self.defaults = merge_dicts(self.f3_defaults, self.machine_defaults)
         # phasespace params
         # TODO: find sensible defaults
         amp = [8, 10, 12]  # The amplitude
-        self.phasespace = dict([
-                               ('amp', list(zip(amp, amp[1:]))),
-                               ('kang', list(range(1, 1 + 1))),
-                               ('kmax', 5),
-                               ])
+        self.phasespace = {"amp": list(zip(amp, amp[1:])),
+                           "kang": list(range(1, 1 + 1)),
+                           "kmax": 5,
+                           }
 
         self.madx = self.find_patterns(self.mask_path)
         self.sixtrack = self.find_patterns(self.fort_path,
@@ -101,7 +106,7 @@ class StudyParams:
         return sixtrack
 
     def keys(self):
-        """Gets the keys of `self.madx`, `self.sixtrack` and `self.phasespace`
+        """Gets the keys of 'self.madx', 'self.sixtrack' and 'self.phasespace'
 
         Returns:
             list: list of keys.
@@ -115,8 +120,8 @@ class StudyParams:
         Extracts the patterns from a file.
 
         Args:
-            file (str): path to the file from which to extract the placeholder
-            patterns.
+            file (str, path): path to the file from which to extract the
+            placeholder patterns.
         Returns:
             list: list containing the regexp matches, i.e. the placeholders
         '''
@@ -126,16 +131,13 @@ class StudyParams:
         matches = re.findall(self._reg, lines_no_comments)
         return matches
 
-    def find_patterns(self, file_path, folder=False, keep_none=True,
-                      mandatory=None):
+    def find_patterns(self, file_path, keep_none=True, mandatory=None):
         '''
-        Reads file at `file_path` and populates a dict with the matched
-        patterns and values taken from `self.defaults`.
+        Reads file at 'file_path' and populates a dict with the matched
+        patterns and values taken from 'self.defaults'.
 
         Args:
-            file_path (str): path to file to extract placeholder patterns
-            folder (bool, optional): if True, check for placeholder patterns
-            in all files in the `file_path` fodler.
+            file_path (str, path): path to file to extract placeholder patterns
             keep_none (bool, optional): if True, keeps the None entries in the
             output dict.
             mandatory (list, optional): if provided will add the keys in the
@@ -144,18 +146,9 @@ class StudyParams:
 
         Returns:
             OrderedDict: dictionnary of the extracted placeholder patterns with
-            their values set the entry on `self.defaults`.
+            their values given by 'self.defaults'.
         '''
-        dirname = os.path.dirname(file_path)
-        if folder and dirname != '':
-            # extract the patterns for all the files in the directory of the
-            # maskfile
-            matches = []
-            for file in os.listdir(dirname):
-                matches += self._extract_patterns(os.path.join(dirname,
-                                                               file))
-        else:
-            matches = self._extract_patterns(file_path)
+        matches = self._extract_patterns(file_path)
 
         out = OrderedDict()
         for ph in matches:
@@ -342,7 +335,7 @@ class StudyParams:
 
     @staticmethod
     def _find_none(dic):
-        """Finds the keys of any entry in `dic` with a None value.
+        """Finds the keys of any entry in 'dic' with a None value.
 
         Args:
             dic (dict): Dictionnary to check.
@@ -357,13 +350,13 @@ class StudyParams:
         return out
 
     def _remove_none(self, dic):
-        """Removes Nones in dictionnary `dic`."""
+        """Removes Nones in dictionnary 'dic'."""
         for k in self._find_none(dic):
             del dic[k]
 
     def drop_none(self):
         """
-        Drop Nones from `self.madx`, `self.sixtrack` and `self.phasespace`.
+        Drop Nones from 'self.madx', 'self.sixtrack' and 'self.phasespace'.
         """
         self._remove_none(self.madx)
         self._remove_none(self.sixtrack)
