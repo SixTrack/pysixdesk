@@ -25,7 +25,7 @@ def run(task_id, input_info):
     db_info.update(cf['db_info'])
     dbtype = db_info['db_type']
     db = SixDB(db_info)
-    wu_id = str(wu_id)
+    task_id = str(task_id)
     where = 'task_id=%s' % task_id
     outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc',
                                         'job_name', 'wu_id'], where)
