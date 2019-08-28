@@ -30,6 +30,7 @@ class WorkSpace(object):
         self.name = workspace_name
         self.paths = {}
         self.studies = []
+        self._template_ignore = ['__pycache__']
         self._update_list_existing_studies()
 
     def _check_name(self):
@@ -98,6 +99,9 @@ class WorkSpace(object):
         self._logger.info(content)
         tem_path = os.path.join(utils.PYSIXDESK_ABSPATH, 'templates')
         for item in os.listdir(tem_path):
+            # skip ignored files and folders
+            if item in self._template_ignore:
+                continue
             sour = os.path.join(tem_path, item)
             dest = os.path.join(self.paths['templates'], item)
             if os.path.isfile(sour) and not os.path.isfile(dest):
