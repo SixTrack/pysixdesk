@@ -97,7 +97,7 @@ class Table(object):
             ('boinc', 'text'),
             ('mtime', 'bigint')])
         self.table_keys['sixtrack_wu'] = {
-            'primary': ['wu_id'],
+            'primary': ['wu_id', 'tracking_turn'],
             #'autoincrement': ['wu_id'],
             'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
         }

@@ -352,11 +352,8 @@ class Study(object):
             job_name = self.name_conven(prefix, keys, element, '')
             wu_id += 1
             madx_table['wu_id'] = wu_id
-            n = str(wu_id)
-            madx_sec['dest_path'] = os.path.join(
-                self.paths['preprocess_out'], n)
-            cus_sec['dest_path'] = os.path.join(
-                self.paths['preprocess_out'], n)
+            madx_sec['dest_path'] = self.paths['preprocess_out']
+            cus_sec['dest_path'] = self.paths['preprocess_out']
             f_out = io.StringIO()
             self.config.write(f_out)
             out = f_out.getvalue()
@@ -387,6 +384,8 @@ class Study(object):
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.encode_strings(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])
+        tracking_turn = self.sixtrack_params[self.synonym_map['tracking_turn']]
+        six_sec['tracking_turn'] = str(tracking_turn)
         self.config['six_results'] = self.tables['six_results']
         if self.collimation:
             self.config['aperture_losses'] = self.tables['aperture_losses']
@@ -414,7 +413,8 @@ class Study(object):
         keys.append('preprocess_id')
         values.append(madx_ids)
         outputs = self.db.select('sixtrack_wu', keys)
-        namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'])
+        namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'],
+                DISTINCT=True)
         wu_id = len(namevsid)
         for element in itertools.product(*values):
             job_table = OrderedDict()
@@ -443,14 +443,14 @@ class Study(object):
                 ky = madx_keys[k]
                 vl = madx_params[k][j]
                 fort3_sec[ky] = str(vl)
-            # cols = list(self.sixtrack_input['input'].values())
             job_table['preprocess_id'] = j + 1  # in db id begin from 1
             wu_id += 1
             job_table['wu_id'] = wu_id
-            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1, wu_id)
+            job_table['tracking_turn'] = tracking_turn
+            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1,
+                    wu_id)
             job_table['job_name'] = job_name
-            dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
-            six_sec['dest_path'] = dest_path
+            six_sec['dest_path'] = self.paths['sixtrack_out']
             self.config['boinc'] = self.boinc_vars
             f_out = io.StringIO()
             self.config.write(f_out)

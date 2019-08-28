@@ -66,7 +66,7 @@ def run(task_id, input_info):
     if dbtype.lower() == 'mysql':
         dest_path = './result'
     else:
-        dest_path = madx_config["dest_path"]
+        dest_path = os.path.join(madx_config["dest_path"], task_id)
     if not os.path.isdir(dest_path):
         os.makedirs(dest_path)
 
@@ -154,9 +154,6 @@ def madxjob(madx_config, mask_config):
         mask_name = mask_name + '.mask'
     mask_file = os.path.join(source_path, mask_name)
     shutil.copy2(mask_file, mask_name)
-    dest_path = madx_config["dest_path"]
-    if not os.path.isdir(dest_path):
-        os.mkdir(dest_path)
 
     # Generate the actual madx file from mask file
     patterns = ['%' + a for a in mask_config.keys()]

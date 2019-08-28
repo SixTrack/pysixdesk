@@ -89,7 +89,7 @@ def run(task_id, input_info):
         logger.error('sixtrackjob failed!', exc_info=True)
 
     if dbtype.lower() == 'sql':
-        dest_path = sixtrack_config["dest_path"]
+        dest_path = os.path.join(sixtrack_config["dest_path"], task_id)
     else:
         dest_path = './result'
     if not os.path.isdir(dest_path):
@@ -107,7 +107,7 @@ def run(task_id, input_info):
     else:
         if boinc.lower() == 'true':
             down_list = ['fort.3']
-            dest_path = sixtrack_config["dest_path"]
+            dest_path = os.path.join(sixtrack_config["dest_path"], task_id)
             utils.download_output(down_list, dest_path)
             return
 
