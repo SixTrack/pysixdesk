@@ -2,6 +2,7 @@ import re
 import os
 import logging
 from collections import OrderedDict
+from collections.abc import Iterable
 from itertools import product
 
 from . import machineparams
@@ -172,86 +173,62 @@ class StudyParams:
             self._logger.debug(f'{k}: {v}')
         return out
 
-    def calc(self, get_val_db=None, require=None, **kwargs):
-        '''
-        Runs the queued calculations, in order.**kwargs are passed
-        to the queued function at run time. The output of the queue is put
-        in self.sixtrack, and a dictionnary containing the calculation results
-        is returned.
+    def calc(self, params, wu_id=None, get_val_db=None, require=None):
+        """Runs the queued calculations, in order. The output of the queue is put
+        in and a dictionnary containing the calculation results is returned.
 
         Args:
+            params (dict): One element of the cartesian product of the
+            parameter dicts.
+            wu_id (int): wu_id of the require parameters, when fetching the
+            data from the database.
             get_val_db (SixDB, optional): SixDB object to fecth values from db
             in for the calculations.
-            require (list, str optional): If 'all' will run all function in
+            require (list, str, optional): If 'all' will run all function in
             calculation queue.
-            If None, will run all calculations which don't require any
-            database.
+            If None or 'none', will run all calculations which don't require
+            any database.
             If list of table names, will run calculations whose 'require'
             attribute's keys are a subset of the provided list.
-            whose "requires" attribute dict's keys
-            **kwargs: passed to the `fun` in the queued calculations
-
-        Returns:
-            dict: results of calculation queue.
-
-        Raises:
-            ValueError: If the number of output values of a function does not
-            match the number of output keys.
-        '''
-
+        """
+        params = params.copy()
         if require == 'all':
             # all the functions
             queue = self.calc_queue
-        elif require is None:
-            # the functions which don't require db
-            queue = [f for f in self.calc_queue if not hasattr(self.calc_queue,
-                                                               'require')]
+        elif require in [None, 'none']:
+            queue = [f for f in self.calc_queue if not hasattr(f, 'require')]
         else:
             queue = self._filter_queue(require)
 
         out_dict = {}
         for fun in queue:
-            # get the input values with __getitem__
-            inp = [self.__getitem__(k) for k in getattr(fun, 'input_keys', [])]
-            inp = [[i] if not isinstance(i, list) else i for i in inp]
-            # get the values in the function 'require' attribute from
-            # the database.
-            required = self._get_required_values(get_val_db, fun)
-            # cartesian product of dict of lists --> list of dicts
-            required = list(self._product_dict(**required))
-            # add any kwargs
-            [r.update(kwargs) for r in required]
-            # add kwarg dicts to the inp list
-            inp.append(required)
-            # run calculations
-            out = []
-            for inputs in product(*inp):
-                o = fun(*inputs[:-1], **inputs[-1])
-                if not isinstance(o, tuple):
-                    o = [o]
-                if len(o) != len(fun.output_keys):
-                    content = (f'The number of outputs of "{fun.__name__}" does'
-                               ' not match the number of keys in '
-                               f'"{fun.output_keys}".')
-                    raise ValueError(content)
-                out.append(o)
-            # convert columns to list of lists
-            out = zip(*out)
+            # filter inputs from params
+            inputs = [params[k] for k in getattr(fun, 'input_keys', [])]
+            # get additionnal kwargs from db
+            required = self._get_required_values(get_val_db, fun, wu_id)
+            # run functions
+            output = fun(*inputs, **required)
+            if not isinstance(output, tuple):
+                output = tuple([output])
+            if len(output) != len(fun.output_keys):
+                content = (f'The number of outputs of {fun.__name__} does not'
+                           ' match the number of of keys in'
+                           f' {fun.output_keys}.')
+                raise ValueError(content)
+
+            # construct output dict
             o_dict = {}
-            for k, v in zip(fun.output_keys, out):
+            for k, v in zip(fun.output_keys, output):
                 self._logger.debug(f'Inserting "{k}": {v}')
-                o_dict[k] = v[0] if len(v) == 1 else list(v)
-            # update sixtrack as we go, so that calculations which depend on
-            # the output of other calcs have their inputs.
-            self.sixtrack.update(o_dict)
-            # update output dict
+                o_dict[k] = v
+            # make results available for next functions in calc queue
+            params.update(o_dict)
+            # update output dict of results
             out_dict.update(o_dict)
 
-        # remove complete calculations
-        self.calc_queue = [f for f in self.calc_queue if f not in queue]
         return out_dict
 
-    def _product_dict(self, **kwargs):
+    def product_dict(self, **kwargs):
         '''
         Cartesian product of dict of lists.
         From:
@@ -274,7 +251,11 @@ class StudyParams:
                {"number": 3, "color": "blue"}]
         '''
         keys = kwargs.keys()
-        vals = kwargs.values()
+        vals = []
+        for v in kwargs.values():
+            if not isinstance(v, Iterable) or isinstance(v, str):
+                v = [v]
+            vals.append(v)
         for instance in product(*vals):
             yield dict(zip(keys, instance))
 
@@ -298,26 +279,29 @@ class StudyParams:
                     queue.append(f)
         return queue
 
-    def _get_required_values(self, db, fun):
+    def _get_required_values(self, db, fun, wu_id):
         '''
         Gets the values needed in the dict fun.require from the database.
 
         Args:
-            db (SicDB): Databse from which to extract the values.
+            db (SicDB): Database from which to extract the values.
             fun (callable): calculation queue function.
+            wu_id (int): wu_id of the row from which to fetch the parameter
+            values.
 
         Returns:
             dict: dictionnary containing the values of the required parameters.
         '''
         required = {}
-        if hasattr(fun, 'require'):
-            for r_table, r_list in fun.require.items():
-                if not isinstance(r_list, list):
-                    r_list = [r_list]
-                r_values = db.select(r_table, r_list)
-                # convert columns to list of list
-                r_values = zip(*r_values)
-                required.update({k: v for k, v in zip(r_list, r_values)})
+        if not hasattr(fun, 'require'):
+            return required
+        for r_table, r_list in fun.require.items():
+            if not isinstance(r_list, list):
+                r_list = [r_list]
+            r_values = db.select(r_table, r_list, where=f'wu_id={wu_id}')
+            # convert columns to list of list
+            r_values = zip(*r_values)
+            required.update({k: v[0] for k, v in zip(r_list, r_values)})
         return required
 
     def __repr__(self):

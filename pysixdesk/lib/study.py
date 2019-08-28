@@ -5,7 +5,6 @@ import copy
 import shutil
 import logging
 import getpass
-import itertools
 import collections
 import configparser
 # from importlib.machinery import SourceFileLoader
@@ -117,7 +116,7 @@ class Study(object):
         self.tables['preprocess_wu'] = collections.OrderedDict([
             ('wu_id', 'INTEGER'),
             ('job_name', 'text'),
-            ('input_file', 'blob'),
+            ('input_file', 'text'),
             ('batch_name', 'text'),
             ('unique_id', 'text'),
             ('status', 'text'),
@@ -173,7 +172,7 @@ class Study(object):
             ('wu_id', 'INTEGER'),
             ('preprocess_id', 'int'),
             ('job_name', 'text'),
-            ('input_file', 'blob'),
+            ('input_file', 'text'),
             ('batch_name', 'text'),
             ('unique_id', 'text'),
             ('status', 'text'),
@@ -335,7 +334,8 @@ class Study(object):
             os.makedirs(self.paths["gather"])
 
         # drop Nones from the param dictionnaries to not have a any NULL types
-        # which cause problems for the database.
+        # which cause problems for the database, I would welcome a more robust
+        # solution.
         self.params.drop_none()
 
         stp = self.study_path
@@ -372,7 +372,8 @@ class Study(object):
         for key, val in self.params.oneturn.items():
             self.tables['oneturn_sixtrack_wu'][key] = self.type_dict[val]
 
-        for key, val in self.params.sixtrack.items():
+        for key, val in list(self.params.sixtrack.items()) +\
+                list(self.params.phasespace.items()):
             self.tables['sixtrack_wu'][key] = self.type_dict[val]
         for key in self.sixtrack_output:
             self.tables['sixtrack_task'][key] = 'MEDIUMBLOB'
@@ -406,6 +407,163 @@ class Study(object):
             content = 'Failed to instantiate cluster class.'
             self._logger.error(content, exc_info=True)
             raise
+
+    def _update_db_preprocessing(self):
+        '''
+        Prepares the preprocess_wu table.
+        '''
+        self.config.clear()
+        self.config['mask'] = {}
+        self.config['madx'] = {}
+        self.config['madx']['source_path'] = self.paths['templates']
+        self.config['madx']['madx_exe'] = self.paths['madx_exe']
+        self.config['madx']['mask_file'] = self.madx_input["mask_file"]
+        self.config['madx']['oneturn'] = str(self.oneturn)
+        self.config['madx']['collimation'] = str(self.collimation)
+        self.config['madx']['output_files'] = str(self.madx_output)
+        if self.oneturn:
+            self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
+            self.config['fort3'] = self.params.oneturn
+            self.config['sixtrack'] = {}
+            self.config['sixtrack']['source_path'] = self.paths['templates']
+            self.config['sixtrack']['sixtrack_exe'] = self.paths['sixtrack_exe']
+            self.config['sixtrack']['temp_files'] = str(self.oneturn_sixtrack_input['temp'])
+            self.config['sixtrack']['input_files'] = str(self.oneturn_sixtrack_input['input'])
+        if self.collimation:
+            self.config['collimation'] = {}
+            self.config['collimation']['source_path'] = self.paths['templates']
+            self.config['collimation']['input_files'] = str(self.collimation_input)
+
+        check_params = self.db.select('preprocess_wu',
+                                      list(self.params.madx.keys()))
+        check_jobs = self.db.select('preprocess_wu', ['wu_id', 'job_name'])
+        wu_id = len(check_params)
+        for element in self.params.product_dict(**self.params.madx):
+            wu_id += 1
+            for k, v in element.items():
+                if isinstance(v, collections.Iterable):
+                    element[k] = str(v)
+
+            if tuple(element.values()) in check_params:
+                i = check_params.index(tuple(element.values()))
+                name = check_jobs[i][1]
+                content = "The job %s is already in the database!" % name
+                self._logger.warning(content)
+                continue
+
+            for k, v in element.items():
+                self.config['mask'][k] = str(v)
+
+            prefix = self.madx_input['mask_file'].split('.')[0]
+            job_name = self.name_conven(prefix,
+                                        element.keys(),
+                                        element.values(),
+                                        suffix='')
+
+            element['wu_id'] = wu_id
+            self.config['madx']['dest_path'] = os.path.join(
+                                    self.paths['preprocess_out'], str(wu_id))
+            # this is very weird, can be self.config['sixtrack'] or
+            # self.config['collimation']
+            self.config['sixtrack']['dest_path'] = os.path.join(
+                                    self.paths['preprocess_out'], str(wu_id))
+            f_out = io.StringIO()
+            self.config.write(f_out)
+            out = f_out.getvalue()
+            element['input_file'] = out
+            element['status'] = 'incomplete'
+            element['job_name'] = job_name
+            element['mtime'] = int(time.time() * 1E7)
+            self.db.insert('preprocess_wu', element)
+            content = 'Store preprocess job %s into database!' % job_name
+            self._logger.info(content)
+
+    def _update_db_tracking(self):
+        '''
+        Prepares the sixtrack_wu table and runs the parameter calculation
+        queue.
+        '''
+        # prepare sixtrack parameters in database
+        self.config.clear()
+        self.config['fort3'] = {}
+        self.config['sixtrack'] = {}
+        self.config['f10'] = self.tables['six_results']
+        self.config['sixtrack']['source_path'] = self.paths['templates']
+        self.config['sixtrack']['sixtrack_exe'] = self.paths['sixtrack_exe']
+        if 'additional_input' in self.sixtrack_input.keys():
+            self.config['sixtrack']['additional_input'] = self.sixtrack_input['additional_input']
+        self.config['sixtrack']['input_files'] = str(self.sixtrack_input['input'])
+        self.config['sixtrack']['boinc_dir'] = self.paths['boinc_spool']
+        self.config['sixtrack']['temp_files'] = str(self.sixtrack_input['temp'])
+        self.config['sixtrack']['output_files'] = str(self.sixtrack_output)
+        self.config['sixtrack']['test_turn'] = str(self.env['test_turn'])
+
+        madx_keys = list(self.params.madx.keys())
+        madx_vals = self.db.select('preprocess_wu', ['wu_id'] + madx_keys)
+        if not madx_vals:
+            content = "The preprocess_wu table is empty!"
+            self._logger.warning(content)
+            return
+        madx_vals = list(zip(*madx_vals))
+        madx_ids = list(madx_vals[0])
+        madx_params = madx_vals[1:]
+
+        keys = list(self.params.sixtrack.keys()) + list(self.params.phasespace.keys())
+        keys.append('preprocess_id')
+        check_params = self.db.select('sixtrack_wu', keys)
+        check_jobs = self.db.select('sixtrack_wu', ['wu_id', 'job_name'])
+        wu_id = len(check_params)
+        for element in self.params.product_dict(**self.params.sixtrack,
+                                                **self.params.phasespace,
+                                                **{'preprocess_id': madx_ids}):
+            wu_id += 1
+            # run calculations
+            out_calc = self.params.calc(element,
+                                        wu_id=element['preprocess_id'],
+                                        get_val_db=self.db,
+                                        require='all')
+            # add to the element dict
+            for k, v in out_calc.items():
+                if k in element.keys():
+                    element[k] = v
+
+            for k, v in element.items():
+                if isinstance(v, collections.Iterable):
+                    element[k] = str(v)
+
+            if tuple(element.values()) in check_params:
+                i = check_params.index(tuple(element.values()))
+                name = check_jobs[i][1]
+                content = "The sixtrack job %s is already in the database!" % name
+                self._logger.info(content)
+                continue
+
+            for k, v in element.items():
+                if k == 'preprocess_id':
+                    j = madx_ids.index(v)
+                    for ky, vl in zip(madx_keys, madx_params):
+                        vl = vl[j]
+                        self.config['fort3'][ky] = str(vl)
+                else:
+                    self.config['fort3'][k] = str(v)
+
+            element['preprocess_id'] = j + 1  # in db id begin from 1
+            element['wu_id'] = wu_id
+            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1, wu_id)
+            element['job_name'] = job_name
+            dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
+            self.config['sixtrack']['dest_path'] = dest_path
+            self.config['boinc'] = self.boinc_vars
+
+            f_out = io.StringIO()
+            self.config.write(f_out)
+            out = f_out.getvalue()
+            element['input_file'] = out
+            element['status'] = 'incomplete'
+            element['mtime'] = int(time.time() * 1E7)
+            self.db.insert('sixtrack_wu', element)
+            content = 'Store sixtrack job %s into database!' % job_name
+            self._logger.info(content)
 
     def update_db(self):
         '''Update the database whith the user-defined parameters'''
@@ -448,174 +606,7 @@ class Study(object):
         else:
             self.db.update('boinc_vars', self.boinc_vars)
 
-        self.config.clear()
-        self.config['madx'] = {}
-        madx_sec = self.config['madx']
-        self.config['mask'] = {}
-        mask_sec = self.config['mask']
-        madx_sec['source_path'] = self.paths['templates']
-        madx_sec['madx_exe'] = self.paths['madx_exe']
-        madx_sec['mask_file'] = self.madx_input["mask_file"]
-        madx_sec['oneturn'] = str(self.oneturn)
-        madx_sec['collimation'] = str(self.collimation)
-        inp = self.madx_output
-        madx_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
-        if self.oneturn:
-            self.config['sixtrack'] = {}
-            cus_sec = self.config['sixtrack']
-            self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
-            self.config['fort3'] = self.params.oneturn
-            cus_sec['source_path'] = self.paths['templates']
-            cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-            inp = self.oneturn_sixtrack_input['temp']
-            cus_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
-            inp = self.oneturn_sixtrack_input['input']
-            cus_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
-        if self.collimation:
-            self.config['collimation'] = {}
-            cus_sec = self.config['collimation']
-            cus_sec['source_path'] = self.paths['templates']
-            inp = self.collimation_input
-            cus_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
-
-        keys = list(self.params.madx.keys())
-        values = []
-        for key in keys:
-            val = self.params.madx[key]
-            if not isinstance(val, collections.Iterable) or isinstance(val, str):
-                val = [val]  # wrap with list for a single element
-            values.append(val)
-
-        check_params = self.db.select('preprocess_wu', keys)
-        check_jobs = self.db.select(
-            'preprocess_wu', ['wu_id', 'job_name', 'status'])
-
-        wu_id = len(check_params)
-        for element in itertools.product(*values):
-            madx_table = collections.OrderedDict()
-            if element in check_params:
-                i = check_params.index(element)
-                name = check_jobs[i][1]
-                content = "The job %s is already in the database!" % name
-                self._logger.warning(content)
-                continue
-            for i in range(len(element)):
-                ky = keys[i]
-                vl = element[i]
-                mask_sec[ky] = str(vl)
-                madx_table[ky] = vl
-            prefix = self.madx_input['mask_file'].split('.')[0]
-            job_name = self.name_conven(prefix, keys, element, '')
-            # madx_input = self.paths['preprocess_in']
-            wu_id += 1
-            madx_table['wu_id'] = wu_id
-            n = str(wu_id)
-            madx_sec['dest_path'] = os.path.join(
-                self.paths['preprocess_out'], n)
-            cus_sec['dest_path'] = os.path.join(
-                self.paths['preprocess_out'], n)
-            f_out = io.StringIO()
-            self.config.write(f_out)
-            out = f_out.getvalue()
-            madx_table['input_file'] = utils.evlt(
-                utils.compress_buf, [out, 'str'])
-            madx_table['status'] = 'incomplete'
-            madx_table['job_name'] = job_name
-            madx_table['mtime'] = int(time.time() * 1E7)
-            self.db.insert('preprocess_wu', madx_table)
-            content = 'Store preprocess job %s into database!' % job_name
-            self._logger.info(content)
-
-        # prepare sixtrack parameters in database
-        self.config.clear()
-        self.config['sixtrack'] = {}
-        six_sec = self.config['sixtrack']
-        self.config['fort3'] = {}
-        fort3_sec = self.config['fort3']
-        self.config['f10'] = self.tables['six_results']
-        six_sec['source_path'] = self.paths['templates']
-        six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-        if 'additional_input' in self.sixtrack_input.keys():
-            inp = self.sixtrack_input['additional_input']
-            six_sec['additional_input'] = utils.evlt(utils.encode_strings,
-                                                     [inp])
-        inp = self.sixtrack_input['input']
-        six_sec['input_files'] = utils.evlt(utils.encode_strings, [inp])
-        six_sec['boinc_dir'] = self.paths['boinc_spool']
-        inp = self.sixtrack_input['temp']
-        six_sec['temp_files'] = utils.evlt(utils.encode_strings, [inp])
-        inp = self.sixtrack_output
-        six_sec['output_files'] = utils.evlt(utils.encode_strings, [inp])
-        six_sec['test_turn'] = str(self.env['test_turn'])
-
-        madx_keys = list(self.params.madx.keys())
-        madx_vals = self.db.select('preprocess_wu', ['wu_id'] + madx_keys)
-        if not madx_vals:
-            content = "The preprocess_wu table is empty!"
-            self._logger.warning(content)
-            return
-        madx_vals = list(zip(*madx_vals))
-        madx_ids = list(madx_vals[0])
-        madx_params = madx_vals[1:]
-        keys = list(self.params.sixtrack.keys())
-        values = []
-        for key in keys:
-            val = self.params.sixtrack[key]
-            if not isinstance(val, collections.Iterable) or isinstance(val, str):
-                val = [val]  # wrap with list for a single element
-            values.append(val)
-
-        keys.append('preprocess_id')
-        values.append(madx_ids)
-        outputs = self.db.select('sixtrack_wu', keys)
-        namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'])
-        wu_id = len(namevsid)
-        for element in itertools.product(*values):
-            job_table = collections.OrderedDict()
-            a = []
-            for i in element:
-                if isinstance(i, collections.Iterable):
-                    i = str(i)
-                a.append(i)
-            element = tuple(a)
-            if element in outputs:
-                i = outputs.index(element)
-                nm = namevsid[i][1]
-                content = "The sixtrack job %s is already in the database!" % nm
-                self._logger.info(content)
-                continue
-            for i in range(len(element) - 1):
-                ky = keys[i]
-                vl = element[i]
-                fort3_sec[ky] = str(vl)
-                if isinstance(vl, collections.Iterable):
-                    vl = str(vl)
-                job_table[ky] = vl
-            vl = element[len(element) - 1]  # the last one is madx_id(wu_id)
-            j = madx_ids.index(vl)
-            for k in range(len(madx_params)):
-                ky = madx_keys[k]
-                vl = madx_params[k][j]
-                fort3_sec[ky] = str(vl)
-            # cols = list(self.sixtrack_input['input'].values())
-            job_table['preprocess_id'] = j + 1  # in db id begin from 1
-            wu_id += 1
-            job_table['wu_id'] = wu_id
-            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1, wu_id)
-            job_table['job_name'] = job_name
-            dest_path = os.path.join(self.paths['sixtrack_out'], str(wu_id))
-            six_sec['dest_path'] = dest_path
-            self.config['boinc'] = self.boinc_vars
-            f_out = io.StringIO()
-            self.config.write(f_out)
-            out = f_out.getvalue()
-            job_table['input_file'] = utils.evlt(
-                utils.compress_buf, [out, 'str'])
-            job_table['status'] = 'incomplete'
-            job_table['mtime'] = int(time.time() * 1E7)
-            self.db.insert('sixtrack_wu', job_table)
-            content = 'Store sixtrack job %s into database!' % job_name
-            self._logger.info(content)
+        self._update_db_preprocessing()
 
     def info(self, job=2, where=None):
         '''Print the status information of this study.
@@ -695,7 +686,7 @@ class Study(object):
         if typ == 0:
             self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
             info_sec['path'] = self.paths['preprocess_out']
-            info_sec['outs'] = utils.evlt(utils.encode_strings, [self.preprocess_output])
+            info_sec['outs'] = str(self.preprocess_output)
             job_name = 'collect preprocess result'
             in_name = 'preprocess.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
@@ -705,7 +696,7 @@ class Study(object):
             info_sec['boinc_results'] = self.env['boinc_results']
             info_sec['boinc'] = str(boinc)
             info_sec['st_pre'] = self.st_pre
-            info_sec['outs'] = utils.evlt(utils.encode_strings, [self.sixtrack_output])
+            info_sec['outs'] = str(self.sixtrack_output)
             job_name = 'collect sixtrack result'
             in_name = 'sixtrack.ini'
             task_input = os.path.join(self.paths['gather'], str(typ), in_name)
@@ -735,6 +726,9 @@ class Study(object):
 
     def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
+
+        self._update_db_tracking()
+
         where = "status='complete'"
         preprocess_outs = self.db.select(
             'preprocess_wu', ['wu_id', 'task_id'], where)
@@ -748,45 +742,21 @@ class Study(object):
         else:
             where = "status='incomplete' and preprocess_id in %s" % str(
                 preprocess_outs[0])
-        outputs = self.db.select('sixtrack_wu', ['wu_id', 'preprocess_id',
-                                                 'input_file', 'job_name'], where)
+        outputs = self.db.select('sixtrack_wu',
+                                 ['wu_id', 'preprocess_id',
+                                  'input_file', 'job_name'],
+                                 where)
         if not outputs:
             content = "There isn't available sixtrack job to submit!"
             self._logger.info(content)
             return
+
         outputs = list(zip(*outputs))
-        wu_ids = []
-        pre_ids = []
-        job_names = []
-        input_buf_new = []
-        for wu_id, pre_id, buf, job_name in zip(outputs[0], outputs[1],
-                                                outputs[2], outputs[3]):
-            in_fil = utils.evlt(utils.decompress_buf, [buf, None, 'buf'])
-            self.config.clear()
-            self.config.read_string(in_fil)
-            # paramsdict = self.config['fort3']
-            # status = self.pre_calc(paramsdict, pre_id)  # further calculation
-            # if status:
-            # TODO: figure this out.
-            try:
-                self.config['fort3'] = self.params.calc(pre_id=pre_id)
-            except Exception:
-                pass
-            # if status
-            else:
-                f_out = io.StringIO()
-                self.config.write(f_out)
-                out = f_out.getvalue()
-                buf_new = utils.evlt(utils.compress_buf, [out, 'str'])
-                input_buf_new.append(buf_new)
-                wu_ids.append(wu_id)
-                pre_ids.append(pre_id)
-                job_names.append(job_name)
-        if not wu_ids:
-            content = ("There isn't available sixtrack job to submit due to "
-                       "failed further calculation!")
-            # self._logger.error(content)
-            raise Exception(content)
+        wu_ids = outputs[0]
+        pre_ids = outputs[1]
+        input_buf = outputs[2]
+        job_names = outputs[3]
+
         task_table = {}
         wu_table = {}
         task_ids = []
@@ -804,6 +774,7 @@ class Study(object):
             self.db.update('sixtrack_wu', wu_table, where)
         db_info = {}
         db_info.update(self.db_info)
+
         tran_input = []
         if db_info['db_type'].lower() == 'sql':
             sub_name = os.path.join(self.paths['sixtrack_in'], 'sub.db')
@@ -826,7 +797,7 @@ class Study(object):
             incom_job['wu_id'] = wu_ids
             incom_job['preprocess_id'] = pre_ids
             incom_job['task_id'] = task_ids
-            incom_job['input_file'] = input_buf_new
+            incom_job['input_file'] = input_buf
             incom_job['job_name'] = job_names
             incom_job['boinc'] = ['false'] * len(wu_ids)
             if boinc:
@@ -849,6 +820,7 @@ class Study(object):
             self.db.update('sixtrack_wu', job_table, where)
         if boinc:
             self.init_boinc_dir()
+
         input_info = os.path.join(self.paths['sixtrack_in'], 'db.ini')
         self.config.clear()
         self.config['db_info'] = db_info
@@ -870,9 +842,9 @@ class Study(object):
             content = "There isn't incomplete preprocess job!"
             self._logger.warning(content)
             return
-        trans = []
         outputs = list(zip(*outputs))
         wu_ids = outputs[0]
+
         task_table = {}
         wu_table = {}
         task_ids = []
@@ -890,6 +862,8 @@ class Study(object):
             self.db.update('preprocess_wu', wu_table, where)
         db_info = {}
         db_info.update(self.db_info)
+
+        trans = []
         if db_info['db_type'].lower() == 'sql':
             sub_name = os.path.join(self.paths['preprocess_in'], 'sub.db')
             if os.path.exists(sub_name):
@@ -921,10 +895,6 @@ class Study(object):
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'preprocess.py')
         self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
                                 out_path, flavour='espresso', *args, **kwargs)
-
-    def pre_calc(self, **kwargs):
-        '''Further calculations for the specified parameters'''
-        pass
 
     def init_boinc_dir(self):
         '''Initialise the boinc directory'''

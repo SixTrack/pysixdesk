@@ -142,7 +142,7 @@ if (mylhcbeam<3){
 seqedit,sequence=lhcb2; flatten; cycle,start=IP3; flatten; endedit;
 
 !********************************************
-NRJ = %e0 ;
+NRJ = %e0 * 1e-3; ! [MeV] --> [GeV]
 I_MO = %I_MO; !-570
 
 !General switch to select collision (0/1)
@@ -151,8 +151,8 @@ ON_COLLISION := 0;
 ON_BB_SWITCH := 0;
 
 b_t_dist := %b_t_dist; !25 bunch separation [ns]
-emit_norm_x := %emit_norm_x * 1e-6;
-emit_norm_y := %emit_norm_y * 1e-6; ! add unequal emittances ?
+emit_norm_x := %emit_norm_x * 1e-6; ! [um] --> [m]
+emit_norm_y := %emit_norm_y * 1e-6; ! [um] --> [m]
 Nb_0 := %bunch_charge;
 sigt_col := %sigz; ! bunch length [m] in collision
 gamma_rel := NRJ/pmass;
@@ -486,7 +486,7 @@ if (mylhcbeam==1){
 	y.ip1=table(twiss,IP1,y);px.ip1=table(twiss,IP1,py); //irrelevant when recycling the sequences
 */
 
-twiss, table=nominal;   // used by orbit correction
+twiss, table=nominal;   ! used by orbit correction
 beta.ip1=table(twiss,IP1,betx);value,beta.ip1;
 
 ! print nominal optics parameter at the MB, MQS and MSS for
@@ -661,7 +661,30 @@ sign_MCBXFBV.b2R1 = ACBXV1.R1/(abs(ACBXV1.R1));
 sign_MCBXFBV.b2L5 = ACBXV1.L5/(abs(ACBXV1.L5));
 sign_MCBXFBV.b2L5 = ACBXV1.L5/(abs(ACBXV1.L5));
 value,on_x1,on_sep1,on_x5,on_sep5;
-value,sign_MCBXFAH.3L1,sign_MCBXFAH.3R1,sign_MCBXFAH.3L5,sign_MCBXFAH.3L5,sign_MCBXFAV.3L1,sign_MCBXFAV.3R1,sign_MCBXFAV.3L5,sign_MCBXFAV.3L5,sign_MCBXFBH.a2L1,sign_MCBXFBH.a2R1,sign_MCBXFBH.a2L5,sign_MCBXFBH.a2L5,sign_MCBXFBV.a2L1,sign_MCBXFBV.a2R1,sign_MCBXFBV.a2L5,sign_MCBXFBV.a2L5,sign_MCBXFBH.b2L1,sign_MCBXFBH.b2R1,sign_MCBXFBH.b2L5,sign_MCBXFBH.b2L5,sign_MCBXFBV.b2L1,sign_MCBXFBV.b2R1,sign_MCBXFBV.b2L5,sign_MCBXFBV.b2L5;
+value,sign_MCBXFAH.3L1,
+	  sign_MCBXFAH.3R1,
+	  sign_MCBXFAH.3L5,
+	  sign_MCBXFAH.3L5,
+	  sign_MCBXFAV.3L1,
+	  sign_MCBXFAV.3R1,
+	  sign_MCBXFAV.3L5,
+	  sign_MCBXFAV.3L5,
+	  sign_MCBXFBH.a2L1,
+	  sign_MCBXFBH.a2R1,
+	  sign_MCBXFBH.a2L5,
+	  sign_MCBXFBH.a2L5,
+	  sign_MCBXFBV.a2L1,
+	  sign_MCBXFBV.a2R1,
+	  sign_MCBXFBV.a2L5,
+	  sign_MCBXFBV.a2L5,
+	  sign_MCBXFBH.b2L1,
+	  sign_MCBXFBH.b2R1,
+	  sign_MCBXFBH.b2L5,
+	  sign_MCBXFBH.b2L5,
+	  sign_MCBXFBV.b2L1,
+	  sign_MCBXFBV.b2R1,
+	  sign_MCBXFBV.b2L5,
+	  sign_MCBXFBV.b2L5;
 on_x1=on_x1save;on_sep1=on_sep1save;
 on_x5=on_x5save;on_sep5=on_sep5save;
 };
@@ -906,12 +929,26 @@ call,file="slhc/toolkit/rematchCOIP.madx";
 if(ON_DISP<>0) {call,file="slhc/toolkit/rematchCOarc.madx";};
 
 if(mylhcbeam==1){
-	kqtf=kqtf.b1;kqtd=kqtd.b1;kqtf.b1:=kqtf;kqtd.b1:=kqtd;
-	ksf=ksf.b1;ksd=ksd.b1;ksf.b1:=ksf;ksd.b1:=ksd;
+	kqtf=kqtf.b1;
+	kqtd=kqtd.b1;
+	kqtf.b1:=kqtf;
+	kqtd.b1:=kqtd;
+
+	ksf=ksf.b1;
+	ksd=ksd.b1;
+	ksf.b1:=ksf;
+	ksd.b1:=ksd;
 };
 if(mylhcbeam>1){
-	kqtf=kqtf.b2;kqtd=kqtd.b2;kqtf.b2:=kqtf;kqtd.b2:=kqtd;
-	ksf=ksf.b2;ksd=ksd.b2;ksf.b2:=ksf;ksd.b2:=ksd;
+	kqtf=kqtf.b2
+	kqtd=kqtd.b2
+	kqtf.b2:=kqtf
+	kqtd.b2:=kqtd
+
+	ksf=ksf.b2
+	ksd=ksd.b2
+	ksf.b2:=ksf
+	ksd.b2:=ksd;
 };
 /*
 match;
@@ -950,8 +987,12 @@ call, file="slhc/errors2/corr_value.madx";
 
 ON_BB_CHARGE:=1;
 
-if (NRJ<4999.9999) {VRF400:=%rfvol ;LAGRF400.B1=0.5; LAGRF400.B2=0.;};
-if (NRJ>5000.0000) {VRF400:=%rfvol ;LAGRF400.B1=0.5; LAGRF400.B2=0.;};
+!if (NRJ<4999.9999) {VRF400:=%rfvol ;LAGRF400.B1=0.5; LAGRF400.B2=0.;};
+!if (NRJ>5000.0000) {VRF400:=%rfvol ;LAGRF400.B1=0.5; LAGRF400.B2=0.;};
+
+VRF400:=%rfvol;
+LAGRF400.B1=0.5;
+LAGRF400.B2=0.;
 
 twiss;
 !emit;
@@ -960,6 +1001,6 @@ xnom2=table(twiss,IP2,x);pxnom2=table(twiss,IP2,px);ynom2=table(twiss,IP2,y);pyn
 xnom5=table(twiss,IP5,x);pxnom5=table(twiss,IP5,px);ynom5=table(twiss,IP5,y);pynom5=table(twiss,IP5,py);
 xnom8=table(twiss,IP8,x);pxnom8=table(twiss,IP8,px);ynom8=table(twiss,IP8,y);pynom8=table(twiss,IP8,py);
 
-sixtrack,cavall, radius=0.017;
+sixtrack, cavall, radius=0.017;
 
 stop;

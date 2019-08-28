@@ -6,6 +6,8 @@ import copy
 import shutil
 import configparser
 
+from ast import literal_eval
+
 from pysixdesk.lib import utils
 from pysixdesk.lib import generate_fort2
 from pysixdesk.lib.pysixdb import SixDB
@@ -31,8 +33,7 @@ def run(wu_id, input_info):
         content = "Input file not found for preprocess job %s!" % wu_id
         raise FileNotFoundError(content)
 
-    input_buf = outputs[0][0]
-    input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
+    input_file = outputs[0][0]
     cf.clear()
     cf.read_string(input_file)
     madx_config = cf['madx']
@@ -72,7 +73,7 @@ def run(wu_id, input_info):
         os.makedirs(dest_path)
 
     otpt = madx_config["output_files"]
-    output_files = utils.evlt(utils.decode_strings, [otpt])
+    output_files = literal_eval(otpt)
 
     # Download the requested files.
     down_list = list(output_files.values())
@@ -141,10 +142,7 @@ def madxjob(madx_config, mask_config):
     source_path = madx_config["source_path"]
     mask_name = madx_config["mask_file"]
     output_files = madx_config["output_files"]
-    status, output_files = utils.decode_strings(output_files)
-    if not status:
-        content = "Wrong setting of madx output!"
-        raise ValueError(content)
+    output_files = literal_eval(output_files)
 
     if 'mask' not in mask_name:
         mask_name = mask_name + '.mask'
@@ -189,8 +187,7 @@ def madxjob(madx_config, mask_config):
 
 def new_fort2(config):
     '''Generate new fort.2 with aperture markers and survey and fort3.limit'''
-    inp = config['input_files']
-    inputfiles = utils.evlt(utils.decode_strings, [inp])
+    inputfiles = literal_eval(config['input_files'])
     source_path = config["source_path"]
     for fil in inputfiles.values():
         fl = os.path.join(source_path, fil)
@@ -206,10 +203,7 @@ def sixtrackjobs(config, fort3_config):
     sixtrack_exe = config['sixtrack_exe']
     source_path = config["source_path"]
 
-    status, temp_files = utils.decode_strings(config["temp_files"])
-    if not status:
-        content = "Wrong setting of oneturn sixtrack templates!"
-        raise ValueError(content)
+    temp_files = literal_eval(config["temp_files"])
 
     for s in temp_files:
         source = os.path.join(source_path, s)
@@ -271,15 +265,8 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     # source_path = sixtrack_config["source_path"]
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
 
-    status, temp_files = utils.decode_strings(sixtrack_config["temp_files"])
-    if not status:
-        content = "Wrong setting of oneturn sixtrack templates!"
-        raise ValueError(content)
-
-    status, input_files = utils.decode_strings(sixtrack_config["input_files"])
-    if not status:
-        content = "Wrong setting of oneturn sixtrack input!"
-        raise ValueError(content)
+    temp_files = literal_eval(sixtrack_config["temp_files"])
+    input_files = literal_eval(sixtrack_config["input_files"])
 
     fc3aux = open('fort.3.aux', 'r')
     fc3aux_lines = fc3aux.readlines()

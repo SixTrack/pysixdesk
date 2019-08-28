@@ -9,6 +9,8 @@ import zipfile
 import configparser
 from subprocess import Popen, PIPE
 
+from ast import literal_eval
+
 from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib import utils
 from pysixdesk.lib.resultparser import parse_sixtrack
@@ -36,15 +38,14 @@ def run(wu_id, input_info):
 
     preprocess_id = outputs[0][1]
     boinc = outputs[0][2]
-    input_buf = outputs[0][0]
+    input_file = outputs[0][0]
     job_name = outputs[0][3]
     task_id = outputs[0][4]
-    input_file = utils.evlt(utils.decompress_buf, [input_buf, None, 'buf'])
+
     cf.clear()
     cf.read_string(input_file)
     sixtrack_config = cf['sixtrack']
-    inp = sixtrack_config["input_files"]
-    input_files = utils.evlt(utils.decode_strings, [inp])
+    input_files = literal_eval(sixtrack_config["input_files"])
     where = 'wu_id=%s' % str(preprocess_id)
     pre_task_id = db.select('preprocess_wu', ['task_id'], where)
     if not pre_task_id:
@@ -94,7 +95,7 @@ def run(wu_id, input_info):
     if not os.path.isdir(dest_path):
         os.makedirs(dest_path)
     inp = sixtrack_config["output_files"]
-    output_files = utils.evlt(utils.decode_strings, [inp])
+    output_files = literal_eval(inp)
     down_list = list(output_files)
     down_list.append('fort.3')
 
@@ -160,15 +161,15 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     source_path = sixtrack_config["source_path"]
     inp = sixtrack_config["temp_files"]
-    temp_files = utils.evlt(utils.decode_strings, [inp])
+    temp_files = literal_eval(inp)
     inp = sixtrack_config["input_files"]
-    input_files = utils.evlt(utils.decode_strings, [inp])
+    input_files = literal_eval(inp)
     inp = sixtrack_config["output_files"]
-    output_files = utils.evlt(utils.decode_strings, [inp])
+    output_files = literal_eval(inp)
     add_inputs = []
     if 'additional_input' in sixtrack_config.keys():
         inp = sixtrack_config["additional_input"]
-        add_inputs = utils.evlt(utils.decode_strings, [inp])
+        add_inputs = literal_eval(inp)
     boinc = sixtrack_config["boinc"]
     requires = temp_files + add_inputs
     for infile in requires:

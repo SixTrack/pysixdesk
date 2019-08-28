@@ -5,8 +5,6 @@ import logging
 from abc import ABC, abstractmethod
 from subprocess import Popen, PIPE
 
-from . import utils
-
 
 class Cluster(ABC):
 
@@ -71,7 +69,7 @@ class HTCondor(Cluster):
         # trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'pysixdb.py'))
         # trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'dbadaptor.py'))
         rep = {}
-        rep['%func'] = utils.evlt(utils.encode_strings, [trans])
+        rep['%func'] = ', '.join(map(str, trans))  # utils.evlt(utils.encode_strings, [trans])
         rep['%exe'] = exe
         rep['%dirname'] = output_path
         rep['%joblist'] = job_list

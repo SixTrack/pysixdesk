@@ -56,9 +56,9 @@ class MyStudy(Study):
                                   machine_defaults=machineparams.HLLHC['col'])
         self.params['Runnam'] = name
         amp = [8, 10, 12]
-        self.params['turnss'] = int(1e6)
+        self.params['turnss'] = int(1e3)
         self.params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
-        self.params['kang'] = list(range(1, 1 + 1))  # The angle
+        self.params['kang'] = list(range(1, 1 + 2))  # The angle
         self.params['kmax'] = 5
         self.params['toggle_coll/'] = ''
 
@@ -74,7 +74,7 @@ class MyStudy(Study):
         def calc_amp(angle, emit, e0, pmass, amp, betax=None):
             tt = abs(sin(pi / 2 * angle) / cos(pi / 2 * angle))
             ratio = 0.0 if tt < 1.0E-15 else tt**2
-            gamma = (e0 * 1e3) / pmass
+            gamma = e0 / pmass
             factor = sqrt(emit / gamma)
             ax0t = factor * (sqrt(betax) + sqrt(betax * ratio) * cos(pi / 2 * angle))
             return amp[0] * ax0t, amp[1] * ax0t
