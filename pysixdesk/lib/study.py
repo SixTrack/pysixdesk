@@ -46,8 +46,8 @@ class Study(object):
         self.pragma = OrderedDict()
         self.boinc_vars = OrderedDict()
         # initialize default values
-        Study._defaults(self)
-        Study._structure(self)
+        self._defaults()
+        self._structure()
 
     @property
     def cluster_class(self):
