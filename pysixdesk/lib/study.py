@@ -665,13 +665,12 @@ class Study(object):
             tran_input.append(sub_name)
         else:
             job_table = {}
-            job_table['boinc'] = str(boinc)
-            job_table['input_file'] = input_buf_new
-            if len(wu_ids) == 1:
-                where = "wu_id=%s" % wu_ids[0]
-            else:
-                where = "wu_id in %s" % str(tuple(wu_ids))
-            self.db.update('sixtrack_wu', job_table, where)
+            input_list = dict(zip(wu_ids, input_buf_new))
+            for wu_id in wu_ids:
+                where = "wu_id=%s" % wu_id
+                job_table['boinc'] = str(boinc)
+                job_table['input_file'] = input_list[wu_id]
+                self.db.update('sixtrack_wu', job_table, where)
         if boinc:
             self.init_boinc_dir()
         input_info = os.path.join(self.paths['sixtrack_in'], 'db.ini')
