@@ -6,7 +6,6 @@ import gzip
 import shutil
 import logging
 import difflib
-import traceback
 
 # Gobal variables
 PYSIXDESK_ABSPATH = os.path.dirname(os.path.dirname(os.path.dirname(
@@ -18,6 +17,9 @@ def check(files):
     which looks like {'file1_oldName': 'file1_newName',
     'file2_oldName': 'file2_newName'}
     '''
+    if not isinstance(files, (dict, list)):
+        raise TypeError('"files" must be a list or dict.')
+
     status = False
     if isinstance(files, dict):
         for key, value in files.items():
@@ -32,9 +34,6 @@ def check(files):
             if not os.path.isfile(key):
                 print("The file %s isn't generated successfully!" % key)
                 return status
-    else:
-        print("The input must be a list or dict!")
-        return status
     status = True
     return status
 
@@ -48,7 +47,8 @@ def download_output(filenames, dest, zp=True):
 
     for filename in filenames:
         if not os.path.isfile(filename):
-            raise FileNotFoundError("The file %s doesn't exist, download failed!" % filename)
+            content = "The file %s doesn't exist, download failed!" % filename
+            raise FileNotFoundError(content)
         if os.path.isfile(filename):
             if zp:
                 out_name = os.path.join(dest, filename + '.gz')
@@ -71,24 +71,20 @@ def check_fort3_block(fort3, block):
 
 def replace(patterns, replacements, source, dest):
     '''Reads a source file and writes the destination file.
-    In each line, replaces patterns with repleacements.
+    In each line, replaces patterns with replacements.
     '''
-    status = False
-    if os.path.isfile(source):
-        fin = open(source, 'r')
-        fout = open(dest, 'w')
-        num = len(patterns)
-        for line in fin:
-            for i in range(num):
-                line = re.sub(patterns[i], str(replacements[i]), line)
-            fout.write(line)
-        fin.close()
-        fout.close()
-    else:
-        print("The file %s doesn't exist!" % source)
-        return status
-    status = True
-    return status
+    if not os.path.isfile(source):
+        raise FileNotFoundError("The file %s doesn't exist!" % source)
+
+    fin = open(source, 'r')
+    fout = open(dest, 'w')
+    num = len(patterns)
+    for line in fin:
+        for i in range(num):
+            line = re.sub(patterns[i], str(replacements[i]), line)
+        fout.write(line)
+    fin.close()
+    fout.close()
 
 
 def diff(file1, file2, logger=None, **kwargs):
@@ -99,7 +95,7 @@ def diff(file1, file2, logger=None, **kwargs):
         file1 (str/path): path to first file for the diff.
         file2 (str/path): path to second file for the diff.
         logger (logging.logger, optional): logger with which to display the
-        diff, if None, will use `print`.
+        diff, if None, will use print.
         **kwargs: additional arguments for `difflib.unified_diff`.
     '''
 
@@ -109,7 +105,7 @@ def diff(file1, file2, logger=None, **kwargs):
         display = print
 
     def get_lines(file):
-        '''Returns the contents of `file`.'''
+        '''Returns the contents of 'file'.'''
         with open(file) as f:
             f_lines = f.read().split('\n')
         return f_lines
@@ -117,51 +113,47 @@ def diff(file1, file2, logger=None, **kwargs):
     file1_data = get_lines(file1)
     file2_data = get_lines(file2)
 
-    display(f'▼▼▼▼▼▼▼▼▼▼▼▼▼ {file1} --> {file2} diff ▼▼▼▼▼▼▼▼▼▼▼▼▼')
-    for line in difflib.unified_diff(file1_data, file2_data, **kwargs):
-        display(line)
-    display(f'▲▲▲▲▲▲▲▲▲▲▲▲▲ {file1} --> {file2} diff ▲▲▲▲▲▲▲▲▲▲▲▲▲')
+    diff_lines = difflib.unified_diff(file1_data, file2_data, **kwargs)
+
+    if diff_lines:
+        display(f'▼▼▼▼▼▼▼▼▼▼▼▼▼ {file1} --> {file2} diff ▼▼▼▼▼▼▼▼▼▼▼▼▼')
+        for line in diff_lines:
+            display(line)
+        display(f'▲▲▲▲▲▲▲▲▲▲▲▲▲ {file1} --> {file2} diff ▲▲▲▲▲▲▲▲▲▲▲▲▲')
 
 
 def encode_strings(inputs):
     '''Convert list or directory to special-format string'''
-    status = False
+    if not isinstance(inputs, (list, dict)):
+        raise TypeError('"inputs" must be list or dict.')
+
     if isinstance(inputs, list):
         output = ','.join(map(str, inputs))
     elif isinstance(inputs, dict):
         a = [':'.join(map(str, i)) for i in inputs.items()]
         output = ','.join(map(str, a))
-    else:
-        output = ''
-        return status, output
-    status = True
-    return status, output
+    return output
 
 
 def decode_strings(inputs):
     '''Convert special-format string to list or directory'''
-    status = False
-    if isinstance(inputs, str):
-        if ':' in inputs:
-            output = {}
-            a = inputs.split(',')
-            for i in a:
-                b = i.split(':')
-                output[b[0]] = b[1]
-        else:
-            output = inputs.split(',')
+    if not isinstance(inputs, str):
+        raise TypeError('"inputs" must be a string.')
+
+    if ':' in inputs:
+        output = {}
+        a = inputs.split(',')
+        for i in a:
+            b = i.split(':')
+            output[b[0]] = b[1]
     else:
-        print("The input is not string!")
-        output = []
-        return status, output
-    status = True
-    return status, output
+        output = inputs.split(',')
+    return output
 
 
 def compress_buf(data, source='file'):
     '''Data compression for storing in database
     The data source can be file,gzip,str'''
-    status = False
     zbuf = io.BytesIO()
     if source == 'file' and os.path.isfile(data):
         with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
@@ -176,52 +168,37 @@ def compress_buf(data, source='file'):
         with gzip.GzipFile(mode='wb', fileobj=zbuf) as zfile:
             zfile.write(buf)
     else:
-        print("Invalid data source!")
-        return status, zbuf.getvalue()
-    status = True
-    return status, zbuf.getvalue()
+        raise ValueError("Invalid data source!")
+    return zbuf.getvalue()
 
 
 def decompress_buf(buf, out, des='file'):
     '''Data decompression to retrieve from database'''
-    status = False
-    if isinstance(buf, bytes):
-        zbuf = io.BytesIO(buf)
-        if des == 'file':
-            with gzip.GzipFile(fileobj=zbuf) as f_in:
-                with open(out, 'wb') as f_out:
-                    f_out.write(f_in.read())
-        elif des == 'buf':
-            with gzip.GzipFile(fileobj=zbuf) as f_in:
-                out = f_in.read()
-                out = out.decode()
-        else:
-            print("Unknown output type!")
-            return status
-        status = True
-        return status, out
-    else:
-        print("Invalid input data!")
-        return status
+    if not isinstance(buf, bytes):
+        raise TypeError('"buf" must be bytes.')
+    if des not in ['file', 'buf']:
+        raise ValueError('"des" must be "file" or "buf".')
+
+    zbuf = io.BytesIO(buf)
+    if des == 'file':
+        with gzip.GzipFile(fileobj=zbuf) as f_in:
+            with open(out, 'wb') as f_out:
+                f_out.write(f_in.read())
+    elif des == 'buf':
+        with gzip.GzipFile(fileobj=zbuf) as f_in:
+            out = f_in.read()
+            out = out.decode()
+    return out
 
 
 def concatenate_files(source, dest, ignore='ENDE'):
     '''Concatenate the given files'''
     f_out = open(dest, 'w')
     endline = ignore + '\n'
-    if type(source) is list:
-        for s_in in source:
-            with open(s_in, 'r') as f_in:
-                lines = f_in.readlines()
-                valid_lines = []
-                for line in lines:
-                    if line.lower().startswith(ignore.lower()):
-                        endline = line
-                        break
-                    valid_lines.append(line)
-                f_out.writelines(valid_lines)
-    else:
-        with open(source, 'r') as f_in:
+    if not isinstance(source, list):
+        source = [source]
+    for s_in in source:
+        with open(s_in, 'r') as f_in:
             lines = f_in.readlines()
             valid_lines = []
             for line in lines:
@@ -234,33 +211,27 @@ def concatenate_files(source, dest, ignore='ENDE'):
     f_out.close()
 
 
-def evlt(fun, inputs, action=sys.exit):
-    '''Evaluate the specified function'''
-    try:
-        outputs = fun(*inputs)
-        if isinstance(outputs, tuple):
-            num = len(outputs)
-        else:
-            num = 1
-        if outputs is None:
-            num = 0
+def exc_catch(fun, exc_action=None, *args, **kwargs):
+    '''
+    Wrapper which catches errors of provided function "fun" and runs "action"
+    if provided.
 
-        if num == 0:
-            pass
-        elif num == 1:
-            status = outputs
-            if not status:
-                action()
-        elif num == 2:
-            status = outputs[0]
-            output = outputs[1]
-            if status:
-                return output
-            else:
-                action()
-    except:
-        print(traceback.print_exc())
-        return
+    Args:
+        fun (callable): The wrapped function.
+        exc_action (callable, optionnal): callable which will run if "fun"
+        raises an Exception. If None will not do anything, the Exception will
+        be supressed.
+        *args **kwargs (optionnal): passed on to the wrapped function call.
+
+    Returns:
+        The output of the wrapped function if no exceptions are raised, the
+        output of the "action" callable if provided and an Exception is raised.
+    '''
+    try:
+        return fun(*args, **kwargs)
+    except Exception:
+        if callable(exc_action):
+            return exc_action()
 
 
 def condor_logger(name):
@@ -273,8 +244,8 @@ def condor_logger(name):
     '''
 
     # disable module level logging of pysixdesk
-    #logger = logging.getLogger('pysixdesk')
-    #logger.setLevel(logging.CRITICAL)
+    # logger = logging.getLogger('pysixdesk')
+    # logger.setLevel(logging.CRITICAL)
 
     formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
                                   datefmt='%H:%M:%S')

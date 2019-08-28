@@ -62,7 +62,7 @@ def run(wu_id, input_info):
     for infile in inputs:
         i = inputs.index(infile)
         buf = input_buf[0][i]
-        utils.evlt(utils.decompress_buf, [buf, infile])
+        utils.decompress_buf(buf, infile)
     fort3_config = cf['fort3']
     boinc_vars = cf['boinc']
     if not boinc_infos:
@@ -222,8 +222,9 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     for s in temp_files:
         dest = s + '.temp'
         source = os.path.join('../', s)
-        status = utils.replace(patterns, values, source, dest)
-        if not status:
+        try:
+            utils.replace(patterns, values, source, dest)
+        except Exception:
             raise Exception("Failed to generate input file for oneturn sixtrack!")
 
         output.append(dest)
@@ -252,8 +253,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     #else:
     #    shutil.move('fort.10', '../fort.10')
     #    logger.info('Sixtrack job %s has completed normally!' % wu_id)
-    status = utils.check(output_files)
-    if status:
+    if utils.check(output_files):
         for out in output_files:
             shutil.move(out, os.path.join('../', out))
     os.chdir('../')  # get out of junk folder
@@ -264,8 +264,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     else:
         surv_per = sixtrack_config['surv_percent']
         surv_per = ast.literal_eval(surv_per)
-        test_status = check_tracking('sixtrack.output', surv_per)
-        if not test_status:
+
+        if not check_tracking('sixtrack.output', surv_per):
             raise Exception("The job doesn't pass the test!")
 
         boinc_work = sixtrack_config['boinc_work']
@@ -285,8 +285,9 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         # recreate the fort.3 file
         for s in temp_files:
             dest = s + '.temp'
-            status = utils.replace(patterns, values, s, dest)
-            if not status:
+            try:
+                utils.replace(patterns, values, s, dest)
+            except Exception:
                 raise Exception("Failed to generate input file for sixtrack!")
 
             output.append(dest)

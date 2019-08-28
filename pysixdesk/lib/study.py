@@ -5,9 +5,10 @@ import copy
 import shutil
 import logging
 import getpass
-import collections
 import configparser
 # from importlib.machinery import SourceFileLoader
+from collections import OrderedDict
+from collections.abc import Iterable
 
 from . import dbtypedict
 from . import utils
@@ -42,8 +43,8 @@ class Study(object):
         self.sixtrack_output = []
         self.tables = {}
         self.table_keys = {}
-        self.pragma = collections.OrderedDict()
-        self.boinc_vars = collections.OrderedDict()
+        self.pragma = OrderedDict()
+        self.boinc_vars = OrderedDict()
         # initialize default values
         Study._defaults(self)
         Study._structure(self)
@@ -111,9 +112,9 @@ class Study(object):
 
         self.db_info['db_type'] = 'sql'
         # Default definition of the database tables
-        self.tables['templates'] = collections.OrderedDict()
-        self.tables['env'] = collections.OrderedDict()
-        self.tables['preprocess_wu'] = collections.OrderedDict([
+        self.tables['templates'] = OrderedDict()
+        self.tables['env'] = OrderedDict()
+        self.tables['preprocess_wu'] = OrderedDict([
             ('wu_id', 'INTEGER'),
             ('job_name', 'text'),
             ('input_file', 'text'),
@@ -127,7 +128,7 @@ class Study(object):
             'autoincrement': ['wu_id'],
             'foreign': {},
         }
-        self.tables['preprocess_task'] = collections.OrderedDict([
+        self.tables['preprocess_task'] = OrderedDict([
             ('task_id', 'INTEGER'),
             ('wu_id', 'int'),
             ('madx_in', 'blob'),
@@ -142,8 +143,8 @@ class Study(object):
             'autoincrement': ['task_id'],
             'foreign': {'preprocess_wu': [['wu_id'], ['wu_id']]},
         }
-        self.tables['oneturn_sixtrack_wu'] = collections.OrderedDict()
-        self.tables['oneturn_sixtrack_result'] = collections.OrderedDict([
+        self.tables['oneturn_sixtrack_wu'] = OrderedDict()
+        self.tables['oneturn_sixtrack_result'] = OrderedDict([
             ('task_id', 'int'),
             ('wu_id', 'int'),
             ('betax', 'float'),
@@ -168,7 +169,7 @@ class Study(object):
             ('tunex2', 'float'),
             ('tuney2', 'float'),
             ('mtime', 'bigint')])
-        self.tables['sixtrack_wu'] = collections.OrderedDict([
+        self.tables['sixtrack_wu'] = OrderedDict([
             ('wu_id', 'INTEGER'),
             ('preprocess_id', 'int'),
             ('job_name', 'text'),
@@ -184,7 +185,7 @@ class Study(object):
             'autoincrement': ['wu_id'],
             'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
         }
-        self.tables['sixtrack_task'] = collections.OrderedDict([
+        self.tables['sixtrack_task'] = OrderedDict([
             ('task_id', 'INTEGER'),
             ('wu_id', 'int'),
             ('fort3', 'blob'),
@@ -198,7 +199,7 @@ class Study(object):
             'autoincrement': ['task_id'],
             'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
         }
-        self.tables['six_results'] = collections.OrderedDict([
+        self.tables['six_results'] = OrderedDict([
             ('six_input_id', 'int'),
             ('row_num', 'int'),
             ('turn_max', 'int'),
@@ -262,7 +263,7 @@ class Study(object):
             ('dnms', 'float'),
             ('trttime', 'float'),
             ('mtime', 'bigint')])
-        self.tables['collimation_results'] = collections.OrderedDict([
+        self.tables['collimation_results'] = OrderedDict([
             ('task_id', 'int'),
             ('mtime', 'bigint')])
         self.table_keys['collimation_results'] = {
@@ -281,7 +282,7 @@ class Study(object):
             'temp_store': 'memory',
             'count_changes': 'off'}
 
-        self.tables['boinc_vars'] = collections.OrderedDict()
+        self.tables['boinc_vars'] = OrderedDict()
         self.boinc_vars['workunitName'] = 'pysixdesk'
         self.boinc_vars['fpopsEstimate'] = 30 * 2 * 10e5 / 2 * 10e6 * 6
         self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate'] * 1000
@@ -412,6 +413,7 @@ class Study(object):
         '''
         Prepares the preprocess_wu table.
         '''
+
         self.config.clear()
         self.config['mask'] = {}
         self.config['madx'] = {}
@@ -441,11 +443,12 @@ class Study(object):
         for element in self.params.product_dict(**self.params.madx):
             wu_id += 1
             for k, v in element.items():
-                if isinstance(v, collections.Iterable):
+                if isinstance(v, Iterable):
                     element[k] = str(v)
 
             if tuple(element.values()) in check_params:
                 i = check_params.index(tuple(element.values()))
+
                 name = check_jobs[i][1]
                 content = "The job %s is already in the database!" % name
                 self._logger.warning(content)
@@ -475,8 +478,6 @@ class Study(object):
             element['job_name'] = job_name
             element['mtime'] = int(time.time() * 1E7)
             self.db.insert('preprocess_wu', element)
-            content = 'Store preprocess job %s into database!' % job_name
-            self._logger.info(content)
 
     def _update_db_tracking(self):
         '''
@@ -499,6 +500,7 @@ class Study(object):
         self.config['sixtrack']['test_turn'] = str(self.env['test_turn'])
 
         madx_keys = list(self.params.madx.keys())
+
         madx_vals = self.db.select('preprocess_wu', ['wu_id'] + madx_keys)
         if not madx_vals:
             content = "The preprocess_wu table is empty!"
@@ -528,7 +530,7 @@ class Study(object):
                     element[k] = v
 
             for k, v in element.items():
-                if isinstance(v, collections.Iterable):
+                if isinstance(v, Iterable):
                     element[k] = str(v)
 
             if tuple(element.values()) in check_params:
@@ -656,22 +658,24 @@ class Study(object):
         ibatch = len(que_out)
         ibatch += 1
         batch_name = batch_name + '_' + str(ibatch)
-        status, out = self.submission.submit(input_path, batch_name,
-                                             trials, *args, **kwargs)
-        if status:
-            content = "Submit %s job successfully!" % jobname
-            self._logger.info(content)
-            table = {}
-            table['status'] = 'submitted'
-            for ky, vl in out.items():
-                where = 'wu_id=%s' % ky
-                table['unique_id'] = vl
-                table['batch_name'] = batch_name
-                self.db.update(table_name, table, where)
-        else:
-            # self.purge_table(task_table_name)
+
+        try:
+            out = self.submission.submit(input_path, batch_name,
+                                         trials, *args, **kwargs)
+        except Exception as e:
             content = "Failed to submit %s job!" % jobname
-            self._logger.warning(content)
+            self._logger.error(content)
+            raise e
+
+        content = "Submit %s job successfully!" % jobname
+        self._logger.info(content)
+        table = {}
+        table['status'] = 'submitted'
+        for ky, vl in out.items():
+            where = 'wu_id=%s' % ky
+            table['unique_id'] = vl
+            table['batch_name'] = batch_name
+            self.db.update(table_name, table, where)
 
     def collect_result(self, typ, boinc=False):
         '''Collect the results of preprocess or  sixtrack jobs'''

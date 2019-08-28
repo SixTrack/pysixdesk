@@ -2,6 +2,7 @@ from .lib.study import Study
 from .lib.workspace import WorkSpace
 from .lib.pysixdb import SixDB
 from .lib.submission import HTCondor
+from .lib.mysqladm import MysqlAdmin
 
 import logging
 # The module level logger is 'pysixdesk'
@@ -20,3 +21,4 @@ __all__.append('Study')
 __all__.append('SixDB')
 __all__.append('WorkSpace')
 __all__.append('HTCondor')
+__all__.append('MysqlAdmin')

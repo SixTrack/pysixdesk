@@ -69,7 +69,7 @@ class HTCondor(Cluster):
         # trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'pysixdb.py'))
         # trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'dbadaptor.py'))
         rep = {}
-        rep['%func'] = ', '.join(map(str, trans))  # utils.evlt(utils.encode_strings, [trans])
+        rep['%func'] = ', '.join(map(str, trans))
         rep['%exe'] = exe
         rep['%dirname'] = output_path
         rep['%joblist'] = job_list
@@ -101,8 +101,8 @@ class HTCondor(Cluster):
         joblist = os.path.join(input_path, 'job_id.list')
         if not os.path.isfile(joblist):
             content = "There isn't %s job for submission!" % job_name
-            self._logger.warning(content)
-            return False, None
+            raise FileNotFoundError(content)
+
         scont = 1
         while scont <= trials:
             args = list(args)
@@ -133,19 +133,18 @@ class HTCondor(Cluster):
                     uniq_ids = [str(cl_id) + '.' + str(pr_id) for pr_id in proc_ls]
                     if len(wu_ids) != len(uniq_ids):
                         content = "There is something wrong during submitting!"
-                        self._logger.error(content)
-                        return False, None
+                        raise Exception(content)
                     else:
                         comb = list(zip(wu_ids, uniq_ids))
                         out = dict(comb)
                         # remove job list after successful submission
                         os.remove(joblist)
-                        return True, out
+                        return out
                 except Exception as e:
-                    self._logger.error(e, exc_info=True)
+                    # this will catch the excpetion raised or any unexpected
+                    # exception in the try block.
                     self._logger.error(outs)
-                    return False, None
-        return False, None
+                    raise e
 
     def check_format(self, unique_id):
         '''Check the job status with fixed format

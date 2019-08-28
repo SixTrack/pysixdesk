@@ -156,8 +156,9 @@ def madxjob(madx_config, mask_config):
     patterns = ['%' + a for a in mask_config.keys()]
     values = list(mask_config.values())
     madx_in = 'madx_in'
-    status = utils.replace(patterns, values, mask_name, madx_in)
-    if not status:
+    try:
+        utils.replace(patterns, values, mask_name, madx_in)
+    except Exception:
         content = "Failed to generate actual madx input file!"
         raise Exception(content)
 
@@ -179,8 +180,7 @@ def madxjob(madx_config, mask_config):
         logger.info("MADX has completed properly!")
 
     # Check the existence of madx output
-    status = utils.check(output_files)
-    if not status:
+    if not utils.check(output_files):
         content = 'MADX output files not found.'
         raise FileNotFoundError(content)
 
@@ -188,6 +188,7 @@ def madxjob(madx_config, mask_config):
 def new_fort2(config):
     '''Generate new fort.2 with aperture markers and survey and fort3.limit'''
     inputfiles = literal_eval(config['input_files'])
+
     source_path = config["source_path"]
     for fil in inputfiles.values():
         fl = os.path.join(source_path, fil)
@@ -291,8 +292,9 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     for s in temp_files:
         dest = s + ".t1"
         source = os.path.join('../', s)
-        status = utils.replace(patterns, values, source, dest)
-        if not status:
+        try:
+            utils.replace(patterns, values, source, dest)
+        except Exception:
             content = "Failed to generate input file for oneturn sixtrack!"
             raise Exception(content)
 
