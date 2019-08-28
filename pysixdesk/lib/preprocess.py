@@ -16,7 +16,7 @@ from pysixdesk.lib.resultparser import parse_results
 logger = utils.condor_logger('preprocess')
 
 
-def run(wu_id, input_info):
+def run(task_id, input_info):
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
@@ -24,12 +24,12 @@ def run(wu_id, input_info):
     db_info.update(cf['db_info'])
     dbtype = db_info['db_type']
     db = SixDB(db_info)
-    wu_id = str(wu_id)
-    where = 'wu_id=%s' % wu_id
+    task_id = str(task_id)
+    where = 'task_id=%s' % task_id
     outputs = db.select('preprocess_wu', ['input_file'], where)
     db.close()
     if not outputs[0]:
-        content = "Input file not found for preprocess job %s!" % wu_id
+        content = "Input file not found for preprocess task %s!" % task_id
         raise FileNotFoundError(content)
 
     input_buf = outputs[0][0]
@@ -95,9 +95,9 @@ def run(wu_id, input_info):
     # reconnect after jobs finished
     try:
         db = SixDB(db_info)
-        where = "wu_id=%s" % wu_id
-        task_id = db.select('preprocess_wu', ['task_id'], where)
-        task_id = task_id[0][0]
+        where = "task_id=%s" % task_id
+        pr_key = db.select('preprocess_wu', ['wu_id'], where)
+        wu_id = pr_key[0][0]
         job_table = {}
         task_table = {}
         task_table['status'] = 'Success'
@@ -114,14 +114,14 @@ def run(wu_id, input_info):
             vals['task_id'] = [task_id,]*len(vals['mtime'])
             db.insertm(sec, vals)
         if task_table['status'] == 'Success':
-            where = "wu_id=%s" % wu_id
+            where = "task_id=%s" % task_id
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
             db.update('preprocess_wu', job_table, where)
             content = "Preprocess job %s has completed normally!" % wu_id
             logger.info(content)
         else:
-            where = "wu_id=%s" % wu_id
+            where = "task_id=%s" % task_id
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
             db.update('preprocess_wu', job_table, where)
@@ -129,7 +129,7 @@ def run(wu_id, input_info):
             logger.warning(content)
         return
     except Exception as e:
-        where = "wu_id=%s" % wu_id
+        where = "task_id=%s" % task_id
         job_table['status'] = 'incomplete'
         job_table['mtime'] = int(time.time() * 1E7)
         db.update('preprocess_wu', job_table, where)
@@ -374,9 +374,9 @@ if __name__ == '__main__':
         logger.error("The input file is missing!")
         sys.exit(1)
     elif num == 2:
-        wu_id = args[1]
+        task_id = args[1]
         db_name = args[2]
-        run(wu_id, db_name)
+        run(task_id, db_name)
         sys.exit(0)
     else:
         logger.error("Too many input arguments!")

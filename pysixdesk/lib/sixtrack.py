@@ -17,7 +17,7 @@ from pysixdesk.lib.resultparser import parse_results
 logger = utils.condor_logger('sixtrack')
 
 
-def run(wu_id, input_info):
+def run(task_id, input_info):
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
@@ -26,9 +26,9 @@ def run(wu_id, input_info):
     dbtype = db_info['db_type']
     db = SixDB(db_info)
     wu_id = str(wu_id)
-    where = 'wu_id=%s' % wu_id
+    where = 'task_id=%s' % task_id
     outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc',
-                                        'job_name', 'task_id'], where)
+                                        'job_name', 'wu_id'], where)
     boinc_infos = db.select('env', ['boinc_work', 'boinc_results',
                                     'surv_percent'])
     if not outputs:
@@ -39,7 +39,7 @@ def run(wu_id, input_info):
     boinc = outputs[0][2]
     input_buf = outputs[0][0]
     job_name = outputs[0][3]
-    task_id = outputs[0][4]
+    wu_id = outputs[0][4]
     input_file = utils.decompress_buf(input_buf, None, 'buf')
     cf.clear()
     cf.read_string(input_file)
@@ -81,7 +81,7 @@ def run(wu_id, input_info):
     sixtrack_config['boinc_results'] = boinc_results
     sixtrack_config['surv_percent'] = str(surv_percent)
     sixtrack_config['job_name'] = job_name
-    sixtrack_config['wu_id'] = wu_id
+    sixtrack_config['wu_id'] = str(wu_id)
 
     try:
         sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
@@ -134,19 +134,19 @@ def run(wu_id, input_info):
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
-            where = "wu_id=%s" % wu_id
+            where = "task_id=%s" % task_id
             db.update('sixtrack_wu', job_table, where)
             content = "Sixtrack job %s has completed normally!" % wu_id
             logger.info(content)
         else:
-            where = "wu_id=%s" % wu_id
+            where = "task_id=%s" % task_id
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
             db.update('sixtrack_wu', job_table, where)
             content = "The sixtrack job failed!"
             logger.warning(content)
     except Exception:
-        where = "wu_id=%s" % wu_id
+        where = "task_id=%s" % task_id
         job_table['status'] = 'incomplete'
         job_table['mtime'] = int(time.time() * 1E7)
         db.update('sixtrack_wu', job_table, where)
@@ -240,8 +240,8 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     #utils.diff(source, 'fort.3', logger=logger)
 
     # actually run
-    wu_id = sixtrack_config['wu_id']
-    logger.info('Sixtrack job %s is running...' % wu_id)
+    task_id = sixtrack_config['task_id']
+    logger.info('Sixtrack task %s is running...' % task_id)
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
     output_name = os.path.join('../', 'sixtrack.output')
@@ -365,9 +365,9 @@ if __name__ == '__main__':
         logger.error("The input file is missing!")
         sys.exit(1)
     elif num == 2:
-        wu_id = args[1]
+        task_id = args[1]
         db_name = args[2]
-        run(wu_id, db_name)
+        run(task_id, db_name)
         sys.exit(0)
     else:
         logger.error("Too many input arguments!")

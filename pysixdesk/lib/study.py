@@ -519,7 +519,7 @@ class Study(object):
             table = {}
             table['status'] = 'submitted'
             for ky, vl in out.items():
-                where = 'wu_id=%s' % ky
+                where = 'task_id=%s' % ky
                 table['unique_id'] = vl
                 table['batch_name'] = batch_name
                 self.db.update(table_name, table, where)
@@ -656,8 +656,8 @@ class Study(object):
             if boinc:
                 incom_job['boinc'] = ['true'] * len(wu_ids)
             sub_db.insertm('sixtrack_wu', incom_job)
-            wu_ids = sub_db.select('sixtrack_wu', ['wu_id'])
-            wu_ids = list(zip(*wu_ids))[0]
+            # wu_ids = sub_db.select('sixtrack_wu', ['wu_id'])
+            # wu_ids = list(zip(*wu_ids))[0]
             sub_db.close()
             db_info['db_name'] = 'sub.db'
             content = "The submitted db %s is ready!" % self.db_info['db_name']
@@ -665,11 +665,11 @@ class Study(object):
             tran_input.append(sub_name)
         else:
             job_table = {}
-            input_list = dict(zip(wu_ids, input_buf_new))
-            for wu_id in wu_ids:
-                where = "wu_id=%s" % wu_id
+            input_list = dict(zip(task_ids, input_buf_new))
+            for task_id in task_ids:
+                where = "task_id=%s" % task_id
                 job_table['boinc'] = str(boinc)
-                job_table['input_file'] = input_list[wu_id]
+                job_table['input_file'] = input_list[task_id]
                 self.db.update('sixtrack_wu', job_table, where)
         if boinc:
             self.init_boinc_dir()
@@ -682,7 +682,7 @@ class Study(object):
         in_path = self.paths['sixtrack_in']
         out_path = self.paths['sixtrack_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'sixtrack.py')
-        self.submission.prepare(wu_ids, tran_input, exe, 'db.ini', in_path,
+        self.submission.prepare(task_ids, tran_input, exe, 'db.ini', in_path,
                                 out_path, flavour='tomorrow', *args, **kwargs)
 
     def prepare_preprocess_input(self, *args, **kwargs):
@@ -743,7 +743,7 @@ class Study(object):
         in_path = self.paths['preprocess_in']
         out_path = self.paths['preprocess_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'preprocess.py')
-        self.submission.prepare(wu_ids, trans, exe, 'db.ini', in_path,
+        self.submission.prepare(task_ids, trans, exe, 'db.ini', in_path,
                                 out_path, flavour='espresso', *args, **kwargs)
 
     def pre_calc(self, **kwargs):
