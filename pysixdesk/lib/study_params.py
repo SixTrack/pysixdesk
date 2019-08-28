@@ -3,8 +3,6 @@ import logging
 
 from pathlib import Path
 from collections import OrderedDict
-from collections.abc import Iterable
-from itertools import product
 
 from . import machineparams
 from .constants import PROTON_MASS
@@ -220,37 +218,6 @@ class StudyParams:
             out_dict.update(o_dict)
 
         return out_dict
-
-    def product_dict(self, **kwargs):
-        '''
-        Cartesian product of dict of lists.
-        From:
-        https://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
-
-        Args:
-            inp (dict): dict of lists on which to do the product.
-
-        Returns:
-            list : list of dicts.
-
-        Example:
-            list(self._product_dict(**{"number": [1,2,3],
-                                       "color": ["orange","blue"]}))
-            >>[{"number": 1, "color": "orange"},
-               {"number": 1, "color": "blue"},
-               {"number": 2, "color": "orange"},
-               {"number": 2, "color": "blue"},
-               {"number": 3, "color": "orange"},
-               {"number": 3, "color": "blue"}]
-        '''
-        keys = kwargs.keys()
-        vals = []
-        for v in kwargs.values():
-            if not isinstance(v, Iterable) or isinstance(v, str):
-                v = [v]
-            vals.append(v)
-        for instance in product(*vals):
-            yield dict(zip(keys, instance))
 
     def _filter_queue(self, require):
         '''

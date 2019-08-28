@@ -5,6 +5,7 @@ import sys
 # give the test runner the import access
 pysixdesk_path = str(Path(__file__).parents[2].absolute())
 sys.path.insert(0, pysixdesk_path)
+from pysixdesk.lib.utils import product_dict
 from pysixdesk.lib.study_params import StudyParams
 from pysixdesk.lib.study_params import set_property
 from pysixdesk.lib.pysixdb import SixDB
@@ -61,12 +62,12 @@ test=%test1; test=%test2; test=%test3
     def test_placeholder_pattern(self):
         params = StudyParams(mask_path=self.mask_file,
                              fort_path=self.fort_file)
-        self.assertTrue((self.mask_ph | self.fort_ph).issubset(set(params.keys())))
+        self.assertTrue(self.mask_ph | self.fort_ph <= set(params.keys()))
         self.assertEqual(set(params.madx.keys()), self.mask_ph)
         # they are not equal because of the 'CHROM' and 'chrom_eps'
         # which are not placeholders in the fort.3 but mandatory for the
         # oneturnresult file created in the preprocessing job.
-        self.assertTrue(self.fort_ph < set(params.sixtrack.keys()))
+        self.assertTrue(self.fort_ph <= set(params.sixtrack.keys()))
 
     def test_oneturn(self):
         params = StudyParams(mask_path=self.mask_file,
@@ -132,7 +133,7 @@ test=%test1; test=%test2; test=%test3
         params.calc_queue.append(times)
 
         self.assertEqual(len(params.calc_queue), 1)
-        for e in params.product_dict(**params.madx):
+        for e in product_dict(**params.madx):
             out_dict = params.calc(e)
             self.assertTrue('e0_2' in out_dict.keys())
             self.assertTrue(out_dict['e0_2'] == e0_init * 2)
@@ -146,7 +147,7 @@ test=%test1; test=%test2; test=%test3
             return x*2, x*2
         params.calc_queue.append(times)
 
-        for e in params.product_dict(**params.madx):
+        for e in product_dict(**params.madx):
             with self.assertRaises(ValueError):
                 out_dict = params.calc(e)
 
@@ -166,9 +167,9 @@ test=%test1; test=%test2; test=%test3
             return x*2
         params.calc_queue.append(times)
 
-        for e in params.product_dict(**params.madx):
+        for e in product_dict(**params.madx):
             out_dict = params.calc(e)
-            self.assertTrue({'e0_2', 'e0_4'}.issubset(set(out_dict.keys())))
+            self.assertTrue({'e0_2', 'e0_4'} <= set(out_dict.keys()))
 
     def test_calc_queue_db(self):
         # this tests the reading from database as calculation input. Using
@@ -199,7 +200,7 @@ test=%test1; test=%test2; test=%test3
         def nss_2_calc(nss):
             return nss*2
         params.calc_queue.append(nss_2_calc)
-        for i, e in enumerate(params.product_dict(**params.sixtrack)):
+        for i, e in enumerate(product_dict(**params.sixtrack)):
             # only run calculations which require 'test_table'
             out_dict = params.calc(e,
                                    wu_id=i+1,
@@ -208,7 +209,7 @@ test=%test1; test=%test2; test=%test3
             self.assertTrue('xy' in out_dict.keys())
             self.assertFalse('nss_2' in out_dict.keys())
 
-        for e in params.product_dict(**params.sixtrack):
+        for e in product_dict(**params.sixtrack):
             # run calculations which don't need db
             out_dict = params.calc(e, require='none')
             self.assertTrue('nss_2' in out_dict.keys())

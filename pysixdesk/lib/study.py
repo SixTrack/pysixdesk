@@ -440,7 +440,7 @@ class Study(object):
                                       list(self.params.madx.keys()))
         check_jobs = self.db.select('preprocess_wu', ['wu_id', 'job_name'])
         wu_id = len(check_params)
-        for element in self.params.product_dict(**self.params.madx):
+        for element in utils.product_dict(**self.params.madx):
             wu_id += 1
             for k, v in element.items():
                 if isinstance(v, Iterable):
@@ -515,9 +515,9 @@ class Study(object):
         check_params = self.db.select('sixtrack_wu', keys)
         check_jobs = self.db.select('sixtrack_wu', ['wu_id', 'job_name'])
         wu_id = len(check_params)
-        for element in self.params.product_dict(**self.params.sixtrack,
-                                                **self.params.phasespace,
-                                                **{'preprocess_id': madx_ids}):
+        for element in utils.product_dict(**self.params.sixtrack,
+                                          **self.params.phasespace,
+                                          **{'preprocess_id': madx_ids}):
             wu_id += 1
             # run calculations
             out_calc = self.params.calc(element,

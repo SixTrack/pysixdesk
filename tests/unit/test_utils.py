@@ -110,6 +110,16 @@ class UtilsTest(unittest.TestCase):
         out = self.concat_contents_1[:end_i] + self.concat_contents_2 + ['ENDE\n']
         self.assertSequenceEqual(content, out)
 
+    def test_product_dict(self):
+        inp = {'a': [1, 2],
+               'b': [3, 4]}
+        out = list(utils.product_dict(**inp))
+        self.assertEqual(out, [{'a': 1, 'b': 3},
+                               {'a': 1, 'b': 4},
+                               {'a': 2, 'b': 3},
+                               {'a': 2, 'b': 4},
+                               ])
+
     def tearDown(self):
         # remove testing folder
         shutil.rmtree(self.test_folder.parent, ignore_errors=True)
