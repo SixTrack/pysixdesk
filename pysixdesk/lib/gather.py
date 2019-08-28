@@ -16,7 +16,7 @@ from .resultparser import parse_results
 
 logger = logging.getLogger(__name__)
 
-def run(wu_id, info):
+def run(wu_id, info, cluster):
     cf = {}
     cf.update(info)
     info_sec = cf['info']
@@ -31,16 +31,6 @@ def run(wu_id, info):
         logger.info(content)
         return
 
-    cluster_module = info_sec['cluster_module']  # pysixtrack.submission
-    classname = info_sec['cluster_name']  # HTCondor
-    try:
-        module = importlib.import_module(cluster_module)
-        cluster_cls = getattr(module, classname)
-        cluster = cluster_cls()
-    except ModuleNotFoundError as e:
-        content = "Failed to instantiate cluster class %s!" % cluster_module
-        logger.error(content)
-        raise e
     if str(wu_id) == '0':
         gather_results('preprocess', cf, cluster)
     elif str(wu_id) == '1':

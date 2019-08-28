@@ -54,33 +54,6 @@ class Study(object):
         Study._defaults(self)
         Study._structure(self)
 
-    @property
-    def cluster_class(self):
-        return self._cluster_class
-
-    @cluster_class.setter
-    def cluster_class(self, value):
-        '''
-        if user sets his own cluster_class, cluster_module and cluster_name
-        update
-        '''
-        self._cluster_class = value
-        self._cluster_name = self._cluster_class.__name__
-        # returns 'HTCondor'
-        self._cluster_module = self._cluster_class.__module__
-        # returns 'pysixtrack.submission'
-
-    # the user cannot change these without going through the cluster_class
-    # setter
-    # it might be best to leave these as hidden attributes?
-    @property
-    def cluster_name(self):
-        return self._cluster_name
-
-    @property
-    def cluster_module(self):
-        return self._cluster_module
-
     def _defaults(self):
         '''initialize a study with some default settings'''
         # full path to madx
@@ -562,8 +535,6 @@ class Study(object):
         config['db_setting'] = self.db_settings
         config['db_info'] = self.db_info
 
-        info_sec['cluster_module'] = self.cluster_module
-        info_sec['cluster_name'] = self.cluster_name
         if typ == 0:
             if self.oneturn:
                 # The section name should be same with the table name
@@ -589,7 +560,7 @@ class Study(object):
             raise ValueError(content)
 
         try:
-            gather.run(typ, config)
+            gather.run(typ, config, self.submission)
         except Exception as e:
             raise e
 
