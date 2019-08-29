@@ -596,6 +596,7 @@ class Study(object):
         new_results = []
         for result in results:
             paramsdict = dict(zip(names, result))
+            pre_id = paramsdict['preprocess_id']
             status = self.pre_calc(paramsdict, pre_id)  # further calculation
             if status:
                 new_results.append(tuple(paramsdict.values()))
