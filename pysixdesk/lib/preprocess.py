@@ -25,19 +25,18 @@ def run(task_id, input_info):
     dbtype = db_info['db_type']
     db = SixDB(db_info)
     task_id = str(task_id)
+    mask_info = cf['mask']
+    mask_keys = list(mask_info.keys())
     where = 'task_id=%s' % task_id
-    outputs = db.select('preprocess_wu', ['input_file'], where)
+    outputs = db.select('preprocess_wu', mask_keys, where)
     db.close()
     if not outputs[0]:
-        content = "Input file not found for preprocess task %s!" % task_id
+        content = "Data not found for preprocess task %s!" % task_id
         raise FileNotFoundError(content)
 
-    input_buf = outputs[0][0]
-    input_file = utils.decompress_buf(input_buf, None, 'buf')
-    cf.clear()
-    cf.read_string(input_file)
+    mask_data = dict(zip(mask_keys, outputs[0])
     madx_config = cf['madx']
-    mask_config = cf['mask']
+    mask_config = mask_data
     oneturn = madx_config['oneturn']
     collimation = madx_config['collimation']
 

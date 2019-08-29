@@ -56,7 +56,7 @@ class Table(object):
         self.tables['preprocess_wu'] = OrderedDict([
             ('wu_id', 'INTEGER'),
             ('job_name', 'text'),
-            ('input_file', 'blob'),
+            #('input_file', 'blob'),
             ('batch_name', 'text'),
             ('unique_id', 'text'),
             ('status', 'text'),
@@ -89,7 +89,7 @@ class Table(object):
             ('tracking_turn', 'int'),
             ('preprocess_id', 'int'),
             ('job_name', 'text'),
-            ('input_file', 'blob'),
+            #('input_file', 'blob'),
             ('batch_name', 'text'),
             ('unique_id', 'text'),
             ('status', 'text'),
@@ -98,7 +98,6 @@ class Table(object):
             ('mtime', 'bigint')])
         self.table_keys['sixtrack_wu'] = {
             'primary': ['wu_id', 'tracking_turn'],
-            #'autoincrement': ['wu_id'],
             'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
         }
         self.tables['sixtrack_task'] = OrderedDict([

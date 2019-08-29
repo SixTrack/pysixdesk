@@ -27,23 +27,24 @@ def run(task_id, input_info):
     db = SixDB(db_info)
     task_id = str(task_id)
     where = 'task_id=%s' % task_id
-    outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc',
-        'job_name', 'wu_id', 'tracking_turn'], where)
+    outputs = db.select('sixtrack_wu', ['preprocess_id', 'boinc', 'job_name',
+        'wu_id', 'tracking_turn'], where)
     boinc_infos = db.select('env', ['boinc_work', 'boinc_results',
                                     'surv_percent'])
+    fort3_info = cf['fort3']
+    fort3_keys = list(fort3_info.keys())
+    fort3_outs = db.select('sixtrack_wu', fort3_keys, where)
     if not outputs:
-        content = "Input file not found for preprocess job %s!" % wu_id
+        content = "Input data not found for sixtrack job %s!" % task_id
         raise FileNotFoundError(content)
 
-    preprocess_id = outputs[0][1]
-    boinc = outputs[0][2]
-    input_buf = outputs[0][0]
-    job_name = outputs[0][3]
-    wu_id = outputs[0][4]
-    tracking_turn = outputs[0][5]
-    input_file = utils.decompress_buf(input_buf, None, 'buf')
-    cf.clear()
-    cf.read_string(input_file)
+    preprocess_id = outputs[0][0]
+    boinc = outputs[0][1]
+    job_name = outputs[0][2]
+    wu_id = outputs[0][3]
+    tracking_turn = outputs[0][4]
+    fort3_data = dict(zip(fort3_keys, fort3_outs[0]))
+    fort3_config = fort3_data
     sixtrack_config = cf['sixtrack']
     inp = sixtrack_config["input_files"]
     input_files = utils.decode_strings(inp)
@@ -64,7 +65,6 @@ def run(task_id, input_info):
         i = inputs.index(infile)
         buf = input_buf[0][i]
         utils.decompress_buf(buf, infile)
-    fort3_config = cf['fort3']
     boinc_vars = cf['boinc']
     if not boinc_infos:
         boinc = 'false'
