@@ -663,8 +663,6 @@ class Study(object):
             if boinc:
                 incom_job['boinc'] = ['true'] * len(wu_ids)
             sub_db.insertm('sixtrack_wu', incom_job)
-            # wu_ids = sub_db.select('sixtrack_wu', ['wu_id'])
-            # wu_ids = list(zip(*wu_ids))[0]
             sub_db.close()
             db_info['db_name'] = 'sub.db'
             content = "The submitted db %s is ready!" % self.db_info['db_name']
@@ -759,14 +757,31 @@ class Study(object):
 
     def prepare_cr(self):
         '''Prepare the checkpoint data, add new lines in db'''
-        pass
-        where = f"status='complete' and tracking_turn={self.start_point}"
-        results = self.db.select('sixtrack_wu', where)
+        tracking_turn = self.start_point + self.prolong_turn
+        checks_1 = self.db.select('sixtrack_wu', ['wu_id'], DISTINCT=True)
+        checks_1 = list(zip(*checks_1))[0]
+        where = f"tracking_turn={tracking_turn}"
+        checks_2 = self.db.select('sixtrack_wu', ['wu_id'], where)
+        checks_2 = list(zip(*checks_2))[0]
+        checks = [i for i in checks_1 if i not in checks_2]
+        if not checks:
+            self._logger.info(f"The tracking jobs with tracking turn\
+                    {tracking_turn} already exist!")
+            return True
+        constraints = f"status='complete' and tracking_turn={self.start_point}\
+                and wu_id in {tuple(checks)}"
+        results = self.db.select('sixtrack_wu', where = constraints)
         if not results:
             self._logger.warning(f"There isn't complete job with tracking\
                     turn {self.start_point}")
             return False
-        #raise Exception
+        N = len(results)
+        names = self.tables['sixtrack_wu']
+        new_lines = dict(zip(names, zip(*results)))
+        new_lines['tracking_turn'] = (tracking_turn,)*N
+        new_lines['status'] = ('incomplete',)*N
+        new_lines[self.synonym_map['tracking_turn']] = (tracking_turn,)*N
+        select.db.insertm('sixtrack_wu', results)
 
     def init_boinc_dir(self):
         '''Initialise the boinc directory'''
