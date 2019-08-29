@@ -34,7 +34,7 @@ def run(task_id, input_info):
         content = "Data not found for preprocess task %s!" % task_id
         raise FileNotFoundError(content)
 
-    mask_data = dict(zip(mask_keys, outputs[0])
+    mask_data = dict(zip(mask_keys, outputs[0]))
     madx_config = cf['madx']
     mask_config = mask_data
     oneturn = madx_config['oneturn']

@@ -299,6 +299,7 @@ class Study(object):
         madx_sec['mask_file'] = self.madx_input["mask_file"]
         madx_sec['oneturn'] = str(self.oneturn)
         madx_sec['collimation'] = str(self.collimation)
+        madx_sec['dest_path'] = self.paths['preprocess_out']
         inp = self.madx_output
         madx_sec['output_files'] = utils.encode_strings(inp)
         if self.oneturn:
@@ -319,6 +320,7 @@ class Study(object):
             cus_sec['source_path'] = self.paths['templates']
             inp = self.collimation_input
             cus_sec['input_files'] = utils.encode_strings(inp)
+        cus_sec['dest_path'] = self.paths['preprocess_out']
 
         input_info = os.path.join(self.paths['preprocess_in'], 'input.ini')
         with open(input_info, 'w') as f_out:
@@ -355,8 +357,6 @@ class Study(object):
             job_name = self.name_conven(prefix, keys, element, '')
             wu_id += 1
             madx_table['wu_id'] = wu_id
-            madx_sec['dest_path'] = self.paths['preprocess_out']
-            cus_sec['dest_path'] = self.paths['preprocess_out']
             # f_out = io.StringIO()
             # self.config.write(f_out)
             # out = f_out.getvalue()
@@ -388,6 +388,7 @@ class Study(object):
         six_sec['test_turn'] = str(self.env['test_turn'])
         tracking_turn = self.sixtrack_params[self.synonym_map['tracking_turn']]
         six_sec['tracking_turn'] = str(tracking_turn)
+        six_sec['dest_path'] = self.paths['sixtrack_out']
         self.config['six_results'] = self.tables['six_results']
         if self.collimation:
             self.config['aperture_losses'] = self.tables['aperture_losses']
@@ -456,7 +457,6 @@ class Study(object):
             job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1,
                     wu_id)
             job_table['job_name'] = job_name
-            six_sec['dest_path'] = self.paths['sixtrack_out']
             self.config['boinc'] = self.boinc_vars
             # f_out = io.StringIO()
             # self.config.write(f_out)
@@ -633,7 +633,6 @@ class Study(object):
             sub_main = self.db_info['db_name']
             if os.path.exists(sub_name):
                 os.remove(sub_name)  # remove the old one
-            # shutil.copy2(sub_main, sub_name)
             db_info['db_name'] = sub_name
             sub_db = SixDB(db_info, settings=self.db_settings, create=True)
             sub_db.create_table('preprocess_wu', self.tables['preprocess_wu'],
@@ -672,7 +671,7 @@ class Study(object):
             sub_db.insertm('sixtrack_wu', outputs)
             sub_db.close()
             db_info['db_name'] = 'sub.db'
-            content = "The submitted db %s is ready!" % self.db_info['db_name']
+            content = "The submitted db %s is ready!" % db_info['db_name']
             self._logger.info(content)
             tran_input.append(sub_name)
         else:
