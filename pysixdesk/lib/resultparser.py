@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
     '''parse the results'''
-    task_table['wu_id'] = item
     task_table['mtime'] = int(time.time() * 1E7)
     contents = os.listdir(job_path)
 
@@ -66,13 +65,13 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
                 except Exception as e:
                     task_table['status'] = 'Failed'
                     content = "There is something wrong with the output "\
-                        "file %s for job %s!" % (out, item)
+                        "file %s for task %s!" % (out, item)
                     logger.error(content)
                     logger.error(e, exc_info=True)
             task_table[out] = compress_buf(out_f, 'gzip')
         else:
             task_table['status'] = 'Failed'
-            content = f"The {jobtype} output file {out} for job {item} "\
+            content = f"The {jobtype} output file {out} for task {item} "\
                     "doesn't exist! The job failed!"
             logger.warning(content)
     # clean the redundant sections

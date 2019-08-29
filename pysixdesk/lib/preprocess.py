@@ -106,8 +106,9 @@ def run(task_id, input_info):
         for sec in cf:
             result_cf[sec] = dict(cf[sec])
         filelist = Table.result_table(output_files.values())
-        parse_results('preprocess', wu_id, job_path, filelist, task_table,
+        parse_results('preprocess', task_id, job_path, filelist, task_table,
                 result_cf)
+        task_table['wu_id'] = wu_id
         where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
         for sec, vals in result_cf.items():

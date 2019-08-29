@@ -28,7 +28,7 @@ def run(task_id, input_info):
     task_id = str(task_id)
     where = 'task_id=%s' % task_id
     outputs = db.select('sixtrack_wu', ['input_file', 'preprocess_id', 'boinc',
-                                        'job_name', 'wu_id'], where)
+        'job_name', 'wu_id', 'tracking_turn'], where)
     boinc_infos = db.select('env', ['boinc_work', 'boinc_results',
                                     'surv_percent'])
     if not outputs:
@@ -40,6 +40,7 @@ def run(task_id, input_info):
     input_buf = outputs[0][0]
     job_name = outputs[0][3]
     wu_id = outputs[0][4]
+    tracking_turn = outputs[0][5]
     input_file = utils.decompress_buf(input_buf, None, 'buf')
     cf.clear()
     cf.read_string(input_file)
@@ -125,7 +126,9 @@ def run(task_id, input_info):
         for sec in cf:
             result_cf[sec] = dict(cf[sec])
         filelist = Table.result_table(output_files)
-        parse_results('sixtrack', wu_id, job_path, filelist, task_table, result_cf)
+        parse_results('sixtrack', task_id, job_path, filelist, task_table, result_cf)
+        task_table['wu_id'] = wu_id
+        task_table['tracking_turn'] = tracking_turn
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
         for sec, vals in result_cf.items():

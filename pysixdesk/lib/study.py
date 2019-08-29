@@ -566,6 +566,8 @@ class Study(object):
 
     def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
+        if self.checkpoint_restart:
+            self.prepare_cr()
         where = "status='complete'"
         preprocess_outs = self.db.select(
             'preprocess_wu', ['wu_id', 'task_id'], where)
@@ -580,18 +582,20 @@ class Study(object):
             where = "status='incomplete' and preprocess_id in %s" % str(
                 preprocess_outs[0])
         outputs = self.db.select('sixtrack_wu', ['wu_id', 'preprocess_id',
-                                                 'input_file', 'job_name'], where)
+            'input_file', 'job_name', 'tracking_turn'], where)
         if not outputs:
             content = "There isn't available sixtrack job to submit!"
             self._logger.info(content)
             return
         outputs = list(zip(*outputs))
         wu_ids = []
+        tracking_turns = []
         pre_ids = []
         job_names = []
         input_buf_new = []
-        for wu_id, pre_id, buf, job_name in zip(outputs[0], outputs[1],
-                                                outputs[2], outputs[3]):
+        for wu_id, pre_id, buf, job_name, n in zip(outputs[0], outputs[1],
+                                                outputs[2], outputs[3],
+                                                outputs[4]):
             in_fil = utils.decompress_buf(buf, None, 'buf')
             self.config.clear()
             self.config.read_string(in_fil)
@@ -604,6 +608,7 @@ class Study(object):
                 buf_new = utils.compress_buf(out, 'str')
                 input_buf_new.append(buf_new)
                 wu_ids.append(wu_id)
+                tracking_turns.append(n)
                 pre_ids.append(pre_id)
                 job_names.append(job_name)
         if not wu_ids:
@@ -643,11 +648,13 @@ class Study(object):
             sub_db.drop_table('sixtrack_wu')
             sub_db.drop_table('oneturn_sixtrack_wu')
             sub_db.drop_table('templates')
-            tables = {'wu_id': 'int', 'preprocess_id': 'int', 'task_id': 'int',
-                      'input_file': 'blob', 'boinc': 'text', 'job_name': 'text'}
+            tables = {'wu_id': 'int', 'tracking_turn': 'int',
+                    'preprocess_id': 'int', 'task_id': 'int',
+                    'input_file': 'blob', 'boinc': 'text', 'job_name': 'text'}
             sub_db.create_table('sixtrack_wu', tables)
             incom_job = {}
             incom_job['wu_id'] = wu_ids
+            incom_job['tracking_turn'] = tracking_turns
             incom_job['preprocess_id'] = pre_ids
             incom_job['task_id'] = task_ids
             incom_job['input_file'] = input_buf_new
@@ -749,6 +756,17 @@ class Study(object):
     def pre_calc(self, **kwargs):
         '''Further calculations for the specified parameters'''
         pass
+
+    def prepare_cr(self):
+        '''Prepare the checkpoint data, add new lines in db'''
+        pass
+        where = f"status='complete' and tracking_turn={self.start_point}"
+        results = self.db.select('sixtrack_wu', where)
+        if not results:
+            self._logger.warning(f"There isn't complete job with tracking\
+                    turn {self.start_point}")
+            return False
+        #raise Exception
 
     def init_boinc_dir(self):
         '''Initialise the boinc directory'''

@@ -104,6 +104,7 @@ class Table(object):
         self.tables['sixtrack_task'] = OrderedDict([
             ('task_id', 'INTEGER'),
             ('wu_id', 'int'),
+            ('tracking_turn', 'int'),
             ('fort3', 'blob'),
             ('job_stdout', 'blob'),
             ('job_stderr', 'blob'),
@@ -119,7 +120,8 @@ class Table(object):
         self.table_keys['sixtrack_task'] = {
             'primary': ['task_id'],
             'autoincrement': ['task_id'],
-            'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
+            'foreign': {'sixtrack_wu': [['wu_id', 'tracking_turn'],
+                ['wu_id', 'tracking_turn']]},
         }
         self.tables['six_results'] = OrderedDict([
             ('task_id', 'int'),

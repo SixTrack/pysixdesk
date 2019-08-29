@@ -91,13 +91,18 @@ def gather_results(jobtype, cf, cluster):
         job_table = {}
         task_table = {}
         task_table['status'] = 'Success'
-        where = 'task_id=%s' % item
-        wu_id = db.select(f'{jobtype}_wu', ['wu_id'], where)
-        wu_id = wu_id[0][0]
         if os.path.isdir(job_path) and os.listdir(job_path):
             # parse the results
-            parse_results(jobtype, wu_id, job_path, file_list, task_table,
+            parse_results(jobtype, item, job_path, file_list, task_table,
                     result_cf)
+            where = 'task_id=%s' % item
+            if jobtype == 'preprocess':
+                pr_id = db.select('preprocess_wu', ['wu_id'], where)
+                task_table['wu_id'] = pr_id[0][0]
+            elif jobtype == 'sixtrack':
+                pr_id = db.select('sixtrack_wu', ['wu_id', 'tracking_turn'], where)
+                task_table['wu_id'] = pr_id[0][0]
+                task_table['tracking_turn'] = pr_id[0][1]
             where = 'task_id=%s' % item
             db.update(f'{jobtype}_task', task_table, where)
             for sec, vals in result_cf.items():
