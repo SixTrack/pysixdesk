@@ -169,8 +169,9 @@ def run(task_id, input_info):
         db.update('sixtrack_wu', job_table, where)
         logger.error('Error during reconnection.', exc_info=True)
     finally:
-        where = "task_id=%s" % task_id
-        db.remove('sixtrack_wu_tmp', where)
+        if dbtype.lower() == 'mysql':
+            where = "task_id=%s" % task_id
+            db.remove('sixtrack_wu_tmp', where)
 
 
 def sixtrackjob(sixtrack_config, config_param, boinc_vars):
