@@ -20,79 +20,76 @@ def run(task_id, input_info):
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
-    db_info = {}
-    db_info.update(cf['db_info'])
+    db_info = dict(cf['db_info'])
     dbtype = db_info['db_type']
     db = SixDB(db_info)
-    task_id = str(task_id)
-    mask_info = cf['mask']
-    mask_keys = list(mask_info.keys())
-    where = 'task_id=%s' % task_id
-    outputs = db.select('preprocess_wu', mask_keys, where)
-    db.close()
-    if not outputs[0]:
-        content = "Data not found for preprocess task %s!" % task_id
-        raise FileNotFoundError(content)
-
-    mask_data = dict(zip(mask_keys, outputs[0]))
-    madx_config = cf['madx']
-    mask_config = mask_data
-    oneturn = madx_config['oneturn']
-    collimation = madx_config['collimation']
-
     try:
-        madxjob(madx_config, mask_config)
-    except Exception:
-        content = 'MADX job failed.'
-        logger.error(content, exc_info=True)
+        task_id = str(task_id)
+        mask_info = cf['mask']
+        mask_keys = list(mask_info.keys())
+        where = 'task_id=%s' % task_id
+        outputs = db.select('preprocess_wu', mask_keys, where)
+        if not outputs[0]:
+            content = "Data not found for preprocess task %s!" % task_id
+            raise FileNotFoundError(content)
+        db.close()
+        try:
+            mask_data = dict(zip(mask_keys, outputs[0]))
+            madx_config = cf['madx']
+            mask_config = mask_data
+            oneturn = madx_config['oneturn']
+            collimation = madx_config['collimation']
+            madxjob(madx_config, mask_config)
+        except Exception:
+            content = 'MADX job failed.'
+            logger.error(content, exc_info=True)
+            if dbtype.lower() == 'sql':
+                return
+        else:
+            if collimation.lower() == 'true':
+                try:
+                    coll_config = cf['collimation']
+                    new_fort2(coll_config)
+                except Exception:
+                    logger.error('Generate new fort2 failed!', exc_info=True)
+            if oneturn.lower() == 'true':
+                try:
+                    sixtrack_config = cf['sixtrack']
+                    fort3_config = cf._sections['fort3']
+                    sixtrackjobs(sixtrack_config, fort3_config)
+                except Exception:
+                    logger.error('Oneturn job failed!', exc_info=True)
+
+        if dbtype.lower() == 'mysql':
+            dest_path = './result'
+        else:
+            dest_path = os.path.join(madx_config["dest_path"], task_id)
+        if not os.path.isdir(dest_path):
+            os.makedirs(dest_path)
+
+        otpt = madx_config["output_files"]
+        output_files = utils.decode_strings(otpt)
+
+        # Download the requested files.
+        down_list = list(output_files.values())
+        down_list.append('madx_in')
+        down_list.append('madx_stdout')
+        if oneturn.lower() == 'true':
+            output_files['oneturnresult'] = 'oneturnresult'
+            down_list.append('oneturnresult')
+        if collimation.lower() == 'true':
+            output_files['fort3.limi'] = 'fort3.limi'
+            down_list.append('fort3.limi')
+        try:
+            utils.download_output(down_list, dest_path)
+            logger.info("All requested results have been stored in %s" % dest_path)
+        except Exception:
+            logger.warning("Job failed!", exc_info=True)
+
         if dbtype.lower() == 'sql':
             return
-    else:
-        if collimation.lower() == 'true':
-            try:
-                coll_config = cf['collimation']
-                new_fort2(coll_config)
-            except Exception:
-                logger.error('Generate new fort2 failed!', exc_info=True)
-        if oneturn.lower() == 'true':
-            try:
-                sixtrack_config = cf['sixtrack']
-                fort3_config = cf._sections['fort3']
-                sixtrackjobs(sixtrack_config, fort3_config)
-            except Exception:
-                logger.error('Oneturn job failed!', exc_info=True)
 
-    if dbtype.lower() == 'mysql':
-        dest_path = './result'
-    else:
-        dest_path = os.path.join(madx_config["dest_path"], task_id)
-    if not os.path.isdir(dest_path):
-        os.makedirs(dest_path)
-
-    otpt = madx_config["output_files"]
-    output_files = utils.decode_strings(otpt)
-
-    # Download the requested files.
-    down_list = list(output_files.values())
-    down_list.append('madx_in')
-    down_list.append('madx_stdout')
-    if oneturn.lower() == 'true':
-        output_files['oneturnresult'] = 'oneturnresult'
-        down_list.append('oneturnresult')
-    if collimation.lower() == 'true':
-        output_files['fort3.limi'] = 'fort3.limi'
-        down_list.append('fort3.limi')
-    try:
-        utils.download_output(down_list, dest_path)
-        logger.info("All requested results have been stored in %s" % dest_path)
-    except Exception:
-        logger.warning("Job failed!", exc_info=True)
-
-    if dbtype.lower() == 'sql':
-        return
-
-    # reconnect after jobs finished
-    try:
+        # reconnect after jobs finished
         db = SixDB(db_info)
         where = "task_id=%s" % task_id
         pr_key = db.select('preprocess_wu', ['wu_id'], where)
@@ -125,17 +122,13 @@ def run(task_id, input_info):
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
             db.update('preprocess_wu', job_table, where)
-            content = "This is a failed job!"
-            logger.warning(content)
-        return
+            logger.warning("This is a failed job!")
     except Exception as e:
         where = "task_id=%s" % task_id
         job_table['status'] = 'incomplete'
         job_table['mtime'] = int(time.time() * 1E7)
         db.update('preprocess_wu', job_table, where)
         raise e
-    finally:
-        db.close()
 
 
 def madxjob(madx_config, mask_config):
