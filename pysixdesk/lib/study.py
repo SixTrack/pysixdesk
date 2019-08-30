@@ -373,6 +373,7 @@ class Study(object):
         self.config['sixtrack'] = {}
         six_sec = self.config['sixtrack']
         self.config['fort3'] = dict.fromkeys(self.sixtrack_params, 0)
+        self.config['boinc'] = self.boinc_vars
         six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         if 'additional_input' in self.sixtrack_input.keys():
@@ -457,7 +458,6 @@ class Study(object):
             job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1,
                     wu_id)
             job_table['job_name'] = job_name
-            self.config['boinc'] = self.boinc_vars
             # f_out = io.StringIO()
             # self.config.write(f_out)
             # out = f_out.getvalue()
@@ -581,12 +581,8 @@ class Study(object):
             self._logger.warning(content)
             return
         preprocess_outs = list(zip(*preprocess_outs))
-        if len(preprocess_outs[0]) == 1:
-            constraints = "status='incomplete' and preprocess_id=%s" % str(
-                    preprocess_outs[0][0])
-        else:
-            constraints = "status='incomplete' and preprocess_id in %s" % str(
-                    preprocess_outs[0])
+        constraints = "status='incomplete' and preprocess_id in (%s)" % (
+                    ','.join(map(str, preprocess_outs[0])))
         results = self.db.select('sixtrack_wu', where=constraints)
         if not results:
             content = "There isn't available sixtrack job to submit!"
@@ -600,16 +596,19 @@ class Study(object):
             status = self.pre_calc(paramsdict, pre_id)  # further calculation
             if status:
                 new_results.append(tuple(paramsdict.values()))
-                wu_id = paramsdict['wu_id']
-                turn = paramsdict['tracking_turn']
-                where = f"wu_id = {wu_id} and tracking_turn = {turn}"
-                self.db.update('sixtrack_wu', paramsdict, where)
+                # wu_id = paramsdict['wu_id']
+                # turn = paramsdict['tracking_turn']
+                # where = f"wu_id = {wu_id} and tracking_turn = {turn}"
+                # self.db.update('sixtrack_wu', paramsdict, where)
         if not new_results:
             content = ("There isn't available sixtrack job to submit due to "
                        "failed further calculation!")
             raise Exception(content)
         outputs = dict(zip(names, zip(*new_results)))
         wu_ids = outputs['wu_id']
+        outputs['boinc'] = ['false'] * len(wu_ids)
+        if boinc:
+            outputs['boinc'] = ['true'] * len(wu_ids)
         pre_ids = outputs['preprocess_id']
         task_table = {}
         wu_table = {}
@@ -626,6 +625,7 @@ class Study(object):
             wu_table['mtime'] = int(time.time() * 1E7)
             where = "wu_id=%s" % wu_id
             self.db.update('sixtrack_wu', wu_table, where)
+        outputs['task_id'] = task_ids
         db_info = {}
         db_info.update(self.db_info)
         tran_input = []
@@ -641,35 +641,28 @@ class Study(object):
             sub_db.create_table('preprocess_task',
                     self.tables['preprocess_task'],
                     self.table_keys['preprocess_task'])
-            sub_db.create_table('sixtrack_wu', self.tables['sixtrack_wu'],
+            sub_db.create_table('sixtrack_wu_tmp', self.tables['sixtrack_wu'],
                     self.table_keys['sixtrack_wu'])
-            sub_db.create_table('env')
+            sub_db.create_table('env', self.tables['env'])
+
             env_outs = self.db.select('env')
             names = list(self.tables['env'].keys())
             env_ins = dict(zip(names, zip(*env_outs)))
             sub_db.insertm('env', env_ins)
 
-            if len(pre_ids) == 1:
-                constr = f"wu_id = {pre_ids[0]}"
-            else:
-                constr = f"wu_id in {tuple(pre_ids)}"
+            constr = "wu_id in (%s)" % (','.join(map(str, pre_ids)))
             pre_outs = self.db.select('preprocess_wu', where=constr)
             names = list(self.tables['preprocess_wu'].keys())
             pre_ins = dict(zip(names, zip(*pre_outs)))
             sub_db.insertm('preprocess_wu', pre_ins)
+
             pre_task_ids = pre_ins['task_id']
-            if len(pre_task_ids) == 1:
-                constr = f"task_id = {pre_task_ids[0]}"
-            else:
-                constr = f"task_id in {tuple(pre_task_ids)}"
+            constr = "task_id in (%s)" % (','.join(map(str, pre_task_ids)))
             pre_task_outs = self.db.select('preprocess_task', where=constr)
             names = list(self.tables['preprocess_task'].keys())
             pre_task_ins = dict(zip(names, zip(*pre_task_outs)))
             sub_db.insertm('preprocess_task', pre_task_ins)
-            outputs['boinc'] = ['false'] * len(wu_ids)
-            if boinc:
-                incom_job['boinc'] = ['true'] * len(wu_ids)
-            sub_db.insertm('sixtrack_wu', outputs)
+            sub_db.insertm('sixtrack_wu_tmp', outputs)
             sub_db.close()
             db_info['db_name'] = 'sub.db'
             content = "The submitted db %s is ready!" % db_info['db_name']
@@ -677,9 +670,12 @@ class Study(object):
             tran_input.append(sub_name)
         else:
             job_table = {}
-            where = "task_id in %s" % str(task_ids)
+            where = "task_id in (%s)" % (','.join(map(str, task_ids)))
             job_table['boinc'] = str(boinc)
             self.db.update('sixtrack_wu', job_table, where)
+            self.db.create_table('sixtrack_wu_tmp', self.tables['sixtrack_wu'],
+                    self.table_keys['sixtrack_wu'])
+            self.db.insertm('sixtrack_wu_tmp', outputs)
         if boinc:
             self.init_boinc_dir()
         input_info = os.path.join(self.paths['sixtrack_in'], 'input.ini')

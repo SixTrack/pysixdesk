@@ -27,13 +27,13 @@ def run(task_id, input_info):
     db = SixDB(db_info)
     task_id = str(task_id)
     where = 'task_id=%s' % task_id
-    outputs = db.select('sixtrack_wu', ['preprocess_id', 'boinc', 'job_name',
+    outputs = db.select('sixtrack_wu_tmp', ['preprocess_id', 'boinc', 'job_name',
         'wu_id', 'tracking_turn'], where)
     boinc_infos = db.select('env', ['boinc_work', 'boinc_results',
                                     'surv_percent'])
     fort3_info = cf['fort3']
     fort3_keys = list(fort3_info.keys())
-    fort3_outs = db.select('sixtrack_wu', fort3_keys, where)
+    fort3_outs = db.select('sixtrack_wu_tmp', fort3_keys, where)
     if not outputs:
         content = "Input data not found for sixtrack job %s!" % task_id
         raise FileNotFoundError(content)
@@ -155,6 +155,8 @@ def run(task_id, input_info):
         db.update('sixtrack_wu', job_table, where)
         logger.error('Error during reconnection.', exc_info=True)
     finally:
+        where = "task_id=%s" % task_id
+        db.remove('sixtrack_wu_tmp', where)
         db.close()
 
 

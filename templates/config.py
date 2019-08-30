@@ -131,7 +131,8 @@ class MyStudy(Study):
             return 0
         value = paramdict[source]
         try:
-            value = ast.literal_eval(value)
+            if isinstance(value, str):
+                value = ast.literal_eval(value)
         except ValueError:
             self._logger.error("Invalid source value for job %s!" % pre_id)
             return 0
@@ -161,6 +162,8 @@ class MyStudy(Study):
             except:
                 self._logger.error("Unexpected error!", exc_info=True)
                 return 0
+            finally:
+                paramdict.pop('angle')
         elif source == 'kang':
             try:
                 kmax = self.env['kmax']
