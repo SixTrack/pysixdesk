@@ -27,14 +27,14 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
         search_store('madx_stdout', 'madx_stdout')
 
     if jobtype == 'sixtrack':
-        search_store('fort3', 'fort.3')
+        search_store('fort_3', 'fort.3')
         # The following files are used for checkpoint/restart
         search_store('cr_status', 'cr_status')
         search_store('cr_stdout', 'cr_stdout')
         search_store('cr_stderr', 'cr_stderr')
         search_store('crpoint_pri', 'crpoint_pri')
         search_store('crpoint_sec', 'crpoint_sec')
-        search_store('fort6', 'fort.6')
+        search_store('fort_6', 'fort.6')
 
     job_stdout = [s for s in contents if (re.match(r'htcondor\..+\.out', s) or
                                           re.match(r'_condor_stdout', s))]

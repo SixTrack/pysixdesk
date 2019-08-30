@@ -765,7 +765,7 @@ class Study(object):
                     {tracking_turn} already exist!")
             return True
         constraints = f"status='complete' and tracking_turn={self.start_point}\
-                and wu_id in {tuple(checks)}"
+                and wu_id in ({','.join(map(str, checks))})"
         results = self.db.select('sixtrack_wu', where = constraints)
         if not results:
             self._logger.warning(f"There isn't complete job with tracking\
@@ -775,6 +775,7 @@ class Study(object):
         names = self.tables['sixtrack_wu'].keys()
         new_lines = dict(zip(names, zip(*results)))
         new_lines['tracking_turn'] = (tracking_turn,)*N
+        new_lines['start_point'] = (self.start_point,)*N
         new_lines['status'] = ('incomplete',)*N
         new_lines[self.synonym_map['tracking_turn']] = (tracking_turn,)*N
         select.db.insertm('sixtrack_wu', results)
