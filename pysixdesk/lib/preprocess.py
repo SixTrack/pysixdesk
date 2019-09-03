@@ -92,8 +92,8 @@ def run(task_id, input_info):
         # reconnect after jobs finished
         db = SixDB(db_info)
         where = "task_id=%s" % task_id
-        pr_key = db.select('preprocess_wu', ['wu_id'], where)
-        wu_id = pr_key[0][0]
+        #pr_key = db.select('preprocess_wu', ['wu_id'], where)
+        #wu_id = pr_key[0][0]
         job_table = {}
         task_table = {}
         task_table['status'] = 'Success'
@@ -104,7 +104,7 @@ def run(task_id, input_info):
         filelist = Table.result_table(output_files.values())
         parse_results('preprocess', task_id, job_path, filelist, task_table,
                 result_cf)
-        task_table['wu_id'] = wu_id
+        #task_table['wu_id'] = wu_id
         where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
         for sec, vals in result_cf.items():
@@ -124,6 +124,7 @@ def run(task_id, input_info):
             db.update('preprocess_wu', job_table, where)
             logger.warning("This is a failed job!")
     except Exception as e:
+        job_table = {}
         where = "task_id=%s" % task_id
         job_table['status'] = 'incomplete'
         job_table['mtime'] = int(time.time() * 1E7)

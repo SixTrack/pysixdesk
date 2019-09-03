@@ -61,15 +61,16 @@ def run(task_id, input_info):
         if not input_buf:
             raise FileNotFoundError("The required files were not found!")
         input_buf = list(input_buf[0])
+        cr_files = ['crpoint_sec.bin', 'crpoint_pri.bin', 'fort.6']
         cr_inputs = []
         if start_point is not None:
-            cr_inputs = ['crpoint_sec.bin', 'crpoint_pre.bin', 'fort.6']
-            where = f'wu_id={wu_id} and tracking_turn={tracking_turn}'
-            cr_task_ids = db.select('sixtrack_wu_tmp', ['task_id'], where)
-            cf_task_id = cr_task_ids[0][0]
+            cr_inputs = cr_files
+            where = f'wu_id={wu_id} and tracking_turn={start_point}'
+            cr_task_ids = db.select('sixtrack_wu', ['task_id'], where)
+            cr_task_id = cr_task_ids[0][0]
             where = f'task_id = {cr_task_id}'
             cr_input_buf = db.select('sixtrack_task', cr_inputs, where)
-            if not cr_input_buf:
+            if (not cr_input_buf) or (cr_input_buf[0][0] is None):
                 raise FileNotFoundError("Checkpoint files were not found!")
             inputs += cr_inputs
             input_buf += cr_input_buf[0]
@@ -114,6 +115,11 @@ def run(task_id, input_info):
         output_files = utils.decode_strings(inp)
         down_list = list(output_files)
         down_list.append('fort.3')
+        for cr_file in cr_files:
+            cr_file_t = os.path.join('./junk', cr_file)
+            if os.path.isfile(cr_file_t):
+                shutil.copy2(cr_file_t, cr_file)
+                down_list.append(cr_file)
 
         try:
             utils.download_output(down_list, dest_path)
@@ -141,8 +147,8 @@ def run(task_id, input_info):
             result_cf[sec] = dict(cf[sec])
         filelist = Table.result_table(output_files)
         parse_results('sixtrack', task_id, job_path, filelist, task_table, result_cf)
-        task_table['wu_id'] = wu_id
-        task_table['tracking_turn'] = tracking_turn
+        #task_table['wu_id'] = wu_id
+        #task_table['tracking_turn'] = tracking_turn
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
         for sec, vals in result_cf.items():
@@ -162,12 +168,15 @@ def run(task_id, input_info):
             db.update('sixtrack_wu', job_table, where)
             content = "The sixtrack job failed!"
             logger.warning(content)
-    except Exception:
-        where = "task_id=%s" % task_id
-        job_table['status'] = 'incomplete'
-        job_table['mtime'] = int(time.time() * 1E7)
-        db.update('sixtrack_wu', job_table, where)
-        logger.error('Error during reconnection.', exc_info=True)
+    except Exception as e:
+        if dbtype.lower() == 'mysql':
+            job_table = {}
+            where = "task_id=%s" % task_id
+            job_table['status'] = 'incomplete'
+            job_table['mtime'] = int(time.time() * 1E7)
+            db.update('sixtrack_wu', job_table, where)
+            logger.error('Error during reconnection.', exc_info=True)
+        raise e
     finally:
         if dbtype.lower() == 'mysql':
             where = "task_id=%s" % task_id
@@ -220,7 +229,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     for key in list(input_files.values()) + add_inputs + cr_inputs:
         key1 = os.path.join('../', key)
         if os.path.isfile(key1):
-            os.symlink(key1, key)
+            shutil.copy2(key1, key)
         else:
             raise FileNotFoundError("The required input file %s does not found!" %
                                     key)
@@ -277,10 +286,10 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     #    logger.info('Sixtrack job %s has completed normally!' % wu_id)
     if utils.check(output_files):
         for out in output_files:
-            shutil.move(out, os.path.join('../', out))
+            shutil.copy2(out, os.path.join('../', out))
     os.chdir('../')  # get out of junk folder
     if boinc.lower() != 'true':
-        shutil.move('junk/fort.3', 'fort.3')
+        shutil.copy2('junk/fort.3', 'fort.3')
         if boinc.lower() != 'false':
             logger.warning("Unknown boinc flag %s!" % boinc)
     else:
