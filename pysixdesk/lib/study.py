@@ -420,7 +420,8 @@ class Study(object):
 
         keys.append('preprocess_id')
         values.append(madx_ids)
-        outputs = self.db.select('sixtrack_wu', keys)
+        where = 'start_point is null'
+        outputs = self.db.select('sixtrack_wu', keys, where)
         namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'],
                 DISTINCT=True)
         wu_id = len(namevsid)

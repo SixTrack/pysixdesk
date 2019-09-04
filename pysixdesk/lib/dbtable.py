@@ -113,6 +113,7 @@ class Table(object):
             ('fort_6', 'MEDIUMBLOB'),
             ('crpoint_pri_bin', 'MEDIUMBLOB'),
             ('crpoint_sec_bin', 'MEDIUMBLOB'),
+            ('singletrackfile_dat', 'MEDIUMBLOB'),
             ('status', 'text'),
             ('mtime', 'bigint')])
         self.table_keys['sixtrack_task'] = {

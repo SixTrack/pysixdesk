@@ -34,6 +34,7 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
         search_store('cr_stderr', 'cr_stderr')
         search_store('crpoint_pri_bin', 'crpoint_pri')
         search_store('crpoint_sec_bin', 'crpoint_sec')
+        search_store('singletrackfile_dat', 'singletrackfile')
         search_store('fort_6', 'fort.6')
 
     job_stdout = [s for s in contents if (re.match(r'htcondor\..+\.out', s) or

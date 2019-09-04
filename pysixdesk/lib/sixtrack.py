@@ -61,7 +61,8 @@ def run(task_id, input_info):
         if not input_buf:
             raise FileNotFoundError("The required files were not found!")
         input_buf = list(input_buf[0])
-        cr_files = ['crpoint_sec.bin', 'crpoint_pri.bin', 'fort.6']
+        cr_files = ['crpoint_sec.bin', 'crpoint_pri.bin', 'fort.6',
+                'singletrackfile.dat']
         cr_inputs = []
         if start_point is not None:
             cr_inputs = cr_files
@@ -224,6 +225,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     os.chdir('junk')
 
     logger.info("Preparing the sixtrack input files!")
+    open('fort.6', 'a').close()
 
     # prepare the other input files
     for key in list(input_files.values()) + add_inputs + cr_inputs:
@@ -274,16 +276,14 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     logger.info('Sixtrack task %s is running...' % task_id)
     six_output = os.popen(sixtrack_exe)
     outputlines = six_output.readlines()
-    output_name = os.path.join('../', 'sixtrack.output')
-    with open(output_name, 'w') as six_out:
-        six_out.writelines(outputlines)
-    #if not os.path.isfile('fort.10'):
-    #    content = ("The sixtrack job %s for chromaticity FAILED! "
-    #               "Check the file %s which contains the SixTrack output.")
-    #    raise Exception(content % (wu_id, output_name))
-    #else:
-    #    shutil.move('fort.10', '../fort.10')
-    #    logger.info('Sixtrack job %s has completed normally!' % wu_id)
+    output_name = os.path.join('fort.6')
+    if outputlines:
+        # For some sixtrack version, the stdout will be automatically wrote to
+        # 'fort.6'
+        with open(output_name, 'w') as six_out:
+            six_out.writelines(outputlines)
+    if 'fort.6' not in output_files:
+        output_files.append('fort.6')
     if utils.check(output_files):
         for out in output_files:
             shutil.copy2(out, os.path.join('../', out))
@@ -296,7 +296,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         surv_per = sixtrack_config['surv_percent']
         surv_per = ast.literal_eval(surv_per)
 
-        if not check_tracking('sixtrack.output', surv_per):
+        if not check_tracking('fort.6', surv_per):
             raise Exception("The job doesn't pass the test!")
 
         boinc_work = sixtrack_config['boinc_work']

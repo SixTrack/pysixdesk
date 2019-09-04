@@ -294,6 +294,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     os.chdir('junk')
 
     logger.info("Preparing the sixtrack input files!")
+    open('fort.6', 'a').close()
 
     keys = list(fort3_config.keys())
     patterns = ['%' + a for a in keys]
