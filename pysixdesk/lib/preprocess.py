@@ -92,8 +92,6 @@ def run(task_id, input_info):
         # reconnect after jobs finished
         db = SixDB(db_info)
         where = "task_id=%s" % task_id
-        #pr_key = db.select('preprocess_wu', ['wu_id'], where)
-        #wu_id = pr_key[0][0]
         job_table = {}
         task_table = {}
         task_table['status'] = 'Success'
@@ -104,7 +102,6 @@ def run(task_id, input_info):
         filelist = Table.result_table(output_files.values())
         parse_results('preprocess', task_id, job_path, filelist, task_table,
                 result_cf)
-        #task_table['wu_id'] = wu_id
         where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
         for sec, vals in result_cf.items():
@@ -329,13 +326,6 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
         else:
             raise FileNotFoundError("The required input file %s does not found!" %
                                     key)
-    #if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
-    #    os.symlink('../fort.2', 'fort.2')
-    #    os.symlink('../fort.16', 'fort.16')
-    #    if not os.path.isfile('../fort.8'):
-    #        open('fort.8', 'a').close()
-    #    else:
-    #        os.symlink('../fort.8', 'fort.8')
 
     # actually run
     logger.info('Sixtrack job %s is running...' % jobname)

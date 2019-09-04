@@ -28,7 +28,7 @@ def run(task_id, input_info):
         task_id = str(task_id)
         where = 'task_id=%s' % task_id
         outputs = db.select('sixtrack_wu_tmp', ['preprocess_id', 'boinc',
-            'job_name', 'wu_id', 'tracking_turn', 'start_point'], where)
+            'job_name', 'wu_id', 'first_turn'], where)
         boinc_infos = db.select('env', ['boinc_work', 'boinc_results',
                                         'surv_percent'])
         fort3_info = cf['fort3']
@@ -42,8 +42,7 @@ def run(task_id, input_info):
         boinc = outputs[0][1]
         job_name = outputs[0][2]
         wu_id = outputs[0][3]
-        tracking_turn = outputs[0][4]
-        start_point = outputs[0][5]
+        first_turn = outputs[0][4]
         fort3_data = dict(zip(fort3_keys, fort3_outs[0]))
         fort3_config = fort3_data
         sixtrack_config = cf['sixtrack']
@@ -64,9 +63,9 @@ def run(task_id, input_info):
         cr_files = ['crpoint_sec.bin', 'crpoint_pri.bin', 'fort.6',
                 'singletrackfile.dat']
         cr_inputs = []
-        if start_point is not None:
+        if first_turn is not None:
             cr_inputs = cr_files
-            where = f'wu_id={wu_id} and tracking_turn={start_point}'
+            where = f'wu_id={wu_id} and last_turn={first_turn-1}'
             cr_task_ids = db.select('sixtrack_wu', ['task_id'], where)
             cr_task_id = cr_task_ids[0][0]
             where = f'task_id = {cr_task_id}'
@@ -97,7 +96,6 @@ def run(task_id, input_info):
         sixtrack_config['boinc_results'] = boinc_results
         sixtrack_config['surv_percent'] = str(surv_percent)
         sixtrack_config['job_name'] = job_name
-        # sixtrack_config['start_point'] = start_point
         sixtrack_config['wu_id'] = str(wu_id)
         sixtrack_config['cr_inputs'] = utils.encode_strings(cr_inputs)
 
@@ -148,8 +146,6 @@ def run(task_id, input_info):
             result_cf[sec] = dict(cf[sec])
         filelist = Table.result_table(output_files)
         parse_results('sixtrack', task_id, job_path, filelist, task_table, result_cf)
-        #task_table['wu_id'] = wu_id
-        #task_table['tracking_turn'] = tracking_turn
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
         for sec, vals in result_cf.items():
@@ -235,15 +231,6 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         else:
             raise FileNotFoundError("The required input file %s does not found!" %
                                     key)
-
-    #if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
-    #    os.symlink('../fort.2', 'fort.2')
-    #    if not os.path.isfile('../fort.16'):
-    #        os.symlink('../fort.16', 'fort.16')
-    #    if not os.path.isfile('../fort.8'):
-    #        open('fort.8', 'a').close()
-    #    else:
-    #        os.symlink('../fort.8', 'fort.8')
 
     if boinc.lower() == 'true':
         test_turn = sixtrack_config["test_turn"]

@@ -85,8 +85,8 @@ class Table(object):
     def init_sixtrack_tables(self):
         self.tables['sixtrack_wu'] = OrderedDict([
             ('wu_id', 'INTEGER'),
-            ('tracking_turn', 'int'),
-            ('start_point', 'int'),
+            ('last_turn', 'int'),
+            ('first_turn', 'int'),
             ('preprocess_id', 'int'),
             ('job_name', 'text'),
             ('batch_name', 'text'),
@@ -96,13 +96,13 @@ class Table(object):
             ('boinc', 'text'),
             ('mtime', 'bigint')])
         self.table_keys['sixtrack_wu'] = {
-            'primary': ['wu_id', 'tracking_turn'],
+            'primary': ['wu_id', 'last_turn'],
             'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
         }
         self.tables['sixtrack_task'] = OrderedDict([
             ('task_id', 'INTEGER'),
             ('wu_id', 'int'),
-            ('tracking_turn', 'int'),
+            ('last_turn', 'int'),
             ('fort_3', 'blob'),
             ('job_stdout', 'blob'),
             ('job_stderr', 'blob'),
@@ -119,8 +119,8 @@ class Table(object):
         self.table_keys['sixtrack_task'] = {
             'primary': ['task_id'],
             'autoincrement': ['task_id'],
-            'foreign': {'sixtrack_wu': [['wu_id', 'tracking_turn'],
-                ['wu_id', 'tracking_turn']]},
+            'foreign': {'sixtrack_wu': [['wu_id', 'last_turn'],
+                ['wu_id', 'last_turn']]},
         }
         self.tables['six_results'] = OrderedDict([
             ('task_id', 'int'),

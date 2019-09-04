@@ -41,7 +41,6 @@ class Study(object):
         self.oneturn_sixtrack_input = {}
         self.sixtrack_params = OrderedDict()
         self.sixtrack_input = {}
-        self.synonym_map = {}
         self.preprocess_output = {}
         self.sixtrack_output = []
         self.tables = {}
@@ -74,8 +73,8 @@ class Study(object):
         self.oneturn = True
         self.collimation = False
         self.checkpoint_restart = False
-        self.start_point = 1000
-        self.prolong_turn = 1000
+        self.first_turn = 1 # first turn
+        self.last_turn = 100 #last turn
         self.cluster_class = submission.HTCondor
 
         self.madx_output = {
@@ -387,8 +386,8 @@ class Study(object):
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.encode_strings(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])
-        tracking_turn = self.sixtrack_params[self.synonym_map['tracking_turn']]
-        six_sec['tracking_turn'] = str(tracking_turn)
+        last_turn = self.sixtrack_params['turnss']
+        six_sec['last_turn'] = str(last_turn)
         six_sec['dest_path'] = self.paths['sixtrack_out']
         self.config['six_results'] = self.tables['six_results']
         if self.collimation:
@@ -420,7 +419,7 @@ class Study(object):
 
         keys.append('preprocess_id')
         values.append(madx_ids)
-        where = 'start_point is null'
+        where = 'first_turn is null'
         outputs = self.db.select('sixtrack_wu', keys, where)
         namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'],
                 DISTINCT=True)
@@ -455,7 +454,7 @@ class Study(object):
             job_table['preprocess_id'] = j + 1  # in db id begin from 1
             wu_id += 1
             job_table['wu_id'] = wu_id
-            job_table['tracking_turn'] = tracking_turn
+            job_table['last_turn'] = last_turn
             job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1,
                     wu_id)
             job_table['job_name'] = job_name
@@ -598,8 +597,8 @@ class Study(object):
             if status:
                 new_results.append(tuple(paramsdict.values()))
                 # wu_id = paramsdict['wu_id']
-                # turn = paramsdict['tracking_turn']
-                # where = f"wu_id = {wu_id} and tracking_turn = {turn}"
+                # turn = paramsdict['last_turn']
+                # where = f"wu_id = {wu_id} and last_turn = {turn}"
                 # self.db.update('sixtrack_wu', paramsdict, where)
         if not new_results:
             content = ("There isn't available sixtrack job to submit due to "
@@ -607,7 +606,7 @@ class Study(object):
             raise Exception(content)
         outputs = dict(zip(names, zip(*new_results)))
         wu_ids = outputs['wu_id']
-        tracking_turns = outputs['tracking_turn']
+        last_turns = outputs['last_turn']
         outputs['boinc'] = ['false'] * len(wu_ids)
         if boinc:
             outputs['boinc'] = ['true'] * len(wu_ids)
@@ -615,9 +614,9 @@ class Study(object):
         task_table = {}
         wu_table = {}
         task_ids = []
-        for wu_id, tracking_turn in zip(wu_ids, tracking_turns):
+        for wu_id, last_turn in zip(wu_ids, last_turns):
             task_table['wu_id'] = wu_id
-            task_table['tracking_turn'] = tracking_turn
+            task_table['last_turn'] = last_turn
             task_table['mtime'] = int(time.time() * 1E7)
             self.db.insert('sixtrack_task', task_table)
             where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
@@ -626,7 +625,7 @@ class Study(object):
             task_ids.append(task_id)
             wu_table['task_id'] = task_id
             wu_table['mtime'] = int(time.time() * 1E7)
-            where = f"wu_id={wu_id} and tracking_turn={tracking_turn}" # wu_id is not unique now
+            where = f"wu_id={wu_id} and last_turn={last_turn}" # wu_id is not unique now
             self.db.update('sixtrack_wu', wu_table, where)
         outputs['task_id'] = task_ids
         db_info = {}
@@ -666,15 +665,15 @@ class Study(object):
             pre_task_outs = self.db.select('preprocess_task', where=constr)
             names = list(self.tables['preprocess_task'].keys())
             pre_task_ins = dict(zip(names, zip(*pre_task_outs)))
-            constr = "start_point is not null and status='incomplete'"
-            cr_ids = self.db.select('sixtrack_wu', ['wu_id', 'start_point'],
+            constr = "first_turn is not null and status='incomplete'"
+            cr_ids = self.db.select('sixtrack_wu', ['wu_id', 'first_turn'],
                     where=constr)
             if cr_ids:
                 sub_db.create_table('sixtrack_task', self.tables['sixtrack_task'])
                 cr_ids = list(zip(*cr_ids))
-                constr = "wu_id in (%s) and tracking_turn in (%s)" % (
+                constr = "wu_id in (%s) and last_turn in (%s)" % (
                         ','.join(map(str, cr_ids[0])), ','.join(map(str,
-                            cr_ids[1])))
+                            map(lambda x:x-1, cr_ids[1]))))
                 cr_wu_outputs = self.db.select('sixtrack_wu', where=constr)
                 if cr_wu_outputs:
                     names = list(self.tables['sixtrack_wu'].keys())
@@ -780,33 +779,32 @@ class Study(object):
 
     def prepare_cr(self):
         '''Prepare the checkpoint data, add new lines in db'''
-        tracking_turn = self.start_point + self.prolong_turn
         checks_1 = self.db.select('sixtrack_wu', ['wu_id'], DISTINCT=True)
         if checks_1:
             checks_1 = list(zip(*checks_1))[0]
-        where = f"tracking_turn={tracking_turn}"
+        where = f"last_turn={self.last_turn}"
         checks_2 = self.db.select('sixtrack_wu', ['wu_id'], where)
         if checks_2:
             checks_2 = list(zip(*checks_2))[0]
         checks = [i for i in checks_1 if i not in checks_2]
         if not checks:
-            self._logger.info(f"The tracking jobs with tracking turn "
-                    f"{tracking_turn} already exist!")
+            self._logger.info(f"The tracking jobs with last turn "
+                    f"{self.last_turn} already exist!")
             return True
-        constraints = f"status='complete' and tracking_turn={self.start_point}\
+        constraints = f"status='complete' and last_turn={self.first_turn-1}\
                 and wu_id in ({','.join(map(str, checks))})"
         results = self.db.select('sixtrack_wu', where = constraints)
         if not results:
-            self._logger.warning(f"There isn't complete job with tracking "
-                    f"turn {self.start_point}")
+            self._logger.warning(f"There isn't complete job with last "
+                    f"turn is {self.first_turn-1}")
             return False
         N = len(results)
         names = self.tables['sixtrack_wu'].keys()
         new_lines = dict(zip(names, zip(*results)))
-        new_lines['tracking_turn'] = (tracking_turn,)*N
-        new_lines['start_point'] = (self.start_point,)*N
+        new_lines['last_turn'] = (self.last_turn,)*N
+        new_lines['first_turn'] = (self.first_turn,)*N
         new_lines['status'] = ('incomplete',)*N
-        new_lines[self.synonym_map['tracking_turn']] = (tracking_turn,)*N
+        new_lines['turnss'] = (self.last_turn,)*N
         self.db.insertm('sixtrack_wu', new_lines)
 
     def init_boinc_dir(self):
