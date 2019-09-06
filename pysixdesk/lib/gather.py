@@ -83,10 +83,6 @@ def gather_results(jobtype, cf, cluster):
         if item not in valid_task_ids:
             continue
         job_path = os.path.join(type_path, item)
-        if not os.listdir(job_path):
-            content = f"The {jobtype} job {item} is empty!"
-            logger.warning(content)
-            continue
         result_cf = copy.deepcopy(parent_cf)
         job_table = {}
         task_table = {}

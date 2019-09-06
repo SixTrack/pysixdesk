@@ -806,6 +806,21 @@ class Study(object):
         where = "status IS NULL"
         self.db.remove(table_name, where)
 
+    def getval(self, pre_id, reqlist):
+        '''Get required values from oneturn sixtrack results'''
+        where = 'wu_id=%s' % pre_id
+        ids = self.db.select('preprocess_wu', ['task_id'], where)
+        if not ids:
+            raise ValueError("Wrong preprocess job id %s!" % pre_id)
+        task_id = ids[0][0]
+        if task_id is None:
+            raise Exception("Incomplete preprocess job id %s!" % pre_id)
+        where = 'task_id=%s' % task_id
+        values = self.db.select('oneturn_sixtrack_results', reqlist, where)
+        if not values:
+            raise ValueError("Wrong task id %s!" % task_id)
+        return values[0]
+
     def name_conven(self, prefix, keys, values, suffix=''):
         '''The convention for naming input file'''
         b = ''

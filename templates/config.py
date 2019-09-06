@@ -118,9 +118,11 @@ class MyStudy(Study):
     def pre_calc(self, paramdict, pre_id):
         '''Further calculations for the specified parameters'''
         # The angle should be calculated before amplitude
+        keys = list(paramdict.keys())
         status = []
         status.append(self.formulas('kang', 'angle', paramdict, pre_id))
         status.append(self.formulas('amp', ['ax0s', 'ax1s'], paramdict, pre_id))
+        [paramdict.pop(key) for key in paramdict.keys() if key not in keys]
         return all(status)
 
     def formulas(self, source, dest, paramdict, pre_id):
@@ -168,8 +170,6 @@ class MyStudy(Study):
             except:
                 self._logger.error("Unexpected error!", exc_info=True)
                 return 0
-            finally:
-                paramdict.pop('angle')
         elif source == 'kang':
             try:
                 kmax = self.env['kmax']
@@ -182,18 +182,3 @@ class MyStudy(Study):
         else:
             self._logger.error("There isn't a formula for parameter %s!" % dest)
             return 0
-
-    def getval(self, pre_id, reqlist):
-        '''Get required values from oneturn sixtrack results'''
-        where = 'wu_id=%s' % pre_id
-        ids = self.db.select('preprocess_wu', ['task_id'], where)
-        if not ids:
-            raise ValueError("Wrong preprocess job id %s!" % pre_id)
-        task_id = ids[0][0]
-        if task_id is None:
-            raise Exception("Incomplete preprocess job id %s!" % pre_id)
-        where = 'task_id=%s' % task_id
-        values = self.db.select('oneturn_sixtrack_results', reqlist, where)
-        if not values:
-            raise ValueError("Wrong task id %s!" % task_id)
-        return values[0]
