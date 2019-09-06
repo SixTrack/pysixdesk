@@ -247,6 +247,62 @@ class Study(object):
             self._logger.error(content, exc_info=True)
             raise
 
+        self.preprocess_config = {}
+        madx_sec = {}
+        cus_sec = {}
+        self.preprocess_config['madx'] = madx_sec
+        self.preprocess_config['mask'] = dict.fromkeys(self.madx_params, 0)
+        madx_sec['source_path'] = self.paths['templates']
+        madx_sec['madx_exe'] = self.paths['madx_exe']
+        madx_sec['mask_file'] = self.madx_input["mask_file"]
+        madx_sec['oneturn'] = str(self.oneturn)
+        madx_sec['collimation'] = str(self.collimation)
+        madx_sec['dest_path'] = self.paths['preprocess_out']
+        madx_sec['output_files'] = utils.encode_strings(self.madx_output)
+        if self.oneturn:
+            self.preprocess_config['sixtrack'] = cus_sec
+            self.preprocess_config['oneturn_sixtrack_results'] = self.tables[
+                    'oneturn_sixtrack_results']
+            self.preprocess_config['fort3'] = self.oneturn_sixtrack_params
+            cus_sec['source_path'] = self.paths['templates']
+            cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+            inp = self.oneturn_sixtrack_input['temp']
+            cus_sec['temp_files'] = utils.encode_strings(inp)
+            inp = self.oneturn_sixtrack_input['input']
+            cus_sec['input_files'] = utils.encode_strings(inp)
+        if self.collimation:
+            self.preprocess_config['collimation'] = cus_sec
+            cus_sec['source_path'] = self.paths['templates']
+            inp = self.collimation_input
+            cus_sec['input_files'] = utils.encode_strings(inp)
+        cus_sec['dest_path'] = self.paths['preprocess_out']
+
+        self.sixtrack_config = {}
+        six_sec = {}
+        self.sixtrack_config['sixtrack'] = six_sec
+        self.sixtrack_config['fort3'] = dict.fromkeys(self.sixtrack_params, 0)
+        self.sixtrack_config['boinc'] = self.boinc_vars
+        six_sec['source_path'] = self.paths['templates']
+        six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+        if 'additional_input' in self.sixtrack_input.keys():
+            inp = self.sixtrack_input['additional_input']
+            six_sec['additional_input'] = utils.encode_strings(inp)
+        inp = self.sixtrack_input['input']
+        six_sec['input_files'] = utils.encode_strings(inp)
+        six_sec['boinc_dir'] = self.paths['boinc_spool']
+        inp = self.sixtrack_input['temp']
+        six_sec['temp_files'] = utils.encode_strings(inp)
+        inp = self.sixtrack_output
+        six_sec['output_files'] = utils.encode_strings(inp)
+        six_sec['test_turn'] = str(self.env['test_turn'])
+        six_sec['dest_path'] = self.paths['sixtrack_out']
+        self.sixtrack_config['six_results'] = self.tables['six_results']
+        if self.collimation:
+            self.sixtrack_config['aperture_losses'] = self.tables['aperture_losses']
+            self.sixtrack_config['collimation_losses'] = self.tables['collimation_losses']
+            self.sixtrack_config['init_state'] = self.tables['init_state']
+            self.sixtrack_config['final_state'] = self.tables['final_state']
+
     def update_db(self):
         '''Update the database whith the user-defined parameters'''
         temp = self.paths["templates"]
@@ -288,43 +344,6 @@ class Study(object):
         else:
             self.db.update('boinc_vars', self.boinc_vars)
 
-        self.config.clear()
-        self.config['madx'] = {}
-        madx_sec = self.config['madx']
-        self.config['mask'] = dict.fromkeys(self.madx_params, 0)
-        # mask_sec = self.config['mask']
-        madx_sec['source_path'] = self.paths['templates']
-        madx_sec['madx_exe'] = self.paths['madx_exe']
-        madx_sec['mask_file'] = self.madx_input["mask_file"]
-        madx_sec['oneturn'] = str(self.oneturn)
-        madx_sec['collimation'] = str(self.collimation)
-        madx_sec['dest_path'] = self.paths['preprocess_out']
-        inp = self.madx_output
-        madx_sec['output_files'] = utils.encode_strings(inp)
-        if self.oneturn:
-            self.config['sixtrack'] = {}
-            cus_sec = self.config['sixtrack']
-            self.config['oneturn_sixtrack_results'] = self.tables[
-                    'oneturn_sixtrack_results']
-            self.config['fort3'] = self.oneturn_sixtrack_params
-            cus_sec['source_path'] = self.paths['templates']
-            cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-            inp = self.oneturn_sixtrack_input['temp']
-            cus_sec['temp_files'] = utils.encode_strings(inp)
-            inp = self.oneturn_sixtrack_input['input']
-            cus_sec['input_files'] = utils.encode_strings(inp)
-        if self.collimation:
-            self.config['collimation'] = {}
-            cus_sec = self.config['collimation']
-            cus_sec['source_path'] = self.paths['templates']
-            inp = self.collimation_input
-            cus_sec['input_files'] = utils.encode_strings(inp)
-        cus_sec['dest_path'] = self.paths['preprocess_out']
-
-        input_info = os.path.join(self.paths['preprocess_in'], 'input.ini')
-        with open(input_info, 'w') as f_out:
-            self.config.write(f_out)
-
         # Fill the preprocess_wu table
         keys = list(self.madx_params.keys())
         values = []
@@ -356,10 +375,6 @@ class Study(object):
             job_name = self.name_conven(prefix, keys, element, '')
             wu_id += 1
             madx_table['wu_id'] = wu_id
-            # f_out = io.StringIO()
-            # self.config.write(f_out)
-            # out = f_out.getvalue()
-            # madx_table['input_file'] = utils.compress_buf(out, 'str')
             madx_table['status'] = 'incomplete'
             madx_table['job_name'] = job_name
             madx_table['mtime'] = int(time.time() * 1E7)
@@ -368,38 +383,6 @@ class Study(object):
             self._logger.info(content)
 
         # prepare sixtrack parameters in database
-        self.config.clear()
-        self.config['sixtrack'] = {}
-        six_sec = self.config['sixtrack']
-        self.config['fort3'] = dict.fromkeys(self.sixtrack_params, 0)
-        self.config['boinc'] = self.boinc_vars
-        six_sec['source_path'] = self.paths['templates']
-        six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-        if 'additional_input' in self.sixtrack_input.keys():
-            inp = self.sixtrack_input['additional_input']
-            six_sec['additional_input'] = utils.encode_strings(inp)
-        inp = self.sixtrack_input['input']
-        six_sec['input_files'] = utils.encode_strings(inp)
-        six_sec['boinc_dir'] = self.paths['boinc_spool']
-        inp = self.sixtrack_input['temp']
-        six_sec['temp_files'] = utils.encode_strings(inp)
-        inp = self.sixtrack_output
-        six_sec['output_files'] = utils.encode_strings(inp)
-        six_sec['test_turn'] = str(self.env['test_turn'])
-        last_turn = self.sixtrack_params['turnss']
-        six_sec['last_turn'] = str(last_turn)
-        six_sec['dest_path'] = self.paths['sixtrack_out']
-        self.config['six_results'] = self.tables['six_results']
-        if self.collimation:
-            self.config['aperture_losses'] = self.tables['aperture_losses']
-            self.config['collimation_losses'] = self.tables['collimation_losses']
-            self.config['init_state'] = self.tables['init_state']
-            self.config['final_state'] = self.tables['final_state']
-
-        input_info = os.path.join(self.paths['sixtrack_in'], 'input.ini')
-        with open(input_info, 'w') as f_out:
-            self.config.write(f_out)
-
         madx_keys = list(self.madx_params.keys())
         madx_vals = self.db.select('preprocess_wu', ['wu_id'] + madx_keys)
         if not madx_vals:
@@ -441,27 +424,19 @@ class Study(object):
             for i in range(len(element) - 1):
                 ky = keys[i]
                 vl = element[i]
-                #fort3_sec[ky] = str(vl)
                 if isinstance(vl, Iterable):
                     vl = str(vl)
                 job_table[ky] = vl
             vl = element[len(element) - 1]  # the last one is madx_id(wu_id)
             j = madx_ids.index(vl)
-            # for k in range(len(madx_params)):
-            #    ky = madx_keys[k]
-            #    vl = madx_params[k][j]
-                # fort3_sec[ky] = str(vl)
             job_table['preprocess_id'] = j + 1  # in db id begin from 1
             wu_id += 1
             job_table['wu_id'] = wu_id
+            last_turn = self.sixtrack_params['turnss']
             job_table['last_turn'] = last_turn
             job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1,
                     wu_id)
             job_table['job_name'] = job_name
-            # f_out = io.StringIO()
-            # self.config.write(f_out)
-            # out = f_out.getvalue()
-            # job_table['input_file'] = utils.compress_buf(out, 'str')
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
             self.db.insert('sixtrack_wu', job_table)
@@ -706,7 +681,7 @@ class Study(object):
             self.init_boinc_dir()
         input_info = os.path.join(self.paths['sixtrack_in'], 'input.ini')
         self.config.clear()
-        self.config.read(input_info)
+        self.config.read_dict(self.sixtrack_config)
         self.config['db_info'] = db_info
         with open(input_info, 'w') as f_out:
             self.config.write(f_out)
@@ -762,7 +737,7 @@ class Study(object):
 
         input_info = os.path.join(self.paths['preprocess_in'], 'input.ini')
         self.config.clear()
-        self.config.read(input_info)
+        self.config.read_dict(self.preprocess_config)
         self.config['db_info'] = db_info
         with open(input_info, 'w') as f_out:
             self.config.write(f_out)
