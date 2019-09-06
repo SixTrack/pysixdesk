@@ -17,11 +17,14 @@ logger.setLevel(logging.INFO)
 
 # To add logging to file, do:
 # -----------------------------------------------------------------------------
-# filehandler = logging.FileHandler(log_path)
-# filehandler.setFormatter(logging.Formatter(format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-#                                            datefmt='%H:%M:%S'))
-# filehandler.setLevel(logging.DEBUG)
-# logger.addHandler(filehandler)
+study_path = os.path.dirname(__file__)
+log_path = os.path.join(study_path, 'pysixdesk.log')
+filehandler = logging.FileHandler(log_path)
+fmt = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
+        datefmt='%b/%d %H:%M:%S')
+filehandler.setFormatter(fmt)
+filehandler.setLevel(logging.DEBUG)
+logger.addHandler(filehandler)
 # -----------------------------------------------------------------------------
 
 
