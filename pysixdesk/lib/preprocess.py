@@ -112,7 +112,7 @@ def run(task_id, input_info):
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
             db.update('preprocess_wu', job_table, where)
-            content = "Preprocess job %s has completed normally!" % wu_id
+            content = "Preprocess task %s has completed normally!" % task_id
             logger.info(content)
         else:
             where = "task_id=%s" % task_id

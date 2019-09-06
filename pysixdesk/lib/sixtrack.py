@@ -156,7 +156,7 @@ def run(task_id, input_info):
             job_table['mtime'] = int(time.time() * 1E7)
             where = "task_id=%s" % task_id
             db.update('sixtrack_wu', job_table, where)
-            content = "Sixtrack job %s has completed normally!" % wu_id
+            content = "Sixtrack task %s has completed normally!" % task_id
             logger.info(content)
         else:
             where = "task_id=%s" % task_id
