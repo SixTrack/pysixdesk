@@ -210,13 +210,14 @@ def sixtrackjobs(config, fort3_config):
     logger.info('Calling sixtrack %s' % sixtrack_exe)
 
     try:
-        sixtrackjob(config, fort3_config, 'first_oneturn', dp1='.0', dp2='.0')
+        sixtrackjob(config, fort3_config, 'first_oneturn', dp1='.0', dp2='.0',
+                ition='0')
     except Exception as e:
         logger.error('SixTrack first oneturn failed.')
         raise e
 
     try:
-        sixtrackjob(config, fort3_config, 'second_oneturn')
+        sixtrackjob(config, fort3_config, 'second_oneturn', ition='0')
     except Exception as e:
         logger.error('SixTrack second oneturn failed.')
         raise e
