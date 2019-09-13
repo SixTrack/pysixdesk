@@ -545,7 +545,8 @@ class Study(object):
         except Exception as e:
             raise e
 
-    def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
+    def prepare_sixtrack_input(self, resubmit=False, boinc=False, *args,
+            **kwargs):
         '''Prepare the input files for sixtrack job'''
         if self.checkpoint_restart:
             self.prepare_cr()
@@ -556,8 +557,11 @@ class Study(object):
             self._logger.warning(content)
             return
         preprocess_outs = list(zip(*preprocess_outs))
-        constraints = "status='incomplete' and preprocess_id in (%s)" % (
-                    ','.join(map(str, preprocess_outs[0])))
+        if resubmit:
+            constraints = "status='submitted'"
+        else:
+            constraints = "status='incomplete' and preprocess_id in (%s)" % (
+                        ','.join(map(str, preprocess_outs[0])))
         results = self.db.select('sixtrack_wu', where=constraints)
         if not results:
             content = "There isn't available sixtrack job to submit!"
@@ -692,11 +696,17 @@ class Study(object):
         self.submission.prepare(task_ids, tran_input, exe, 'input.ini', in_path,
                                 out_path, flavour='tomorrow', *args, **kwargs)
 
-    def prepare_preprocess_input(self, *args, **kwargs):
+    def prepare_preprocess_input(self, resubmit=False, *args, **kwargs):
         '''Prepare the input files for madx and one turn sixtrack job'''
-        results = self.db.select('preprocess_wu', where="status='incomplete'")
+        if resubmit:
+            constraints = "status='submitted'"
+            info = 'submitted'
+        else:
+            constraints = "status='incomplete'"
+            info = 'incomplete'
+        results = self.db.select('preprocess_wu', where=constraints)
         if not results:
-            content = "There isn't incomplete preprocess job!"
+            content = f"There isn't {info} preprocess job!"
             self._logger.warning(content)
             return
         trans = []
