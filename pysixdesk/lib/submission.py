@@ -66,10 +66,12 @@ class HTCondor(Cluster):
                     shutil.rmtree(out_f)
                 os.makedirs(out_f)
         os.chmod(job_list, 0o444)  # change the permission to readonly
-        # trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'resultparser.py'))
-        # trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'utils.py'))
-        # trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'pysixdb.py'))
-        # trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'dbadaptor.py'))
+        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk'))
+        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'resultparser.py'))
+        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'utils.py'))
+        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'pysixdb.py'))
+        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'dbadaptor.py'))
+        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'dbtable.py'))
         rep = {}
         rep['%func'] = utils.encode_strings(trans)
         rep['%exe'] = exe
