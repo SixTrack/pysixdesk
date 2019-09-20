@@ -11,12 +11,13 @@ import configparser
 from collections import OrderedDict
 from collections.abc import Iterable
 
-from . import dbtypedict
+#from . import dbtypedict
 from . import utils
 from . import gather
 from . import constants
 from . import submission
 from .pysixdb import SixDB
+from .dbtable import Table
 
 
 class Study(object):
@@ -42,7 +43,7 @@ class Study(object):
         self.oneturn_sixtrack_input = {}
         self.sixtrack_params = OrderedDict()
         self.sixtrack_input = {}
-        self.preprocess_ouput = {}
+        self.preprocess_output = {}
         self.sixtrack_output = []
         self.tables = {}
         self.table_keys = {}
@@ -94,7 +95,6 @@ class Study(object):
             self.study_path, "sixtrack_input")
         self.paths["sixtrack_out"] = os.path.join(
             self.study_path, "sixtrack_output")
-        self.paths["gather"] = os.path.join(self.study_path, "gather")
         self.paths["templates"] = self.study_path
         # self.paths["boinc_spool"] = "/afs/cern.ch/work/b/boinc/boinc"
         self.env['test_turn'] = 1000
@@ -149,169 +149,6 @@ class Study(object):
         self.sixtrack_output = ['fort.10']
 
         self.db_info['db_type'] = 'sql'
-        # Default definition of the database tables
-        self.tables['templates'] = OrderedDict()
-        self.tables['env'] = OrderedDict()
-        self.tables['preprocess_wu'] = OrderedDict([
-            ('wu_id', 'INTEGER'),
-            ('job_name', 'text'),
-            ('input_file', 'blob'),
-            ('batch_name', 'text'),
-            ('unique_id', 'text'),
-            ('status', 'text'),
-            ('task_id', 'int'),
-            ('mtime', 'bigint')])
-        self.table_keys['preprocess_wu'] = {
-            'primary': ['wu_id'],
-            'autoincrement': ['wu_id'],
-            'foreign': {},
-        }
-        self.tables['preprocess_task'] = OrderedDict([
-            ('task_id', 'INTEGER'),
-            ('wu_id', 'int'),
-            ('madx_in', 'blob'),
-            ('madx_stdout', 'blob'),
-            ('job_stdout', 'blob'),
-            ('job_stderr', 'blob'),
-            ('job_stdlog', 'blob'),
-            ('status', 'text'),
-            ('mtime', 'bigint')])
-        self.table_keys['preprocess_task'] = {
-            'primary': ['task_id'],
-            'autoincrement': ['task_id'],
-            'foreign': {'preprocess_wu': [['wu_id'], ['wu_id']]},
-        }
-        self.tables['oneturn_sixtrack_wu'] = OrderedDict()
-        self.tables['oneturn_sixtrack_result'] = OrderedDict([
-            ('task_id', 'int'),
-            ('wu_id', 'int'),
-            ('betax', 'float'),
-            ('betax2', 'float'),
-            ('betay', 'float'),
-            ('betay2', 'float'),
-            ('tunex', 'float'),
-            ('tuney', 'float'),
-            ('chromx', 'float'),
-            ('chromy', 'float'),
-            ('x', 'float'),
-            ('xp', 'float'),
-            ('y', 'float'),
-            ('yp', 'float'),
-            ('z', 'float'),
-            ('zp', 'float'),
-            ('chromx_s', 'float'),
-            ('chromy_s', 'float'),
-            ('chrom_eps', 'float'),
-            ('tunex1', 'float'),
-            ('tuney1', 'float'),
-            ('tunex2', 'float'),
-            ('tuney2', 'float'),
-            ('mtime', 'bigint')])
-        self.tables['sixtrack_wu'] = OrderedDict([
-            ('wu_id', 'INTEGER'),
-            ('preprocess_id', 'int'),
-            ('job_name', 'text'),
-            ('input_file', 'blob'),
-            ('batch_name', 'text'),
-            ('unique_id', 'text'),
-            ('status', 'text'),
-            ('task_id', 'int'),
-            ('boinc', 'text'),
-            ('mtime', 'bigint')])
-        self.table_keys['sixtrack_wu'] = {
-            'primary': ['wu_id'],
-            'autoincrement': ['wu_id'],
-            'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
-        }
-        self.tables['sixtrack_task'] = OrderedDict([
-            ('task_id', 'INTEGER'),
-            ('wu_id', 'int'),
-            ('fort3', 'blob'),
-            ('job_stdout', 'blob'),
-            ('job_stderr', 'blob'),
-            ('job_stdlog', 'blob'),
-            ('status', 'text'),
-            ('mtime', 'bigint')])
-        self.table_keys['sixtrack_task'] = {
-            'primary': ['task_id'],
-            'autoincrement': ['task_id'],
-            'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
-        }
-        self.tables['six_results'] = OrderedDict([
-            ('six_input_id', 'int'),
-            ('row_num', 'int'),
-            ('turn_max', 'int'),
-            ('sflag', 'int'),
-            ('qx', 'float'),
-            ('qy', 'float'),
-            ('betx', 'float'),
-            ('bety', 'float'),
-            ('sigx1', 'float'),
-            ('sigy1', 'float'),
-            ('deltap', 'float'),
-            ('dist', 'float'),
-            ('distp', 'float'),
-            ('qx_det', 'float'),
-            ('qx_spread', 'float'),
-            ('qy_det', 'float'),
-            ('qy_spread', 'float'),
-            ('resxfact', 'float'),
-            ('resyfact', 'float'),
-            ('resorder', 'int'),
-            ('smearx', 'float'),
-            ('smeary', 'float'),
-            ('smeart', 'float'),
-            ('sturns1', 'int'),
-            ('sturns2', 'int'),
-            ('sseed', 'float'),
-            ('qs', 'float'),
-            ('sigx2', 'float'),
-            ('sigy2', 'float'),
-            ('sigxmin', 'float'),
-            ('sigxavg', 'float'),
-            ('sigxmax', 'float'),
-            ('sigymin', 'float'),
-            ('sigyavg', 'float'),
-            ('sigymax', 'float'),
-            ('sigxminld', 'float'),
-            ('sigxavgld', 'float'),
-            ('sigxmaxld', 'float'),
-            ('sigyminld', 'float'),
-            ('sigyavgld', 'float'),
-            ('sigymaxld', 'float'),
-            ('sigxminnld', 'float'),
-            ('sigxavgnld', 'float'),
-            ('sigxmaxnld', 'float'),
-            ('sigyminnld', 'float'),
-            ('sigyavgnld', 'float'),
-            ('sigymaxnld', 'float'),
-            ('emitx', 'float'),
-            ('emity', 'float'),
-            ('betx2', 'float'),
-            ('bety2', 'float'),
-            ('qpx', 'float'),
-            ('qpy', 'float'),
-            ('version', 'float'),
-            ('cx', 'float'),
-            ('cy', 'float'),
-            ('csigma', 'float'),
-            ('xp', 'float'),
-            ('yp', 'float'),
-            ('delta', 'float'),
-            ('dnms', 'float'),
-            ('trttime', 'float'),
-            ('mtime', 'bigint')])
-        self.tables['collimation_results'] = OrderedDict([
-            ('task_id', 'int'),
-            ('mtime', 'bigint')])
-        self.table_keys['collimation_results'] = {
-            'primary': ['task_id'],
-            'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
-        }
-        self.table_keys['six_results'] = {
-            'primary': ['six_input_id', 'row_num'],
-            'foreign': {'sixtrack_task': [['six_input_id'], ['task_id']]},
-        }
         self.db_settings = {
             # 'synchronous': 'off',
             'foreign_keys': 'on',
@@ -320,7 +157,6 @@ class Study(object):
             'temp_store': 'memory',
             'count_changes': 'off'}
 
-        self.tables['boinc_vars'] = OrderedDict()
         self.boinc_vars['workunitName'] = 'pysixdesk'
         self.boinc_vars['fpopsEstimate'] = 30 * 2 * 10e5 / 2 * 10e6 * 6
         self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate'] * 1000
@@ -369,8 +205,6 @@ class Study(object):
             os.makedirs(self.paths["sixtrack_in"])
         if not os.path.isdir(self.paths["sixtrack_out"]):
             os.makedirs(self.paths["sixtrack_out"])
-        if not os.path.isdir(self.paths["gather"]):
-            os.makedirs(self.paths["gather"])
 
         stp = self.study_path
         studies = os.path.dirname(stp)
@@ -380,10 +214,10 @@ class Study(object):
 
         db_type = self.db_info['db_type']
         if db_type.lower() == 'sql':
-            self.type_dict = dbtypedict.SQLiteDict()
+            table = Table(self.tables, self.table_keys, 'sql')
             self.db_info['db_name'] = os.path.join(self.study_path, 'data.db')
         elif db_type.lower() == 'mysql':
-            self.type_dict = dbtypedict.MySQLDict()
+            table = Table(self.tables, self.table_keys, 'mysql')
             self.db_info['db_name'] = wu_name + '_' + st_name
         else:
             content = "Unknown database type %s! Must be either 'sql' or 'mysql'." % db_type
@@ -396,36 +230,34 @@ class Study(object):
             boinc_spool, self.st_pre, 'results')
         self.env['surv_percent'] = 1
 
-        for key, val in self.madx_params.items():
-            self.tables['preprocess_wu'][key] = self.type_dict[val]
+        # initialize the database table
+        table.init_preprocess_tables()
+        table.init_sixtrack_tables()
+        table.init_state_tables()
+        if self.oneturn:
+            self.preprocess_output['oneturnresult'] = 'oneturnresult'
+            table.init_oneturn_tables()
+            table.customize_tables('oneturn_sixtrack_wu',
+                    self.oneturn_sixtrack_params)
+            table.customize_tables('templates',
+                    list(self.oneturn_sixtrack_input['temp']), 'BLOB')
+
         if self.collimation:
             self.preprocess_output['fort3.limi'] = 'fort3.limi'
-        for key in self.preprocess_output.values():
-            self.tables['preprocess_task'][key] = 'MEDIUMBLOB'
+            table.init_collimation_tables()
 
-        for key, val in self.oneturn_sixtrack_params.items():
-            self.tables['oneturn_sixtrack_wu'][key] = self.type_dict[val]
-
-        for key, val in self.sixtrack_params.items():
-            self.tables['sixtrack_wu'][key] = self.type_dict[val]
-        for key in self.sixtrack_output:
-            self.tables['sixtrack_task'][key] = 'MEDIUMBLOB'
-
-        for key in self.madx_input.keys():
-            self.tables['templates'][key] = 'BLOB'
-        if self.oneturn:
-            for key in self.oneturn_sixtrack_input['temp']:
-                self.tables['templates'][key] = 'BLOB'
-        for key in self.sixtrack_input['temp']:
-            self.tables['templates'][key] = 'BLOB'
-
-        for key in self.paths.keys():
-            self.tables['env'][key] = 'TEXT'
-        for key, val in self.env.items():
-            self.tables['env'][key] = self.type_dict[val]
-
-        for key, val in self.boinc_vars.items():
-            self.tables['boinc_vars'][key] = self.type_dict[val]
+        table.customize_tables('templates', list(self.madx_input.keys()),
+                'BLOB')
+        table.customize_tables('templates', list(self.sixtrack_input['temp']),
+                'BLOB')
+        table.customize_tables('env', self.env)
+        table.customize_tables('env', list(self.paths.keys()), 'text')
+        table.customize_tables('preprocess_wu', self.madx_params)
+        table.customize_tables('preprocess_task',
+                list(self.preprocess_output.values()), 'MEDIUMBLOB')
+        table.customize_tables('sixtrack_wu', self.sixtrack_params)
+        table.customize_tables('sixtrack_task', list(self.sixtrack_output), 'MEDIUMBLOB')
+        table.customize_tables('boinc_vars', self.boinc_vars)
 
         # Initialize the database
         self.db = SixDB(self.db_info, settings=self.db_settings, create=True)
@@ -446,8 +278,8 @@ class Study(object):
         temp = self.paths["templates"]
         cont = os.listdir(temp)
         require = []
-        if self.oneturn:
-            require += self.oneturn_sixtrack_input["temp"]
+        #if self.oneturn:
+        #    require += self.oneturn_sixtrack_input["temp"]
         require += self.sixtrack_input['temp']
         require.append(self.madx_input["mask_file"])
         for r in require:
@@ -460,10 +292,10 @@ class Study(object):
             for key, value in self.madx_input.items():
                 value = os.path.join(self.study_path, value)
                 tab[key] = utils.compress_buf(value)
-            if self.oneturn:
-                for key in self.oneturn_sixtrack_input['temp']:
-                    value = os.path.join(self.study_path, key)
-                    tab[key] = utils.compress_buf(value)
+            #if self.oneturn:
+            #    for key in self.oneturn_sixtrack_input['temp']:
+            #        value = os.path.join(self.study_path, key)
+            #        tab[key] = utils.compress_buf(value)
             for key in self.sixtrack_input['temp']:
                 value = os.path.join(self.study_path, key)
                 tab[key] = utils.compress_buf(value)
@@ -497,7 +329,8 @@ class Study(object):
         if self.oneturn:
             self.config['sixtrack'] = {}
             cus_sec = self.config['sixtrack']
-            self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
+            self.config['oneturn_sixtrack_results'] = self.tables[
+                    'oneturn_sixtrack_results']
             self.config['fort3'] = self.oneturn_sixtrack_params
             cus_sec['source_path'] = self.paths['templates']
             cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
@@ -565,7 +398,6 @@ class Study(object):
         six_sec = self.config['sixtrack']
         self.config['fort3'] = {}
         fort3_sec = self.config['fort3']
-        self.config['f10'] = self.tables['six_results']
         six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         if 'additional_input' in self.sixtrack_input.keys():
@@ -579,6 +411,12 @@ class Study(object):
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.encode_strings(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])
+        self.config['six_results'] = self.tables['six_results']
+        if self.collimation:
+            self.config['aperture_losses'] = self.tables['aperture_losses']
+            self.config['collimation_losses'] = self.tables['collimation_losses']
+            self.config['init_state'] = self.tables['init_state']
+            self.config['final_state'] = self.tables['final_state']
 
         madx_keys = list(self.madx_params.keys())
         madx_vals = self.db.select('preprocess_wu', ['wu_id'] + madx_keys)
@@ -696,74 +534,61 @@ class Study(object):
         ibatch += 1
         batch_name = batch_name + '_' + str(ibatch)
 
-        try:
-            out = self.submission.submit(input_path, batch_name,
-                                         trials, *args, **kwargs)
-        except Exception as e:
+        status, out = self.submission.submit(input_path, batch_name, trials,
+                *args, **kwargs)
+
+        if status:
+            content = "Submit %s job successfully!" % jobname
+            self._logger.info(content)
+            table = {}
+            table['status'] = 'submitted'
+            for ky, vl in out.items():
+                where = 'wu_id=%s' % ky
+                table['unique_id'] = vl
+                table['batch_name'] = batch_name
+                self.db.update(table_name, table, where)
+        else:
             content = "Failed to submit %s job!" % jobname
             self._logger.error(content)
-            raise e
-
-        content = "Submit %s job successfully!" % jobname
-        self._logger.info(content)
-        table = {}
-        table['status'] = 'submitted'
-        for ky, vl in out.items():
-            where = 'wu_id=%s' % ky
-            table['unique_id'] = vl
-            table['batch_name'] = batch_name
-            self.db.update(table_name, table, where)
 
     def collect_result(self, typ, boinc=False):
         '''Collect the results of preprocess or  sixtrack jobs'''
-        self.config.clear()
-        self.config['info'] = {}
-        info_sec = self.config['info']
-        self.config['db_setting'] = self.db_settings
-        self.config['db_info'] = self.db_info
+        config ={}
+        info_sec = {}
+        config['info'] = info_sec
+        config['db_setting'] = self.db_settings
+        config['db_info'] = self.db_info
 
         info_sec['cluster_module'] = self.cluster_module
         info_sec['cluster_name'] = self.cluster_name
         if typ == 0:
-            self.config['oneturn'] = self.tables['oneturn_sixtrack_result']
+            if self.oneturn:
+                # The section name should be same with the table name
+                config['oneturn_sixtrack_results'] = self.tables[
+                        'oneturn_sixtrack_results']
             info_sec['path'] = self.paths['preprocess_out']
-            info_sec['outs'] = utils.encode_strings(self.preprocess_output)
-            job_name = 'collect preprocess result'
-            in_name = 'preprocess.ini'
-            task_input = os.path.join(self.paths['gather'], str(typ), in_name)
+            fileout = list(self.preprocess_output.values())
+            info_sec['outs'] = Table.result_table(fileout)
         elif typ == 1:
-            self.config['f10'] = self.tables['six_results']
+            config['six_results'] = self.tables['six_results']
             info_sec['path'] = self.paths['sixtrack_out']
             info_sec['boinc_results'] = self.env['boinc_results']
-            info_sec['boinc'] = str(boinc)
+            info_sec['boinc'] = boinc
             info_sec['st_pre'] = self.st_pre
-            info_sec['outs'] = utils.encode_strings(self.sixtrack_output)
-            job_name = 'collect sixtrack result'
-            in_name = 'sixtrack.ini'
-            task_input = os.path.join(self.paths['gather'], str(typ), in_name)
+            info_sec['outs'] = Table.result_table(self.sixtrack_output)
+            if self.collimation:
+                config['aperture_losses'] = self.tables['aperture_losses']
+                config['collimation_losses'] = self.tables['collimation_losses']
+                config['init_state'] = self.tables['init_state']
+                config['final_state'] = self.tables['final_state']
         else:
             content = "Unkown job type %s" % typ
             raise ValueError(content)
 
-        in_path = os.path.join(self.paths['gather'], str(typ))
-        if not os.path.isdir(in_path):
-            os.makedirs(in_path)
-        with open(task_input, 'w') as f_out:
-            self.config.write(f_out)
         try:
-            gather.run(typ, task_input)
+            gather.run(typ, config)
         except Exception as e:
             raise e
-        # TODO: Submit gather job to htcondor is error-prone, so I block it for
-        #       the moment. Acctually it's dispensable.
-        # elif platform is 'htcondor':
-        #    tran_input =[]
-        #    tran_input.append(task_input)
-        #    exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'lib', 'gather.py')
-        #    wu_ids = [typ]
-        #    self.submission.prepare(wu_ids, tran_input, exe, in_name, in_path,
-        #            out_path)
-        #    self.submission.submit(in_path, job_name, trials)
 
     def prepare_sixtrack_input(self, boinc=False, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
@@ -867,6 +692,7 @@ class Study(object):
         else:
             job_table = {}
             job_table['boinc'] = str(boinc)
+            job_table['input_file'] = input_buf_new
             if len(wu_ids) == 1:
                 where = "wu_id=%s" % wu_ids[0]
             else:

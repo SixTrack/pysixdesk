@@ -11,7 +11,8 @@ from subprocess import Popen, PIPE
 
 from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib import utils
-from pysixdesk.lib.resultparser import parse_sixtrack
+from pysixdesk.lib.dbtable import Table
+from pysixdesk.lib.resultparser import parse_results
 
 logger = utils.condor_logger('sixtrack')
 
@@ -116,19 +117,20 @@ def run(wu_id, input_info):
     try:
         # Reconnect after job finished
         db = SixDB(db_info)
-        f10_sec = cf['f10']
         job_table = {}
         task_table = {}
-        f10_table = {}
         task_table['status'] = 'Success'
         job_path = dest_path
-        parse_sixtrack(wu_id, job_path, output_files, task_table,
-                       f10_table, list(f10_sec.keys()))
+        result_cf = {}
+        for sec in cf:
+            result_cf[sec] = dict(cf[sec])
+        filelist = Table.result_table(output_files)
+        parse_results('sixtrack', wu_id, job_path, filelist, task_table, result_cf)
         where = 'task_id=%s' % task_id
         db.update('sixtrack_task', task_table, where)
-        if len(f10_table) != 0:
-            f10_table['six_input_id'] = [task_id, ] * len(f10_table['mtime'])
-            db.insertm('six_results', f10_table)
+        for sec, vals in result_cf.items():
+            vals['task_id'] = [task_id,]*len(vals['mtime'])
+            db.insertm(sec, vals)
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
@@ -235,7 +237,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         raise FileNotFoundError("The %s file doesn't exist!" % temp1)
 
     utils.concatenate_files(output, 'fort.3')
-    utils.diff(source, 'fort.3', logger=logger)
+    #utils.diff(source, 'fort.3', logger=logger)
 
     # actually run
     wu_id = sixtrack_config['wu_id']
@@ -297,7 +299,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
             raise FileNotFoundError("The %s file doesn't exist!" % temp1)
 
         utils.concatenate_files(output, 'fort.3')
-        utils.diff(source, 'fort.3', logger=logger)
+        #utils.diff(source, 'fort.3', logger=logger)
 
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'

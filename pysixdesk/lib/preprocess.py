@@ -7,9 +7,10 @@ import shutil
 import configparser
 
 from pysixdesk.lib import utils
+from pysixdesk.lib.dbtable import Table
 from pysixdesk.lib import generate_fort2
 from pysixdesk.lib.pysixdb import SixDB
-from pysixdesk.lib.resultparser import parse_preprocess
+from pysixdesk.lib.resultparser import parse_results
 
 
 logger = utils.condor_logger('preprocess')
@@ -37,7 +38,6 @@ def run(wu_id, input_info):
     cf.read_string(input_file)
     madx_config = cf['madx']
     mask_config = cf['mask']
-    oneturn_config = {}
     oneturn = madx_config['oneturn']
     collimation = madx_config['collimation']
 
@@ -58,7 +58,6 @@ def run(wu_id, input_info):
         if oneturn.lower() == 'true':
             try:
                 sixtrack_config = cf['sixtrack']
-                oneturn_config = cf['oneturn']
                 fort3_config = cf._sections['fort3']
                 sixtrackjobs(sixtrack_config, fort3_config)
             except Exception:
@@ -79,6 +78,7 @@ def run(wu_id, input_info):
     down_list.append('madx_in')
     down_list.append('madx_stdout')
     if oneturn.lower() == 'true':
+        output_files['oneturnresult'] = 'oneturnresult'
         down_list.append('oneturnresult')
     if collimation.lower() == 'true':
         output_files['fort3.limi'] = 'fort3.limi'
@@ -100,16 +100,19 @@ def run(wu_id, input_info):
         task_id = task_id[0][0]
         job_table = {}
         task_table = {}
-        oneturn_table = {}
         task_table['status'] = 'Success'
         job_path = dest_path
-        parse_preprocess(wu_id, job_path, output_files, task_table,
-                         oneturn_table, list(oneturn_config.keys()))
+        result_cf = {}
+        for sec in cf:
+            result_cf[sec] = dict(cf[sec])
+        filelist = Table.result_table(output_files.values())
+        parse_results('preprocess', wu_id, job_path, filelist, task_table,
+                result_cf)
         where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
-        if oneturn.lower() == 'true':
-            oneturn_table['task_id'] = task_id
-            db.insert('oneturn_sixtrack_result', oneturn_table)
+        for sec, vals in result_cf.items():
+            vals['task_id'] = [task_id,]*len(vals['mtime'])
+            db.insertm(sec, vals)
         if task_table['status'] == 'Success':
             where = "wu_id=%s" % wu_id
             job_table['status'] = 'complete'
@@ -165,7 +168,7 @@ def madxjob(madx_config, mask_config):
         content = "Failed to generate actual madx input file!"
         raise Exception(content)
 
-    utils.diff(mask_name, madx_in, logger=logger)
+    #utils.diff(mask_name, madx_in, logger=logger)
 
     # Begin to execute madx job
     command = madxexe + " " + madx_in
@@ -324,7 +327,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
         raise FileNotFoundError(content)
 
     utils.concatenate_files(output, 'fort.3')
-    utils.diff(source, 'fort.3', logger=logger)
+    #utils.diff(source, 'fort.3', logger=logger)
 
     # prepare the other input files
     for key in input_files.values():
