@@ -118,8 +118,8 @@ class SixtrackJob:
 
         # concatenate
         utils.concatenate_files([dest, madx_fc3], output_file)
-        if not source.samefile(output_file):
-            utils.diff(source, output_file, logger=self._logger)
+        # if not source.samefile(output_file):
+        #     utils.diff(source, output_file, logger=self._logger)
 
         # there could be merit in moving the symlinking to sixtrack_temp_folder
         # so it would be done when entering a temp folder

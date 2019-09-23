@@ -8,9 +8,10 @@ from pathlib import Path
 
 from pysixdesk.lib.sixtrack_job import SixtrackJob
 from pysixdesk.lib import utils
+from pysixdesk.lib.dbtable import Table
 from pysixdesk.lib import generate_fort2
 from pysixdesk.lib.pysixdb import SixDB
-from pysixdesk.lib.resultparser import parse_preprocess
+from pysixdesk.lib.resultparser import parse_results
 
 
 class PreprocessJob(SixtrackJob):
@@ -45,6 +46,7 @@ class PreprocessJob(SixtrackJob):
         intput_buf = outputs[0][0]
         in_files = utils.decompress_buf(intput_buf, None, 'buf')
         cf.read_string(in_files)
+        self.cf = cf
         self.madx_cfg = cf['madx']
 
         output_files = self.madx_cfg["output_files"]
@@ -61,10 +63,10 @@ class PreprocessJob(SixtrackJob):
         self.oneturn_flag = self.madx_cfg.getboolean('oneturn')
         self.coll_flag = self.madx_cfg.getboolean('collimation')
 
-        if self.oneturn_flag:
-            self.oneturn_cfg = cf['oneturn']
-        else:
-            self.oneturn_cfg = {}
+        # if self.oneturn_flag:
+        #     self.oneturn_cfg = cf['oneturn']
+        # else:
+        #     self.oneturn_cfg = {}
         if self.coll_flag:
             self.coll_cfg = cf['collimation']
         else:
@@ -83,6 +85,7 @@ class PreprocessJob(SixtrackJob):
         madx_outputs.append('madx_in')
         madx_outputs.append('madx_stdout')
         if self.oneturn_flag:
+            self.madx_out['oneturnresult'] = 'oneturnresult'
             madx_outputs.append('oneturnresult')
         if self.coll_flag:
             madx_outputs.append('fort3.limi')
@@ -98,15 +101,21 @@ class PreprocessJob(SixtrackJob):
         Runs the parsing and pushes results to db. Is called in push_to_db.
         '''
         task_table = {}
-        oneturn_table = {}
         task_table['status'] = 'Success'
-        parse_preprocess(self.wu_id, dest_path, self.madx_out, task_table,
-                         oneturn_table, list(self.oneturn_cfg.keys()))
-        self.db.update(f'preprocess_task', task_table, f'task_id={self.task_id}')
+        result_cf = {}
+        for sec in self.cf:
+            result_cf[sec] = dict(self.cf[sec])
+        filelist = Table.result_table(self.madx_out.values())
+        parse_results('preprocess', self.wu_id, dest_path, filelist,
+                      task_table, result_cf)
 
-        if self.oneturn_flag:
-            oneturn_table['task_id'] = self.task_id
-            self.db.insert('oneturn_sixtrack_result', oneturn_table)
+        self.db.update(f'preprocess_task', task_table,
+                       f'task_id={self.task_id}')
+
+        for sec, val in result_cf.items():
+            val['task_id'] = [self.task_id]*len(val['mtime'])
+            self.db.insertm(sec, val)
+
         return task_table
 
     def run(self):
@@ -187,8 +196,8 @@ class PreprocessJob(SixtrackJob):
             raise Exception(content)
 
         # show diff
-        mask_name = self.madx_cfg["mask_file"]
-        utils.diff(mask_name, output_file, logger=self._logger)
+        # mask_name = self.madx_cfg["mask_file"]
+        # utils.diff(mask_name, output_file, logger=self._logger)
 
     def madx_run(self, mask):
         """Runs madx.

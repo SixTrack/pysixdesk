@@ -10,7 +10,8 @@ from pathlib import Path
 from pysixdesk.lib.sixtrack_job import SixtrackJob
 from pysixdesk.lib.pysixdb import SixDB
 from pysixdesk.lib import utils
-from pysixdesk.lib.resultparser import parse_sixtrack
+from pysixdesk.lib.dbtable import Table
+from pysixdesk.lib.resultparser import parse_results
 
 
 class TrackingJob(SixtrackJob):
@@ -52,10 +53,10 @@ class TrackingJob(SixtrackJob):
 
         in_files = utils.decompress_buf(input_buf, None, 'buf')
         cf.read_string(in_files)
+        self.cf = cf
         self.six_cfg = cf['sixtrack']
         self.fort_cfg = cf['fort3']
         self.boinc_cfg = cf['boinc']
-        self.f10_sec = cf['f10']  # what is this ?
         out = self.six_cfg['output_files']
         output_files = utils.decode_strings(out)
         self.six_out = output_files
@@ -159,15 +160,21 @@ class TrackingJob(SixtrackJob):
         Runs the parsing and pushes results to db. Is called in push_to_db.
         '''
         task_table = {}
-        f10_table = {}
         task_table['status'] = 'Success'
-        parse_sixtrack(self.wu_id, dest_path, self.six_out, task_table,
-                       f10_table, list(self.f10_sec.keys()))
-        self.db.update('sixtrack_task', task_table, f'task_id={self.task_id}')
+        result_cf = {}
+        for sec in self.cf:
+            result_cf[sec] = dict(self.cf[sec])
+        filelist = Table.result_table(self.six_out)
+        parse_results('sixtrack', self.wu_id, dest_path, filelist,
+                      task_table, result_cf)
 
-        if len(f10_table) != 0:
-            f10_table['six_input_id'] = [self.task_id] * len(f10_table['mtime'])
-            self.db.insertm('six_results', f10_table)
+        self.db.update('sixtrack_task', task_table,
+                       f'task_id={self.task_id}')
+
+        for sec, val in result_cf.items():
+            val['task_id'] = [self.task_id] * len(val['mtime'])
+            self.db.insertm(sec, val)
+
         return task_table
 
     def run(self):
@@ -201,7 +208,6 @@ class TrackingJob(SixtrackJob):
         Returns:
             bool: True if the ratio of particles which survived the tracking is
             >= than self.surv_precent. False otherwise.
-
         '''
         with open(six_stdout, 'r') as f_in:
             lines = f_in.readlines()

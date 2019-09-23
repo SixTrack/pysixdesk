@@ -61,7 +61,7 @@ class MyStudy(Study):
         self.oneturn_sixtrack_params.update(machine_params)
         self.oneturn_sixtrack_params['COLL'] = ''
         self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
-        self.sixtrack_params['turnss'] = int(1e6)  # number of turns to track (must be int)
+        self.sixtrack_params['turnss'] = int(1e2)  # number of turns to track (must be int)
         amp = [8, 10, 12]  # The amplitude
         self.sixtrack_params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
         self.sixtrack_params['kang'] = list(range(1, 1 + 1))  # The angle
@@ -81,7 +81,8 @@ class MyStudy(Study):
         # self.sixtrack_input['temp'] = ['fort.3']
         # self.sixtrack_input['input'] = self.preprocess_output
         # self.sixtrack_input['additional_input'] = ['CollDB.data']
-        # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat']
+        # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat',
+        #         'Coll_Scatter.dat']
         # self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
         # self.sixtrack_params['COLL'] = '/'
         # self.sixtrack_params['turnss'] = 200
@@ -104,8 +105,8 @@ class MyStudy(Study):
         self.env['gamma'] = 7460.5
         self.env['kmax'] = 5
 
-        ## Update the user-define parameters and objects
-        self.customize()  ## This call is mandatory
+        # Update the user-define parameters and objects
+        self.customize()  # This call is mandatory
 
     def pre_calc(self, paramdict, pre_id):
         '''Further calculations for the specified parameters'''
@@ -127,7 +128,7 @@ class MyStudy(Study):
         if source not in paramdict.keys():
             self._logger.info("Invalid parameter name %s!" % source)
             return 0
-        value = paramdict.pop(source)
+        value = paramdict[source]
         try:
             value = ast.literal_eval(value)
         except ValueError:
@@ -182,7 +183,7 @@ class MyStudy(Study):
         if task_id is None:
             raise Exception("Incomplete preprocess job id %s!" % pre_id)
         where = 'task_id=%s' % task_id
-        values = self.db.select('oneturn_sixtrack_result', reqlist, where)
+        values = self.db.select('oneturn_sixtrack_results', reqlist, where)
         if not values:
             raise ValueError("Wrong task id %s!" % task_id)
         return values[0]
