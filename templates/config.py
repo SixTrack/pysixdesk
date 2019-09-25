@@ -37,14 +37,9 @@ class MyStudy(Study):
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
 
-        # Add database informations
+        # Database type
         self.db_info['db_type'] = 'sql'
-        # self.db_info['db_type'] = 'mysql'
-        # The follow information is needed when the db type is mysql
-        # self.db_info['host'] = 'dbod-gc023'
-        # self.db_info['port'] = '5500'
-        # self.db_info['user'] = 'admin'
-        # self.db_info['passwd'] = 'pysixdesk'
+        #self.db_info['db_type'] = 'mysql'
 
         # Get the default values for specified machine with specified runtype
         machine_params = MachineConfig('LHC').parameters('inj')

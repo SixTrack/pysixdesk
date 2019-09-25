@@ -194,6 +194,19 @@ class Study(object):
         elif db_type.lower() == 'mysql':
             table = Table(self.tables, self.table_keys, 'mysql')
             self.db_info['db_name'] = wu_name + '_' + st_name
+            home_path = os.getenv('HOME')
+            if home_path:
+                my_cnf = os.path.join(home_path, '.my.cnf')
+                self.config.clear()
+                self.config.read(my_cnf)
+                client = self.config['client']
+                user_name = getpass.getuser()
+                self.db_info['user'] = client.get('user', fallback=user_name)
+                self.db_info['passwd'] = client['password']
+                self.db_info['host'] = client.get('host', fallback='127.0.0.1')
+                self.db_info['port'] = client.get('port', fallback='3306')
+            else:
+                raise FileNotFoundError(".my.cnf in $HOME dir is needed for login!")
         else:
             content = "Unknown database type %s! Must be either 'sql' or 'mysql'." % db_type
             raise ValueError(content)
@@ -252,7 +265,7 @@ class Study(object):
         cus_sec = {}
         self.preprocess_config['madx'] = madx_sec
         self.preprocess_config['mask'] = dict.fromkeys(self.madx_params, 0)
-        madx_sec['source_path'] = self.paths['templates']
+        #madx_sec['source_path'] = self.paths['templates']
         madx_sec['madx_exe'] = self.paths['madx_exe']
         madx_sec['mask_file'] = self.madx_input["mask_file"]
         madx_sec['oneturn'] = str(self.oneturn)
@@ -282,7 +295,7 @@ class Study(object):
         self.sixtrack_config['sixtrack'] = six_sec
         self.sixtrack_config['fort3'] = dict.fromkeys(self.sixtrack_params, 0)
         self.sixtrack_config['boinc'] = self.boinc_vars
-        six_sec['source_path'] = self.paths['templates']
+        #six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         if 'additional_input' in self.sixtrack_input.keys():
             inp = self.sixtrack_input['additional_input']
@@ -419,7 +432,7 @@ class Study(object):
                 i = outputs.index(element)
                 nm = namevsid[i][1]
                 content = "The sixtrack job %s is already in the database!" % nm
-                self._logger.info(content)
+                self._logger.warning(content)
                 continue
             for i in range(len(element) - 1):
                 ky = keys[i]
@@ -627,11 +640,17 @@ class Study(object):
             sub_db.create_table('sixtrack_wu', self.tables['sixtrack_wu'],
                     self.table_keys['sixtrack_wu'])
             sub_db.create_table('env', self.tables['env'])
+            sub_db.create_table('templates', self.tables['templates'])
 
             env_outs = self.db.select('env')
             names = list(self.tables['env'].keys())
             env_ins = dict(zip(names, zip(*env_outs)))
             sub_db.insertm('env', env_ins)
+
+            temp_outs = self.db.select('templates')
+            names = list(self.tables['templates'].keys())
+            temp_ins = dict(zip(names, zip(*temp_outs)))
+            sub_db.insertm('templates', temp_ins)
 
             constr = "wu_id in (%s)" % (','.join(map(str, pre_ids)))
             pre_outs = self.db.select('preprocess_wu', where=constr)
@@ -737,6 +756,11 @@ class Study(object):
             db_info['db_name'] = sub_name
             sub_db = SixDB(db_info, settings=self.db_settings, create=True)
             sub_db.create_table('preprocess_wu', self.tables['preprocess_wu'])
+            sub_db.create_table('templates', self.tables['templates'])
+            temp_outs = self.db.select('templates')
+            names = list(self.tables['templates'].keys())
+            temp_ins = dict(zip(names, zip(*temp_outs)))
+            sub_db.insertm('templates', temp_ins)
             outputs['task_id'] = task_ids
             sub_db.insertm('preprocess_wu', outputs)
             sub_db.close()
