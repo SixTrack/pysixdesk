@@ -17,6 +17,10 @@ logger = utils.condor_logger('preprocess')
 
 
 def run(task_id, input_info):
+    # create result path at first to avoid 'held' of htcondor
+    dest_path = './results'
+    if not os.path.isdir(dest_path):
+        os.makedirs(dest_path)
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
@@ -74,9 +78,6 @@ def run(task_id, input_info):
                 except Exception:
                     logger.error('Oneturn job failed!', exc_info=True)
 
-        dest_path = './results'
-        if not os.path.isdir(dest_path):
-            os.makedirs(dest_path)
 
         otpt = madx_config["output_files"]
         output_files = utils.decode_strings(otpt)

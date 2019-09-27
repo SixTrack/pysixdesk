@@ -18,6 +18,10 @@ logger = utils.condor_logger('sixtrack')
 
 
 def run(task_id, input_info):
+    # create result path at first to avoid 'held' of htcondor
+    dest_path = './results'
+    if not os.path.isdir(dest_path):
+        os.makedirs(dest_path)
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
@@ -104,9 +108,6 @@ def run(task_id, input_info):
         except Exception:
             logger.error('sixtrackjob failed!', exc_info=True)
 
-        dest_path = './results'
-        if not os.path.isdir(dest_path):
-            os.makedirs(dest_path)
         inp = sixtrack_config["output_files"]
         output_files = utils.decode_strings(inp)
         down_list = list(output_files)
