@@ -104,10 +104,7 @@ def run(task_id, input_info):
         except Exception:
             logger.error('sixtrackjob failed!', exc_info=True)
 
-        if dbtype.lower() == 'sql':
-            dest_path = os.path.join(sixtrack_config["dest_path"], task_id)
-        else:
-            dest_path = './result'
+        dest_path = './results'
         if not os.path.isdir(dest_path):
             os.makedirs(dest_path)
         inp = sixtrack_config["output_files"]
@@ -199,13 +196,13 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         inp = sixtrack_config["additional_input"]
         add_inputs = utils.decode_strings(inp)
     boinc = sixtrack_config["boinc"]
-    requires = temp_files + add_inputs
-    for infile in requires:
-        infi = os.path.join(source_path, infile)
-        if os.path.isfile(infi):
-            shutil.copy2(infi, infile)
-        else:
-            raise FileNotFoundError("The required file %s isn't found!" % infile)
+    #requires = temp_files + add_inputs
+    #for infile in requires:
+    #    infi = os.path.join(source_path, infile)
+    #    if os.path.isfile(infi):
+    #        shutil.copy2(infi, infile)
+    #    else:
+    #        raise FileNotFoundError("The required file %s isn't found!" % infile)
 
     with open('fort.3.aux', 'r') as fc3aux:
         fc3aux_lines = fc3aux.readlines()

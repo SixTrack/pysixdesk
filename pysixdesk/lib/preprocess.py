@@ -26,16 +26,30 @@ def run(task_id, input_info):
     try:
         task_id = str(task_id)
         mask_info = cf['mask']
+        madx_config = cf['madx']
+        templates = cf['templates']
+        #templates = utils.decode_strings(templates)
         mask_keys = list(mask_info.keys())
         where = 'task_id=%s' % task_id
         outputs = db.select('preprocess_wu', mask_keys, where)
         if not outputs[0]:
             content = "Data not found for preprocess task %s!" % task_id
             raise FileNotFoundError(content)
+        temp_buf = db.select('templates', templates.keys())
+        temp_buf = temp_buf[0]
+        if not temp_buf:
+            content = "Temp files not found in DB!"
+            raise FileNotFoundError(content)
+        else:
+            for temp, temp_name in zip(temp_buf, templates.values()):
+                if not temp:
+                    content = f"{temp_name} not found in DB!"
+                    raise FileNotFoundError(content)
+                else:
+                    utils.decompress_buf(temp, temp_name)
         db.close()
         try:
             mask_data = dict(zip(mask_keys, outputs[0]))
-            madx_config = cf['madx']
             mask_config = mask_data
             oneturn = madx_config['oneturn']
             collimation = madx_config['collimation']
@@ -60,10 +74,7 @@ def run(task_id, input_info):
                 except Exception:
                     logger.error('Oneturn job failed!', exc_info=True)
 
-        if dbtype.lower() == 'mysql':
-            dest_path = './result'
-        else:
-            dest_path = os.path.join(madx_config["dest_path"], task_id)
+        dest_path = './results'
         if not os.path.isdir(dest_path):
             os.makedirs(dest_path)
 
@@ -121,6 +132,7 @@ def run(task_id, input_info):
             db.update('preprocess_wu', job_table, where)
             logger.warning("This is a failed job!")
     except Exception as e:
+        db = SixDB(db_info)
         job_table = {}
         where = "task_id=%s" % task_id
         job_table['status'] = 'incomplete'
@@ -132,7 +144,6 @@ def run(task_id, input_info):
 def madxjob(madx_config, mask_config):
     '''MADX job to generate input files for sixtrack'''
     madxexe = madx_config["madx_exe"]
-    source_path = madx_config["source_path"]
     mask_name = madx_config["mask_file"]
     output_files = madx_config["output_files"]
     try:
@@ -140,11 +151,6 @@ def madxjob(madx_config, mask_config):
     except Exception:
         content = "Wrong setting of madx output!"
         raise ValueError(content)
-
-    if 'mask' not in mask_name:
-        mask_name = mask_name + '.mask'
-    mask_file = os.path.join(source_path, mask_name)
-    shutil.copy2(mask_file, mask_name)
 
     # Generate the actual madx file from mask file
     patterns = ['%' + a for a in mask_config.keys()]
@@ -183,10 +189,6 @@ def new_fort2(config):
     '''Generate new fort.2 with aperture markers and survey and fort3.limit'''
     inp = config['input_files']
     inputfiles = utils.decode_strings(inp)
-    source_path = config["source_path"]
-    for fil in inputfiles.values():
-        fl = os.path.join(source_path, fil)
-        shutil.copy2(fl, fil)
     fc2 = 'fort.2'
     aperture = inputfiles['aperture']
     survery = inputfiles['survey']
@@ -196,17 +198,17 @@ def new_fort2(config):
 def sixtrackjobs(config, fort3_config):
     '''Manage all the one turn sixtrack job'''
     sixtrack_exe = config['sixtrack_exe']
-    source_path = config["source_path"]
+    #source_path = config["source_path"]
 
-    try:
-        temp_files = utils.decode_strings(config["temp_files"])
-    except Exception:
-        content = "Wrong setting of oneturn sixtrack templates!"
-        raise ValueError(content)
+    #try:
+    #    temp_files = utils.decode_strings(config["temp_files"])
+    #except Exception:
+    #    content = "Wrong setting of oneturn sixtrack templates!"
+    #    raise ValueError(content)
 
-    for s in temp_files:
-        source = os.path.join(source_path, s)
-        shutil.copy2(source, s)
+    #for s in temp_files:
+    #    source = os.path.join(source_path, s)
+    #    shutil.copy2(source, s)
     logger.info('Calling sixtrack %s' % sixtrack_exe)
 
     try:
@@ -262,20 +264,10 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     '''One turn sixtrack job'''
     sixtrack_config = config
     fort3_config = copy.deepcopy(config_re)
-    # source_path = sixtrack_config["source_path"]
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
 
-    try:
-        temp_files = utils.decode_strings(sixtrack_config["temp_files"])
-    except Exception:
-        content = "Wrong setting of oneturn sixtrack templates!"
-        raise ValueError(content)
-
-    try:
-        input_files = utils.decode_strings(sixtrack_config["input_files"])
-    except Exception:
-        content = "Wrong setting of oneturn sixtrack input!"
-        raise ValueError(content)
+    temp_files = utils.decode_strings(sixtrack_config["temp_files"])
+    input_files = utils.decode_strings(sixtrack_config["input_files"])
 
     fc3aux = open('fort.3.aux', 'r')
     fc3aux_lines = fc3aux.readlines()

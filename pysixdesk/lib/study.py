@@ -2,6 +2,7 @@ import os
 import io
 import time
 import copy
+import json
 import shutil
 import logging
 import getpass
@@ -232,6 +233,8 @@ class Study(object):
         if self.collimation:
             self.preprocess_output['fort3.limi'] = 'fort3.limi'
             table.init_collimation_tables()
+            table.customize_tables('templates',
+                    list(self.collimation_input.keys()), 'BLOB')
 
         table.customize_tables('templates', list(self.madx_input.keys()),
                 'BLOB')
@@ -263,15 +266,17 @@ class Study(object):
         self.preprocess_config = {}
         madx_sec = {}
         cus_sec = {}
+        templates = {}
         self.preprocess_config['madx'] = madx_sec
         self.preprocess_config['mask'] = dict.fromkeys(self.madx_params, 0)
-        #madx_sec['source_path'] = self.paths['templates']
+        self.preprocess_config['templates'] = templates
         madx_sec['madx_exe'] = self.paths['madx_exe']
         madx_sec['mask_file'] = self.madx_input["mask_file"]
         madx_sec['oneturn'] = str(self.oneturn)
         madx_sec['collimation'] = str(self.collimation)
         madx_sec['dest_path'] = self.paths['preprocess_out']
         madx_sec['output_files'] = utils.encode_strings(self.madx_output)
+        templates['mask_file'] = self.madx_input["mask_file"]
         if self.oneturn:
             self.preprocess_config['sixtrack'] = cus_sec
             self.preprocess_config['oneturn_sixtrack_results'] = self.tables[
@@ -281,6 +286,7 @@ class Study(object):
             cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
             inp = self.oneturn_sixtrack_input['temp']
             cus_sec['temp_files'] = utils.encode_strings(inp)
+            templates['fort.3'] = utils.encode_strings(inp)
             inp = self.oneturn_sixtrack_input['input']
             cus_sec['input_files'] = utils.encode_strings(inp)
         if self.collimation:
@@ -288,23 +294,29 @@ class Study(object):
             cus_sec['source_path'] = self.paths['templates']
             inp = self.collimation_input
             cus_sec['input_files'] = utils.encode_strings(inp)
+            templates['survey'] = inp['survey']
+            templates['aperture'] = inp['aperture']
         cus_sec['dest_path'] = self.paths['preprocess_out']
 
         self.sixtrack_config = {}
         six_sec = {}
+        templates = {}
         self.sixtrack_config['sixtrack'] = six_sec
         self.sixtrack_config['fort3'] = dict.fromkeys(self.sixtrack_params, 0)
         self.sixtrack_config['boinc'] = self.boinc_vars
+        self.sixtrack_config['templates'] = templates
         #six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         if 'additional_input' in self.sixtrack_input.keys():
             inp = self.sixtrack_input['additional_input']
             six_sec['additional_input'] = utils.encode_strings(inp)
+            templates['additional_input'] = utils.encode_strings(inp)
         inp = self.sixtrack_input['input']
         six_sec['input_files'] = utils.encode_strings(inp)
         six_sec['boinc_dir'] = self.paths['boinc_spool']
         inp = self.sixtrack_input['temp']
         six_sec['temp_files'] = utils.encode_strings(inp)
+        templates['fort.3'] = utils.encode_strings(inp)
         inp = self.sixtrack_output
         six_sec['output_files'] = utils.encode_strings(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])
@@ -321,8 +333,6 @@ class Study(object):
         temp = self.paths["templates"]
         cont = os.listdir(temp)
         require = []
-        #if self.oneturn:
-        #    require += self.oneturn_sixtrack_input["temp"]
         require += self.sixtrack_input['temp']
         require.append(self.madx_input["mask_file"])
         for r in require:
@@ -335,10 +345,6 @@ class Study(object):
             for key, value in self.madx_input.items():
                 value = os.path.join(self.study_path, value)
                 tab[key] = utils.compress_buf(value)
-            #if self.oneturn:
-            #    for key in self.oneturn_sixtrack_input['temp']:
-            #        value = os.path.join(self.study_path, key)
-            #        tab[key] = utils.compress_buf(value)
             for key in self.sixtrack_input['temp']:
                 value = os.path.join(self.study_path, key)
                 tab[key] = utils.compress_buf(value)
