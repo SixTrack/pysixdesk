@@ -4,6 +4,7 @@ import re
 import sys
 import ast
 import time
+import json
 import shutil
 import zipfile
 import configparser
@@ -51,7 +52,7 @@ def run(task_id, input_info):
         fort3_config = fort3_data
         sixtrack_config = cf['sixtrack']
         inp = sixtrack_config["input_files"]
-        input_files = utils.decode_strings(inp)
+        input_files = json.loads(inp)
         where = 'wu_id=%s' % str(preprocess_id)
         pre_task_id = db.select('preprocess_wu', ['task_id'], where)
         if not pre_task_id:
@@ -114,7 +115,7 @@ def run(task_id, input_info):
         sixtrack_config['surv_percent'] = str(surv_percent)
         sixtrack_config['job_name'] = job_name
         sixtrack_config['wu_id'] = str(wu_id)
-        sixtrack_config['cr_inputs'] = utils.encode_strings(cr_inputs)
+        sixtrack_config['cr_inputs'] = json.dumps(cr_inputs)
 
         try:
             sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
@@ -122,7 +123,7 @@ def run(task_id, input_info):
             logger.error('sixtrackjob failed!', exc_info=True)
 
         inp = sixtrack_config["output_files"]
-        output_files = utils.decode_strings(inp)
+        output_files = json.loads(inp)
         down_list = list(output_files)
         down_list.append('fort.3')
         for cr_file in cr_files:
@@ -201,15 +202,15 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
     temp_file = sixtrack_config["temp_file"]
     inp = sixtrack_config["input_files"]
-    input_files = utils.decode_strings(inp)
+    input_files = json.loads(inp)
     inp = sixtrack_config["output_files"]
-    output_files = utils.decode_strings(inp)
+    output_files = json.loads(inp)
     inp = sixtrack_config["cr_inputs"]
-    cr_inputs = utils.decode_strings(inp)
+    cr_inputs = json.loads(inp)
     add_inputs = []
     if 'additional_input' in sixtrack_config.keys():
         inp = sixtrack_config["additional_input"]
-        add_inputs = utils.decode_strings(inp)
+        add_inputs = json.loads(inp)
     boinc = sixtrack_config["boinc"]
 
     with open('fort.3.aux', 'r') as fc3aux:

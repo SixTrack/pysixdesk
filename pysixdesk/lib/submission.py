@@ -73,7 +73,7 @@ class HTCondor(Cluster):
         #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'dbadaptor.py'))
         #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'dbtable.py'))
         rep = {}
-        rep['%func'] = utils.encode_strings(trans)
+        rep['%func'] = ','.join(map(str, trans))
         rep['%exe'] = exe
         rep['%dirname'] = output_path
         rep['%joblist'] = job_list
