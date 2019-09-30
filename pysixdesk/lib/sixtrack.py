@@ -82,6 +82,19 @@ def run(task_id, input_info):
             i = inputs.index(infile)
             buf = input_buf[i]
             utils.decompress_buf(buf, infile)
+        templates = cf['templates']
+        temp_buf = db.select('templates', templates.keys())
+        temp_buf = temp_buf[0]
+        if not temp_buf:
+            content = "Temp files not found in DB!"
+            raise FileNotFoundError(content)
+        else:
+            for temp, temp_name in zip(temp_buf, templates.values()):
+                if not temp:
+                    content = f"{temp_name} not found in DB!"
+                    raise FileNotFoundError(content)
+                else:
+                    utils.decompress_buf(temp, temp_name)
         db.close()
         boinc_vars = cf['boinc']
         if not boinc_infos:
@@ -117,6 +130,9 @@ def run(task_id, input_info):
             if os.path.isfile(cr_file_t):
                 shutil.copy2(cr_file_t, cr_file)
                 down_list.append(cr_file)
+        if dbtype.lower() == 'mysql':
+            down_list.append('_condor_stdout')
+            down_list.append('_condor_stderr')
 
         try:
             utils.download_output(down_list, dest_path)
@@ -183,9 +199,7 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     fort3_config = config_param
     real_turn = fort3_config['turnss']
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
-    source_path = sixtrack_config["source_path"]
-    inp = sixtrack_config["temp_files"]
-    temp_files = utils.decode_strings(inp)
+    temp_file = sixtrack_config["temp_file"]
     inp = sixtrack_config["input_files"]
     input_files = utils.decode_strings(inp)
     inp = sixtrack_config["output_files"]
@@ -197,13 +211,6 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         inp = sixtrack_config["additional_input"]
         add_inputs = utils.decode_strings(inp)
     boinc = sixtrack_config["boinc"]
-    #requires = temp_files + add_inputs
-    #for infile in requires:
-    #    infi = os.path.join(source_path, infile)
-    #    if os.path.isfile(infi):
-    #        shutil.copy2(infi, infile)
-    #    else:
-    #        raise FileNotFoundError("The required file %s isn't found!" % infile)
 
     with open('fort.3.aux', 'r') as fc3aux:
         fc3aux_lines = fc3aux.readlines()
@@ -237,15 +244,14 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     patterns = ['%' + a for a in keys]
     values = [fort3_config[key] for key in keys]
     output = []
-    for s in temp_files:
-        dest = s + '.temp'
-        source = os.path.join('../', s)
-        try:
-            utils.replace(patterns, values, source, dest)
-        except Exception:
-            raise Exception("Failed to generate input file for oneturn sixtrack!")
+    dest = temp_file + '.temp'
+    source = os.path.join('../', temp_file)
+    try:
+        utils.replace(patterns, values, source, dest)
+    except Exception:
+        raise Exception("Failed to generate input file for oneturn sixtrack!")
 
-        output.append(dest)
+    output.append(dest)
     temp1 = input_files['fc.3']
     temp1 = os.path.join('../', temp1)
     if os.path.isfile(temp1):
@@ -299,14 +305,13 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         values = [fort3_config[key] for key in keys]
         output = []
         # recreate the fort.3 file
-        for s in temp_files:
-            dest = s + '.temp'
-            try:
-                utils.replace(patterns, values, s, dest)
-            except Exception:
-                raise Exception("Failed to generate input file for sixtrack!")
+        dest = temp_file + '.temp'
+        try:
+            utils.replace(patterns, values, temp_file, dest)
+        except Exception:
+            raise Exception("Failed to generate input file for sixtrack!")
 
-            output.append(dest)
+        output.append(dest)
         temp1 = input_files['fc.3']
         if os.path.isfile(temp1):
             output.insert(1, temp1)

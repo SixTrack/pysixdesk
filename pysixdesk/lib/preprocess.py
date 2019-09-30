@@ -92,6 +92,9 @@ def run(task_id, input_info):
         if collimation.lower() == 'true':
             output_files['fort3.limi'] = 'fort3.limi'
             down_list.append('fort3.limi')
+        if dbtype.lower() == 'mysql':
+            down_list.append('_condor_stdout')
+            down_list.append('_condor_stderr')
         try:
             utils.download_output(down_list, dest_path)
             logger.info("All requested results have been stored in %s" % dest_path)
