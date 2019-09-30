@@ -1,7 +1,6 @@
 import os
 import io
 import time
-import copy
 import json
 import shutil
 import logging
@@ -121,7 +120,7 @@ class Study(object):
             ("dp2", 0.000001),
             ("chromx", 2),
             ("chromy", 2)])
-        self.oneturn_sixtrack_input['input'] = copy.deepcopy(self.madx_output)
+        self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
         self.sixtrack_output = ['fort.10']
 
         self.db_info['db_type'] = 'sql'
@@ -228,7 +227,7 @@ class Study(object):
             table.customize_tables('oneturn_sixtrack_wu',
                     self.oneturn_sixtrack_params)
             table.customize_tables('templates',
-                    list(self.oneturn_sixtrack_input['temp']), 'BLOB')
+                    [self.oneturn_sixtrack_input['temp']], 'BLOB')
 
         if self.collimation:
             self.preprocess_output['fort3.limi'] = 'fort3.limi'
@@ -238,8 +237,10 @@ class Study(object):
 
         table.customize_tables('templates', list(self.madx_input.keys()),
                 'BLOB')
-        table.customize_tables('templates', list(self.sixtrack_input['temp']),
-                'BLOB')
+        table.customize_tables('templates', [self.sixtrack_input['temp']], 'BLOB')
+        if 'additional_input' in self.sixtrack_input.keys():
+            inp = self.sixtrack_input['additional_input']
+            table.customize_tables('templates', inp, 'BLOB')
         table.customize_tables('env', self.env)
         table.customize_tables('env', list(self.paths.keys()), 'text')
         table.customize_tables('preprocess_wu', self.madx_params)
@@ -272,10 +273,10 @@ class Study(object):
         self.preprocess_config['templates'] = templates
         madx_sec['madx_exe'] = self.paths['madx_exe']
         madx_sec['mask_file'] = self.madx_input["mask_file"]
-        madx_sec['oneturn'] = str(self.oneturn)
-        madx_sec['collimation'] = str(self.collimation)
+        madx_sec['oneturn'] = json.dumps(self.oneturn)
+        madx_sec['collimation'] = json.dumps(self.collimation)
         madx_sec['dest_path'] = self.paths['preprocess_out']
-        madx_sec['output_files'] = utils.encode_strings(self.madx_output)
+        madx_sec['output_files'] = json.dumps(self.madx_output)
         templates['mask_file'] = self.madx_input["mask_file"]
         if self.oneturn:
             self.preprocess_config['sixtrack'] = cus_sec
@@ -285,17 +286,16 @@ class Study(object):
             cus_sec['source_path'] = self.paths['templates']
             cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
             inp = self.oneturn_sixtrack_input['temp']
-            cus_sec['temp_files'] = utils.encode_strings(inp)
-            templates['fort.3'] = utils.encode_strings(inp)
+            cus_sec['temp_file'] = inp
+            templates[inp] = inp
             inp = self.oneturn_sixtrack_input['input']
-            cus_sec['input_files'] = utils.encode_strings(inp)
+            cus_sec['input_files'] = json.dumps(inp)
         if self.collimation:
             self.preprocess_config['collimation'] = cus_sec
             cus_sec['source_path'] = self.paths['templates']
             inp = self.collimation_input
-            cus_sec['input_files'] = utils.encode_strings(inp)
-            templates['survey'] = inp['survey']
-            templates['aperture'] = inp['aperture']
+            cus_sec['input_files'] = json.dumps(inp)
+            templates.update(inp)
         cus_sec['dest_path'] = self.paths['preprocess_out']
 
         self.sixtrack_config = {}
@@ -305,20 +305,19 @@ class Study(object):
         self.sixtrack_config['fort3'] = dict.fromkeys(self.sixtrack_params, 0)
         self.sixtrack_config['boinc'] = self.boinc_vars
         self.sixtrack_config['templates'] = templates
-        #six_sec['source_path'] = self.paths['templates']
         six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
         if 'additional_input' in self.sixtrack_input.keys():
             inp = self.sixtrack_input['additional_input']
-            six_sec['additional_input'] = utils.encode_strings(inp)
-            templates['additional_input'] = utils.encode_strings(inp)
+            six_sec['additional_input'] = json.dumps(inp)
+            templates.update(zip(inp,inp))
         inp = self.sixtrack_input['input']
-        six_sec['input_files'] = utils.encode_strings(inp)
+        six_sec['input_files'] = json.dumps(inp)
         six_sec['boinc_dir'] = self.paths['boinc_spool']
         inp = self.sixtrack_input['temp']
-        six_sec['temp_files'] = utils.encode_strings(inp)
-        templates['fort.3'] = utils.encode_strings(inp)
+        six_sec['temp_file'] = inp
+        templates[inp] = inp
         inp = self.sixtrack_output
-        six_sec['output_files'] = utils.encode_strings(inp)
+        six_sec['output_files'] = json.dumps(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])
         six_sec['dest_path'] = self.paths['sixtrack_out']
         self.sixtrack_config['six_results'] = self.tables['six_results']
@@ -333,22 +332,29 @@ class Study(object):
         temp = self.paths["templates"]
         cont = os.listdir(temp)
         require = []
-        require += self.sixtrack_input['temp']
+        require.append(self.sixtrack_input['temp'])
         require.append(self.madx_input["mask_file"])
         for r in require:
             if r not in cont:
                 content = "The required file %s isn't found in %s!" % (r, temp)
                 raise FileNotFoundError(content)
         outputs = self.db.select('templates', self.tables['templates'].keys())
-        if not outputs:
-            tab = {}
-            for key, value in self.madx_input.items():
-                value = os.path.join(self.study_path, value)
-                tab[key] = utils.compress_buf(value)
-            for key in self.sixtrack_input['temp']:
+        tab = {}
+        for key, value in self.madx_input.items():
+            value = os.path.join(self.study_path, value)
+            tab[key] = utils.compress_buf(value)
+        key = self.sixtrack_input['temp']
+        value = os.path.join(self.study_path, key)
+        tab[key] = utils.compress_buf(value)
+        if 'additional_input' in self.sixtrack_input.keys():
+            inp = self.sixtrack_input['additional_input']
+            for key in inp:
                 value = os.path.join(self.study_path, key)
                 tab[key] = utils.compress_buf(value)
+        if not outputs:
             self.db.insert('templates', tab)
+        else:
+            self.db.update('templates', tab)
         outputs = self.db.select('env', self.paths.keys())
         envs = {}
         envs.update(self.paths)

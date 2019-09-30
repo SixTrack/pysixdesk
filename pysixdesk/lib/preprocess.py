@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import copy
+import json
 import shutil
 import configparser
 
@@ -32,7 +33,6 @@ def run(task_id, input_info):
         mask_info = cf['mask']
         madx_config = cf['madx']
         templates = cf['templates']
-        #templates = utils.decode_strings(templates)
         mask_keys = list(mask_info.keys())
         where = 'task_id=%s' % task_id
         outputs = db.select('preprocess_wu', mask_keys, where)
@@ -80,7 +80,7 @@ def run(task_id, input_info):
 
 
         otpt = madx_config["output_files"]
-        output_files = utils.decode_strings(otpt)
+        output_files = json.loads(otpt)
 
         # Download the requested files.
         down_list = list(output_files.values())
@@ -148,7 +148,7 @@ def madxjob(madx_config, mask_config):
     mask_name = madx_config["mask_file"]
     output_files = madx_config["output_files"]
     try:
-        output_files = utils.decode_strings(output_files)
+        output_files = json.loads(output_files)
     except Exception:
         content = "Wrong setting of madx output!"
         raise ValueError(content)
@@ -189,7 +189,7 @@ def madxjob(madx_config, mask_config):
 def new_fort2(config):
     '''Generate new fort.2 with aperture markers and survey and fort3.limit'''
     inp = config['input_files']
-    inputfiles = utils.decode_strings(inp)
+    inputfiles = json.loads(inp)
     fc2 = 'fort.2'
     aperture = inputfiles['aperture']
     survery = inputfiles['survey']
@@ -199,17 +199,6 @@ def new_fort2(config):
 def sixtrackjobs(config, fort3_config):
     '''Manage all the one turn sixtrack job'''
     sixtrack_exe = config['sixtrack_exe']
-    #source_path = config["source_path"]
-
-    #try:
-    #    temp_files = utils.decode_strings(config["temp_files"])
-    #except Exception:
-    #    content = "Wrong setting of oneturn sixtrack templates!"
-    #    raise ValueError(content)
-
-    #for s in temp_files:
-    #    source = os.path.join(source_path, s)
-    #    shutil.copy2(source, s)
     logger.info('Calling sixtrack %s' % sixtrack_exe)
 
     try:
@@ -267,8 +256,8 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     fort3_config = copy.deepcopy(config_re)
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
 
-    temp_files = utils.decode_strings(sixtrack_config["temp_files"])
-    input_files = utils.decode_strings(sixtrack_config["input_files"])
+    temp_file = sixtrack_config["temp_file"]
+    input_files = json.loads(sixtrack_config["input_files"])
 
     fc3aux = open('fort.3.aux', 'r')
     fc3aux_lines = fc3aux.readlines()
@@ -291,16 +280,15 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     patterns = ['%' + a for a in keys]
     values = [fort3_config[key] for key in keys]
     output = []
-    for s in temp_files:
-        dest = s + ".t1"
-        source = os.path.join('../', s)
-        try:
-            utils.replace(patterns, values, source, dest)
-        except Exception:
-            content = "Failed to generate input file for oneturn sixtrack!"
-            raise Exception(content)
+    dest = temp_file + ".t1"
+    source = os.path.join('../', temp_file)
+    try:
+        utils.replace(patterns, values, source, dest)
+    except Exception:
+        content = "Failed to generate input file for oneturn sixtrack!"
+        raise Exception(content)
 
-        output.append(dest)
+    output.append(dest)
     temp1 = input_files['fc.3']
     temp1 = os.path.join('../', temp1)
     if os.path.isfile(temp1):
