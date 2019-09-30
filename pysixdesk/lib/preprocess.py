@@ -16,88 +16,82 @@ from pysixdesk.lib.resultparser import parse_results
 logger = utils.condor_logger('preprocess')
 
 
-def run(wu_id, input_info):
+def run(task_id, input_info):
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
-    db_info = {}
-    db_info.update(cf['db_info'])
+    db_info = dict(cf['db_info'])
     dbtype = db_info['db_type']
     db = SixDB(db_info)
-    wu_id = str(wu_id)
-    where = 'wu_id=%s' % wu_id
-    outputs = db.select('preprocess_wu', ['input_file'], where)
-    db.close()
-    if not outputs[0]:
-        content = "Input file not found for preprocess job %s!" % wu_id
-        raise FileNotFoundError(content)
-
-    input_buf = outputs[0][0]
-    input_file = utils.decompress_buf(input_buf, None, 'buf')
-    cf.clear()
-    cf.read_string(input_file)
-    madx_config = cf['madx']
-    mask_config = cf['mask']
-    oneturn = madx_config['oneturn']
-    collimation = madx_config['collimation']
-
     try:
-        madxjob(madx_config, mask_config)
-    except Exception:
-        content = 'MADX job failed.'
-        logger.error(content, exc_info=True)
+        task_id = str(task_id)
+        mask_info = cf['mask']
+        mask_keys = list(mask_info.keys())
+        where = 'task_id=%s' % task_id
+        outputs = db.select('preprocess_wu', mask_keys, where)
+        if not outputs[0]:
+            content = "Data not found for preprocess task %s!" % task_id
+            raise FileNotFoundError(content)
+        db.close()
+        try:
+            mask_data = dict(zip(mask_keys, outputs[0]))
+            madx_config = cf['madx']
+            mask_config = mask_data
+            oneturn = madx_config['oneturn']
+            collimation = madx_config['collimation']
+            madxjob(madx_config, mask_config)
+        except Exception:
+            content = 'MADX job failed.'
+            logger.error(content, exc_info=True)
+            if dbtype.lower() == 'sql':
+                return
+        else:
+            if collimation.lower() == 'true':
+                try:
+                    coll_config = cf['collimation']
+                    new_fort2(coll_config)
+                except Exception:
+                    logger.error('Generate new fort2 failed!', exc_info=True)
+            if oneturn.lower() == 'true':
+                try:
+                    sixtrack_config = cf['sixtrack']
+                    fort3_config = cf._sections['fort3']
+                    sixtrackjobs(sixtrack_config, fort3_config)
+                except Exception:
+                    logger.error('Oneturn job failed!', exc_info=True)
+
+        if dbtype.lower() == 'mysql':
+            dest_path = './result'
+        else:
+            dest_path = os.path.join(madx_config["dest_path"], task_id)
+        if not os.path.isdir(dest_path):
+            os.makedirs(dest_path)
+
+        otpt = madx_config["output_files"]
+        output_files = utils.decode_strings(otpt)
+
+        # Download the requested files.
+        down_list = list(output_files.values())
+        down_list.append('madx_in')
+        down_list.append('madx_stdout')
+        if oneturn.lower() == 'true':
+            output_files['oneturnresult'] = 'oneturnresult'
+            down_list.append('oneturnresult')
+        if collimation.lower() == 'true':
+            output_files['fort3.limi'] = 'fort3.limi'
+            down_list.append('fort3.limi')
+        try:
+            utils.download_output(down_list, dest_path)
+            logger.info("All requested results have been stored in %s" % dest_path)
+        except Exception:
+            logger.warning("Job failed!", exc_info=True)
+
         if dbtype.lower() == 'sql':
             return
-    else:
-        if collimation.lower() == 'true':
-            try:
-                coll_config = cf['collimation']
-                new_fort2(coll_config)
-            except Exception:
-                logger.error('Generate new fort2 failed!', exc_info=True)
-        if oneturn.lower() == 'true':
-            try:
-                sixtrack_config = cf['sixtrack']
-                fort3_config = cf._sections['fort3']
-                sixtrackjobs(sixtrack_config, fort3_config)
-            except Exception:
-                logger.error('Oneturn job failed!', exc_info=True)
 
-    if dbtype.lower() == 'mysql':
-        dest_path = './result'
-    else:
-        dest_path = madx_config["dest_path"]
-    if not os.path.isdir(dest_path):
-        os.makedirs(dest_path)
-
-    otpt = madx_config["output_files"]
-    output_files = utils.decode_strings(otpt)
-
-    # Download the requested files.
-    down_list = list(output_files.values())
-    down_list.append('madx_in')
-    down_list.append('madx_stdout')
-    if oneturn.lower() == 'true':
-        output_files['oneturnresult'] = 'oneturnresult'
-        down_list.append('oneturnresult')
-    if collimation.lower() == 'true':
-        output_files['fort3.limi'] = 'fort3.limi'
-        down_list.append('fort3.limi')
-    try:
-        utils.download_output(down_list, dest_path)
-        logger.info("All requested results have been stored in %s" % dest_path)
-    except Exception:
-        logger.warning("Job failed!", exc_info=True)
-
-    if dbtype.lower() == 'sql':
-        return
-
-    # reconnect after jobs finished
-    try:
+        # reconnect after jobs finished
         db = SixDB(db_info)
-        where = "wu_id=%s" % wu_id
-        task_id = db.select('preprocess_wu', ['task_id'], where)
-        task_id = task_id[0][0]
+        where = "task_id=%s" % task_id
         job_table = {}
         task_table = {}
         task_table['status'] = 'Success'
@@ -106,7 +100,7 @@ def run(wu_id, input_info):
         for sec in cf:
             result_cf[sec] = dict(cf[sec])
         filelist = Table.result_table(output_files.values())
-        parse_results('preprocess', wu_id, job_path, filelist, task_table,
+        parse_results('preprocess', task_id, job_path, filelist, task_table,
                 result_cf)
         where = "task_id=%s" % task_id
         db.update('preprocess_task', task_table, where)
@@ -114,28 +108,25 @@ def run(wu_id, input_info):
             vals['task_id'] = [task_id,]*len(vals['mtime'])
             db.insertm(sec, vals)
         if task_table['status'] == 'Success':
-            where = "wu_id=%s" % wu_id
+            where = "task_id=%s" % task_id
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
             db.update('preprocess_wu', job_table, where)
-            content = "Preprocess job %s has completed normally!" % wu_id
+            content = "Preprocess task %s has completed normally!" % task_id
             logger.info(content)
         else:
-            where = "wu_id=%s" % wu_id
+            where = "task_id=%s" % task_id
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
             db.update('preprocess_wu', job_table, where)
-            content = "This is a failed job!"
-            logger.warning(content)
-        return
+            logger.warning("This is a failed job!")
     except Exception as e:
-        where = "wu_id=%s" % wu_id
+        job_table = {}
+        where = "task_id=%s" % task_id
         job_table['status'] = 'incomplete'
         job_table['mtime'] = int(time.time() * 1E7)
         db.update('preprocess_wu', job_table, where)
         raise e
-    finally:
-        db.close()
 
 
 def madxjob(madx_config, mask_config):
@@ -154,9 +145,6 @@ def madxjob(madx_config, mask_config):
         mask_name = mask_name + '.mask'
     mask_file = os.path.join(source_path, mask_name)
     shutil.copy2(mask_file, mask_name)
-    dest_path = madx_config["dest_path"]
-    if not os.path.isdir(dest_path):
-        os.mkdir(dest_path)
 
     # Generate the actual madx file from mask file
     patterns = ['%' + a for a in mask_config.keys()]
@@ -222,13 +210,14 @@ def sixtrackjobs(config, fort3_config):
     logger.info('Calling sixtrack %s' % sixtrack_exe)
 
     try:
-        sixtrackjob(config, fort3_config, 'first_oneturn', dp1='.0', dp2='.0')
+        sixtrackjob(config, fort3_config, 'first_oneturn', dp1='.0', dp2='.0',
+                ition='0')
     except Exception as e:
         logger.error('SixTrack first oneturn failed.')
         raise e
 
     try:
-        sixtrackjob(config, fort3_config, 'second_oneturn')
+        sixtrackjob(config, fort3_config, 'second_oneturn', ition='0')
     except Exception as e:
         logger.error('SixTrack second oneturn failed.')
         raise e
@@ -303,6 +292,7 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
     os.chdir('junk')
 
     logger.info("Preparing the sixtrack input files!")
+    open('fort.6', 'a').close()
 
     keys = list(fort3_config.keys())
     patterns = ['%' + a for a in keys]
@@ -337,13 +327,6 @@ def sixtrackjob(config, config_re, jobname, **kwargs):
         else:
             raise FileNotFoundError("The required input file %s does not found!" %
                                     key)
-    #if os.path.isfile('../fort.2') and os.path.isfile('../fort.16'):
-    #    os.symlink('../fort.2', 'fort.2')
-    #    os.symlink('../fort.16', 'fort.16')
-    #    if not os.path.isfile('../fort.8'):
-    #        open('fort.8', 'a').close()
-    #    else:
-    #        os.symlink('../fort.8', 'fort.8')
 
     # actually run
     logger.info('Sixtrack job %s is running...' % jobname)
@@ -374,9 +357,9 @@ if __name__ == '__main__':
         logger.error("The input file is missing!")
         sys.exit(1)
     elif num == 2:
-        wu_id = args[1]
+        task_id = args[1]
         db_name = args[2]
-        run(wu_id, db_name)
+        run(task_id, db_name)
         sys.exit(0)
     else:
         logger.error("Too many input arguments!")

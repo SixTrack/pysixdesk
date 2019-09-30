@@ -13,24 +13,29 @@ logger = logging.getLogger(__name__)
 
 def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
     '''parse the results'''
-    task_table['wu_id'] = item
     task_table['mtime'] = int(time.time() * 1E7)
     contents = os.listdir(job_path)
 
-    madx_in = [s for s in contents if 'madx_in' in s]
-    if madx_in and jobtype == 'preprocess':
-        madx_in = os.path.join(job_path, madx_in[0])
-        task_table['madx_in'] = compress_buf(madx_in, 'gzip')
+    def search_store(key, name):
+        search_re = [s for s in contents if name in s]
+        if search_re:
+            search_re = os.path.join(job_path, search_re[0])
+            task_table[key] = compress_buf(search_re, 'gzip')
 
-    madx_out = [s for s in contents if 'madx_stdout' in s]
-    if madx_out and jobtype == 'preprocess':
-        madx_out = os.path.join(job_path, madx_out[0])
-        task_table['madx_stdout'] = compress_buf(madx_out, 'gzip')
+    if jobtype == 'preprocess':
+        search_store('madx_in', 'madx_in')
+        search_store('madx_stdout', 'madx_stdout')
 
-    fort3_in = [s for s in contents if 'fort.3' in s]
-    if fort3_in and jobtype == 'sixtrack':
-        fort3_in = os.path.join(job_path, fort3_in[0])
-        task_table['fort3'] = compress_buf(fort3_in, 'gzip')
+    if jobtype == 'sixtrack':
+        search_store('fort_3', 'fort.3')
+        # The following files are used for checkpoint/restart
+        search_store('cr_status', 'cr_status')
+        search_store('cr_stdout', 'cr_stdout')
+        search_store('cr_stderr', 'cr_stderr')
+        search_store('crpoint_pri_bin', 'crpoint_pri')
+        search_store('crpoint_sec_bin', 'crpoint_sec')
+        search_store('singletrackfile_dat', 'singletrackfile')
+        search_store('fort_6', 'fort.6')
 
     job_stdout = [s for s in contents if (re.match(r'htcondor\..+\.out', s) or
                                           re.match(r'_condor_stdout', s))]
@@ -61,13 +66,13 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
                 except Exception as e:
                     task_table['status'] = 'Failed'
                     content = "There is something wrong with the output "\
-                        "file %s for job %s!" % (out, item)
+                        "file %s for task %s!" % (out, item)
                     logger.error(content)
                     logger.error(e, exc_info=True)
             task_table[out] = compress_buf(out_f, 'gzip')
         else:
             task_table['status'] = 'Failed'
-            content = f"The {jobtype} output file {out} for job {item} "\
+            content = f"The {jobtype} output file {out} for task {item} "\
                     "doesn't exist! The job failed!"
             logger.warning(content)
     # clean the redundant sections

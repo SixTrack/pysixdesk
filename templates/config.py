@@ -17,11 +17,14 @@ logger.setLevel(logging.INFO)
 
 # To add logging to file, do:
 # -----------------------------------------------------------------------------
-# filehandler = logging.FileHandler(log_path)
-# filehandler.setFormatter(logging.Formatter(format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-#                                            datefmt='%H:%M:%S'))
-# filehandler.setLevel(logging.DEBUG)
-# logger.addHandler(filehandler)
+study_path = os.path.dirname(__file__)
+log_path = os.path.join(study_path, 'pysixdesk.log')
+filehandler = logging.FileHandler(log_path)
+fmt = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
+        datefmt='%b/%d %H:%M:%S')
+filehandler.setFormatter(fmt)
+filehandler.setLevel(logging.DEBUG)
+logger.addHandler(filehandler)
 # -----------------------------------------------------------------------------
 
 
@@ -68,6 +71,10 @@ class MyStudy(Study):
         self.sixtrack_input['temp'] = ['fort.3']
         self.preprocess_output = copy.deepcopy(self.madx_output)
         self.sixtrack_input['input'] = self.preprocess_output
+        # For CR
+        self.checkpoint_restart = False
+        self.first_turn = 1
+        self.last_turn = 100
 
         ## The parameters for collimation job
         # self.madx_output = {
@@ -111,9 +118,11 @@ class MyStudy(Study):
     def pre_calc(self, paramdict, pre_id):
         '''Further calculations for the specified parameters'''
         # The angle should be calculated before amplitude
+        keys = list(paramdict.keys())
         status = []
         status.append(self.formulas('kang', 'angle', paramdict, pre_id))
         status.append(self.formulas('amp', ['ax0s', 'ax1s'], paramdict, pre_id))
+        [paramdict.pop(key) for key in paramdict.keys() if key not in keys]
         return all(status)
 
     def formulas(self, source, dest, paramdict, pre_id):
@@ -130,7 +139,8 @@ class MyStudy(Study):
             return 0
         value = paramdict[source]
         try:
-            value = ast.literal_eval(value)
+            if isinstance(value, str):
+                value = ast.literal_eval(value)
         except ValueError:
             self._logger.error("Invalid source value for job %s!" % pre_id)
             return 0
@@ -172,18 +182,3 @@ class MyStudy(Study):
         else:
             self._logger.error("There isn't a formula for parameter %s!" % dest)
             return 0
-
-    def getval(self, pre_id, reqlist):
-        '''Get required values from oneturn sixtrack results'''
-        where = 'wu_id=%s' % pre_id
-        ids = self.db.select('preprocess_wu', ['task_id'], where)
-        if not ids:
-            raise ValueError("Wrong preprocess job id %s!" % pre_id)
-        task_id = ids[0][0]
-        if task_id is None:
-            raise Exception("Incomplete preprocess job id %s!" % pre_id)
-        where = 'task_id=%s' % task_id
-        values = self.db.select('oneturn_sixtrack_results', reqlist, where)
-        if not values:
-            raise ValueError("Wrong task id %s!" % task_id)
-        return values[0]
