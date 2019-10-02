@@ -67,11 +67,6 @@ class HTCondor(Cluster):
                 os.makedirs(out_f)
         os.chmod(job_list, 0o444)  # change the permission to readonly
         trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk'))
-        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'resultparser.py'))
-        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'utils.py'))
-        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'pysixdb.py'))
-        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'dbadaptor.py'))
-        #trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'dbtable.py'))
         rep = {}
         rep['%func'] = ','.join(map(str, trans))
         rep['%exe'] = exe
@@ -107,49 +102,43 @@ class HTCondor(Cluster):
             content = "There isn't %s job for submission!" % job_name
             self._logger.warning(content)
             return False, None
+        with open(joblist, 'r') as f_in:
+            task_ids = f_in.read().split()
         scont = 1
         while scont <= trials:
             args = list(args)
-            for ky, vl in kwargs:
-                args = args + ['-' + ky, vl]
+            for ky in kwargs.keys():
+                args = args + ['-' + ky, kwargs[ky]]
             args.append(sub)
             args.append('-batch-name')
             args.append(job_name)
-            process = Popen(['condor_submit', '-terse', *args], stdout=PIPE,
-                            stderr=PIPE, universal_newlines=True)
-            stdout, stderr = process.communicate()
-            if stderr:
+            try:
+                process = Popen(['condor_submit', '-terse', *args], stdout=PIPE,
+                                stderr=PIPE, universal_newlines=True)
+                stdout, stderr = process.communicate()
                 self._logger.info(stdout)
-                self._logger.error(stderr)
-                scont += 1
-            else:
-                self._logger.info(stdout)
-                outs = stdout.split()
-                [cluster_id, proc_st] = outs[0].split('.')
-                [cluster_id, proc_ed] = outs[-1].split('.')
-                with open(joblist, 'r') as f_in:
-                    task_ids = f_in.read().split()
-                try:
-                    cl_id = int(cluster_id)
-                    proc_st = int(proc_st)
-                    proc_ed = int(proc_ed)
-                    proc_ls = list(range(proc_st, proc_ed + 1))
-                    uniq_ids = [str(cl_id) + '.' + str(pr_id) for pr_id in proc_ls]
-                    if len(task_ids) != len(uniq_ids):
-                        content = "There is something wrong during submitting!"
-                        raise Exception(content)
-                    else:
-                        comb = list(zip(task_ids, uniq_ids))
-                        out = dict(comb)
-                        # remove job list after successful submission
-                        os.remove(joblist)
-                        return True, out
-                except Exception as e:
-                    # this will catch the excpetion raised or any unexpected
-                    # exception in the try block.
-                    self._logger.error(e, exc_info=True)
-                    self._logger.error(outs)
-                    return False, None
+                if stderr:
+                    self._logger.error(stderr)
+                args = ['-constraint', 'JobBatchName=="%s"' % job_name,
+                        '-format', '%d.', 'ClusterId', '-format', '%d\n', 'ProcId']
+                uniq_ids = self.check(*args).split()
+                status = len(task_ids) == len(uniq_ids)
+                if not status:
+                    content = "There is something wrong during submitting!"
+                    self._logger.error(content)
+                    scont += 1
+                else:
+                    comb = list(zip(task_ids, uniq_ids))
+                    out = dict(comb)
+                    # remove job list after successful submission
+                    os.remove(joblist)
+                    return True, out
+            except Exception as e:
+                # this will catch the excpetion raised or any unexpected
+                # exception in the try block.
+                self._logger.error(e, exc_info=True)
+                self._logger.error(outs)
+                return False, None
         return False, None
 
     def check_format(self, unique_id):
@@ -206,23 +195,23 @@ class HTCondor(Cluster):
 
     def check(self, *args, **kwargs):
         '''Check the job status'''
-        for ky, vl in kwargs:
-            args = args + ['-' + ky, vl]
+        for ky in kwargs.keys():
+            args = args + ['-' + ky, kwargs[ky]]
         process = Popen(['condor_q', *args], stdout=PIPE,
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         if stderr:
             self._logger.info(stdout)
             self._logger.error(stderr)
-            return None
+            return ''
         else:
-            self._logger.info(stdout)
+            #self._logger.info(stdout)
             return stdout
 
     def remove(self, *args, **kwargs):
         '''Cancel the submitted jobs'''
-        for ky, vl in kwargs:
-            args = args + ['-' + ky, vl]
+        for ky in kwargs.keys():
+            args = args + ['-' + ky, kwargs[ky]]
         process = Popen(['condor_rm', *args], stdout=PIPE,
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
