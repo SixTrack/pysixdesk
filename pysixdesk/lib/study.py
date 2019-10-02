@@ -108,6 +108,7 @@ class Study(object):
             ("inttuney", 60.31),
             ("DIFF", '/DIFF'),
             ("DIF1", '/'),
+            ("COLL", ''),
             ("pmass", constants.PROTON_MASS),
             ("emit_beam", 3.75),
             ("e0", 7000000),
@@ -266,7 +267,6 @@ class Study(object):
 
         self.preprocess_config = {}
         madx_sec = {}
-        cus_sec = {}
         templates = {}
         self.preprocess_config['madx'] = madx_sec
         self.preprocess_config['mask'] = dict.fromkeys(self.madx_params, 0)
@@ -275,28 +275,26 @@ class Study(object):
         madx_sec['mask_file'] = self.madx_input["mask_file"]
         madx_sec['oneturn'] = json.dumps(self.oneturn)
         madx_sec['collimation'] = json.dumps(self.collimation)
-        madx_sec['dest_path'] = self.paths['preprocess_out']
         madx_sec['output_files'] = json.dumps(self.madx_output)
         templates['mask_file'] = self.madx_input["mask_file"]
         if self.oneturn:
-            self.preprocess_config['sixtrack'] = cus_sec
+            six_sec = {}
+            self.preprocess_config['sixtrack'] = six_sec
             self.preprocess_config['oneturn_sixtrack_results'] = self.tables[
                     'oneturn_sixtrack_results']
             self.preprocess_config['fort3'] = self.oneturn_sixtrack_params
-            cus_sec['source_path'] = self.paths['templates']
-            cus_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
+            six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
             inp = self.oneturn_sixtrack_input['temp']
-            cus_sec['temp_file'] = inp
+            six_sec['temp_file'] = inp
             templates[inp] = inp
             inp = self.oneturn_sixtrack_input['input']
-            cus_sec['input_files'] = json.dumps(inp)
+            six_sec['input_files'] = json.dumps(inp)
         if self.collimation:
+            cus_sec = {}
             self.preprocess_config['collimation'] = cus_sec
-            cus_sec['source_path'] = self.paths['templates']
             inp = self.collimation_input
             cus_sec['input_files'] = json.dumps(inp)
             templates.update(inp)
-        cus_sec['dest_path'] = self.paths['preprocess_out']
 
         self.sixtrack_config = {}
         six_sec = {}
@@ -319,7 +317,6 @@ class Study(object):
         inp = self.sixtrack_output
         six_sec['output_files'] = json.dumps(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])
-        six_sec['dest_path'] = self.paths['sixtrack_out']
         self.sixtrack_config['six_results'] = self.tables['six_results']
         if self.collimation:
             self.sixtrack_config['aperture_losses'] = self.tables['aperture_losses']
@@ -346,6 +343,10 @@ class Study(object):
         key = self.sixtrack_input['temp']
         value = os.path.join(self.study_path, key)
         tab[key] = utils.compress_buf(value)
+        if self.collimation:
+            for key in self.collimation_input.keys():
+                val = os.path.join(self.study_path, self.collimation_input[key])
+                tab[key] = utils.compress_buf(val)
         if 'additional_input' in self.sixtrack_input.keys():
             inp = self.sixtrack_input['additional_input']
             for key in inp:
@@ -394,7 +395,6 @@ class Study(object):
             for i in range(len(element)):
                 ky = keys[i]
                 vl = element[i]
-                # mask_sec[ky] = str(vl)
                 madx_table[ky] = vl
             prefix = self.madx_input['mask_file'].split('.')[0]
             job_name = self.name_conven(prefix, keys, element, '')

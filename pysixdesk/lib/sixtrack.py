@@ -143,7 +143,6 @@ def run(task_id, input_info):
         else:
             if boinc.lower() == 'true':
                 down_list = ['fort.3']
-                dest_path = os.path.join(sixtrack_config["dest_path"], task_id)
                 utils.download_output(down_list, dest_path)
                 return
 

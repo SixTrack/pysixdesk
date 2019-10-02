@@ -57,7 +57,6 @@ class MyStudy(Study):
         self.madx_params["IOCT"] = list(range(100, 200 + 1, 100))
         self.oneturn_sixtrack_input['temp'] = 'fort.3'
         self.oneturn_sixtrack_params.update(machine_params)
-        self.oneturn_sixtrack_params['COLL'] = ''
         self.sixtrack_params = dict(self.oneturn_sixtrack_params)
         self.sixtrack_params['turnss'] = int(1e2)  # number of turns to track (must be int)
         amp = [8, 10, 12]  # The amplitude
@@ -79,8 +78,9 @@ class MyStudy(Study):
         #     'fc.8': 'fort.8'}
         # self.collimation_input = {'aperture':'allapert.b1',
         #         'survey':'SurveyWithCrossing_XP_lowb.dat'}
+        # self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
         # self.preprocess_output = dict(self.madx_output)
-        # self.sixtrack_input['temp'] = ['fort.3']
+        # self.sixtrack_input['temp'] = 'fort.3'
         # self.sixtrack_input['input'] = self.preprocess_output
         # self.sixtrack_input['additional_input'] = ['CollDB.data']
         # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat',
