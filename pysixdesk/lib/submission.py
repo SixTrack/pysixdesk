@@ -15,7 +15,7 @@ class Cluster(ABC):
         self._logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def prepare(self, wu_ids, trans, exe, exe_args, input_path, output_path,
+    def prepare(self, task_ids, trans, exe, exe_args, input_path, output_path,
                 *args, **kwargs):
         pass
 
@@ -41,12 +41,12 @@ class HTCondor(Cluster):
         self.temp = temp_path
         self.sub_name = 'htcondor_run.sub'
 
-    def prepare(self, wu_ids, trans, exe, exe_args, input_path, output_path,
+    def prepare(self, task_ids, trans, exe, exe_args, input_path, output_path,
                 flavour='tomorrow', *args, **kwargs):
         '''Prepare the submission file.
 
         Args:
-            wu_ids (int): The job ids for submission
+            task_ids (int): The task ids for submission
             trans (list): The python modules needed by the executables
             exe (str): The executable
             exe_args (str): The additional arguments for executable except for wu_id
@@ -58,7 +58,7 @@ class HTCondor(Cluster):
         if os.path.exists(job_list):
             os.remove(job_list)
         with open(job_list, 'w') as f_out:
-            for i in wu_ids:
+            for i in task_ids:
                 f_out.write(str(i))
                 f_out.write('\n')
                 out_f = os.path.join(output_path, str(i))
@@ -126,18 +126,18 @@ class HTCondor(Cluster):
                 [cluster_id, proc_st] = outs[0].split('.')
                 [cluster_id, proc_ed] = outs[-1].split('.')
                 with open(joblist, 'r') as f_in:
-                    wu_ids = f_in.read().split()
+                    task_ids = f_in.read().split()
                 try:
                     cl_id = int(cluster_id)
                     proc_st = int(proc_st)
                     proc_ed = int(proc_ed)
                     proc_ls = list(range(proc_st, proc_ed + 1))
                     uniq_ids = [str(cl_id) + '.' + str(pr_id) for pr_id in proc_ls]
-                    if len(wu_ids) != len(uniq_ids):
+                    if len(task_ids) != len(uniq_ids):
                         content = "There is something wrong during submitting!"
                         raise Exception(content)
                     else:
-                        comb = list(zip(wu_ids, uniq_ids))
+                        comb = list(zip(task_ids, uniq_ids))
                         out = dict(comb)
                         # remove job list after successful submission
                         os.remove(joblist)

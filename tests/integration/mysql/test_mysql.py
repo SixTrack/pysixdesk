@@ -39,7 +39,7 @@ class MySqlDB(unittest.TestCase):
         self.st.prepare_preprocess_input()
         in_files = set(os.listdir(Path(self.st.study_path) / 'preprocess_input'))
         out_folders = set(os.listdir(Path(self.st.study_path) / 'preprocess_output'))
-        self.assertEqual(in_files, set(['db.ini',
+        self.assertEqual(in_files, set(['input.ini',
                                         'job_id.list',
                                         'htcondor_run.sub']))
         where = "status='incomplete'"

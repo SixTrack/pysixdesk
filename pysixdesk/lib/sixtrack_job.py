@@ -16,7 +16,7 @@ class SixtrackJob:
     methods in both jobs which could be refactored here if needed.
     '''
     @abstractmethod
-    def __init__(self, wu_id, db_name):
+    def __init__(self, task_id, input_info):
         pass
 
     @abstractmethod
@@ -83,12 +83,14 @@ class SixtrackJob:
 
         Raises:
             Exception: If placeholder replacement in fort.3 fails.
-            FileNotFoundError: If missing input file during symlinking
-            ValueError: If provided sixtrack 'input_files' are incorect
+            FileNotFoundError: If missing input file during symlinking.
+            ValueError: If provided sixtrack 'input_files' are incorect.
         """
         # get the fort file patterns and values
         if source_prefix is not None:
             source_prefix = Path(source_prefix)
+        # touch fort.6
+        open('fort.6', 'a').close()
 
         fort_file = Path(self.six_cfg["fort_file"])
         patterns = ['%' + a for a in fort_cfg.keys()]
@@ -133,7 +135,7 @@ class SixtrackJob:
                     raise FileNotFoundError("The required input file %s does not found!" %
                                             file)
 
-    def sixtrack_run(self, job_name):
+    def sixtrack_run(self, output_file):
         """Runs sixtrack.
 
         Args:
@@ -145,55 +147,41 @@ class SixtrackJob:
         # write stdout to file
         outputlines = six_output.readlines()
         self._logger.info('Sixtrack is done!')
-        output_name = Path.cwd().parent / (job_name + '.output')
-        with open(output_name, 'w') as six_out:
-            six_out.writelines(outputlines)
-        print(''.join(outputlines))
+        # output_name = Path.cwd().parent / (job_name + '.output')
 
-    @abstractmethod
-    def _push_to_db_results(self, dest_path):
-        pass
+        if outputlines:
+            with open(output_file, 'w') as six_out:
+                six_out.writelines(outputlines)
+        elif output_file != 'fort.6':
+            # For some sixtrack version, the stdout will be automatically
+            # written to fort.6
+            shutil.copy2('fort.6', output_file)
+        # else:
+        #     self.output_files.append('fort.6')
 
-    def push_to_db(self, dest_path, job_type='preprocess'):
-        """Pushes job results to database.
+        # print(''.join(outputlines))
+
+    def push_to_db_status(self, task_table, job_type):
+        """updates the status and mtime columns of the corresponding
+        *_wu table.
 
         Args:
-            dest_path (str): Location of the job results.
-            job_type (str, optional): type of job currently being run, is used
-            to determine which table in the db to write the results i.e.
-            '{job_type}_wu'.
-
-        Raises:
-            Exception: if failure to push results to database. Will set status
-            of current wu_id to incomplete.
+            task_table (dict): table containing the status of the current task.
+            job_type (TYPE): Job being run, either 'sixtrack' or 'preprocess'.
         """
-        # reconnect database
-        self.db.open()
-        try:
-            job_table = {}
 
-            task_table = self._push_to_db_results(dest_path)
-
-            if task_table['status'] == 'Success':
-                job_table['status'] = 'complete'
-                job_table['mtime'] = int(time.time() * 1E7)
-                self.db.update(f'{job_type}_wu', job_table, f'wu_id={self.wu_id}')
-                content = f"{job_type} job {self.wu_id} has completed normally!"
-                self._logger.info(content)
-            else:
-                job_table['status'] = 'incomplete'
-                job_table['mtime'] = int(time.time() * 1E7)
-                self.db.update(f'{job_type}_wu', job_table, f'wu_id={self.wu_id}')
-                content = "This is a failed job!"
-                self._logger.warning(content)
-        except Exception as e:
+        job_table = {}
+        if task_table['status'] == 'Success':
+            job_table['status'] = 'complete'
+            job_table['mtime'] = int(time.time() * 1E7)
+            self.db.update(f'{job_type}_wu', job_table, f'task_id={self.task_id}')
+            content = f"{job_type} task {self.task_id} has completed normally!"
+            self._logger.info(content)
+        else:
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
-            self.db.update(f'{job_type}_wu', job_table, f'wu_id={self.wu_id}')
-            self._logger.error('Error during reconnection.')
-            raise e
-        finally:
-            self.db.close()
+            self.db.update(f'{job_type}_wu', job_table, f'task_id={self.task_id}')
+            self._logger.warning("This is a failed job!")
 
     def sixtrack_copy_input(self, extra=[]):
         '''

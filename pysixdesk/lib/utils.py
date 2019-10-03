@@ -147,6 +147,8 @@ def decode_strings(inputs):
             b = i.split(':')
             output[b[0]] = b[1]
     else:
+        if not inputs:
+            return []
         output = inputs.split(',')
     return output
 

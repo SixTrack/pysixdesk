@@ -31,10 +31,12 @@ class LHC(ParentMachine):
         self.params['inj']['rfvol'] = 8.0  # [MV]
         self.params['inj']['sigz'] = 0.11  # [mm]
         self.params['inj']['sige'] = 4.5e-04  # []
+        self.params['inj']['e0'] = 450000  # []
 
         self.params['col']['rfvol'] = 16.0  # [MV]
         self.params['col']['sigz'] = 0.77e-1  # [mm]
         self.params['col']['sige'] = 1.1e-04  # []
+        self.params['inj']['e0'] = 7000000  # []
 
 
 class HLLHC(ParentMachine):
@@ -45,10 +47,12 @@ class HLLHC(ParentMachine):
         self.params['inj']['rfvol'] = 8.0  # [MV]
         self.params['inj']['sigz'] = 0.11  # [mm]
         self.params['inj']['sige'] = 4.5e-04  # []
+        self.params['inj']['e0'] = 450000  # []
 
         self.params['col']['rfvol'] = 16.0  # [MV]
         self.params['col']['sigz'] = 0.77e-1  # [mm]
         self.params['col']['sige'] = 1.1e-04  # []
+        self.params['inj']['e0'] = 7000000  # []
 
 
 class MachineConfig(object):

@@ -57,7 +57,6 @@ class Table(object):
         self.tables['preprocess_wu'] = OrderedDict([
             ('wu_id', 'INTEGER'),
             ('job_name', 'text'),
-            ('input_file', 'blob'),
             ('batch_name', 'text'),
             ('unique_id', 'text'),
             ('status', 'text'),
@@ -87,9 +86,10 @@ class Table(object):
     def init_sixtrack_tables(self):
         self.tables['sixtrack_wu'] = OrderedDict([
             ('wu_id', 'INTEGER'),
+            ('last_turn', 'int'),
+            ('first_turn', 'int'),
             ('preprocess_id', 'int'),
             ('job_name', 'text'),
-            ('input_file', 'blob'),
             ('batch_name', 'text'),
             ('unique_id', 'text'),
             ('status', 'text'),
@@ -97,23 +97,31 @@ class Table(object):
             ('boinc', 'text'),
             ('mtime', 'bigint')])
         self.table_keys['sixtrack_wu'] = {
-            'primary': ['wu_id'],
-            'autoincrement': ['wu_id'],
+            'primary': ['wu_id', 'last_turn'],
             'foreign': {'preprocess_wu': [['preprocess_id'], ['wu_id']]},
         }
         self.tables['sixtrack_task'] = OrderedDict([
             ('task_id', 'INTEGER'),
             ('wu_id', 'int'),
-            ('fort3', 'blob'),
+            ('last_turn', 'int'),
+            ('fort_3', 'blob'),
             ('job_stdout', 'blob'),
             ('job_stderr', 'blob'),
             ('job_stdlog', 'blob'),
+            ('cr_status', 'blob'),
+            ('cr_stdout', 'blob'),
+            ('cr_stderr', 'blob'),
+            ('fort_6', 'MEDIUMBLOB'),
+            ('crpoint_pri_bin', 'MEDIUMBLOB'),
+            ('crpoint_sec_bin', 'MEDIUMBLOB'),
+            ('singletrackfile_dat', 'MEDIUMBLOB'),
             ('status', 'text'),
             ('mtime', 'bigint')])
         self.table_keys['sixtrack_task'] = {
             'primary': ['task_id'],
             'autoincrement': ['task_id'],
-            'foreign': {'sixtrack_wu': [['wu_id'], ['wu_id']]},
+            'foreign': {'sixtrack_wu': [['wu_id', 'last_turn'],
+                                        ['wu_id', 'last_turn']]},
         }
         self.tables['six_results'] = OrderedDict([
             ('task_id', 'int'),

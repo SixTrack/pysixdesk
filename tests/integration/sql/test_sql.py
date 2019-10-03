@@ -40,7 +40,7 @@ class SqlDB(unittest.TestCase):
         in_files = set(os.listdir(Path(self.st.study_path) / 'preprocess_input'))
         out_folders = set(os.listdir(Path(self.st.study_path) / 'preprocess_output'))
         self.assertEqual(in_files, set(['sub.db',
-                                        'db.ini',
+                                        'input.ini',
                                         'job_id.list',
                                         'htcondor_run.sub']))
         # getting the expected list of preprocess wu_ids.

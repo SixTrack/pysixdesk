@@ -3,6 +3,7 @@ import os
 import shutil
 import configparser
 import argparse
+import time
 
 from pathlib import Path
 
@@ -15,39 +16,47 @@ from pysixdesk.lib.resultparser import parse_results
 
 
 class PreprocessJob(SixtrackJob):
-    def __init__(self, wu_id, db_name):
+    def __init__(self, task_id, input_info):
         '''Class to handle the execution of the preprocessing job.
 
         Args:
-            wu_id (int): Current work unit ID.
-            db_name (str/path): Path to the database configuration file.
+            task_id (int): Current work unit ID.
+            input_info (str/path): Path to the database configuration file.
 
         Raises:
             FileNotFoundError: If required input file is not found in database.
             ValueError: If the provided output files are incorect.
         '''
         self._logger = utils.condor_logger('preprocess')
-        self.wu_id = wu_id
+        self.task_id = task_id
         cf = configparser.ConfigParser()
         cf.optionxform = str
-        cf.read(db_name)
+        cf.read(input_info)
         self.db = SixDB(cf['db_info'].items())
         db_type = cf['db_info']['db_type']
         self.db_type = db_type.lower()
-        cf.clear()
-        outputs = self.db.select('preprocess_wu',
-                                 ['input_file', 'task_id'],
-                                 f'wu_id={wu_id}')
+        # cf.clear()
+
+        mask_keys = list(cf['mask'].keys())
+        outputs = self.db.select('preprocess_wu', mask_keys,
+                                 where=f'task_id={self.task_id}')
+
         if not outputs[0]:
-            content = "Input file not found for preprocess job %s!" % wu_id
+            content = "Data not found for preprocess task %s!" % task_id
             raise FileNotFoundError(content)
 
-        self.task_id = outputs[0][1]
-        intput_buf = outputs[0][0]
-        in_files = utils.decompress_buf(intput_buf, None, 'buf')
-        cf.read_string(in_files)
-        self.cf = cf
         self.madx_cfg = cf['madx']
+        self.mask_cfg = dict(zip(mask_keys, outputs[0]))
+        # outputs = self.db.select('preprocess_wu',
+        #                          ['input_file', 'task_id'],
+        #                          f'task_id={task_id}')
+
+        # self.task_id = outputs[0][1]
+        # intput_buf = outputs[0][0]
+        # in_files = utils.decompress_buf(intput_buf, None, 'buf')
+        # cf.read_string(in_files)
+        self.cf = cf
+        # self.madx_cfg = cf['madx']
 
         output_files = self.madx_cfg["output_files"]
         try:
@@ -56,7 +65,7 @@ class PreprocessJob(SixtrackJob):
             content = "Wrong setting of madx output!"
             raise ValueError(content)
         self.madx_out = output_files
-        self.mask_cfg = cf['mask']
+        # self.mask_cfg = cf['mask']
 
         self.six_cfg = cf['sixtrack']
         self.fort_cfg = cf['fort3']
@@ -96,27 +105,33 @@ class PreprocessJob(SixtrackJob):
         except Exception:
             self._logger.warning("Job failed!", exc_info=True)
 
-    def _push_to_db_results(self, dest_path):
+    def push_to_db(self, dest_path):
         '''
-        Runs the parsing and pushes results to db. Is called in push_to_db.
+        Runs the parsing and pushes results to db.
+
+        Args:
+            dest_path (str): Location of the job results.
         '''
+        self.db.open()
+
         task_table = {}
         task_table['status'] = 'Success'
+
         result_cf = {}
         for sec in self.cf:
             result_cf[sec] = dict(self.cf[sec])
         filelist = Table.result_table(self.madx_out.values())
-        parse_results('preprocess', self.wu_id, dest_path, filelist,
+        parse_results('preprocess', self.task_id, dest_path, filelist,
                       task_table, result_cf)
 
         self.db.update(f'preprocess_task', task_table,
                        f'task_id={self.task_id}')
 
         for sec, val in result_cf.items():
-            val['task_id'] = [self.task_id]*len(val['mtime'])
+            val['task_id'] = [self.task_id] * len(val['mtime'])
             self.db.insertm(sec, val)
 
-        return task_table
+        self.push_to_db_status(task_table, job_type='preprocess')
 
     def run(self):
         '''
@@ -154,7 +169,7 @@ class PreprocessJob(SixtrackJob):
             if self.db_type == 'mysql':
                 dest_path = Path('./result')
             else:
-                dest_path = Path(self.madx_cfg["dest_path"])
+                dest_path = Path(self.madx_cfg["dest_path"]) / str(self.task_id)
             if not dest_path.is_dir():
                 dest_path.mkdir(parents=True, exist_ok=True)
             # download results
@@ -163,7 +178,7 @@ class PreprocessJob(SixtrackJob):
             if self.db_type == 'mysql':
                 if self.coll_flag:
                     self.madx_out['fort3.limi'] = 'fort3.limi'
-                self.push_to_db(dest_path, job_type='preprocess')
+                self.push_to_db(dest_path)
 
     def madx_copy_mask(self):
         '''
@@ -265,13 +280,13 @@ class PreprocessJob(SixtrackJob):
             FileNotFoundError: if fort.10 is not found.
         """
         # check for fort.10
-        output_name = Path.cwd().parent / (job_name + '.output')
+        # output_name = Path.cwd().parent / (job_name + '.output')
         # TODO: it is possible for sixtrack to run correctly but there not be a
         # fort.10
         if not Path('fort.10').is_file:
             self._logger.error("The %s sixtrack job FAILED!" % job_name)
-            self._logger.error("Check the file %s which contains the SixTrack fort.6 output." % output_name)
-            raise FileNotFoundError('fort.10 not found.')
+            self._logger.error("Check the file %s which contains the SixTrack fort.6 output." % job_name)
+            raise FileNotFoundError('"fort.10" not found.')
         else:
             # move fort.10 out of temp folder
             result_name = Path.cwd().parent / ('fort.10' + '_' + job_name)
@@ -303,13 +318,13 @@ class PreprocessJob(SixtrackJob):
         self.sixtrack_copy_input()
 
         try:
-            self._sixtrack_job('first_oneturn', dp1='.0', dp2='.0')
+            self._sixtrack_job('first_oneturn', dp1='.0', dp2='.0', ition='0')
         except Exception as e:
             self._logger.error('SixTrack first oneturn failed.')
             raise e
 
         try:
-            self._sixtrack_job('second_oneturn')
+            self._sixtrack_job('second_oneturn', ition='0')
         except Exception as e:
             self._logger.error('SixTrack second oneturn failed.')
             raise e
@@ -352,10 +367,19 @@ class PreprocessJob(SixtrackJob):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('wu_id', type=int,
+    parser.add_argument('task_id', type=int,
                         help='Current work unit ID')
-    parser.add_argument('db_config', type=str,
-                        help='Path to the db config file.')
+    parser.add_argument('input_info', type=str,
+                        help='Path to the config file.')
     args = parser.parse_args()
-    job = PreprocessJob(args.wu_id, args.db_config)
-    job.run()
+    job = PreprocessJob(args.task_id, args.input_info)
+    try:
+        job.run()
+    except Exception as e:
+        job.db.open()
+        job_table = {}
+        where = f"task_id={job.task_id}"
+        job_table['status'] = 'incomplete'
+        job_table['mtime'] = int(time.time() * 1E7)
+        job.db.update('preprocess_wu'. job_table, where)
+        raise e
