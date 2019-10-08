@@ -1,6 +1,7 @@
 import os
 import shutil
 import logging
+import getpass
 
 from abc import ABC, abstractmethod
 from subprocess import Popen, PIPE
@@ -24,7 +25,11 @@ class Cluster(ABC):
         pass
 
     @abstractmethod
-    def check(self, *args, **kwargs):
+    def check_running(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def download_from_spool(self):
         pass
 
     @abstractmethod
@@ -91,9 +96,10 @@ class HTCondor(Cluster):
 
     def submit(self, input_path, job_name, trials=5, *args, **kwargs):
         '''Submit the job to the cluster
-        @input_path The input path to hold the input files
-        @job_name The job name (also is the batch_name for HTCondor)
-        @trials The maximum number of resubmission when submit failed
+        Args:
+            input_path (string): The input path to hold the input files
+            job_name (string): The job name (also is the batch_name for HTCondor)
+            trials (int): The maximum number of resubmission when submit failed
         '''
 
         sub = os.path.join(input_path, self.sub_name)
@@ -143,8 +149,9 @@ class HTCondor(Cluster):
 
     def check_format(self, unique_id):
         '''Check the job status with fixed format
-        @unique_id(int or str) The unique id of the job, e.g: cluster_id.proc_id
-        @return(int or None) The job status
+        Args:
+            unique_id(int or str): The unique id of the job, e.g: cluster_id.proc_id
+            return(int or None): The job status
         '''
 
         args = ['-format', '%d\n', 'JobStatus']
@@ -175,8 +182,9 @@ class HTCondor(Cluster):
 
     def check_running(self, studypath):
         '''Check the unfininshed job
-        @studypath The absolute path of the study
-        @return(list or None) The unique id (ClusterId.ProcId) list
+        Args:
+            studypath (string): The absolute path of the study
+            return(list or None): The unique id (ClusterId.ProcId) list
         '''
 
         args = ['-constraint', 'regexp("%s", JobBatchName)' % studypath,
@@ -208,16 +216,40 @@ class HTCondor(Cluster):
             #self._logger.info(stdout)
             return stdout
 
-    def remove(self, *args, **kwargs):
-        '''Cancel the submitted jobs'''
+    def download_from_spool(self, study_path, *args, **kwargs):
+        '''Download the results from spool directory'''
         for ky in kwargs.keys():
             args = args + ['-' + ky, kwargs[ky]]
-        process = Popen(['condor_rm', *args], stdout=PIPE,
+        user_name = getpass.getuser()
+        theargs = [user_name, '-const', 'JobStatus==4', '-const',
+                'regexp("%s", JobBatchName)' % study_path] + list(args)
+        process = Popen(['condor_transfer_data', *theargs], stdout=PIPE,
+                stderr=PIPE, universal_newlines=True)
+        stdout, stderr = process.communicate()
+        self._logger.info(stdout)
+        if stderr:
+            self._logger.error(stderr)
+        return not process.returncode
+
+    def remove(self,study_path, status, *args, **kwargs):
+        '''Cancel the submitted jobs
+        Args:
+            studypath (string): The absolute path of the study
+            status (int): The job status. 0: unexpanded, 1:idle, 2:held,
+            3:removed, 4:done, 5:held, 6:submission_err
+        '''
+        if status not in [0,1,2,3,4,5,6]:
+            self._logger.error("Unknown job status %s!" % status)
+            return False
+        for ky in kwargs.keys():
+            args = args + ['-' + ky, kwargs[ky]]
+        theargs = ['-const', 'JobStatus==%s' % status, '-const',
+                'regexp("%s", JobBatchName)' % study_path] + list(args)
+        process = Popen(['condor_rm', *theargs], stdout=PIPE,
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
+        if stdout:
+            self._logger.info(stdout)
         if stderr:
-            self._logger.info(stdout)
             self._logger.error(stderr)
-        else:
-            self._logger.info(stdout)
-            self._logger.error(stderr)
+        return not process.returncode

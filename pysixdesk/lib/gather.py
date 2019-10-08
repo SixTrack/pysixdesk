@@ -58,11 +58,17 @@ def gather_results(jobtype, cf, cluster):
     job_index = dict(job_ids)
     studypath = os.path.dirname(type_path)
     unfin = cluster.check_running(studypath)
-    running_jobs = [job_index.pop(unid) for unid in unfin]
+    jbin = dict(job_index)
+    running_jobs = [job_index.pop(unid) for unid in unfin if unid in jbin]
     if running_jobs:
         content = f"The {jobtype} tasks {str(running_jobs)} aren't completed yet!"
         logger.warning(content)
     valid_task_ids = list(job_index.values())
+    status = cluster.download_from_spool(studypath)
+    if not status:
+        content = "Failed to download results from spool!"
+        logger.error(content)
+        return
 
     if ('boinc' in cf['info'].keys()) and cf['info']['boinc']:
         content = "Downloading results from boinc spool!"
@@ -79,6 +85,7 @@ def gather_results(jobtype, cf, cluster):
     parent_cf = {}
     for sec in cf:
         parent_cf[sec] = cf[sec]
+    coll_action = False
     for item in os.listdir(type_path):
         if item not in valid_task_ids:
             continue
@@ -91,6 +98,7 @@ def gather_results(jobtype, cf, cluster):
             # parse the results
             parse_results(jobtype, item, job_path, file_list, task_table,
                     result_cf)
+            coll_action = True
             where = 'task_id=%s' % item
             db.update(f'{jobtype}_task', task_table, where)
             for sec, vals in result_cf.items():
@@ -114,6 +122,8 @@ def gather_results(jobtype, cf, cluster):
             content = "This is a failed job!"
             logger.warning(content)
         shutil.rmtree(job_path)
+    if coll_action:
+        cluster.remove(studypath, 4) #remove the completed condor jobs
     db.close()
 
 

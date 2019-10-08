@@ -584,12 +584,14 @@ class Study(object):
         preprocess_outs = list(zip(*preprocess_outs))
         if resubmit:
             constraints = "status='submitted'"
+            action = 'resubmit'
         else:
             constraints = "status='incomplete' and preprocess_id in (%s)" % (
                         ','.join(map(str, preprocess_outs[0])))
+            action = 'submit'
         results = self.db.select('sixtrack_wu', where=constraints)
         if not results:
-            content = "There isn't available sixtrack job to submit!"
+            content = f"There isn't available sixtrack job to {action}!"
             self._logger.info(content)
             return
         names = list(self.tables['sixtrack_wu'].keys())
