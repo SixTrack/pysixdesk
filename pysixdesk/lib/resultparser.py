@@ -167,9 +167,9 @@ def aperture_losses(lines, postlines):
     status = True
     for perline in lines:
         line = perline.split()
-        if len(line) != 17:
+        if len(line) != 15:
             logger.info(perline)
-            line = 17*['None']
+            line = 15*['None']
             status = False
         postlines.append(line)
     return status
