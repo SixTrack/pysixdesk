@@ -64,11 +64,7 @@ def gather_results(jobtype, cf, cluster):
         content = f"The {jobtype} tasks {str(running_jobs)} aren't completed yet!"
         logger.warning(content)
     valid_task_ids = list(job_index.values())
-    status = cluster.download_from_spool(studypath)
-    if not status:
-        content = "Failed to download results from spool!"
-        logger.error(content)
-        return
+    cluster.download_from_spool(studypath)
 
     if ('boinc' in cf['info'].keys()) and cf['info']['boinc']:
         content = "Downloading results from boinc spool!"
