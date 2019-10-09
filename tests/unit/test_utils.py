@@ -47,26 +47,6 @@ class UtilsTest(unittest.TestCase):
             f_2.writelines(''.join(self.concat_contents_2))
         self.concat_file_out = self.test_folder / 'concat_test.out'
 
-    def test_encode_strings(self):
-        self.assertEqual(utils.encode_strings(self.str_list),
-                         self.str_list_out)
-
-        self.assertEqual(utils.encode_strings(self.str_dic),
-                         self.str_dic_out)
-        # Expected failure case
-        with self.assertRaises(TypeError):
-            utils.encode_strings(10)
-
-    def test_decode_strings(self):
-        self.assertEqual(utils.decode_strings(self.str_list_out),
-                         self.str_list)
-
-        self.assertEqual(utils.decode_strings(self.str_dic_out),
-                         self.str_dic)
-        # Expected failure case
-        with self.assertRaises(TypeError):
-            utils.decode_strings(10)
-
     def test_replace(self):
         utils.replace(self.patterns,
                       self.replace,
