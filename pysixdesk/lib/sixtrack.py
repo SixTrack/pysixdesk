@@ -4,6 +4,7 @@ import re
 import sys
 import ast
 import time
+import json
 import shutil
 import zipfile
 import configparser
@@ -18,6 +19,10 @@ logger = utils.condor_logger('sixtrack')
 
 
 def run(task_id, input_info):
+    # create result path at first to avoid 'held' of htcondor
+    dest_path = './results'
+    if not os.path.isdir(dest_path):
+        os.makedirs(dest_path)
     cf = configparser.ConfigParser()
     cf.optionxform = str  # preserve case
     cf.read(input_info)
@@ -47,7 +52,7 @@ def run(task_id, input_info):
         fort3_config = fort3_data
         sixtrack_config = cf['sixtrack']
         inp = sixtrack_config["input_files"]
-        input_files = utils.decode_strings(inp)
+        input_files = json.loads(inp)
         where = 'wu_id=%s' % str(preprocess_id)
         pre_task_id = db.select('preprocess_wu', ['task_id'], where)
         if not pre_task_id:
@@ -78,6 +83,19 @@ def run(task_id, input_info):
             i = inputs.index(infile)
             buf = input_buf[i]
             utils.decompress_buf(buf, infile)
+        templates = cf['templates']
+        temp_buf = db.select('templates', templates.keys())
+        temp_buf = temp_buf[0]
+        if not temp_buf:
+            content = "Temp files not found in DB!"
+            raise FileNotFoundError(content)
+        else:
+            for temp, temp_name in zip(temp_buf, templates.values()):
+                if not temp:
+                    content = f"{temp_name} not found in DB!"
+                    raise FileNotFoundError(content)
+                else:
+                    utils.decompress_buf(temp, temp_name)
         db.close()
         boinc_vars = cf['boinc']
         if not boinc_infos:
@@ -97,21 +115,15 @@ def run(task_id, input_info):
         sixtrack_config['surv_percent'] = str(surv_percent)
         sixtrack_config['job_name'] = job_name
         sixtrack_config['wu_id'] = str(wu_id)
-        sixtrack_config['cr_inputs'] = utils.encode_strings(cr_inputs)
+        sixtrack_config['cr_inputs'] = json.dumps(cr_inputs)
 
         try:
             sixtrackjob(sixtrack_config, fort3_config, boinc_vars)
         except Exception:
             logger.error('sixtrackjob failed!', exc_info=True)
 
-        if dbtype.lower() == 'sql':
-            dest_path = os.path.join(sixtrack_config["dest_path"], task_id)
-        else:
-            dest_path = './result'
-        if not os.path.isdir(dest_path):
-            os.makedirs(dest_path)
         inp = sixtrack_config["output_files"]
-        output_files = utils.decode_strings(inp)
+        output_files = json.loads(inp)
         down_list = list(output_files)
         down_list.append('fort.3')
         for cr_file in cr_files:
@@ -119,6 +131,9 @@ def run(task_id, input_info):
             if os.path.isfile(cr_file_t):
                 shutil.copy2(cr_file_t, cr_file)
                 down_list.append(cr_file)
+        if dbtype.lower() == 'mysql':
+            down_list.append('_condor_stdout')
+            down_list.append('_condor_stderr')
 
         try:
             utils.download_output(down_list, dest_path)
@@ -128,7 +143,6 @@ def run(task_id, input_info):
         else:
             if boinc.lower() == 'true':
                 down_list = ['fort.3']
-                dest_path = os.path.join(sixtrack_config["dest_path"], task_id)
                 utils.download_output(down_list, dest_path)
                 return
 
@@ -185,27 +199,18 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     fort3_config = config_param
     real_turn = fort3_config['turnss']
     sixtrack_exe = sixtrack_config["sixtrack_exe"]
-    source_path = sixtrack_config["source_path"]
-    inp = sixtrack_config["temp_files"]
-    temp_files = utils.decode_strings(inp)
+    temp_file = sixtrack_config["temp_file"]
     inp = sixtrack_config["input_files"]
-    input_files = utils.decode_strings(inp)
+    input_files = json.loads(inp)
     inp = sixtrack_config["output_files"]
-    output_files = utils.decode_strings(inp)
+    output_files = json.loads(inp)
     inp = sixtrack_config["cr_inputs"]
-    cr_inputs = utils.decode_strings(inp)
+    cr_inputs = json.loads(inp)
     add_inputs = []
     if 'additional_input' in sixtrack_config.keys():
         inp = sixtrack_config["additional_input"]
-        add_inputs = utils.decode_strings(inp)
+        add_inputs = json.loads(inp)
     boinc = sixtrack_config["boinc"]
-    requires = temp_files + add_inputs
-    for infile in requires:
-        infi = os.path.join(source_path, infile)
-        if os.path.isfile(infi):
-            shutil.copy2(infi, infile)
-        else:
-            raise FileNotFoundError("The required file %s isn't found!" % infile)
 
     with open('fort.3.aux', 'r') as fc3aux:
         fc3aux_lines = fc3aux.readlines()
@@ -239,15 +244,14 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
     patterns = ['%' + a for a in keys]
     values = [fort3_config[key] for key in keys]
     output = []
-    for s in temp_files:
-        dest = s + '.temp'
-        source = os.path.join('../', s)
-        try:
-            utils.replace(patterns, values, source, dest)
-        except Exception:
-            raise Exception("Failed to generate input file for oneturn sixtrack!")
+    dest = temp_file + '.temp'
+    source = os.path.join('../', temp_file)
+    try:
+        utils.replace(patterns, values, source, dest)
+    except Exception:
+        raise Exception("Failed to generate input file for oneturn sixtrack!")
 
-        output.append(dest)
+    output.append(dest)
     temp1 = input_files['fc.3']
     temp1 = os.path.join('../', temp1)
     if os.path.isfile(temp1):
@@ -301,14 +305,13 @@ def sixtrackjob(sixtrack_config, config_param, boinc_vars):
         values = [fort3_config[key] for key in keys]
         output = []
         # recreate the fort.3 file
-        for s in temp_files:
-            dest = s + '.temp'
-            try:
-                utils.replace(patterns, values, s, dest)
-            except Exception:
-                raise Exception("Failed to generate input file for sixtrack!")
+        dest = temp_file + '.temp'
+        try:
+            utils.replace(patterns, values, temp_file, dest)
+        except Exception:
+            raise Exception("Failed to generate input file for sixtrack!")
 
-            output.append(dest)
+        output.append(dest)
         temp1 = input_files['fc.3']
         if os.path.isfile(temp1):
             output.insert(1, temp1)

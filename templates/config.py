@@ -37,14 +37,9 @@ class MyStudy(Study):
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
 
-        # Add database informations
+        # Database type
         self.db_info['db_type'] = 'sql'
-        # self.db_info['db_type'] = 'mysql'
-        # The follow information is needed when the db type is mysql
-        # self.db_info['host'] = 'dbod-gc023'
-        # self.db_info['port'] = '5500'
-        # self.db_info['user'] = 'admin'
-        # self.db_info['passwd'] = 'pysixdesk'
+        #self.db_info['db_type'] = 'mysql'
 
         # Get the default values for specified machine with specified runtype
         machine_params = MachineConfig('LHC').parameters('inj')
@@ -60,17 +55,16 @@ class MyStudy(Study):
         self.madx_params["QP"] = list(range(1, 1 + 1))
         # all octupole currents in the study
         self.madx_params["IOCT"] = list(range(100, 200 + 1, 100))
-        self.oneturn_sixtrack_input['temp'] = ['fort.3']
+        self.oneturn_sixtrack_input['temp'] = 'fort.3'
         self.oneturn_sixtrack_params.update(machine_params)
-        self.oneturn_sixtrack_params['COLL'] = ''
-        self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
+        self.sixtrack_params = dict(self.oneturn_sixtrack_params)
         self.sixtrack_params['turnss'] = int(1e2)  # number of turns to track (must be int)
         amp = [8, 10, 12]  # The amplitude
         self.sixtrack_params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
         self.sixtrack_params['kang'] = list(range(1, 1 + 1))  # The angle
-        self.sixtrack_input['temp'] = ['fort.3']
-        self.preprocess_output = copy.deepcopy(self.madx_output)
-        self.sixtrack_input['input'] = self.preprocess_output
+        self.sixtrack_input['temp'] = 'fort.3'
+        self.preprocess_output = dict(self.madx_output)
+        self.sixtrack_input['input'] = dict(self.preprocess_output)
         # For CR
         self.checkpoint_restart = False
         self.first_turn = 1
@@ -84,13 +78,14 @@ class MyStudy(Study):
         #     'fc.8': 'fort.8'}
         # self.collimation_input = {'aperture':'allapert.b1',
         #         'survey':'SurveyWithCrossing_XP_lowb.dat'}
-        # self.preprocess_output = copy.deepcopy(self.madx_output)
-        # self.sixtrack_input['temp'] = ['fort.3']
+        # self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
+        # self.preprocess_output = dict(self.madx_output)
+        # self.sixtrack_input['temp'] = 'fort.3'
         # self.sixtrack_input['input'] = self.preprocess_output
         # self.sixtrack_input['additional_input'] = ['CollDB.data']
         # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat',
         #         'Coll_Scatter.dat']
-        # self.sixtrack_params = copy.deepcopy(self.oneturn_sixtrack_params)
+        # self.sixtrack_params = dict(self.oneturn_sixtrack_params)
         # self.sixtrack_params['COLL'] = '/'
         # self.sixtrack_params['turnss'] = 200
         # self.sixtrack_params['nss'] = 5000
@@ -122,7 +117,8 @@ class MyStudy(Study):
         status = []
         status.append(self.formulas('kang', 'angle', paramdict, pre_id))
         status.append(self.formulas('amp', ['ax0s', 'ax1s'], paramdict, pre_id))
-        [paramdict.pop(key) for key in paramdict.keys() if key not in keys]
+        param_keys = list(paramdict.keys())
+        [paramdict.pop(key) for key in param_keys if key not in keys]
         return all(status)
 
     def formulas(self, source, dest, paramdict, pre_id):

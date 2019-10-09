@@ -9,7 +9,7 @@ log = %dirname/$(wu_id)/htcondor.$(ClusterId).$(ProcId).log
 getenv = true
 # do not ask htcondor to take care of output files, otherwise empty ones will be created while the simulation proceeds
 transfer_input_files = %func
-transfer_output_files = ""
+transfer_output_files = results
 ShouldTransferFiles = YES
 WhenToTransferOutput = ON_EXIT_OR_EVICT
 +JobFlavour = "%flavour"

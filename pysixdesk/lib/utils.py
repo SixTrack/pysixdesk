@@ -122,37 +122,6 @@ def diff(file1, file2, logger=None, **kwargs):
         display(f'▲▲▲▲▲▲▲▲▲▲▲▲▲ {file1} --> {file2} diff ▲▲▲▲▲▲▲▲▲▲▲▲▲')
 
 
-def encode_strings(inputs):
-    '''Convert list or directory to special-format string'''
-    if not isinstance(inputs, (list, dict)):
-        raise TypeError('"inputs" must be list or dict.')
-
-    if isinstance(inputs, list):
-        output = ','.join(map(str, inputs))
-    elif isinstance(inputs, dict):
-        a = [':'.join(map(str, i)) for i in inputs.items()]
-        output = ','.join(map(str, a))
-    return output
-
-
-def decode_strings(inputs):
-    '''Convert special-format string to list or directory'''
-    if not isinstance(inputs, str):
-        raise TypeError('"inputs" must be a string.')
-
-    if ':' in inputs:
-        output = {}
-        a = inputs.split(',')
-        for i in a:
-            b = i.split(':')
-            output[b[0]] = b[1]
-    else:
-        if not inputs:
-            return []
-        output = inputs.split(',')
-    return output
-
-
 def compress_buf(data, source='file'):
     '''Data compression for storing in database
     The data source can be file,gzip,str'''

@@ -14,12 +14,15 @@ logger = logging.getLogger(__name__)
 def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
     '''parse the results'''
     task_table['mtime'] = int(time.time() * 1E7)
-    contents = os.listdir(job_path)
+    contents = []
+    for a in os.walk(job_path):
+        for b in a[2]:
+            contents.append(os.path.join(a[0], b))
 
     def search_store(key, name):
-        search_re = [s for s in contents if name in s]
+        search_re = [s for s in contents if name in os.path.basename(s)]
         if search_re:
-            search_re = os.path.join(job_path, search_re[0])
+            search_re = search_re[0]
             task_table[key] = compress_buf(search_re, 'gzip')
 
     if jobtype == 'preprocess':
@@ -37,28 +40,29 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
         search_store('singletrackfile_dat', 'singletrackfile')
         search_store('fort_6', 'fort.6')
 
-    job_stdout = [s for s in contents if (re.match(r'htcondor\..+\.out', s) or
-                                          re.match(r'_condor_stdout', s))]
+    job_stdout = [s for s in contents if (re.match(r'htcondor\..+\.out',
+        os.path.basename(s)) or re.match(r'_condor_stdout', os.path.basename(s)))]
     if job_stdout:
-        job_stdout = os.path.join(job_path, job_stdout[0])
+        job_stdout = job_stdout[0]
         task_table['job_stdout'] = compress_buf(job_stdout)
 
-    job_stderr = [s for s in contents if (re.match(r'htcondor\..+\.err', s) or
-                                          re.match(r'_condor_stderr', s))]
+    job_stderr = [s for s in contents if (re.match(r'htcondor\..+\.err',
+        os.path.basename(s)) or re.match(r'_condor_stderr', os.path.basename(s)))]
     if job_stderr:
-        job_stderr = os.path.join(job_path, job_stderr[0])
+        job_stderr = job_stderr[0]
         task_table['job_stderr'] = compress_buf(job_stderr)
 
-    job_stdlog = [s for s in contents if re.match(r'htcondor\..+\.log', s)]
+    job_stdlog = [s for s in contents if re.match(r'htcondor\..+\.log',
+        os.path.basename(s))]
     if job_stdlog:
-        job_stdlog = os.path.join(job_path, job_stdlog[0])
+        job_stdlog = job_stdlog[0]
         task_table['job_stdlog'] = compress_buf(job_stdlog)
 
     valid_tname = []
     for out, tname in file_list.items():
-        out_f = [s for s in contents if out in s]
+        out_f = [s for s in contents if out in os.path.basename(s)]
         if out_f:
-            out_f = os.path.join(job_path, out_f[0])
+            out_f = out_f[0]
             if tname is not None:
                 try:
                     parse_file(out_f, task_table, result_cf[tname], tname)
@@ -163,9 +167,9 @@ def aperture_losses(lines, postlines):
     status = True
     for perline in lines:
         line = perline.split()
-        if len(line) != 17:
+        if len(line) != 15:
             logger.info(perline)
-            line = 17*['None']
+            line = 15*['None']
             status = False
         postlines.append(line)
     return status
