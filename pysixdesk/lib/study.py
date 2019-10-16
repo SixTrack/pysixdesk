@@ -374,19 +374,19 @@ class Study(object):
 
         # Fill the preprocess_wu table
         keys = list(self.madx_params.keys())
-        values = []
+        param_dict = dict()
         for key in keys:
             val = self.madx_params[key]
             if not isinstance(val, Iterable) or isinstance(val, str):
                 val = [val]  # wrap with list for a single element
-            values.append(val)
+            param_dict[key] = val
 
         check_params = self.db.select('preprocess_wu', keys)
         check_jobs = self.db.select(
             'preprocess_wu', ['wu_id', 'job_name', 'status'])
 
         wu_id = len(check_params)
-        for element in self.custom_product_preprocess(values):
+        for element in self.custom_product_preprocess(param_dict):
             madx_table = OrderedDict()
             if element in check_params:
                 i = check_params.index(element)
@@ -420,21 +420,21 @@ class Study(object):
         madx_ids = list(madx_vals[0])
         madx_params = madx_vals[1:]
         keys = list(self.sixtrack_params.keys())
-        values = []
+        param_dict = dict()
         for key in keys:
             val = self.sixtrack_params[key]
             if not isinstance(val, Iterable) or isinstance(val, str):
                 val = [val]  # wrap with list for a single element
-            values.append(val)
+            param_dict[key] = val
 
         keys.append('preprocess_id')
-        values.append(madx_ids)
+        param_dict['preprocess_id'] = madx_ids
         where = 'first_turn is null'
         outputs = self.db.select('sixtrack_wu', keys, where)
         namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'],
                 DISTINCT=True)
         wu_id = len(namevsid)
-        for element in self.custom_product_sixtrack(values):
+        for element in self.custom_product_sixtrack(param_dict):
             job_table = OrderedDict()
             a = []
             for i in element:
@@ -883,12 +883,12 @@ class Study(object):
         mk = prefix + '_' + b + suffix
         return mk
 
-    def custom_product_preprocess(self, param_lists):
+    def custom_product_preprocess(self, param_dict):
         '''Custom product of the input iterables for preprocess.
         In default, it's cartesian product'''
-        return itertools.product(*param_lists)
+        return itertools.product(*param_dict.values())
 
-    def custom_product_sixtrack(self, param_lists):
+    def custom_product_sixtrack(self, param_dict):
         '''Custom product of the input iterables for sixtrack.
         In default, it's cartesian product'''
-        return itertools.product(*param_lists)
+        return itertools.product(*param_dict.values())
