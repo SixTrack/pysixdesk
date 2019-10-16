@@ -125,7 +125,10 @@ def run(task_id, input_info):
         inp = sixtrack_config["output_files"]
         output_files = json.loads(inp)
         down_list = list(output_files)
-        down_list.append('fort.3')
+        if boinc.lower() == 'true':
+            down_list = ['fort.3']
+        else:
+            down_list.append('fort.3')
         for cr_file in cr_files:
             cr_file_t = os.path.join('./junk', cr_file)
             if os.path.isfile(cr_file_t):
@@ -140,11 +143,6 @@ def run(task_id, input_info):
             logger.info("All requested results have been stored in %s" % dest_path)
         except Exception:
             logger.error("Job failed!", exc_info=True)
-        else:
-            if boinc.lower() == 'true':
-                down_list = ['fort.3']
-                utils.download_output(down_list, dest_path)
-                return
 
         if dbtype.lower() == 'sql':
             return

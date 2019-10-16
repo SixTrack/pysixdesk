@@ -121,7 +121,9 @@ class Study(object):
             ("dp2", 0.000001),
             ("chromx", 2),
             ("chromy", 2)])
+        self.oneturn_sixtrack_input['temp'] = 'fort.3'
         self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
+        self.sixtrack_input['temp'] = 'fort.3'
         self.sixtrack_output = ['fort.10']
 
         self.db_info['db_type'] = 'sql'
@@ -384,7 +386,7 @@ class Study(object):
             'preprocess_wu', ['wu_id', 'job_name', 'status'])
 
         wu_id = len(check_params)
-        for element in itertools.product(*values):
+        for element in self.custom_product_preprocess(values):
             madx_table = OrderedDict()
             if element in check_params:
                 i = check_params.index(element)
@@ -432,7 +434,7 @@ class Study(object):
         namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'],
                 DISTINCT=True)
         wu_id = len(namevsid)
-        for element in itertools.product(*values):
+        for element in self.custom_product_sixtrack(values):
             job_table = OrderedDict()
             a = []
             for i in element:
@@ -880,3 +882,13 @@ class Study(object):
             self._logger.error(content)
         mk = prefix + '_' + b + suffix
         return mk
+
+    def custom_product_preprocess(self, param_lists):
+        '''Custom product of the input iterables for preprocess.
+        In default, it's cartesian product'''
+        return itertools.product(*param_lists)
+
+    def custom_product_sixtrack(self, param_lists):
+        '''Custom product of the input iterables for sixtrack.
+        In default, it's cartesian product'''
+        return itertools.product(*param_lists)
