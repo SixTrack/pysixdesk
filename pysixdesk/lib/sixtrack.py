@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import os
 import re
+import time
+import json
 import shutil
 import zipfile
 import argparse
 import configparser
-import time
 
 from pathlib import Path
 from contextlib import contextmanager
@@ -17,28 +18,31 @@ from pysixdesk.lib.resultparser import parse_results
 
 
 class TrackingJob:
-    def __init__(self, task_id, db_name):
+    def __init__(self, task_id, input_info):
         '''Class to handle the execution of the tracking job.
 
         Args:
-            wu_id (int): Current work unit ID.
-            db_name (str/path): Path to the database configuration file.
+            task_id (int): Current task ID.
+            input_info (str/path): Path to the database configuration file.
 
         Raises:
             FileNotFoundError: If required input file is not found in database.
-            Exception: If unalbe to find the preprocess task_id for this job.
+            ValueError: If unalbe to find the preprocess task_id for this job.
         '''
         self._logger = utils.condor_logger('sixtrack')
+        self._dest_path = Path('results')
+        self._dest_path.mkdir(exist_ok=True)
+
         self.task_id = task_id
         # read database config
         cf = configparser.ConfigParser()
         cf.optionxform = str
-        cf.read(db_name)
+        cf.read(input_info)
+        self.cf = cf
         self.db = SixDB(cf['db_info'].items())
         db_type = cf['db_info']['db_type']
         self.db_type = db_type.lower()
-        # cf.clear()
-        # get some parameters from the database
+
         outputs = self.db.select('sixtrack_wu_tmp',
                                  ['preprocess_id', 'boinc', 'job_name',
                                   'wu_id', 'first_turn'],
@@ -57,26 +61,17 @@ class TrackingJob:
         fort3_outputs = self.db.select("sixtrack_wu_tmp", fort3_keys,
                                        where=f"task_id={self.task_id}")
         self.fort_cfg = dict(zip(fort3_keys, fort3_outputs[0]))
-        # in_files = utils.decompress_buf(input_buf, None, 'buf')
-        # cf.read_string(in_files)
-        self.cf = cf
         self.six_cfg = cf['sixtrack']
-        # self.fort_cfg = cf['fort3']
+        self._decomp_templates()
         self.boinc_cfg = cf['boinc']
 
-        # inp = self.six_cfg['input_file']
-        # input_files = utils.decode_strings(inp)
-        # self.six_inp = list(input_files.values())
-
-        out = self.six_cfg['output_files']
-        output_files = utils.decode_strings(out)
-        self.six_out = output_files
+        self.six_out = json.loads(self.six_cfg['output_files'])
 
         pre_task_id = self.db.select('preprocess_wu',
                                      ['task_id'],
                                      f'wu_id={self.preprocess_id}')
         if not pre_task_id:
-            raise Exception("Can't find the preprocess task_id for this job!")
+            raise ValueError("Can't find the preprocess task_id for this job!")
         self.pre_task_id = pre_task_id[0][0]
 
         self.cr_inputs = self._decomp_files()
@@ -102,7 +97,7 @@ class TrackingJob:
         self.db.close()
 
     def _str_to_bool(self, string):
-        '''Conveniance function to convert string to bool.
+        '''Convenience function to convert string to bool.
 
         Args:
             string (str): String to convert to bool.
@@ -123,16 +118,34 @@ class TrackingJob:
         else:
             raise ValueError(f'Unable to convert "{string}" to bool.')
 
+    def _decomp_templates(self):
+        """Decompresses the template buffers from the database.
+
+        Raises:
+            FileNotFoundError: If buffer is not found in db.
+        """
+        templates = self.cf['templates']
+        temp_buf = self.db.select('templates', templates.keys())[0]
+        if not temp_buf:
+            raise FileNotFoundError('Templates not found in DB.')
+        else:
+            for temp, temp_name in zip(temp_buf, templates.values()):
+                if not temp:
+                    raise FileNotFoundError(f'{temp_name} not found in DB.')
+                else:
+                    utils.decompress_buf(temp, temp_name)
+
     def _decomp_files(self):
         '''This decompresses the buffers in the database into files.
         Note: the db connection must be open.
 
         Raises:
-            FileNotFoundError: If unble to find input buffers in database.
+            FileNotFoundError: If unable to find input buffers in database.
+            Or unable to find checkpoint buffers.
         '''
 
         inp = self.six_cfg["input_files"]
-        input_files = utils.decode_strings(inp)
+        input_files = json.loads(inp)
         inputs = list(input_files.values())
 
         input_buf = self.db.select('preprocess_task',
@@ -167,12 +180,20 @@ class TrackingJob:
         return cr_inputs
 
     @contextmanager
-    def sixtrack_temp_folder(self, folder='temp'):
-        """Helper context manager to deal with the temp folder. On release,
-        moves back to the orignal folder and deletes the temp folder.
+    def sixtrack_temp_folder(self, folder='temp', symlink_parent=True,
+                             extra=[]):
+        """Helper context manager to deal with the temp folder and symlinking
+        the input files. On release, moves back to the orignal folder and
+        deletes the temp folder.
 
         Args:
             folder (str, optional): name of temp folder.
+            symlink_parent (bool, optional): controls whether to symlink input
+            files and extra files from the parent dir to the temporary folder.
+            extra (list, optional): list of extra files to symlink.
+
+        Raises:
+            FileNotFoundError: if input file not found during symlinking.
         """
         # quick context manager to handle the temporary folder
         cwd = Path.cwd()
@@ -182,6 +203,17 @@ class TrackingJob:
         temp_folder.mkdir()
         try:
             os.chdir(temp_folder)
+            # symlink input files to temp folder.
+            if symlink_parent:
+                input_files = json.loads(self.six_cfg["input_files"])
+                # make symlinks to the other input files in the parent folder
+                for file in [Path(f) for f in list(input_files.values()) + extra]:
+                    target = Path.cwd().parent / file
+                    if target.is_file():
+                        file.symlink_to(target)
+                    else:
+                        msg = f"The required input file {file} was not found!"
+                        raise FileNotFoundError(msg)
             yield
         finally:
             os.chdir(cwd)
@@ -211,9 +243,8 @@ class TrackingJob:
         return fort_dic
 
     def sixtrack_prep_job(self, fort_cfg, source_prefix=None,
-                          output_file='fort.3', symlink_parent=True):
-        """Prepares sixtrack fort.3 file and symlinks the other required
-        input files.
+                          output_file='fort.3'):
+        """Prepares sixtrack fort.3 file.
 
         Args:
             fort_cfg (dict): dict containing the placeholder/value pairs.
@@ -221,13 +252,7 @@ class TrackingJob:
             provided folder prefix when looking for the fort_file and fc.3
             files.
             output_file (str, optional): name of the prepared fort.3 file.
-            symlink_parent (bool, optional): controls whether to symlink the
-            input_files of the parent folder to the current folder.
 
-        Raises:
-            Exception: If placeholder replacement in fort.3 fails.
-            FileNotFoundError: If missing input file during symlinking.
-            ValueError: If provided sixtrack 'input_files' are incorect.
         """
         # get the fort file patterns and values
         if source_prefix is not None:
@@ -247,7 +272,7 @@ class TrackingJob:
         utils.replace(patterns, values, source, dest)
 
         # prepare the other input files
-        input_files = utils.decode_strings(self.six_cfg["input_files"])
+        input_files = json.loads(self.six_cfg["input_files"])
 
         madx_fc3 = input_files['fc.3']
         if source_prefix is not None:
@@ -257,18 +282,6 @@ class TrackingJob:
         utils.concatenate_files([dest, madx_fc3], output_file)
         # if not source.samefile(output_file):
         #     utils.diff(source, output_file, logger=self._logger)
-
-        # there could be merit in moving the symlinking to sixtrack_temp_folder
-        # so it would be done when entering a temp folder
-        if symlink_parent:
-            # make symlinks to the other input files in the parent folder
-            for file in [Path(f) for f in input_files.values()]:
-                target = Path.cwd().parent / file
-                if target.is_file():
-                    file.symlink_to(target)
-                else:
-                    raise FileNotFoundError("The required input file %s was not found!" %
-                                            file)
 
     def sixtrack_run(self, output_file):
         """Runs sixtrack.
@@ -296,27 +309,8 @@ class TrackingJob:
 
         # print(''.join(outputlines))
 
-    def sixtrack_copy_input(self, extra=[]):
-        '''
-        Copies the fort.3 file and other additional inputs to the cwd.
-
-        Args:
-            extra (list, optional): Any additional inputs to copy over.
-        '''
-        required = [self.six_cfg['fort_file']] + extra
-        for infile in required:
-            infi = Path(self.six_cfg['source_path']) / infile
-            if infi.is_file():
-                shutil.copy2(infi, infile)
-            else:
-                content = "The required file %s isn't found!" % infile
-                raise FileNotFoundError(content)
-
-    def dl_output(self, dest_path):
+    def dl_output(self):
         """Downloads the output of the job.
-
-        Args:
-            dest_path (str): Path to download location.
         """
         # Download the requested files.
         down_list = list(self.six_out)
@@ -326,22 +320,17 @@ class TrackingJob:
                 down_list.append(cr_f)
 
         try:
-            utils.download_output(down_list, dest_path)
-            content = f"All requested results have been stored in {dest_path}"
+            utils.download_output(down_list, self._dest_path)
+            content = f"All requested results have been stored in {self._dest_path}"
             self._logger.info(content)
             if self.boinc:
                 down_list = ['fort.3']
-                dest_path = Path(self.six_cfg["dest_path"]) / str(self.task_id)
-                utils.download_output(down_list, dest_path)
+                utils.download_output(down_list, self._dest_path)
         except Exception:
             self._logger.warning("Job failed!", exc_info=True)
 
-    def push_to_db(self, dest_path):
-        '''
-        Runs the parsing and pushes results to db.
-
-        Args:
-            dest_path (str): Location of the job results.
+    def push_to_db(self):
+        '''Runs the parsing and pushes results to db.
         '''
         self.db.open()
 
@@ -352,7 +341,7 @@ class TrackingJob:
         for sec in self.cf:
             result_cf[sec] = dict(self.cf[sec])
         filelist = Table.result_table(self.six_out)
-        parse_results('sixtrack', self.task_id, dest_path, filelist,
+        parse_results('sixtrack', self.task_id, self._dest_path, filelist,
                       task_table, result_cf)
 
         self.db.update('sixtrack_task', task_table,
@@ -378,25 +367,17 @@ class TrackingJob:
             self._logger.warning("This is a failed job!")
 
     def run(self):
-        '''
-        Main execution logic
+        '''Main execution logic
         '''
         try:
             self.sixtrack_job()
         except Exception:
             self._logger.error('Sixtrack task failed!', exc_info=True)
 
-        if self.db_type == 'mysql':
-            dest_path = Path('./result')
-        else:
-            dest_path = Path(self.six_cfg["dest_path"]) / str(self.task_id)
-        if not dest_path.is_dir():
-            dest_path.mkdir(parents=True, exist_ok=True)
-
-        self.dl_output(dest_path)
+        self.dl_output()
 
         if self.db_type == 'mysql':
-            self.push_to_db(dest_path)
+            self.push_to_db()
 
     def sixtrack_check_tracking(self, six_stdout='sixtrack.output'):
         '''Check the tracking result to see how many particles survived.
@@ -451,7 +432,6 @@ class TrackingJob:
             job_name (str): boinc job name.
 
         Raises:
-            Exception: If failure to copy files to boinc directory.
             FileNotFoundError: If missing files for boinc job.
         """
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
@@ -476,16 +456,13 @@ class TrackingJob:
         self._logger.info("Submit to %s successfully!" % self.boinc_work)
 
     def sixtrack_job(self):
-        ''''
-        Controls sixtrack job execution.
+        ''''Controls sixtrack job execution.
         '''
         if 'additional_input' in self.six_cfg.keys():
-            inp = self.six_cfg["additional_input"]
-            add_inputs = utils.decode_strings(inp)
+            # inp = self.six_cfg["additional_input"]
+            add_inputs = json.loads(self.six_cfg["additional_input"])
         else:
             add_inputs = []
-
-        self.sixtrack_copy_input(extra=add_inputs + self.cr_inputs)
 
         if self.boinc:
             # run sixtrack with a few turns
@@ -495,12 +472,12 @@ class TrackingJob:
             fort_dic = self.sixtrack_prep_cfg()
 
         # create and enter temp folder
-        with self.sixtrack_temp_folder():
+        with self.sixtrack_temp_folder(symlink_parent=True,
+                                       extra=add_inputs + self.cr_inputs):
             self._logger.info("Preparing the sixtrack input files!")
-            # replace placeholders, concatenate and prepare symlinks
+            # replace placeholders and concatenate
             self.sixtrack_prep_job(fort_dic,
                                    source_prefix=Path.cwd().parent,
-                                   symlink_parent=True,
                                    output_file='fort.3')
             # run sixtrack
             self.sixtrack_run('fort.6')
@@ -528,8 +505,7 @@ class TrackingJob:
             fort_dic['turnss'] = self.fort_cfg['turnss']
             self.sixtrack_prep_job(fort_dic,
                                    source_prefix=None,
-                                   output_file='fort.3',
-                                   symlink_parent=False)
+                                   output_file='fort.3')
             self.boinc_submit(job_name)
 
 

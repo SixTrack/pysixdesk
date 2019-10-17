@@ -88,8 +88,7 @@ def replace(patterns, replacements, source, dest):
 
 
 def diff(file1, file2, logger=None, **kwargs):
-    '''
-    Displays the diff of two files.
+    '''Displays the diff of two files.
 
     Args:
         file1 (str/path): path to first file for the diff.
@@ -120,37 +119,6 @@ def diff(file1, file2, logger=None, **kwargs):
         for line in diff_lines:
             display(line)
         display(f'▲▲▲▲▲▲▲▲▲▲▲▲▲ {file1} --> {file2} diff ▲▲▲▲▲▲▲▲▲▲▲▲▲')
-
-
-def encode_strings(inputs):
-    '''Convert list or directory to special-format string'''
-    if not isinstance(inputs, (list, dict)):
-        raise TypeError('"inputs" must be list or dict.')
-
-    if isinstance(inputs, list):
-        output = ','.join(map(str, inputs))
-    elif isinstance(inputs, dict):
-        a = [':'.join(map(str, i)) for i in inputs.items()]
-        output = ','.join(map(str, a))
-    return output
-
-
-def decode_strings(inputs):
-    '''Convert special-format string to list or directory'''
-    if not isinstance(inputs, str):
-        raise TypeError('"inputs" must be a string.')
-
-    if ':' in inputs:
-        output = {}
-        a = inputs.split(',')
-        for i in a:
-            b = i.split(':')
-            output[b[0]] = b[1]
-    else:
-        if not inputs:
-            return []
-        output = inputs.split(',')
-    return output
 
 
 def compress_buf(data, source='file'):
@@ -214,9 +182,8 @@ def concatenate_files(source, dest, ignore='ENDE'):
 
 
 def exc_catch(fun, exc_action=None, *args, **kwargs):
-    '''
-    Wrapper which catches errors of provided function "fun" and runs "action"
-    if provided.
+    '''Wrapper which catches errors of provided function "fun" and runs
+    "exc_action" if provided.
 
     Args:
         fun (callable): The wrapped function.
@@ -237,12 +204,14 @@ def exc_catch(fun, exc_action=None, *args, **kwargs):
 
 
 def condor_logger(name):
-    '''
-    Prepares a logger for job on HTCondor. It splits the levels to stdout
+    '''Prepares a logger for job on HTCondor. It splits the levels to stdout
     and stderr, and disables module level logging.
 
     DEBUG, INFO go to stdout
     WARNING, ERROR go to stderr
+
+    Args:
+        name (str): name of the logger.
     '''
 
     # disable module level logging of pysixdesk

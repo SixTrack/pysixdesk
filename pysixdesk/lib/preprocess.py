@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import os
+import time
+import json
 import shutil
 import configparser
 import argparse
-import time
 
 from pathlib import Path
 from contextlib import contextmanager
@@ -20,22 +21,25 @@ class PreprocessJob:
         '''Class to handle the execution of the preprocessing job.
 
         Args:
-            task_id (int): Current work unit ID.
+            task_id (int): Current task ID.
             input_info (str/path): Path to the database configuration file.
 
         Raises:
             FileNotFoundError: If required input file is not found in database.
-            ValueError: If the provided output files are incorect.
         '''
         self._logger = utils.condor_logger('preprocess')
+        self._dest_path = Path('results')
+        self._dest_path.mkdir(exist_ok=True)
+
         self.task_id = task_id
+        # read database config
         cf = configparser.ConfigParser()
         cf.optionxform = str
         cf.read(input_info)
+        self.cf = cf
         self.db = SixDB(cf['db_info'].items())
         db_type = cf['db_info']['db_type']
         self.db_type = db_type.lower()
-        # cf.clear()
 
         mask_keys = list(cf['mask'].keys())
         outputs = self.db.select('preprocess_wu', mask_keys,
@@ -47,21 +51,11 @@ class PreprocessJob:
 
         self.madx_cfg = cf['madx']
         self.mask_cfg = dict(zip(mask_keys, outputs[0]))
-        # outputs = self.db.select('preprocess_wu',
-        #                          ['input_file', 'task_id'],
-        #                          f'task_id={task_id}')
-
-        # self.task_id = outputs[0][1]
-        # intput_buf = outputs[0][0]
-        # in_files = utils.decompress_buf(intput_buf, None, 'buf')
-        # cf.read_string(in_files)
-        self.cf = cf
-        # self.madx_cfg = cf['madx']
+        self._decomp_templates()
 
         output_files = self.madx_cfg["output_files"]
-        output_files = utils.decode_strings(output_files)
+        output_files = json.loads(output_files)
         self.madx_out = output_files
-        # self.mask_cfg = cf['mask']
 
         self.oneturn_flag = self.madx_cfg.getboolean('oneturn')
         self.coll_flag = self.madx_cfg.getboolean('collimation')
@@ -79,13 +73,38 @@ class PreprocessJob:
         # close db to avoid unexpected timeouts
         self.db.close()
 
+    def _decomp_templates(self):
+        """Decompresses the template buffers from the database.
+
+        Raises:
+            FileNotFoundError: If buffer is not found in db.
+        """
+        templates = self.cf['templates']
+        temp_buf = self.db.select('templates', templates.keys())[0]
+        if not temp_buf:
+            raise FileNotFoundError('Templates not found in DB.')
+        else:
+            for temp, temp_name in zip(temp_buf, templates.values()):
+                if not temp:
+                    raise FileNotFoundError(f'{temp_name} not found in DB.')
+                else:
+                    utils.decompress_buf(temp, temp_name)
+
     @contextmanager
-    def sixtrack_temp_folder(self, folder='temp'):
-        """Helper context manager to deal with the temp folder. On release,
-        moves back to the orignal folder and deletes the temp folder.
+    def sixtrack_temp_folder(self, folder='temp', symlink_parent=True,
+                             extra=[]):
+        """Helper context manager to deal with the temp folder and symlinking
+        the input files. On release, moves back to the orignal folder and
+        deletes the temp folder.
 
         Args:
             folder (str, optional): name of temp folder.
+            symlink_parent (bool, optional): controls whether to symlink input
+            files and extra files from the parent dir to the temporary folder.
+            extra (list, optional): list of extra files to symlink.
+
+        Raises:
+            FileNotFoundError: if input file not found during symlinking.
         """
         # quick context manager to handle the temporary folder
         cwd = Path.cwd()
@@ -95,6 +114,17 @@ class PreprocessJob:
         temp_folder.mkdir()
         try:
             os.chdir(temp_folder)
+            # symlink input files to temp folder.
+            if symlink_parent:
+                input_files = json.loads(self.six_cfg["input_files"])
+                # make symlinks to the other input files in the parent folder
+                for file in [Path(f) for f in list(input_files.values()) + extra]:
+                    target = Path.cwd().parent / file
+                    if target.is_file():
+                        file.symlink_to(target)
+                    else:
+                        msg = f"The required input file {file} was not found!"
+                        raise FileNotFoundError(msg)
             yield
         finally:
             os.chdir(cwd)
@@ -124,9 +154,8 @@ class PreprocessJob:
         return fort_dic
 
     def sixtrack_prep_job(self, fort_cfg, source_prefix=None,
-                          output_file='fort.3', symlink_parent=True):
-        """Prepares sixtrack fort.3 file and symlinks the other required
-        input files.
+                          output_file='fort.3'):
+        """Prepares sixtrack fort.3 file.
 
         Args:
             fort_cfg (dict): dict containing the placeholder/value pairs.
@@ -134,13 +163,7 @@ class PreprocessJob:
             provided folder prefix when looking for the fort_file and fc.3
             files.
             output_file (str, optional): name of the prepared fort.3 file.
-            symlink_parent (bool, optional): controls whether to symlink the
-            input_files of the parent folder to the current folder.
 
-        Raises:
-            Exception: If placeholder replacement in fort.3 fails.
-            FileNotFoundError: If missing input file during symlinking.
-            ValueError: If provided sixtrack 'input_files' are incorect.
         """
         # get the fort file patterns and values
         if source_prefix is not None:
@@ -160,7 +183,7 @@ class PreprocessJob:
         utils.replace(patterns, values, source, dest)
 
         # prepare the other input files
-        input_files = utils.decode_strings(self.six_cfg["input_files"])
+        input_files = json.loads(self.six_cfg["input_files"])
 
         madx_fc3 = input_files['fc.3']
         if source_prefix is not None:
@@ -170,34 +193,6 @@ class PreprocessJob:
         utils.concatenate_files([dest, madx_fc3], output_file)
         # if not source.samefile(output_file):
         #     utils.diff(source, output_file, logger=self._logger)
-
-        # there could be merit in moving the symlinking to sixtrack_temp_folder
-        # so it would be done when entering a temp folder
-        if symlink_parent:
-            # make symlinks to the other input files in the parent folder
-            for file in [Path(f) for f in input_files.values()]:
-                target = Path.cwd().parent / file
-                if target.is_file():
-                    file.symlink_to(target)
-                else:
-                    raise FileNotFoundError("The required input file %s does not found!" %
-                                            file)
-
-    def sixtrack_copy_input(self):
-        '''
-        Copies the fort.3 file and other additional inputs to the cwd.
-
-        Args:
-            extra (list, optional): Any additional inputs to copy over.
-        '''
-        required = [self.six_cfg['fort_file']]
-        for infile in required:
-            infi = Path(self.six_cfg['source_path']) / infile
-            if infi.is_file():
-                shutil.copy2(infi, infile)
-            else:
-                content = "The required file %s isn't found!" % infile
-                raise FileNotFoundError(content)
 
     def sixtrack_run(self, output_file):
         """Runs sixtrack.
@@ -225,34 +220,29 @@ class PreprocessJob:
 
         # print(''.join(outputlines))
 
-    def dl_output(self, dest_path):
+    def dl_output(self):
         """Downloads the output of the job.
-
-        Args:
-            dest_path (str): Path to download location.
         """
         # Download the requested files.
-        madx_outputs = list(self.madx_out.values())
-        madx_outputs.append('madx_in')
-        madx_outputs.append('madx_stdout')
+        dl_list = list(self.madx_out.values())
+        dl_list.append('madx_in')
+        dl_list.append('madx_stdout')
         if self.oneturn_flag:
-            self.madx_out['oneturnresult'] = 'oneturnresult'
-            madx_outputs.append('oneturnresult')
+            dl_list.append('oneturnresult')
         if self.coll_flag:
-            madx_outputs.append('fort3.limi')
+            dl_list.append('fort3.limi')
+        if self.db_type == 'mysql':
+            dl_list.append('_condor_stdout')
+            dl_list.append('_condor_stderr')
         try:
-            utils.download_output(madx_outputs, dest_path)
-            content = f"All requested results have been stored in {dest_path}"
+            utils.download_output(dl_list, self._dest_path)
+            content = f"All requested results have been stored in {self._dest_path}"
             self._logger.info(content)
         except Exception:
             self._logger.warning("Job failed!", exc_info=True)
 
-    def push_to_db(self, dest_path):
-        '''
-        Runs the parsing and pushes results to db.
-
-        Args:
-            dest_path (str): Location of the job results.
+    def push_to_db(self):
+        '''Runs the parsing and pushes results to db.
         '''
         self.db.open()
 
@@ -263,7 +253,7 @@ class PreprocessJob:
         for sec in self.cf:
             result_cf[sec] = dict(self.cf[sec])
         filelist = Table.result_table(self.madx_out.values())
-        parse_results('preprocess', self.task_id, dest_path, filelist,
+        parse_results('preprocess', self.task_id, self._dest_path, filelist,
                       task_table, result_cf)
 
         self.db.update(f'preprocess_task', task_table,
@@ -287,8 +277,7 @@ class PreprocessJob:
             self._logger.warning("This is a failed job!")
 
     def run(self):
-        '''
-        Main execution logic.
+        '''Main execution logic.
         '''
         try:
             self.madx_job()
@@ -318,24 +307,18 @@ class PreprocessJob:
                     self._logger.error('Oneturn job failed!', exc_info=True)
         finally:
             # if failed and mysql or if success --> store results
-            # result store location
-            if self.db_type == 'mysql':
-                dest_path = Path('./result')
-            else:
-                dest_path = Path(self.madx_cfg["dest_path"]) / str(self.task_id)
-            if not dest_path.is_dir():
-                dest_path.mkdir(parents=True, exist_ok=True)
             # download results
-            self.dl_output(dest_path)
+            self.dl_output()
             # push results to mysql db
             if self.db_type == 'mysql':
+                if self.oneturn_flag:
+                    self.madx_out['oneturnresult'] = 'oneturnresult'
                 if self.coll_flag:
                     self.madx_out['fort3.limi'] = 'fort3.limi'
-                self.push_to_db(dest_path)
+                self.push_to_db()
 
     def madx_copy_mask(self):
-        '''
-        Copies madx mask file to cwd.
+        '''Copies madx mask file to cwd.
         '''
         mask_name = self.madx_cfg["mask_file"]
         source_path = Path(self.madx_cfg['source_path'])
@@ -344,13 +327,10 @@ class PreprocessJob:
         Path(self.madx_cfg['dest_path']).mkdir(parents=True, exist_ok=True)
 
     def madx_prep(self, output_file='madx_in'):
-        '''Replaces the placeholders in the mask_file and prints diff.
+        '''Replaces the placeholders in the mask_file.
 
         Args:
             output_file (str, optional): Name of the prepared mask_file.
-
-        Raises:
-            Exception: if failure to generate mask file.
         '''
         patterns = ['%' + a for a in self.mask_cfg.keys()]
         values = list(self.mask_cfg.values())
@@ -384,10 +364,9 @@ class PreprocessJob:
             self._logger.info("MADX has completed properly!")
 
     def madx_job(self):
+        """Controls madx job execution.
         """
-        Controls madx job execution.
-        """
-        self.madx_copy_mask()
+        # self.madx_copy_mask()
         # replace placeholders
         ready_mask = 'madx_in'
         self.madx_prep(output_file=ready_mask)
@@ -399,12 +378,11 @@ class PreprocessJob:
             raise FileNotFoundError(content)
 
     def new_fort2(self):
-        '''
-        Generate new fort.2 with aperture markers and survey and fort3.limit.
+        '''Generate new fort.2 with aperture markers and survey and fort3.limit.
         '''
         # copy the collimation input files over
         inp = self.coll_cfg['input_files']
-        inputfiles = utils.decode_strings(inp)
+        inputfiles = json.loads(inp)
         source_path = Path(self.coll_cfg["source_path"])
         for fil in inputfiles.values():
             fl = source_path / fil
@@ -448,20 +426,17 @@ class PreprocessJob:
             in fort_cfg.
         '''
         fort_dic = self.sixtrack_prep_cfg(**kwargs)
-        with self.sixtrack_temp_folder():
+        with self.sixtrack_temp_folder(symlink_parent=True):
             self.sixtrack_prep_job(fort_dic,
                                    source_prefix=Path.cwd().parent,
-                                   symlink_parent=True,
                                    output_file='fort.3')
             self.sixtrack_run(job_name)
             # check and move fort.10 file
             self.sixtrack_check(job_name)
 
     def sixtrack_job(self):
-        ''''
-        Controls sixtrack job execution.
+        ''''Controls sixtrack job execution.
         '''
-        self.sixtrack_copy_input()
 
         try:
             self._sixtrack_job('first_oneturn', dp1='.0', dp2='.0', ition='0')
@@ -482,8 +457,7 @@ class PreprocessJob:
         #     raise e
 
     def write_oneturnresult(self):
-        '''
-        Writes the oneturnresult file.
+        '''Writes the oneturnresult file.
         '''
         # Calculate and write out the requested values
         chrom_eps = self.fort_cfg['chrom_eps']
@@ -518,6 +492,7 @@ if __name__ == '__main__':
     parser.add_argument('input_info', type=str,
                         help='Path to the config file.')
     args = parser.parse_args()
+
     job = PreprocessJob(args.task_id, args.input_info)
     try:
         job.run()
