@@ -326,7 +326,7 @@ class Study(object):
             self.sixtrack_config['init_state'] = self.tables['init_state']
             self.sixtrack_config['final_state'] = self.tables['final_state']
 
-    def update_db(self):
+    def update_db(self, force_update=False, db_check=False):
         '''Update the database whith the user-defined parameters'''
         temp = self.paths["templates"]
         cont = os.listdir(temp)
@@ -386,9 +386,31 @@ class Study(object):
             'preprocess_wu', ['wu_id', 'job_name', 'status'])
 
         wu_id = len(check_params)
+        wu_id_start = wu_id
+        madx_table = OrderedDict()
+        for ky in keys:
+            madx_table[ky] = []
+        madx_table['wu_id'] = []
+        madx_table['status'] = []
+        madx_table['job_name'] = []
+        madx_table['mtime'] = []
+
+        if not force_update:
+            if (wu_id != 0) and (not db_check):
+                self._logger.warning('''You are going to update the database
+                which is not empty, you must assign 'db_check' to True to
+                avoid duplicate rows! If you are pretty sure there aren't
+                duplicate rows, you can skip db check with 'force_update'.
+                But you should be responsible for this!''')
+                return
+        else:
+            db_check = False
+            if wu_id != 0:
+                self._logger.warning('Attention! Force update(skip db '
+                        'check) is selected, make sure no duplications!')
+
         for element in self.custom_product_preprocess(param_dict):
-            madx_table = OrderedDict()
-            if element in check_params:
+            if db_check and (element in check_params):
                 i = check_params.index(element)
                 name = check_jobs[i][1]
                 content = "The job %s is already in the database!" % name
@@ -397,28 +419,26 @@ class Study(object):
             for i in range(len(element)):
                 ky = keys[i]
                 vl = element[i]
-                madx_table[ky] = vl
+                madx_table[ky].append(vl)
             prefix = self.madx_input['mask_file'].split('.')[0]
             job_name = self.name_conven(prefix, keys, element, '')
             wu_id += 1
-            madx_table['wu_id'] = wu_id
-            madx_table['status'] = 'incomplete'
-            madx_table['job_name'] = job_name
-            madx_table['mtime'] = int(time.time() * 1E7)
-            self.db.insert('preprocess_wu', madx_table)
-            content = 'Store preprocess job %s into database!' % job_name
-            self._logger.info(content)
+            madx_table['wu_id'].append(wu_id)
+            madx_table['status'].append('incomplete')
+            madx_table['job_name'].append(job_name)
+            madx_table['mtime'].append(int(time.time() * 1E7))
+        self.db.insertm('preprocess_wu', madx_table)
+        self._logger.info(f'Add {wu_id-wu_id_start} new preprocess '
+                f'jobs into database! A total of {wu_id}!')
 
         # prepare sixtrack parameters in database
-        madx_keys = list(self.madx_params.keys())
-        madx_vals = self.db.select('preprocess_wu', ['wu_id'] + madx_keys)
+        madx_vals = self.db.select('preprocess_wu', ['wu_id'])
         if not madx_vals:
             content = "The preprocess_wu table is empty!"
             self._logger.warning(content)
             return
         madx_vals = list(zip(*madx_vals))
         madx_ids = list(madx_vals[0])
-        madx_params = madx_vals[1:]
         keys = list(self.sixtrack_params.keys())
         param_dict = dict()
         for key in keys:
@@ -434,41 +454,46 @@ class Study(object):
         namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'],
                 DISTINCT=True)
         wu_id = len(namevsid)
+        wu_id_start = wu_id
+        six_table = OrderedDict()
+        for ky in keys:
+            six_table[ky] = []
+        six_table['wu_id']=[]
+        six_table['last_turn']=[]
+        six_table['job_name']=[]
+        six_table['status']=[]
+        six_table['mtime']=[]
         for element in self.custom_product_sixtrack(param_dict):
-            job_table = OrderedDict()
             a = []
             for i in element:
                 if isinstance(i, Iterable):
                     i = str(i)
                 a.append(i)
             element = tuple(a)
-            if element in outputs:
+            if db_check and element in outputs:
                 i = outputs.index(element)
                 nm = namevsid[i][1]
-                content = "The sixtrack job %s is already in the database!" % nm
+                content = f"The sixtrack job {nm} is already in the database!"
                 self._logger.warning(content)
                 continue
-            for i in range(len(element) - 1):
+            for i in range(len(element)):
                 ky = keys[i]
                 vl = element[i]
                 if isinstance(vl, Iterable):
                     vl = str(vl)
-                job_table[ky] = vl
-            vl = element[len(element) - 1]  # the last one is madx_id(wu_id)
-            j = madx_ids.index(vl)
-            job_table['preprocess_id'] = j + 1  # in db id begin from 1
+                six_table[ky].append(vl)
+            pre_id = element[len(element) - 1]  # the last one is madx_id(wu_id)
             wu_id += 1
-            job_table['wu_id'] = wu_id
+            six_table['wu_id'].append(wu_id)
             last_turn = self.sixtrack_params['turnss']
-            job_table['last_turn'] = last_turn
-            job_name = 'sixtrack_job_preprocess_id_%i_wu_id_%i' % (j + 1,
-                    wu_id)
-            job_table['job_name'] = job_name
-            job_table['status'] = 'incomplete'
-            job_table['mtime'] = int(time.time() * 1E7)
-            self.db.insert('sixtrack_wu', job_table)
-            content = 'Store sixtrack job %s into database!' % job_name
-            self._logger.info(content)
+            six_table['last_turn'].append(last_turn)
+            job_name = f'sixtrack_job_preprocess_id_{pre_id}_wu_id_{wu_id}'
+            six_table['job_name'].append(job_name)
+            six_table['status'].append('incomplete')
+            six_table['mtime'].append(int(time.time() * 1E7))
+        self.db.insertm('sixtrack_wu', six_table)
+        self._logger.info(f'Add {wu_id-wu_id_start} new sixtrack jobs into '
+                f'database! A total of {wu_id}!')
 
     def info(self, job=2, where=None):
         '''Print the status information of this study.
