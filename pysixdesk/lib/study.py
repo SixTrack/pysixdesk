@@ -104,8 +104,8 @@ class Study(object):
             ("ndafi", 1),
             ("tunex", 62.28),
             ("tuney", 60.31),
-            ("inttunex", 62.28),
-            ("inttuney", 60.31),
+            ("inttunex", 62),
+            ("inttuney", 60),
             ("DIFF", '/DIFF'),
             ("DIF1", '/'),
             ("COLL", ''),
@@ -236,7 +236,7 @@ class Study(object):
             self.preprocess_output['fort3.limi'] = 'fort3.limi'
             table.init_collimation_tables()
             table.customize_tables('templates',
-                    list(self.collimation_input.keys()), 'BLOB')
+                    list(self.collimation_input.keys()), 'MEDIUMBLOB')
 
         table.customize_tables('templates', list(self.madx_input.keys()),
                 'BLOB')
