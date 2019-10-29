@@ -482,7 +482,7 @@ class Study(object):
                 if isinstance(vl, Iterable):
                     vl = str(vl)
                 six_table[ky].append(vl)
-            pre_id = element[len(element) - 1]  # the last one is madx_id(wu_id)
+            pre_id = six_table['preprocess_id'][-1]  # madx_id(wu_id)
             wu_id += 1
             six_table['wu_id'].append(wu_id)
             last_turn = self.sixtrack_params['turnss']
