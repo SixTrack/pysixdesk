@@ -234,7 +234,7 @@ class Study(object):
             self.preprocess_output['fort3.limi'] = 'fort3.limi'
             table.init_collimation_tables()
             table.customize_tables('templates',
-                    list(self.collimation_input.keys()), 'BLOB')
+                    list(self.collimation_input.keys()), 'MEDIUMBLOB')
 
         table.customize_tables('templates', list(self.madx_input.keys()),
                 'BLOB')
