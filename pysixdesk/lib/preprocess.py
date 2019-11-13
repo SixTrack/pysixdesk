@@ -211,14 +211,50 @@ def sixtrackjobs(config, fort3_config):
         shutil.copy2(source, s)
     logger.info('Calling sixtrack %s' % sixtrack_exe)
 
+    # these oneturn chroma jobs params are hardcoded
+    '''
+    %turnss='1'
+    %nss='1'
+    %ax0s='.1'
+    %ax1s='.1'
+    %imc='1'
+    %iclo6='2'
+    %writebins='1'
+    %ratios='1'
+    %dp1='.000'
+    %dp2='.000'
+    %e0='$e0'
+    %Runnam=First Turn
+    %idfor=0
+    %ibtype=0
+    %bunch_charge='$bunch_charge'
+    %ition=0
+    '''
     try:
-        sixtrackjob(config, fort3_config, 'first_oneturn', dp1='.0', dp2='.0')
+        sixtrackjob(config, fort3_config, 'first_oneturn', dp1='.0', dp2='.0')  # 
     except Exception as e:
         logger.error('SixTrack first oneturn failed.')
         raise e
-
+    '''
+    %turnss='1'
+    %nss='1'
+    %ax0s='.1'
+    %ax1s='.1'
+    %imc='1'
+    %iclo6='2'
+    %writebins='1'
+    %ratios='1'
+    %dp1='$chrom_eps'
+    %dp2='$chrom_eps'
+    %e0='$e0'
+    %Runnam=Second Turn
+    %idfor=0
+    %ibtype=0
+    %bunch_charge='$bunch_charge'
+    %ition='0'
+    '''
     try:
-        sixtrackjob(config, fort3_config, 'second_oneturn')
+        sixtrackjob(config, fort3_config, 'second_oneturn')  # shouldn't dp1/dp2 be chrom_eps ?
     except Exception as e:
         logger.error('SixTrack second oneturn failed.')
         raise e

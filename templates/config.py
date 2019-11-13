@@ -8,7 +8,7 @@ import logging
 from pysixdesk.lib import submission
 from pysixdesk import Study
 from pysixdesk.lib.study_params import StudyParams, set_property
-from math import sqrt, pi, sin, cos
+from math import sqrt, pi, sin, cos, tan
 from pysixdesk.lib import machineparams
 
 # logger configuration
@@ -57,6 +57,7 @@ class MyStudy(Study):
         self.params['Runnam'] = name
         amp = [8, 10, 12]
         self.params['turnss'] = int(1e3)
+        self.params['nss'] = 30
         self.params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
         self.params['kang'] = list(range(1, 1 + 2))  # The angle
         self.params['kmax'] = 5
@@ -65,18 +66,28 @@ class MyStudy(Study):
         @set_property('input_keys', ['kang', 'kmax'])
         @set_property('output_keys', ['angle'])
         def calc_angle(kang, kmax):
-            return kang / (kmax + 1)
+            return kang / (kmax + 1)  # 1-->pi/2, 0.5-->pi/4, ...
         self.params.calc_queue.append(calc_angle)
 
-        @set_property('require', {'oneturn_sixtrack_result': 'betax'})
-        @set_property('input_keys', ['angle', 'emit_norm_x', 'e0', 'pmass', 'amp'])
+        @set_property('input_keys', ['angle'])
+        @set_property('output_keys', ['ratio'])
+        def calc_ratio(angle):
+            ratio = abs(tan((pi / 2) * angle))
+            if ratio < 1e-15:
+                ratio = 0.
+            else:
+                ratio = ratio ** 2
+            return ratio
+        self.params.calc_queue.append(calc_ratio)
+
+        # should it not be betax and betax2 ?
+        @set_property('require', {'oneturn_sixtrack_result': ['betax', 'betax2']})
+        @set_property('input_keys', ['angle', 'ratio', 'emit_norm_x', 'e0', 'pmass', 'amp'])
         @set_property('output_keys', ['ax0s', 'ax1s'])
-        def calc_amp(angle, emit, e0, pmass, amp, betax=None):
-            tt = abs(sin(pi / 2 * angle) / cos(pi / 2 * angle))
-            ratio = 0.0 if tt < 1.0E-15 else tt**2
+        def calc_amp(angle, ratio, emit, e0, pmass, amp, betax=None, betax2=None):
             gamma = e0 / pmass
             factor = sqrt(emit / gamma)
-            ax0t = factor * (sqrt(betax) + sqrt(betax * ratio) * cos(pi / 2 * angle))
+            ax0t = factor * (sqrt(betax) + sqrt(betax2 * ratio) * cos((pi / 2) * angle))
             return amp[0] * ax0t, amp[1] * ax0t
         self.params.calc_queue.append(calc_amp)
 
@@ -86,7 +97,7 @@ class MyStudy(Study):
         self.preprocess_output = copy.deepcopy(self.madx_output)
         self.sixtrack_input['input'] = self.preprocess_output
 
-        ## The parameters for collimation job
+        # # The parameters for collimation job
         # self.madx_output = {
         #     'fc.2': 'fort.2',
         #     'fc.3': 'fort.3.mad',

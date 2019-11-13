@@ -53,9 +53,9 @@ class MysqlAdmin(object):
             self._logger.warning('Access denied! You are not the administrator!')
             return
         self.adaptor.create_user(self.conn, username, passwd)
-        pattern = "`%s\_%%`.*" % (username)
+        pattern = r"`%s\_%%`.*" % (username)
         self.adaptor.grant(self.conn, username, 'ALL PRIVILEGES', pattern,
-                grant=True)
+                           grant=True)
         # Used for checking the privileges of users
         self.adaptor.grant(self.conn, username, 'SELECT', 'mysql.*')
 
@@ -111,16 +111,16 @@ class MysqlAdmin(object):
 
     def grant(self, username, privs, db='*', table='*'):
         '''Grant privileges'''
-        if not self.check_admin() and db=='*':
-            db = "`%s\_%%`" % (self.db_info['user'])
+        if not self.check_admin() and db == '*':
+            db = r"`%s\_%%`" % (self.db_info['user'])
         pattern = db + '.' + table
         self._format_check(pattern)
         self.adaptor.grant(self.conn, username, privs, pattern)
 
     def revoke(self, username, privs, db='*', table='*'):
         '''Revoke privileges'''
-        if not self.check_admin() and db=='*':
-            db = "`%s\_%%`" % (self.db_info['user'])
+        if not self.check_admin() and db == '*':
+            db = r"`%s\_%%`" % (self.db_info['user'])
         pattern = db + '.' + table
         self._format_check(pattern)
         self.adaptor.revoke(self.conn, username, privs, pattern)
@@ -132,7 +132,7 @@ class MysqlAdmin(object):
         if not isinstance(pattern, str):
             a = type(pattern)
             raise TypeError("'%s' object cannot be interpreted as an string!" %
-                    (a.__name__))
+                            (a.__name__))
         if '.' not in pattern:
             raise Exception("Format error! It sould be like '*.*'")
 

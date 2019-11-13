@@ -61,7 +61,7 @@ class StudyParams:
                             "CHROM": 0,  # this is not a placeholder, it's a toggle for the preprocess job
                             "dp1": 0.000001,
                             "dp2": 0.000001,
-                            "EI": 3.5,  # figure out if this should be the same as the emittance
+                            "EI": 3.5,  # eigen emittance
                             "ibtype": 0,
                             "iclo6": 2,
                             "idfor": 0,
@@ -73,8 +73,8 @@ class StudyParams:
                             "nss": 30,  # should this be 60? 30?
                             "pmass": PROTON_MASS,
                             "Runnam": 'FirstTurn',
-                            "ratios": 1,
-                            "turnss": 1e5,
+                            "ratio": 1,
+                            "turnss": 1e6,
                             # these toggle_*: aren't very pretty.
                             "toggle_post/": '',  # '' --> on, '/' --> off
                             "toggle_diff/": '/',  # '' --> on, '/' --> off

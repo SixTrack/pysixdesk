@@ -23,7 +23,7 @@ _LHC_DEF = dict(phi_IR1=90.000,
                 )
 # injection defaults
 _LHC_INJ = dict(rfvol=8.0,  # [MV]
-                sigz=0.11,  # [mm]
+                sigz=0.11,  # [m]
                 sige=4.5e-04,
                 e0=450000.0,  # [MeV]
                 # I_MO= -40,  # [A]
@@ -32,7 +32,7 @@ _LHC_INJ = dict(rfvol=8.0,  # [MV]
                 )
 # collision defaults
 _LHC_COL = dict(rfvol=16.0,  # [MV]
-                sigz=0.77e-1,  # [mm]
+                sigz=0.77e-1,  # [m]
                 sige=1.1e-04,
                 e0=7000000.0,  # [MeV]
                 # I_MO= ,  # [A]
