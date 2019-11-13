@@ -232,8 +232,8 @@ class PreprocessJob:
         if self.coll_flag:
             dl_list.append('fort3.limi')
         if self.db_type == 'mysql':
-            dl_list.append('_condor_stdout')
-            dl_list.append('_condor_stderr')
+            dl_list.extend(['_condor_stdout', '_condor_stderr'])
+
         try:
             utils.download_output(dl_list, self._dest_path)
             content = f"All requested results have been stored in {self._dest_path}"
@@ -267,14 +267,14 @@ class PreprocessJob:
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
-            self.db.update(f'preprocess_wu', job_table, f'task_id={self.task_id}')
-            content = f" preprocess task {self.task_id} has completed normally!"
+            content = f"preprocess task {self.task_id} has completed normally!"
             self._logger.info(content)
         else:
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
-            self.db.update(f'preprocess_wu', job_table, f'task_id={self.task_id}')
             self._logger.warning("This is a failed job!")
+
+        self.db.update(f'preprocess_wu', job_table, f'task_id={self.task_id}')
 
     def run(self):
         '''Main execution logic.
@@ -382,10 +382,6 @@ class PreprocessJob:
         # copy the collimation input files over
         inp = self.coll_cfg['input_files']
         inputfiles = json.loads(inp)
-        source_path = Path(self.coll_cfg["source_path"])
-        for fil in inputfiles.values():
-            fl = source_path / fil
-            shutil.copy2(fl, fil)
         fc2 = 'fort.2'
         aperture = inputfiles['aperture']
         survery = inputfiles['survey']
@@ -447,31 +443,30 @@ class PreprocessJob:
             self._logger.error('SixTrack second oneturn failed.')
             raise e
 
-        # try:
-        #     self._sixtrack_job('beta_oneturn', dp1='.0', dp2='.0')
-        # except Exception as e:
-        #     self._logger.error('SixTrack beta oneturn failed.')
-        #     raise e
+        try:
+            self._sixtrack_job('beta_oneturn', dp1='.0', dp2='.0')
+        except Exception as e:
+            self._logger.error('SixTrack beta oneturn failed.')
+            raise e
 
     def write_oneturnresult(self):
         '''Writes the oneturnresult file.
         '''
         # Calculate and write out the requested values
         chrom_eps = self.fort_cfg['chrom_eps']
-        with open('fort.10_first_oneturn', 'r') as first:
-            val_1 = first.readline().split()
-        with open('fort.10_second_oneturn', 'r') as second:
-            val_2 = second.readline().split()
+        with open('fort.10_first_oneturn', 'r') as f_first:
+            val_1 = f_first.readline().split()
+        with open('fort.10_second_oneturn', 'r') as f_second:
+            val_2 = f_second.readline().split()
         tunes = [chrom_eps, val_1[2], val_1[3], val_2[2], val_2[3]]
         chrom1 = (float(val_2[2]) - float(val_1[2])) / float(chrom_eps)
         chrom2 = (float(val_2[3]) - float(val_1[3])) / float(chrom_eps)
         mychrom = [chrom1, chrom2]
-        # with open('fort.10_beta_oneturn', 'r') as f_in:
-        #     beta = f_in.readline().split()
-        # print(beta)
-        beta_out = [val_1[4], val_1[47], val_1[5], val_1[48], val_1[2], val_1[3],
-                    val_1[49], val_1[50], val_1[52], val_1[53], val_1[54], val_1[55],
-                    val_1[56], val_1[57]]
+        with open('fort.10_beta_oneturn', 'r') as f_beta:
+            beta = f_beta.readline().split()
+        beta_out = [beta[4], beta[47], beta[5], beta[48], beta[2], beta[3],
+                    beta[49], beta[50], beta[52], beta[53], beta[54], beta[55],
+                    beta[56], beta[57]]
         if self.fort_cfg['CHROM'] == '0':
             beta_out[6] = chrom1
             beta_out[7] = chrom2

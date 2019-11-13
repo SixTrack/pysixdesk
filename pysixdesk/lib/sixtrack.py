@@ -74,10 +74,11 @@ class TrackingJob:
             raise ValueError("Can't find the preprocess task_id for this job!")
         self.pre_task_id = pre_task_id[0][0]
 
-        self.cr_inputs = self._decomp_files()
-
         self.cr_files = ['crpoint_sec.bin', 'crpoint_pri.bin',
                          'fort.6', 'singletrackfile.dat']
+
+        self.cr_inputs = self._decomp_files()
+
         # get boinc settings
         boinc_infos = self.db.select('env',
                                      ['boinc_work', 'boinc_results',
@@ -319,6 +320,9 @@ class TrackingJob:
             if Path(cr_f).exists():
                 down_list.append(cr_f)
 
+        if self.db_type == 'mysql':
+            down_list.extend(['_condor_stdout', '_condor_stderr'])
+
         try:
             utils.download_output(down_list, self._dest_path)
             content = f"All requested results have been stored in {self._dest_path}"
@@ -355,16 +359,14 @@ class TrackingJob:
         if task_table['status'] == 'Success':
             job_table['status'] = 'complete'
             job_table['mtime'] = int(time.time() * 1E7)
-            self.db.update(f'sixtrack_wu', job_table,
-                           f'task_id={self.task_id}')
             content = f" sixtrack task {self.task_id} has completed normally!"
             self._logger.info(content)
         else:
             job_table['status'] = 'incomplete'
             job_table['mtime'] = int(time.time() * 1E7)
-            self.db.update(f'sixtrack_wu', job_table,
-                           f'task_id={self.task_id}')
             self._logger.warning("This is a failed job!")
+
+        self.db.update(f'sixtrack_wu', job_table, f'task_id={self.task_id}')
 
     def run(self):
         '''Main execution logic
@@ -481,16 +483,20 @@ class TrackingJob:
                                    output_file='fort.3')
             # run sixtrack
             self.sixtrack_run('fort.6')
-            self.six_out.append('fort.6')
+            # self.six_out.append('fort.6')
+
             # check and move output files
             if utils.check(self.six_out):
                 for out in self.six_out:
                     shutil.copy2(out, Path.cwd().parent / out)
 
-            # move checkpoint files out of temp folder
+            # move checkpoint files out of temp folder, if files are not
+            # symlinks
             for cr_f in self.cr_files:
-                if Path(cr_f).exists():
-                    shutil.copy2(cr_f, Path.cwd().parent / cr_f)
+                cr_f = Path(cr_f)
+                cr_f_parent = Path.cwd().parent / cr_f
+                if cr_f.exists() and not cr_f_parent.exists():
+                    shutil.copy2(cr_f, cr_f_parent)
 
             if not self.boinc:
                 shutil.copy2(Path('fort.3'), Path.cwd().parent / 'fort.3')

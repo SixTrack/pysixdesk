@@ -72,7 +72,7 @@ class Table(object):
             ('wu_id', 'int'),
             ('madx_in', 'blob'),
             ('madx_stdout', 'blob'),
-            ('job_stdout', 'blob'),
+            ('job_stdout', 'MEDIUMBLOB'),
             ('job_stderr', 'blob'),
             ('job_stdlog', 'blob'),
             ('status', 'text'),

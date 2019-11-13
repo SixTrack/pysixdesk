@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from importlib.machinery import SourceFileLoader
 path = Path(__file__).absolute().parents[2] / 'templates/config.py'
