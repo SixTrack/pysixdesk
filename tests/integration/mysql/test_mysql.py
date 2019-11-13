@@ -19,7 +19,7 @@ class MySqlStudy:
     '''Runs a typical MySql test.
     Note, this method is not supposed to run on it's own, it must be subclassed
     and combined with the unittest.TestCase class for the self.assertEqual,
-    self.assertTrue,... to be defined.
+    self.assertTrue, and other attributes/methods to be defined.
     '''
     def mysql_study(self, config='MySqlConfig'):
         self.ws.init_study(self.st_name)

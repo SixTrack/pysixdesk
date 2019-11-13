@@ -8,10 +8,8 @@ import shutil
 import getpass
 import zipfile
 import logging
-# import importlib
 
 from .pysixdb import SixDB
-# from . import utils
 from .resultparser import parse_results
 
 logger = logging.getLogger(__name__)

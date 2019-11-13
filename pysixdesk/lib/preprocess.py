@@ -337,8 +337,7 @@ class PreprocessJob:
         utils.replace(patterns, values, self.madx_cfg["mask_file"],
                       output_file)
         # show diff
-        # mask_name = self.madx_cfg["mask_file"]
-        # utils.diff(mask_name, output_file, logger=self._logger)
+        # utils.diff(self.madx_cfg["mask_file"], output_file, logger=self._logger)
 
     def madx_run(self, mask):
         """Runs madx.
@@ -405,8 +404,6 @@ class PreprocessJob:
         """
         # check for fort.10
         # output_name = Path.cwd().parent / (job_name + '.output')
-        # TODO: it is possible for sixtrack to run correctly but there not be a
-        # fort.10
         if not Path('fort.10').is_file:
             self._logger.error("The %s sixtrack job FAILED!" % job_name)
             self._logger.error("Check the file %s which contains the SixTrack fort.6 output." % job_name)

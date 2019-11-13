@@ -1,7 +1,6 @@
 import unittest
 import os
 import shutil
-import time
 import sys
 from pathlib import Path
 # give the test runner the import access

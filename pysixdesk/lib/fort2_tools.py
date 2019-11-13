@@ -6,7 +6,6 @@
 # Warning: the reading of the file is not by any means complete, only reads the
 # elements at the top of the file
 
-import logging
 from . import utils
 from copy import deepcopy
 
