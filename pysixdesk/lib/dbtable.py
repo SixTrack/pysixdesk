@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 from . import dbtypedict
 
+
 class Table(object):
     '''This class aims to initialize and customize the database tables'''
 
@@ -21,7 +22,7 @@ class Table(object):
 
     @staticmethod
     def result_table(filelist):
-        '''Retrun the map between the result files and database tables
+        '''Return the map between the result files and database tables
         fileName --> tableName'''
         relation = {}
         relation['fort.10'] = 'six_results'
@@ -71,7 +72,7 @@ class Table(object):
             ('wu_id', 'int'),
             ('madx_in', 'blob'),
             ('madx_stdout', 'blob'),
-            ('job_stdout', 'blob'),
+            ('job_stdout', 'MEDIUMBLOB'),
             ('job_stderr', 'blob'),
             ('job_stdlog', 'blob'),
             ('status', 'text'),
@@ -120,7 +121,7 @@ class Table(object):
             'primary': ['task_id'],
             'autoincrement': ['task_id'],
             'foreign': {'sixtrack_wu': [['wu_id', 'last_turn'],
-                ['wu_id', 'last_turn']]},
+                                        ['wu_id', 'last_turn']]},
         }
         self.tables['six_results'] = OrderedDict([
             ('task_id', 'int'),

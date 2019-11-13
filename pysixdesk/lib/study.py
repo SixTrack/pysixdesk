@@ -1,5 +1,4 @@
 import os
-import io
 import time
 import json
 import shutil
@@ -73,8 +72,8 @@ class Study(object):
         self.oneturn = True
         self.collimation = False
         self.checkpoint_restart = False
-        self.first_turn = 1 # first turn
-        self.last_turn = 100 #last turn
+        self.first_turn = 1  # first turn
+        self.last_turn = 100  # last turn
         self.cluster_class = submission.HTCondor
 
         self.madx_output = {
@@ -197,9 +196,8 @@ class Study(object):
         elif db_type.lower() == 'mysql':
             table = Table(self.tables, self.table_keys, 'mysql')
             self.db_info['db_name'] = wu_name + '_' + st_name
-            home_path = os.getenv('HOME')
-            if home_path:
-                my_cnf = os.path.join(home_path, '.my.cnf')
+            my_cnf = os.path.join(os.getenv('HOME'), '.my.cnf')
+            if os.path.isfile(my_cnf):
                 self.config.clear()
                 self.config.read(my_cnf)
                 client = self.config['client']
@@ -217,8 +215,8 @@ class Study(object):
         self.st_pre = wu_name + '_' + st_name
         boinc_spool = self.paths['boinc_spool']
         self.env['boinc_work'] = os.path.join(boinc_spool, self.st_pre, 'work')
-        self.env['boinc_results'] = os.path.join(
-            boinc_spool, self.st_pre, 'results')
+        self.env['boinc_results'] = os.path.join(boinc_spool, self.st_pre,
+                                                 'results')
 
         # initialize the database table
         table.init_preprocess_tables()
@@ -228,9 +226,10 @@ class Study(object):
             self.preprocess_output['oneturnresult'] = 'oneturnresult'
             table.init_oneturn_tables()
             table.customize_tables('oneturn_sixtrack_wu',
-                    self.oneturn_sixtrack_params)
+                                   self.oneturn_sixtrack_params)
             table.customize_tables('templates',
-                    [self.oneturn_sixtrack_input['temp']], 'BLOB')
+                                   ['fort_file'],
+                                   'BLOB')
 
         if self.collimation:
             self.preprocess_output['fort3.limi'] = 'fort3.limi'
@@ -239,8 +238,8 @@ class Study(object):
                     list(self.collimation_input.keys()), 'MEDIUMBLOB')
 
         table.customize_tables('templates', list(self.madx_input.keys()),
-                'BLOB')
-        table.customize_tables('templates', [self.sixtrack_input['temp']], 'BLOB')
+                               'BLOB')
+        table.customize_tables('templates', ['fort_file'], 'BLOB')
         if 'additional_input' in self.sixtrack_input.keys():
             inp = self.sixtrack_input['additional_input']
             table.customize_tables('templates', inp, 'BLOB')
@@ -248,9 +247,11 @@ class Study(object):
         table.customize_tables('env', list(self.paths.keys()), 'text')
         table.customize_tables('preprocess_wu', self.madx_params)
         table.customize_tables('preprocess_task',
-                list(self.preprocess_output.values()), 'MEDIUMBLOB')
+                               list(self.preprocess_output.values()),
+                               'MEDIUMBLOB')
         table.customize_tables('sixtrack_wu', self.sixtrack_params)
-        table.customize_tables('sixtrack_task', list(self.sixtrack_output), 'MEDIUMBLOB')
+        table.customize_tables('sixtrack_task', list(self.sixtrack_output),
+                               'MEDIUMBLOB')
         table.customize_tables('boinc_vars', self.boinc_vars)
 
         # Initialize the database
@@ -286,9 +287,9 @@ class Study(object):
                     'oneturn_sixtrack_results']
             self.preprocess_config['fort3'] = self.oneturn_sixtrack_params
             six_sec['sixtrack_exe'] = self.paths['sixtrack_exe']
-            inp = self.oneturn_sixtrack_input['temp']
-            six_sec['temp_file'] = inp
-            templates[inp] = inp
+            inp = self.oneturn_sixtrack_input['fort_file']
+            six_sec['fort_file'] = inp
+            templates['fort_file'] = inp
             inp = self.oneturn_sixtrack_input['input']
             six_sec['input_files'] = json.dumps(inp)
         if self.collimation:
@@ -313,9 +314,9 @@ class Study(object):
         inp = self.sixtrack_input['input']
         six_sec['input_files'] = json.dumps(inp)
         six_sec['boinc_dir'] = self.paths['boinc_spool']
-        inp = self.sixtrack_input['temp']
-        six_sec['temp_file'] = inp
-        templates[inp] = inp
+        inp = self.sixtrack_input['fort_file']
+        six_sec['fort_file'] = inp
+        templates['fort_file'] = inp
         inp = self.sixtrack_output
         six_sec['output_files'] = json.dumps(inp)
         six_sec['test_turn'] = str(self.env['test_turn'])
@@ -331,7 +332,7 @@ class Study(object):
         temp = self.paths["templates"]
         cont = os.listdir(temp)
         require = []
-        require.append(self.sixtrack_input['temp'])
+        require.append(self.sixtrack_input['fort_file'])
         require.append(self.madx_input["mask_file"])
         for r in require:
             if r not in cont:
@@ -342,9 +343,8 @@ class Study(object):
         for key, value in self.madx_input.items():
             value = os.path.join(self.study_path, value)
             tab[key] = utils.compress_buf(value)
-        key = self.sixtrack_input['temp']
-        value = os.path.join(self.study_path, key)
-        tab[key] = utils.compress_buf(value)
+        value = os.path.join(self.study_path, self.sixtrack_input['fort_file'])
+        tab['fort_file'] = utils.compress_buf(value)
         if self.collimation:
             for key in self.collimation_input.keys():
                 val = os.path.join(self.study_path, self.collimation_input[key])
@@ -452,7 +452,7 @@ class Study(object):
         where = 'first_turn is null'
         outputs = self.db.select('sixtrack_wu', keys, where)
         namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'],
-                DISTINCT=True)
+                                  DISTINCT=True)
         wu_id = len(namevsid)
         wu_id_start = wu_id
         six_table = OrderedDict()
@@ -544,7 +544,7 @@ class Study(object):
         batch_name = batch_name + '_' + str(ibatch)
 
         status, out = self.submission.submit(input_path, batch_name, trials,
-                *args, **kwargs)
+                                             *args, **kwargs)
 
         if status:
             content = "Submit %s job successfully!" % jobname
@@ -562,7 +562,7 @@ class Study(object):
 
     def collect_result(self, typ, boinc=False):
         '''Collect the results of preprocess or  sixtrack jobs'''
-        config ={}
+        config = {}
         info_sec = {}
         config['info'] = info_sec
         config['db_setting'] = self.db_settings
@@ -598,7 +598,7 @@ class Study(object):
             raise e
 
     def prepare_sixtrack_input(self, resubmit=False, boinc=False, *args,
-            **kwargs):
+                               **kwargs):
         '''Prepare the input files for sixtrack job'''
         if self.checkpoint_restart:
             self.prepare_cr()
@@ -658,7 +658,7 @@ class Study(object):
             task_ids.append(task_id)
             wu_table['task_id'] = task_id
             wu_table['mtime'] = int(time.time() * 1E7)
-            where = f"wu_id={wu_id} and last_turn={last_turn}" # wu_id is not unique now
+            where = f"wu_id={wu_id} and last_turn={last_turn}"  # wu_id is not unique now
             self.db.update('sixtrack_wu', wu_table, where)
         outputs['task_id'] = task_ids
         db_info = {}
@@ -666,20 +666,20 @@ class Study(object):
         tran_input = []
         if db_info['db_type'].lower() == 'sql':
             sub_name = os.path.join(self.paths['sixtrack_in'], 'sub.db')
-            sub_main = self.db_info['db_name']
+            # sub_main = self.db_info['db_name']
             if os.path.exists(sub_name):
                 os.remove(sub_name)  # remove the old one
             db_info['db_name'] = sub_name
             sub_db = SixDB(db_info, settings=self.db_settings, create=True)
             sub_db.create_table('preprocess_wu', self.tables['preprocess_wu'],
-                    self.table_keys['preprocess_wu'])
+                                self.table_keys['preprocess_wu'])
             sub_db.create_table('preprocess_task',
-                    self.tables['preprocess_task'],
-                    self.table_keys['preprocess_task'])
+                                self.tables['preprocess_task'],
+                                self.table_keys['preprocess_task'])
             sub_db.create_table('sixtrack_wu_tmp', self.tables['sixtrack_wu'],
-                    self.table_keys['sixtrack_wu'])
+                                self.table_keys['sixtrack_wu'])
             sub_db.create_table('sixtrack_wu', self.tables['sixtrack_wu'],
-                    self.table_keys['sixtrack_wu'])
+                                self.table_keys['sixtrack_wu'])
             sub_db.create_table('env', self.tables['env'])
             sub_db.create_table('templates', self.tables['templates'])
 
@@ -706,7 +706,7 @@ class Study(object):
             pre_task_ins = dict(zip(names, zip(*pre_task_outs)))
             constr = "first_turn is not null and status='incomplete'"
             cr_ids = self.db.select('sixtrack_wu', ['wu_id', 'first_turn'],
-                    where=constr)
+                                    where=constr)
             if cr_ids:
                 sub_db.create_table('sixtrack_task', self.tables['sixtrack_task'])
                 cr_ids = list(zip(*cr_ids))
@@ -719,9 +719,9 @@ class Study(object):
                     cr_wu_ins = dict(zip(names, zip(*cr_wu_outputs)))
                     cr_task_ids = cr_wu_ins['task_id']
                     constr = "task_id in (%s)" % (','.join(map(str,
-                        cr_task_ids)))
+                                                               cr_task_ids)))
                     task_outputs = self.db.select('sixtrack_task',
-                            where=constr)
+                                                  where=constr)
                     names = list(self.tables['sixtrack_task'].keys())
                     task_ins = dict(zip(names, zip(*task_outputs)))
                     sub_db.insertm('sixtrack_wu', cr_wu_ins)
@@ -739,7 +739,7 @@ class Study(object):
             job_table['boinc'] = str(boinc)
             self.db.update('sixtrack_wu', job_table, where)
             self.db.create_table('sixtrack_wu_tmp', self.tables['sixtrack_wu'],
-                    self.table_keys['sixtrack_wu'])
+                                 self.table_keys['sixtrack_wu'])
             self.db.insertm('sixtrack_wu_tmp', outputs)
         if boinc:
             self.init_boinc_dir()
@@ -839,14 +839,14 @@ class Study(object):
         checks = [i for i in checks_1 if i not in checks_2]
         if not checks:
             self._logger.info(f"The tracking jobs with last turn "
-                    f"{self.last_turn} already exist!")
+                              f"{self.last_turn} already exist!")
             return True
         constraints = f"status='complete' and last_turn={self.first_turn-1}\
                 and wu_id in ({','.join(map(str, checks))})"
-        results = self.db.select('sixtrack_wu', where = constraints)
+        results = self.db.select('sixtrack_wu', where=constraints)
         if not results:
             self._logger.warning(f"There isn't complete job with last "
-                    f"turn is {self.first_turn-1}")
+                                 f"turn is {self.first_turn-1}")
             return False
         N = len(results)
         names = self.tables['sixtrack_wu'].keys()

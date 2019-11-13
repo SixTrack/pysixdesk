@@ -88,8 +88,7 @@ def replace(patterns, replacements, source, dest):
 
 
 def diff(file1, file2, logger=None, **kwargs):
-    '''
-    Displays the diff of two files.
+    '''Displays the diff of two files.
 
     Args:
         file1 (str/path): path to first file for the diff.
@@ -183,9 +182,8 @@ def concatenate_files(source, dest, ignore='ENDE'):
 
 
 def exc_catch(fun, exc_action=None, *args, **kwargs):
-    '''
-    Wrapper which catches errors of provided function "fun" and runs "action"
-    if provided.
+    '''Wrapper which catches errors of provided function "fun" and runs
+    "exc_action" if provided.
 
     Args:
         fun (callable): The wrapped function.
@@ -206,12 +204,14 @@ def exc_catch(fun, exc_action=None, *args, **kwargs):
 
 
 def condor_logger(name):
-    '''
-    Prepares a logger for job on HTCondor. It splits the levels to stdout
+    '''Prepares a logger for job on HTCondor. It splits the levels to stdout
     and stderr, and disables module level logging.
 
     DEBUG, INFO go to stdout
     WARNING, ERROR go to stderr
+
+    Args:
+        name (str): name of the logger.
     '''
 
     # disable module level logging of pysixdesk

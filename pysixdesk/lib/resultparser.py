@@ -77,13 +77,14 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
         else:
             task_table['status'] = 'Failed'
             content = f"The {jobtype} output file {out} for task {item} "\
-                    "doesn't exist! The job failed!"
+                      "doesn't exist! The job failed!"
             logger.warning(content)
     # clean the redundant sections
     keys = list(result_cf.keys())
     for tname in keys:
         if tname not in valid_tname:
             result_cf.pop(tname)
+
 
 def parse_file(out_f, task_table, result_table, tname):
     '''parse the files'''
@@ -125,6 +126,7 @@ def oneturn_sixtrack_results(lines, postlines):
         postlines.append(line)
     return status
 
+
 def six_results(lines, postlines):
     '''process the lines of fort.10'''
     status = True
@@ -150,17 +152,19 @@ def init_state(lines, postlines):
         postlines.append(line)
     return status
 
+
 def final_sate(lines, postlines):
     '''process the lines of final_state.dat'''
     status = True
     for perline in lines:
         line = perline.split()
         if len(line) != 12:
-           # logger.info(perline)
+            # logger.info(perline)
             line = 12*['None']
             status = False
         postlines.append(line)
     return status
+
 
 def aperture_losses(lines, postlines):
     '''process the lines of aperture_losses.dat'''
@@ -173,6 +177,7 @@ def aperture_losses(lines, postlines):
             status = False
         postlines.append(line)
     return status
+
 
 def collimation_losses(lines, postlines):
     '''process the lines of Coll_Scatter.dat'''

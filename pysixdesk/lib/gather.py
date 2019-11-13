@@ -8,13 +8,12 @@ import shutil
 import getpass
 import zipfile
 import logging
-import importlib
 
 from .pysixdb import SixDB
-from . import utils
 from .resultparser import parse_results
 
 logger = logging.getLogger(__name__)
+
 
 def run(wu_id, info, cluster):
     cf = {}
@@ -93,12 +92,12 @@ def gather_results(jobtype, cf, cluster):
         if os.path.isdir(job_path) and os.listdir(job_path):
             # parse the results
             parse_results(jobtype, item, job_path, file_list, task_table,
-                    result_cf)
+                          result_cf)
             coll_action = True
             where = 'task_id=%s' % item
             db.update(f'{jobtype}_task', task_table, where)
             for sec, vals in result_cf.items():
-                vals['task_id'] = [item,]*len(vals['mtime'])
+                vals['task_id'] = [item]*len(vals['mtime'])
                 db.insertm(sec, vals)
             if task_table['status'] == 'Success':
                 job_table['status'] = 'complete'
@@ -119,7 +118,7 @@ def gather_results(jobtype, cf, cluster):
             logger.warning(content)
         shutil.rmtree(job_path)
     if coll_action:
-        cluster.remove(studypath, 4) #remove the completed condor jobs
+        cluster.remove(studypath, 4)  # remove the completed condor jobs
     db.close()
 
 

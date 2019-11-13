@@ -54,7 +54,8 @@ class HTCondor(Cluster):
             task_ids (int): The task ids for submission
             trans (list): The python modules needed by the executables
             exe (str): The executable
-            exe_args (str): The additional arguments for executable except for wu_id
+            exe_args (str): The additional arguments for executable except for
+            wu_id.
             input_path (str): The folder with input files
             output_path (str): The output folder
             flavour (str): The queue types of HTCondor
@@ -119,8 +120,10 @@ class HTCondor(Cluster):
             args.append('-batch-name')
             args.append(job_name)
             try:
-                process = Popen(['condor_submit', '-terse', *args], stdout=PIPE,
-                                stderr=PIPE, universal_newlines=True)
+                process = Popen(['condor_submit', '-terse', *args],
+                                stdout=PIPE, stderr=PIPE,
+                                universal_newlines=True)
+
                 stdout, stderr = process.communicate()
                 self._logger.info(stdout)
                 if stderr:
@@ -143,7 +146,7 @@ class HTCondor(Cluster):
                 # this will catch the excpetion raised or any unexpected
                 # exception in the try block.
                 self._logger.error(e, exc_info=True)
-                self._logger.error(outs)
+                # self._logger.error(outs)
                 return False, None
         return False, None
 
@@ -213,7 +216,7 @@ class HTCondor(Cluster):
             self._logger.error(stderr)
             return ''
         else:
-            #self._logger.info(stdout)
+            # self._logger.info(stdout)
             return stdout
 
     def download_from_spool(self, study_path, *args, **kwargs):
@@ -222,9 +225,9 @@ class HTCondor(Cluster):
             args = args + ['-' + ky, kwargs[ky]]
         user_name = getpass.getuser()
         theargs = [user_name, '-const', 'JobStatus==4', '-const',
-                'regexp("%s", JobBatchName)' % study_path] + list(args)
+                   'regexp("%s", JobBatchName)' % study_path] + list(args)
         process = Popen(['condor_transfer_data', *theargs], stdout=PIPE,
-                stderr=PIPE, universal_newlines=True)
+                        stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
         self._logger.info(stdout)
         if stderr:
@@ -238,13 +241,13 @@ class HTCondor(Cluster):
             status (int): The job status. 0: unexpanded, 1:idle, 2:held,
             3:removed, 4:done, 5:held, 6:submission_err
         '''
-        if status not in [0,1,2,3,4,5,6]:
+        if status not in [0, 1, 2, 3, 4, 5, 6]:
             self._logger.error("Unknown job status %s!" % status)
             return False
         for ky in kwargs.keys():
             args = args + ['-' + ky, kwargs[ky]]
         theargs = ['-const', 'JobStatus==%s' % status, '-const',
-                'regexp("%s", JobBatchName)' % study_path] + list(args)
+                   'regexp("%s", JobBatchName)' % study_path] + list(args)
         process = Popen(['condor_rm', *theargs], stdout=PIPE,
                         stderr=PIPE, universal_newlines=True)
         stdout, stderr = process.communicate()
