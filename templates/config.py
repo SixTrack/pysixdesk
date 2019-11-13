@@ -3,7 +3,6 @@ This is a template file of preparing parameters for madx and sixtracking jobs.
 '''
 import os
 import ast
-import copy
 import logging
 
 from pysixdesk.lib import submission
@@ -21,7 +20,7 @@ study_path = os.path.dirname(__file__)
 log_path = os.path.join(study_path, 'pysixdesk.log')
 filehandler = logging.FileHandler(log_path)
 fmt = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
-        datefmt='%b/%d %H:%M:%S')
+                        datefmt='%b/%d %H:%M:%S')
 filehandler.setFormatter(fmt)
 filehandler.setLevel(logging.DEBUG)
 logger.addHandler(filehandler)
@@ -39,7 +38,7 @@ class MyStudy(Study):
 
         # Database type
         self.db_info['db_type'] = 'sql'
-        #self.db_info['db_type'] = 'mysql'
+        # self.db_info['db_type'] = 'mysql'
 
         # Get the default values for specified machine with specified runtype
         machine_params = MachineConfig('LHC').parameters('inj')
@@ -55,14 +54,14 @@ class MyStudy(Study):
         self.madx_params["QP"] = list(range(1, 1 + 1))
         # all octupole currents in the study
         self.madx_params["IOCT"] = list(range(100, 200 + 1, 100))
-        self.oneturn_sixtrack_input['temp'] = 'fort.3'
+        self.oneturn_sixtrack_input['fort_file'] = 'fort.3'
         self.oneturn_sixtrack_params.update(machine_params)
         self.sixtrack_params = dict(self.oneturn_sixtrack_params)
         self.sixtrack_params['turnss'] = int(1e2)  # number of turns to track (must be int)
         amp = [8, 10, 12]  # The amplitude
         self.sixtrack_params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
         self.sixtrack_params['kang'] = list(range(1, 1 + 1))  # The angle
-        self.sixtrack_input['temp'] = 'fort.3'
+        self.sixtrack_input['fort_file'] = 'fort.3'
         self.preprocess_output = dict(self.madx_output)
         self.sixtrack_input['input'] = dict(self.preprocess_output)
         # For CR
@@ -70,7 +69,7 @@ class MyStudy(Study):
         self.first_turn = 1
         self.last_turn = 100
 
-        ## The parameters for collimation job
+        # The parameters for collimation job
         # self.madx_output = {
         #     'fc.2': 'fort.2',
         #     'fc.3': 'fort.3.mad',
@@ -107,8 +106,8 @@ class MyStudy(Study):
         self.env['gamma'] = 7460.5
         self.env['kmax'] = 5
 
-        ## Update the user-define parameters and objects
-        self.customize()  ## This call is mandatory
+        # Update the user-define parameters and objects
+        self.customize()  # This call is mandatory
 
     def pre_calc(self, paramdict, pre_id):
         '''Further calculations for the specified parameters'''

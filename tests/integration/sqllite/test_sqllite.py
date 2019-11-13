@@ -23,7 +23,7 @@ class SqlLiteStudy:
     '''
     def sqllite_study(self, config="SqlLiteConfig"):
         self.ws.init_study(self.st_name)
-        self.assertEqual(self.ws.studies, [self.st_name])
+        self.assertTrue(self.st_name in self.ws.studies)
 
         self.st = self.ws.load_study(self.st_name,
                                      module_path=str(Path(__file__).parents[1] /

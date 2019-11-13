@@ -34,9 +34,11 @@ class WorkSpaceTest(unittest.TestCase):
         self.st = self.ws.load_study('unit_test_st')
 
         load_tables = set([('boinc_vars',),
-                           ('collimation_results',),
+                           # ('collimation_results',),
+                           ('final_state',),
+                           ('init_state',),
                            ('env',),
-                           ('oneturn_sixtrack_result',),
+                           ('oneturn_sixtrack_results',),
                            ('oneturn_sixtrack_wu',),
                            ('preprocess_task',),
                            ('preprocess_wu',),
