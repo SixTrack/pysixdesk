@@ -281,8 +281,6 @@ class TrackingJob:
 
         # concatenate
         utils.concatenate_files([dest, madx_fc3], output_file)
-        # if not source.samefile(output_file):
-        #     utils.diff(source, output_file, logger=self._logger)
 
     def sixtrack_run(self, output_file):
         """Runs sixtrack.
@@ -296,7 +294,6 @@ class TrackingJob:
         # write stdout to file
         outputlines = six_output.readlines()
         self._logger.info('Sixtrack is done!')
-        # output_name = Path.cwd().parent / (job_name + '.output')
 
         if outputlines:
             with open(output_file, 'w') as six_out:
@@ -305,10 +302,6 @@ class TrackingJob:
             # For some sixtrack version, the stdout will be automatically
             # written to fort.6
             shutil.copy2('fort.6', output_file)
-        # else:
-        #     self.output_files.append('fort.6')
-
-        # print(''.join(outputlines))
 
     def dl_output(self):
         """Downloads the output of the job.
@@ -438,7 +431,7 @@ class TrackingJob:
         """
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'
-        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16']
+        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16'] + self.cr_inputs
         with zipfile.ZipFile(input_zip, 'w', zipfile.ZIP_DEFLATED) as ziph:
             for infile in inputs:
                 if infile in os.listdir('.'):
@@ -534,8 +527,6 @@ if __name__ == '__main__':
             job_table['mtime'] = int(time.time() * 1E7)
             job.db.update('sixtrack_wu', job_table,
                           where=f'task_id={job.task_id}')
-            # this error msg is not correct.
-            # logger.error("Error during reconnection.")
         raise e
     finally:
         if job.db_type == 'mysql':
