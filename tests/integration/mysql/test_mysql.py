@@ -91,16 +91,16 @@ class MySqlDB(MySqlStudy, unittest.TestCase):
     def test_mysql_tudy(self):
         self.mysql_study(config='MySqlConfig')
 
-    # def tearDown(self):
-    #     # need to remove database
-    #     if self.st is not None and self.st.db_info['db_type'] == 'mysql':
-    #         conn = self.st.db.conn
-    #         with conn.cursor() as c:
-    #             sql = f"DROP DATABASE admin_{self.ws_name}_{self.st_name};"
-    #             c.execute(sql)
+    def tearDown(self):
+        # need to remove database
+        if self.st is not None and self.st.db_info['db_type'] == 'mysql':
+            conn = self.st.db.conn
+            with conn.cursor() as c:
+                sql = f"DROP DATABASE admin_{self.ws_name}_{self.st_name};"
+                c.execute(sql)
 
-    #     # remove directory
-    #     shutil.rmtree('integration_test', ignore_errors=True)
+        # remove directory
+        shutil.rmtree('integration_test', ignore_errors=True)
 
 
 if __name__ == '__main__':

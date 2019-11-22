@@ -80,6 +80,7 @@ class Study(object):
             'fc.8': 'fort.8',
             'fc.16': 'fort.16',
             'fc.34': 'fort.34'}
+
         # I think this can go
         # self.oneturn_sixtrack_params = OrderedDict([
         #     ("turnss", 1),
@@ -119,6 +120,7 @@ class Study(object):
         #     ("chromx", 2),
         #     ("chromy", 2)])
         # up to here
+
         self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
         self.sixtrack_output = ['fort.10']
 
@@ -229,6 +231,7 @@ class Study(object):
             table.init_oneturn_tables()
             table.customize_tables('oneturn_sixtrack_wu',
                                    self.params.oneturn)
+
             table.customize_tables('templates',
                                    ['fort_file'],
                                    'BLOB')
@@ -253,6 +256,7 @@ class Study(object):
                                'MEDIUMBLOB')
         table.customize_tables('sixtrack_wu', self.params.sixtrack )
         table.customize_tables('sixtrack_wu', self.params.phasespace)
+
         table.customize_tables('sixtrack_task', list(self.sixtrack_output),
                                'MEDIUMBLOB')
         table.customize_tables('boinc_vars', self.boinc_vars)
@@ -633,6 +637,7 @@ class Study(object):
         preprocess_outs = list(zip(*preprocess_outs))
         print('PRE_OUTS')
         print(preprocess_outs)
+
         if resubmit:
             constraints = "status='submitted'"
             action = 'resubmit'
@@ -712,6 +717,7 @@ class Study(object):
             sub_db.insertm('templates', temp_ins)
 
             constr = "wu_id in (%s)" % (','.join(map(str, outputs['preprocess_id'])))
+
             pre_outs = self.db.select('preprocess_wu', where=constr)
             names = list(self.tables['preprocess_wu'].keys())
             pre_ins = dict(zip(names, zip(*pre_outs)))

@@ -234,7 +234,7 @@ class HTCondor(Cluster):
             self._logger.error(stderr)
         return not process.returncode
 
-    def remove(self,study_path, status, *args, **kwargs):
+    def remove(self, study_path, status, *args, **kwargs):
         '''Cancel the submitted jobs
         Args:
             studypath (string): The absolute path of the study

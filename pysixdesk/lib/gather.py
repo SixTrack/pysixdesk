@@ -9,8 +9,6 @@ import getpass
 import zipfile
 import logging
 
-from ast import literal_eval
-
 from .pysixdb import SixDB
 from .resultparser import parse_results
 

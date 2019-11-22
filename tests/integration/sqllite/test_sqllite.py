@@ -99,9 +99,9 @@ class SqlDB(SqlLiteStudy, unittest.TestCase):
     def test_sqllite_study(self):
         self.sqllite_study(config='SqlLiteConfig')
 
-    # def tearDown(self):
-    #     # remove directory
-    #     shutil.rmtree('integration_test', ignore_errors=True)
+    def tearDown(self):
+        # remove directory
+        shutil.rmtree('integration_test', ignore_errors=True)
 
 
 if __name__ == '__main__':
