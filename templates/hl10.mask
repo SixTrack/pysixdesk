@@ -154,7 +154,8 @@ b_t_dist := %b_t_dist; !25 bunch separation [ns]
 emit_norm_x := %emit_norm_x * 1e-6; ! [um] --> [m]
 emit_norm_y := %emit_norm_y * 1e-6; ! [um] --> [m]
 Nb_0 := %bunch_charge;
-sigt_col := %sigz; ! bunch length [m] in collision
+sigt := %sigz; ! bunch length [m] in collision
+sige := %sige;
 gamma_rel := NRJ/pmass;
 epsx := emit_norm_x /gamma_rel;
 epsy := emit_norm_y /gamma_rel;
@@ -164,6 +165,10 @@ epsy := emit_norm_y /gamma_rel;
 qx00 = %inttunex;  !integer h tune
 qy00 = %inttuney;  !integer v tune
 tsplit = qx00 - qy00;   !new tune split
+qx0 = %tunex;
+qy0 = %tuney;
+qprimex = %qprimex;
+qprimey = %qprimey;
 
 if (NRJ<4999.9999){
 	!Inj. optics in thin lens
@@ -191,9 +196,9 @@ if (NRJ>5000.0000){
 };
 
 if (mylhcbeam<3){
-	Beam, particle=proton, sequence=lhcb1, energy=NRJ, sigt=%sigz, bv=1, NPART=Nb_0, sige=%sige, ex=epsx, ey=epsy;
+	Beam, particle=proton, sequence=lhcb1, energy=NRJ, sigt=sigt, bv=1, NPART=Nb_0, sige=sige, ex=epsx, ey=epsy;
 };
-Beam, particle=proton, sequence=lhcb2, energy=NRJ, sigt=%sigz, bv=bvaux, NPART=Nb_0, sige=%sige, ex=epsx, ey=epsy;
+Beam, particle=proton, sequence=lhcb2, energy=NRJ, sigt=sigt, bv=bvaux, NPART=Nb_0, sige=sige, ex=epsx, ey=epsy;
 
 
 
@@ -959,14 +964,14 @@ lmdif,  calls=100, tolerance=1.0E-12;
 endmatch;
 
 match,chrom;
-global, dq1=qprime, dq2=qprime;
+global, dq1=qprimex, dq2=qprimey;
 vary,   name=ksf;
 vary,   name=ksd;
 lmdif,  calls=100, tolerance=1.0E-12;
 endmatch;
 
 match,chrom;
-global, dq1=qprime, dq2=qprime;
+global, dq1=qprimex, dq2=qprimey;
 global, q1=qx0, q2=qy0;
 vary,   name=ksf;
 vary,   name=ksd;

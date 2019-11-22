@@ -15,23 +15,20 @@ else:
 import pysixdesk
 
 
-class MySqlDB(unittest.TestCase):
-    def setUp(self):
-        self.test_folder = Path('integration_test/mysql')
-        self.test_folder.mkdir(parents=True, exist_ok=True)
-        self.ws_name = 'integration_test'
-        self.ws = pysixdesk.WorkSpace(str(self.test_folder / self.ws_name))
-        self.st_name = 'mysql'
-        self.st = None
-
-    def test_mysql_study(self):
+class MySqlStudy:
+    '''Runs a typical MySql test.
+    Note, this method is not supposed to run on it's own, it must be subclassed
+    and combined with the unittest.TestCase class for the self.assertEqual,
+    self.assertTrue, and other attributes/methods to be defined.
+    '''
+    def mysql_study(self, config='MySqlConfig'):
         self.ws.init_study(self.st_name)
-        self.assertEqual(self.ws.studies, [self.st_name])
+        self.assertTrue(self.st_name in self.ws.studies)
 
         self.st = self.ws.load_study(self.st_name,
                                      module_path=str(Path(__file__).parents[1] /
                                                      'variable_config.py'),
-                                     class_name='MySqlConfig')
+                                     class_name=config)
         self.assertEqual(self.st.db_info['db_type'], 'mysql')
 
         self.st.update_db()
@@ -39,7 +36,7 @@ class MySqlDB(unittest.TestCase):
         self.st.prepare_preprocess_input()
         in_files = set(os.listdir(Path(self.st.study_path) / 'preprocess_input'))
         out_folders = set(os.listdir(Path(self.st.study_path) / 'preprocess_output'))
-        self.assertEqual(in_files, set(['db.ini',
+        self.assertEqual(in_files, set(['input.ini',
                                         'job_id.list',
                                         'htcondor_run.sub']))
         where = "status='incomplete'"
@@ -54,7 +51,7 @@ class MySqlDB(unittest.TestCase):
         print('waiting for preprocess job to finish...')
         while self.st.submission.check_running(self.st.study_path) is None\
                 or len(self.st.submission.check_running(self.st.study_path)) >= 1:
-            time.sleep(30)
+            time.sleep(10)
         # TODO: add a check on the output of the preprocess job
 
         self.st.prepare_sixtrack_input()
@@ -75,22 +72,35 @@ class MySqlDB(unittest.TestCase):
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)),
                          len(six_wu_ids))
 
-        print('waiting for sxitrack job to finish...')
+        print('waiting for sixtrack job to finish...')
         while self.st.submission.check_running(self.st.study_path) is None\
                 or len(self.st.submission.check_running(self.st.study_path)) >= 1:
-            time.sleep(60)
+            time.sleep(10)
         # TODO: add a check on the output of the sixtrack job
 
-    def tearDown(self):
-        # need to remove database
-        if self.st is not None and self.st.db_info['db_type'] == 'mysql':
-            conn = self.st.db.conn
-            with conn.cursor() as c:
-                sql = f"DROP DATABASE admin_{self.ws_name}_{self.st_name};"
-                c.execute(sql)
 
-        # remove directory
-        shutil.rmtree('integration_test', ignore_errors=True)
+class MySqlDB(MySqlStudy, unittest.TestCase):
+    def setUp(self):
+        self.test_folder = Path('integration_test/mysql')
+        self.test_folder.mkdir(parents=True, exist_ok=True)
+        self.ws_name = 'integration_test'
+        self.ws = pysixdesk.WorkSpace(str(self.test_folder / self.ws_name))
+        self.st_name = 'mysql_params'
+        self.st = None
+
+    def test_mysql_tudy(self):
+        self.mysql_study(config='MySqlConfig')
+
+    # def tearDown(self):
+    #     # need to remove database
+    #     if self.st is not None and self.st.db_info['db_type'] == 'mysql':
+    #         conn = self.st.db.conn
+    #         with conn.cursor() as c:
+    #             sql = f"DROP DATABASE admin_{self.ws_name}_{self.st_name};"
+    #             c.execute(sql)
+
+    #     # remove directory
+    #     shutil.rmtree('integration_test', ignore_errors=True)
 
 
 if __name__ == '__main__':

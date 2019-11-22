@@ -1,0 +1,17 @@
+
+The first_turn column in sixtrack_wu needs to be None for the sixtrack job to run. --> this is confusing and inconsistent
+
+The keys in the [fort3] section of the input.ini are only used to get the column names of the sixtrack_wu table, the values are unused. --> it could just be a list of column names...
+
+How to control the toggling of fort blocks ?
+
+oneturn_sixtrack_wu is empty ?
+oneturn_sixtrack_results.row_num is always 1 ?
+six_results.row_num is always 1 ?
+
+consistent naming scheme of study parameters
+--> no all caps vars ?
+--> sixtrack style ition, icml, amp1 amp0, q1, q2, qprimex... ? 
+--> python style snake case ? transition, amp_1, amp_0, tune_x, tune_y, chrom_x, ... ?
+--> camel case ?
+

@@ -2,7 +2,6 @@
 This is a template file of preparing parameters for madx and sixtracking jobs.
 '''
 import os
-import copy
 import logging
 
 from pysixdesk.lib import submission
@@ -17,11 +16,14 @@ logger.setLevel(logging.INFO)
 
 # To add logging to file, do:
 # -----------------------------------------------------------------------------
-# filehandler = logging.FileHandler(log_path)
-# filehandler.setFormatter(logging.Formatter(format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-#                                            datefmt='%H:%M:%S'))
-# filehandler.setLevel(logging.DEBUG)
-# logger.addHandler(filehandler)
+study_path = os.path.dirname(__file__)
+log_path = os.path.join(study_path, 'pysixdesk.log')
+filehandler = logging.FileHandler(log_path)
+fmt = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s',
+                        datefmt='%b/%d %H:%M:%S')
+filehandler.setFormatter(fmt)
+filehandler.setLevel(logging.DEBUG)
+logger.addHandler(filehandler)
 # -----------------------------------------------------------------------------
 
 
@@ -34,14 +36,9 @@ class MyStudy(Study):
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
 
-        # Add database informations
+        # Database type
         self.db_info['db_type'] = 'sql'
         # self.db_info['db_type'] = 'mysql'
-        # The follow information is needed when the db type is mysql
-        # self.db_info['host'] = 'dbod-gc023'
-        # self.db_info['port'] = '5500'
-        # self.db_info['user'] = 'admin'
-        # self.db_info['passwd'] = 'pysixdesk'
 
         self.oneturn = True  # Switch for oneturn sixtrack job
         # self.collimation = True
@@ -56,12 +53,15 @@ class MyStudy(Study):
                                   machine_defaults=machineparams.HLLHC['col'])
         self.params['Runnam'] = name
         amp = [8, 10, 12]
-        self.params['turnss'] = int(1e3)
+        self.params['turnss'] = int(1e2)  # number of turns to track (must be int)
         self.params['nss'] = 30
         self.params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
         self.params['kang'] = list(range(1, 1 + 2))  # The angle
         self.params['kmax'] = 5
-        self.params['toggle_coll/'] = ''
+        # self.params['toggle_coll/'] = '/'
+        self.params['SEEDRAN'] = [1, 2]
+        self.params['I_MO'] = list(range(100, 200 + 1, 100))
+        print(self.params)
 
         @set_property('input_keys', ['kang', 'kmax'])
         @set_property('output_keys', ['angle'])
@@ -81,7 +81,7 @@ class MyStudy(Study):
         self.params.calc_queue.append(calc_ratio)
 
         # should it not be betax and betax2 ?
-        @set_property('require', {'oneturn_sixtrack_result': ['betax', 'betax2']})
+        @set_property('require', {'oneturn_sixtrack_results': ['betax', 'betax2']})
         @set_property('input_keys', ['angle', 'ratio', 'emit_norm_x', 'e0', 'pmass', 'amp'])
         @set_property('output_keys', ['ax0s', 'ax1s'])
         def calc_amp(angle, ratio, emit, e0, pmass, amp, betax=None, betax2=None):
@@ -91,11 +91,11 @@ class MyStudy(Study):
             return amp[0] * ax0t, amp[1] * ax0t
         self.params.calc_queue.append(calc_amp)
 
-        self.oneturn_sixtrack_input['temp'] = ['fort.3']
+        self.oneturn_sixtrack_input['fort_file'] = 'fort.3'
         self.oneturn_sixtrack_output = ['oneturnresult']
-        self.sixtrack_input['temp'] = ['fort.3']
-        self.preprocess_output = copy.deepcopy(self.madx_output)
-        self.sixtrack_input['input'] = self.preprocess_output
+        self.sixtrack_input['fort_file'] = 'fort.3'
+        self.preprocess_output = dict(self.madx_output)
+        self.sixtrack_input['input'] = dict(self.preprocess_output)
 
         # # The parameters for collimation job
         # self.madx_output = {
@@ -105,8 +105,9 @@ class MyStudy(Study):
         #     'fc.8': 'fort.8'}
         # self.collimation_input = {'aperture':'allapert.b1',
         #         'survey':'SurveyWithCrossing_XP_lowb.dat'}
-        # self.preprocess_output = copy.deepcopy(self.madx_output)
-        # self.sixtrack_input['temp'] = ['fort.3']
+        # self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
+        # self.preprocess_output = dict(self.madx_output)
+        # self.sixtrack_input['temp'] = 'fort.3'
         # self.sixtrack_input['input'] = self.preprocess_output
         # self.sixtrack_input['additional_input'] = ['CollDB.data']
         # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat']

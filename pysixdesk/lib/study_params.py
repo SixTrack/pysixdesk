@@ -43,7 +43,7 @@ class StudyParams:
         # comment regexp
         self._reg_comment = re.compile(r'^(\s?!|\s?/).*', re.MULTILINE)
         # placeholder pattern regexp
-        self._reg = re.compile(r'%(?!FILE|%)([a-zA-Z0-9_]+/?)')
+        self._reg = re.compile(r'%([a-zA-Z0-9_]+/?)')
         self.fort_path = fort_path
         self.mask_path = mask_path
         # initialize empty calculation queue
@@ -67,7 +67,7 @@ class StudyParams:
                             "idfor": 0,
                             "imc": 1,
                             "ilin": 1,
-                            "ition": 0,
+                            "ition": 1,  # This control above or below transition, should be auto depending on energy ?
                             "length": 26658.864,
                             "ndafi": 1,
                             "nss": 30,  # should this be 60? 30?
@@ -78,7 +78,7 @@ class StudyParams:
                             # these toggle_*: aren't very pretty.
                             "toggle_post/": '',  # '' --> on, '/' --> off
                             "toggle_diff/": '/',  # '' --> on, '/' --> off
-                            "toggle_coll/": '',  # '' --> off, '/' --> on
+                            "toggle_coll/": '/',  # '' --> on, '/' --> off
                             "writebins": 1,
                             }
         self.machine_defaults = machine_defaults
@@ -101,6 +101,10 @@ class StudyParams:
         sixtrack['turnss'] = 1
         sixtrack['nss'] = 1
         sixtrack['Runnam'] = 'FirstTurn'
+        # oneturn job must output fort.10 --> POST block
+        # oneturn job cannot do collimation
+        sixtrack['toggle_post/'] = ''
+        sixtrack['toggle_coll/'] = '/'
         return sixtrack
 
     def keys(self):
@@ -139,7 +143,7 @@ class StudyParams:
             keep_none (bool, optional): if True, keeps the None entries in the
             output dict.
             mandatory (list, optional): if provided will add the keys in the
-            provided list to the output dict, regardless is they are found in
+            provided list to the output dict, regardless if they are found in
             the file.
 
         Returns:
@@ -164,14 +168,14 @@ class StudyParams:
             self._logger.debug(f'{k}: {v}')
         return out
 
-    def calc(self, params, wu_id=None, get_val_db=None, require=None):
+    def calc(self, params, task_id=None, get_val_db=None, require=None):
         """Runs the queued calculations, in order. The output of the queue is put
         in and a dictionnary containing the calculation results is returned.
 
         Args:
             params (dict): One element of the cartesian product of the
             parameter dicts.
-            wu_id (int): wu_id of the require parameters, when fetching the
+            task_id (int): task_id of the require parameters, when fetching the
             data from the database.
             get_val_db (SixDB, optional): SixDB object to fecth values from db
             in for the calculations.
@@ -196,7 +200,7 @@ class StudyParams:
             # filter inputs from params
             inputs = [params[k] for k in getattr(fun, 'input_keys', [])]
             # get additionnal kwargs from db
-            required = self._get_required_values(get_val_db, fun, wu_id)
+            required = self._get_required_values(get_val_db, fun, task_id)
             # run functions
             output = fun(*inputs, **required)
             if not isinstance(output, tuple):
@@ -239,14 +243,14 @@ class StudyParams:
                     queue.append(f)
         return queue
 
-    def _get_required_values(self, db, fun, wu_id):
+    def _get_required_values(self, db, fun, task_id):
         '''
         Gets the values needed in the dict fun.require from the database.
 
         Args:
             db (SicDB): Database from which to extract the values.
             fun (callable): calculation queue function.
-            wu_id (int): wu_id of the row from which to fetch the parameter
+            task_id (int): task_id of the row from which to fetch the parameter
             values.
 
         Returns:
@@ -258,7 +262,7 @@ class StudyParams:
         for r_table, r_list in fun.require.items():
             if not isinstance(r_list, list):
                 r_list = [r_list]
-            r_values = db.select(r_table, r_list, where=f'wu_id={wu_id}')
+            r_values = db.select(r_table, r_list, where=f'task_id={task_id}')
             # convert columns to list of list
             r_values = zip(*r_values)
             required.update({k: v[0] for k, v in zip(r_list, r_values)})

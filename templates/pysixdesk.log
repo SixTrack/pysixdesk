@@ -1,0 +1,1523 @@
+Nov/14 14:43:22 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 14:45:50 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 14:46:50 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 14:52:11 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 14:54:27 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:11:11 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:11:11 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 15:11:11 pysixdesk.lib.submission INFO: 802.0 - 802.0
+
+Nov/14 15:11:11 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 15:14:02 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 15:17:57 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:17:58 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 15:17:58 pysixdesk.lib.submission INFO: 803.0 - 803.0
+
+Nov/14 15:17:58 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 15:20:49 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 15:24:09 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:24:19 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:24:19 pysixdesk.lib.dbadaptor WARNING: The db admin_integration_test_mysql_params already exist!
+Nov/14 15:24:19 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 15:24:19 pysixdesk.lib.submission INFO: 804.0 - 804.0
+
+Nov/14 15:24:19 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 15:25:50 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:25:51 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 15:25:51 pysixdesk.lib.submission INFO: 805.0 - 805.0
+
+Nov/14 15:25:51 pysixdesk.lib.submission ERROR: There is something wrong during submitting!
+Nov/14 15:25:51 pysixdesk.lib.submission INFO: 
+Nov/14 15:25:51 pysixdesk.lib.submission ERROR: Usage: condor_submit [options] [<attrib>=<value>] [- | <submit-file>]
+    [options] are
+	-file <submit-file>	Read Submit commands from <submit-file>
+	-terse  		Display terse output, jobid ranges only
+	-verbose		Display verbose output, jobid and full job ClassAd
+	-debug  		Display debugging output
+	-append <line>		add line to submit file before processing
+	              		(overrides submit file; multiple -a lines ok)
+	-queue <queue-opts>	append Queue statement to submit file before processing
+	                   	(submit file must not already have a Queue statement)
+	-batch-name <name>	append a line to submit file that sets the batch name
+	-disable		disable file permission checks
+	-dry-run <filename>	process submit file and write ClassAd attributes to <filename>
+	        		but do not actually submit the job(s) to the SCHEDD
+	-maxjobs <maxjobs>	Do not submit if number of jobs would exceed <maxjobs>.
+	-single-cluster		Do not submit if more than one ClusterId is needed.
+	-unused			toggles unused or unexpanded macro warnings
+	       			(overrides config file; multiple -u flags ok)
+	-allow-crlf-script	Allow submitting #! executable script with DOS/CRLF line endings
+	-dump <filename>	Write job ClassAds to <filename> instead of
+	                	submitting to a schedd.
+	-interactive		submit an interactive session job
+	-name <name>		submit to the specified schedd
+	-remote <name>		submit to the specified remote schedd
+	              		(implies -spool)
+	-addr <ip:port>		submit to schedd at given "sinful string"
+	-spool			spool all files to the schedd
+	-password <password>	specify password to MyProxy server
+	-pool <host>		Use host as the central manager to query
+	-stm <method>		How to move a sandbox into HTCondor
+	             		<methods> is one of: stm_use_schedd_only
+	             		                     stm_use_transferd
+	<attrib>=<value>	Set <attrib>=<value> before reading the submit file.
+
+    If <submit-file> is omitted or is -, and a -queue is not provided, submit commands
+     are read from stdin. Use of - implies verbose output unless -terse is specified
+
+Nov/14 15:25:51 pysixdesk.lib.submission ERROR: There is something wrong during submitting!
+Nov/14 15:25:51 pysixdesk.lib.submission INFO: 
+Nov/14 15:25:51 pysixdesk.lib.submission ERROR: Usage: condor_submit [options] [<attrib>=<value>] [- | <submit-file>]
+    [options] are
+	-file <submit-file>	Read Submit commands from <submit-file>
+	-terse  		Display terse output, jobid ranges only
+	-verbose		Display verbose output, jobid and full job ClassAd
+	-debug  		Display debugging output
+	-append <line>		add line to submit file before processing
+	              		(overrides submit file; multiple -a lines ok)
+	-queue <queue-opts>	append Queue statement to submit file before processing
+	                   	(submit file must not already have a Queue statement)
+	-batch-name <name>	append a line to submit file that sets the batch name
+	-disable		disable file permission checks
+	-dry-run <filename>	process submit file and write ClassAd attributes to <filename>
+	        		but do not actually submit the job(s) to the SCHEDD
+	-maxjobs <maxjobs>	Do not submit if number of jobs would exceed <maxjobs>.
+	-single-cluster		Do not submit if more than one ClusterId is needed.
+	-unused			toggles unused or unexpanded macro warnings
+	       			(overrides config file; multiple -u flags ok)
+	-allow-crlf-script	Allow submitting #! executable script with DOS/CRLF line endings
+	-dump <filename>	Write job ClassAds to <filename> instead of
+	                	submitting to a schedd.
+	-interactive		submit an interactive session job
+	-name <name>		submit to the specified schedd
+	-remote <name>		submit to the specified remote schedd
+	              		(implies -spool)
+	-addr <ip:port>		submit to schedd at given "sinful string"
+	-spool			spool all files to the schedd
+	-password <password>	specify password to MyProxy server
+	-pool <host>		Use host as the central manager to query
+	-stm <method>		How to move a sandbox into HTCondor
+	             		<methods> is one of: stm_use_schedd_only
+	             		                     stm_use_transferd
+	<attrib>=<value>	Set <attrib>=<value> before reading the submit file.
+
+    If <submit-file> is omitted or is -, and a -queue is not provided, submit commands
+     are read from stdin. Use of - implies verbose output unless -terse is specified
+
+Nov/14 15:25:51 pysixdesk.lib.submission ERROR: There is something wrong during submitting!
+Nov/14 15:25:51 pysixdesk.lib.submission INFO: 
+Nov/14 15:25:51 pysixdesk.lib.submission ERROR: Usage: condor_submit [options] [<attrib>=<value>] [- | <submit-file>]
+    [options] are
+	-file <submit-file>	Read Submit commands from <submit-file>
+	-terse  		Display terse output, jobid ranges only
+	-verbose		Display verbose output, jobid and full job ClassAd
+	-debug  		Display debugging output
+	-append <line>		add line to submit file before processing
+	              		(overrides submit file; multiple -a lines ok)
+	-queue <queue-opts>	append Queue statement to submit file before processing
+	                   	(submit file must not already have a Queue statement)
+	-batch-name <name>	append a line to submit file that sets the batch name
+	-disable		disable file permission checks
+	-dry-run <filename>	process submit file and write ClassAd attributes to <filename>
+	        		but do not actually submit the job(s) to the SCHEDD
+	-maxjobs <maxjobs>	Do not submit if number of jobs would exceed <maxjobs>.
+	-single-cluster		Do not submit if more than one ClusterId is needed.
+	-unused			toggles unused or unexpanded macro warnings
+	       			(overrides config file; multiple -u flags ok)
+	-allow-crlf-script	Allow submitting #! executable script with DOS/CRLF line endings
+	-dump <filename>	Write job ClassAds to <filename> instead of
+	                	submitting to a schedd.
+	-interactive		submit an interactive session job
+	-name <name>		submit to the specified schedd
+	-remote <name>		submit to the specified remote schedd
+	              		(implies -spool)
+	-addr <ip:port>		submit to schedd at given "sinful string"
+	-spool			spool all files to the schedd
+	-password <password>	specify password to MyProxy server
+	-pool <host>		Use host as the central manager to query
+	-stm <method>		How to move a sandbox into HTCondor
+	             		<methods> is one of: stm_use_schedd_only
+	             		                     stm_use_transferd
+	<attrib>=<value>	Set <attrib>=<value> before reading the submit file.
+
+    If <submit-file> is omitted or is -, and a -queue is not provided, submit commands
+     are read from stdin. Use of - implies verbose output unless -terse is specified
+
+Nov/14 15:25:51 pysixdesk.lib.submission ERROR: There is something wrong during submitting!
+Nov/14 15:25:51 pysixdesk.lib.submission INFO: 
+Nov/14 15:25:51 pysixdesk.lib.submission ERROR: Usage: condor_submit [options] [<attrib>=<value>] [- | <submit-file>]
+    [options] are
+	-file <submit-file>	Read Submit commands from <submit-file>
+	-terse  		Display terse output, jobid ranges only
+	-verbose		Display verbose output, jobid and full job ClassAd
+	-debug  		Display debugging output
+	-append <line>		add line to submit file before processing
+	              		(overrides submit file; multiple -a lines ok)
+	-queue <queue-opts>	append Queue statement to submit file before processing
+	                   	(submit file must not already have a Queue statement)
+	-batch-name <name>	append a line to submit file that sets the batch name
+	-disable		disable file permission checks
+	-dry-run <filename>	process submit file and write ClassAd attributes to <filename>
+	        		but do not actually submit the job(s) to the SCHEDD
+	-maxjobs <maxjobs>	Do not submit if number of jobs would exceed <maxjobs>.
+	-single-cluster		Do not submit if more than one ClusterId is needed.
+	-unused			toggles unused or unexpanded macro warnings
+	       			(overrides config file; multiple -u flags ok)
+	-allow-crlf-script	Allow submitting #! executable script with DOS/CRLF line endings
+	-dump <filename>	Write job ClassAds to <filename> instead of
+	                	submitting to a schedd.
+	-interactive		submit an interactive session job
+	-name <name>		submit to the specified schedd
+	-remote <name>		submit to the specified remote schedd
+	              		(implies -spool)
+	-addr <ip:port>		submit to schedd at given "sinful string"
+	-spool			spool all files to the schedd
+	-password <password>	specify password to MyProxy server
+	-pool <host>		Use host as the central manager to query
+	-stm <method>		How to move a sandbox into HTCondor
+	             		<methods> is one of: stm_use_schedd_only
+	             		                     stm_use_transferd
+	<attrib>=<value>	Set <attrib>=<value> before reading the submit file.
+
+    If <submit-file> is omitted or is -, and a -queue is not provided, submit commands
+     are read from stdin. Use of - implies verbose output unless -terse is specified
+
+Nov/14 15:25:51 pysixdesk.lib.submission ERROR: There is something wrong during submitting!
+Nov/14 15:25:51 pysixdesk.lib.study ERROR: Failed to submit preprocess job!
+Nov/14 15:25:51 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 15:28:55 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:28:56 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 15:28:56 pysixdesk.lib.submission INFO: 806.0 - 806.2
+
+Nov/14 15:28:56 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 15:32:27 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 15:36:33 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:36:34 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 15:36:34 pysixdesk.lib.submission INFO: 807.0 - 807.3
+
+Nov/14 15:36:34 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 15:39:45 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 15:43:53 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:43:53 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 15:43:53 pysixdesk.lib.submission INFO: 808.0 - 808.3
+
+Nov/14 15:43:53 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 15:46:54 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 15:48:48 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 15:48:49 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 15:48:49 pysixdesk.lib.submission INFO: 809.0 - 809.3
+
+Nov/14 15:48:49 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 15:52:00 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 16:13:12 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 16:13:13 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 16:13:13 pysixdesk.lib.submission INFO: 810.0 - 810.3
+
+Nov/14 16:13:13 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 16:16:24 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 16:23:22 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 16:23:23 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 16:23:23 pysixdesk.lib.submission INFO: 811.0 - 811.3
+
+Nov/14 16:23:23 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 16:26:54 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 16:28:27 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 16:28:28 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 16:28:28 pysixdesk.lib.submission INFO: 812.0 - 812.3
+
+Nov/14 16:28:28 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 16:32:09 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 16:38:13 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 16:38:14 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 16:38:14 pysixdesk.lib.submission INFO: 813.0 - 813.3
+
+Nov/14 16:38:14 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 16:41:55 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 16:58:53 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 16:58:54 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 16:58:54 pysixdesk.lib.submission INFO: 814.0 - 814.3
+
+Nov/14 16:58:54 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 17:02:25 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 17:14:08 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 17:14:09 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 17:14:09 pysixdesk.lib.submission INFO: 815.0 - 815.3
+
+Nov/14 17:14:09 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_17 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_18 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_19 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_20 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_21 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_22 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_23 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_24 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_25 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_26 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_27 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_28 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_29 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_30 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_31 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_32 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_33 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_34 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_35 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_36 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_37 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_38 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_39 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_40 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_41 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_42 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_43 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_44 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_45 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_46 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_47 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_48 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_49 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_50 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_51 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_52 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_53 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_54 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_55 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_56 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_57 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_58 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_59 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_60 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_61 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_62 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_63 into database!
+Nov/14 17:17:40 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_64 into database!
+Nov/14 17:17:41 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 17:22:43 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 17:22:43 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 17:22:44 pysixdesk.lib.submission INFO: 816.0 - 816.3
+
+Nov/14 17:22:44 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 17:26:15 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 17:32:36 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 17:32:36 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 17:32:36 pysixdesk.lib.submission INFO: 817.0 - 817.3
+
+Nov/14 17:32:36 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 17:36:08 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 17:42:58 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 17:42:58 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 17:42:58 pysixdesk.lib.submission INFO: 818.0 - 818.3
+
+Nov/14 17:42:59 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 17:46:30 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 17:49:11 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 17:49:12 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 17:49:12 pysixdesk.lib.submission INFO: 819.0 - 819.3
+
+Nov/14 17:49:12 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 17:52:43 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 17:56:52 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 17:56:53 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 17:56:53 pysixdesk.lib.submission INFO: 820.0 - 820.3
+
+Nov/14 17:56:53 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/14 18:00:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/14 18:00:24 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 18:10:31 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 18:10:31 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 18:10:31 pysixdesk.lib.submission INFO: 821.0 - 821.3
+
+Nov/14 18:10:31 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/14 18:14:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/14 18:14:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/14 18:14:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/14 18:14:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/14 18:14:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/14 18:14:03 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 18:22:42 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 18:22:42 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 18:22:42 pysixdesk.lib.submission INFO: 822.0 - 822.3
+
+Nov/14 18:22:42 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/14 18:26:13 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/14 18:26:14 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 18:33:06 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 18:33:07 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 18:33:07 pysixdesk.lib.submission INFO: 823.0 - 823.3
+
+Nov/14 18:33:07 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/14 18:36:38 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/14 18:36:38 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 18:38:10 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 18:38:11 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 18:38:11 pysixdesk.lib.submission INFO: 824.0 - 824.3
+
+Nov/14 18:38:11 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/14 18:41:42 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/14 18:41:43 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 18:41:43 pysixdesk.lib.submission INFO: 825.0 - 825.15
+
+Nov/14 18:41:43 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/14 18:41:53 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/14 19:09:48 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 19:09:48 pysixdesk.lib.dbadaptor WARNING: The db admin_integration_test_mysql_params already exist!
+Nov/14 19:09:48 pysixdesk.lib.study WARNING: The job hl10_lhcbeam_1_e0_7000000.0_I_MO_100_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_inttunex_62.0_inttuney_60.0_sige_0.00011_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_1_rfvol_16.0 is already in the database!
+Nov/14 19:09:48 pysixdesk.lib.study WARNING: The job hl10_lhcbeam_1_e0_7000000.0_I_MO_100_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_inttunex_62.0_inttuney_60.0_sige_0.00011_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_2_rfvol_16.0 is already in the database!
+Nov/14 19:09:48 pysixdesk.lib.study WARNING: The job hl10_lhcbeam_1_e0_7000000.0_I_MO_200_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_inttunex_62.0_inttuney_60.0_sige_0.00011_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_1_rfvol_16.0 is already in the database!
+Nov/14 19:09:48 pysixdesk.lib.study WARNING: The job hl10_lhcbeam_1_e0_7000000.0_I_MO_200_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_inttunex_62.0_inttuney_60.0_sige_0.00011_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_2_rfvol_16.0 is already in the database!
+Nov/14 19:09:48 pysixdesk.lib.study WARNING: There isn't incomplete preprocess job!
+Nov/14 19:10:04 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 19:10:04 pysixdesk.lib.dbadaptor WARNING: The db admin_integration_test_mysql_params already exist!
+Nov/14 19:10:04 pysixdesk.lib.study WARNING: The job hl10_lhcbeam_1_e0_7000000.0_I_MO_100_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_inttunex_62.0_inttuney_60.0_sige_0.00011_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_1_rfvol_16.0 is already in the database!
+Nov/14 19:10:04 pysixdesk.lib.study WARNING: The job hl10_lhcbeam_1_e0_7000000.0_I_MO_100_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_inttunex_62.0_inttuney_60.0_sige_0.00011_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_2_rfvol_16.0 is already in the database!
+Nov/14 19:10:04 pysixdesk.lib.study WARNING: The job hl10_lhcbeam_1_e0_7000000.0_I_MO_200_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_inttunex_62.0_inttuney_60.0_sige_0.00011_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_1_rfvol_16.0 is already in the database!
+Nov/14 19:10:04 pysixdesk.lib.study WARNING: The job hl10_lhcbeam_1_e0_7000000.0_I_MO_200_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_inttunex_62.0_inttuney_60.0_sige_0.00011_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_2_rfvol_16.0 is already in the database!
+Nov/14 19:10:04 pysixdesk.lib.study WARNING: There isn't incomplete preprocess job!
+Nov/14 19:10:45 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/14 19:10:45 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 19:10:45 pysixdesk.lib.submission INFO: 830.0 - 830.3
+
+Nov/14 19:10:46 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/14 19:14:17 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/14 19:14:17 pysixdesk.lib.submission INFO: 831.0 - 831.15
+
+Nov/14 19:14:17 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/14 19:14:27 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/15 09:46:15 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/15 09:46:16 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 09:46:16 pysixdesk.lib.submission INFO: 117.0 - 117.3
+
+Nov/15 09:46:16 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/15 09:50:49 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 09:50:49 pysixdesk.lib.submission INFO: 118.0 - 118.15
+
+Nov/15 09:50:49 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/15 09:51:09 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/15 10:02:44 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/15 10:02:45 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 10:02:45 pysixdesk.lib.submission INFO: 119.0 - 119.3
+
+Nov/15 10:02:45 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/15 10:07:07 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 10:07:07 pysixdesk.lib.submission INFO: 120.0 - 120.15
+
+Nov/15 10:07:07 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/15 10:07:27 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/15 10:14:43 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/15 10:14:44 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 10:14:44 pysixdesk.lib.submission INFO: 121.0 - 121.3
+
+Nov/15 10:14:44 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/15 10:18:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/15 10:18:55 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 10:18:56 pysixdesk.lib.submission INFO: 122.0 - 122.15
+
+Nov/15 10:18:56 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/15 10:20:56 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/15 10:28:46 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/15 10:28:47 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 10:28:47 pysixdesk.lib.submission INFO: 123.0 - 123.3
+
+Nov/15 10:28:47 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/15 10:33:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/15 10:33:08 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 10:33:09 pysixdesk.lib.submission INFO: 124.0 - 124.15
+
+Nov/15 10:33:09 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/15 10:35:09 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/15 11:15:45 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/15 11:15:46 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 11:15:46 pysixdesk.lib.submission INFO: 128.0 - 128.3
+
+Nov/15 11:15:46 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/15 11:19:57 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/15 11:19:58 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 11:19:58 pysixdesk.lib.submission INFO: 129.0 - 129.15
+
+Nov/15 11:19:58 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/15 11:22:19 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/15 12:17:42 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/15 12:17:42 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 12:17:43 pysixdesk.lib.submission INFO: 132.0 - 132.3
+
+Nov/15 12:17:43 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/15 12:21:44 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/15 12:21:44 pysixdesk.lib.submission INFO: 133.0 - 133.15
+
+Nov/15 12:21:44 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/15 12:22:35 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 10:46:19 pysixdesk.lib.workspace INFO: Study mysql_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql/integration_test/studies/mysql_params 
+
+Nov/22 10:46:20 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 10:46:20 pysixdesk.lib.submission INFO: 135.0 - 135.3
+
+Nov/22 10:46:20 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 10:50:21 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 10:50:21 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 10:50:21 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 10:50:21 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 10:50:21 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 10:50:21 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 10:50:22 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 10:50:22 pysixdesk.lib.submission INFO: 136.0 - 136.15
+
+Nov/22 10:50:22 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 10:51:23 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 10:57:32 pysixdesk.lib.workspace INFO: Study mysql_coll_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_coll/integration_test/studies/mysql_coll_params 
+
+Nov/22 11:00:12 pysixdesk.lib.workspace INFO: Study mysql_coll_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_coll/integration_test/studies/mysql_coll_params 
+
+Nov/22 11:00:15 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 11:00:15 pysixdesk.lib.submission INFO: 137.0 - 137.3
+
+Nov/22 11:00:15 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 11:04:07 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 11:04:07 pysixdesk.lib.submission INFO: 138.0 - 138.15
+
+Nov/22 11:04:07 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 11:13:22 pysixdesk.lib.workspace INFO: Study mysql_coll_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_coll/integration_test/studies/mysql_coll_params 
+
+Nov/22 11:13:24 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 11:13:24 pysixdesk.lib.submission INFO: 139.0 - 139.3
+
+Nov/22 11:13:24 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 11:16:56 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 11:20:28 pysixdesk.lib.workspace INFO: Study mysql_coll_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_coll/integration_test/studies/mysql_coll_params 
+
+Nov/22 11:20:30 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 11:20:30 pysixdesk.lib.submission INFO: 140.0 - 140.3
+
+Nov/22 11:20:30 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 11:23:52 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 11:23:52 pysixdesk.lib.study WARNING: There isn't complete madx job!
+Nov/22 11:23:52 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 11:30:03 pysixdesk.lib.workspace INFO: Study mysql_coll_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_coll/integration_test/studies/mysql_coll_params 
+
+Nov/22 11:30:05 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 11:30:06 pysixdesk.lib.submission INFO: 141.0 - 141.3
+
+Nov/22 11:30:06 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 11:33:27 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 11:33:27 pysixdesk.lib.study WARNING: There isn't complete madx job!
+Nov/22 11:33:27 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 11:46:35 pysixdesk.lib.workspace INFO: Study mysql_coll_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_coll/integration_test/studies/mysql_coll_params 
+
+Nov/22 11:46:38 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 11:46:38 pysixdesk.lib.submission INFO: 142.0 - 142.3
+
+Nov/22 11:46:38 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 11:51:19 pysixdesk.lib.workspace INFO: Study mysql_coll_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_coll/integration_test/studies/mysql_coll_params 
+
+Nov/22 11:52:01 pysixdesk.lib.workspace INFO: Study mysql_coll_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_coll/integration_test/studies/mysql_coll_params 
+
+Nov/22 11:52:01 pysixdesk.lib.dbadaptor WARNING: The db admin_integration_test_mysql_coll_params already exist!
+Nov/22 11:52:03 pysixdesk.lib.study WARNING: The job collimation_lhcbeam_1_e0_6500000_I_MO_100_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_sige_0.00011_inttunex_62.0_inttuney_60.0_tunex_62.31_tuney_60.32_qprimex_3.0_qprimey_3.0_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_1_rfvol_16.0 is already in the database!
+Nov/22 11:52:03 pysixdesk.lib.study WARNING: The job collimation_lhcbeam_1_e0_6500000_I_MO_100_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_sige_0.00011_inttunex_62.0_inttuney_60.0_tunex_62.31_tuney_60.32_qprimex_3.0_qprimey_3.0_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_2_rfvol_16.0 is already in the database!
+Nov/22 11:52:03 pysixdesk.lib.study WARNING: The job collimation_lhcbeam_1_e0_6500000_I_MO_200_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_sige_0.00011_inttunex_62.0_inttuney_60.0_tunex_62.31_tuney_60.32_qprimex_3.0_qprimey_3.0_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_1_rfvol_16.0 is already in the database!
+Nov/22 11:52:03 pysixdesk.lib.study WARNING: The job collimation_lhcbeam_1_e0_6500000_I_MO_200_b_t_dist_25.0_emit_norm_x_2.5_emit_norm_y_2.5_bunch_charge_220000000000.0_sigz_0.075_sige_0.00011_inttunex_62.0_inttuney_60.0_tunex_62.31_tuney_60.32_qprimex_3.0_qprimey_3.0_phi_IR1_90.0_phi_IR5_0.0_fraction_crab_0_SEEDRAN_2_rfvol_16.0 is already in the database!
+Nov/22 11:52:03 pysixdesk.lib.study WARNING: There isn't incomplete preprocess job!
+Nov/22 11:52:30 pysixdesk.lib.workspace INFO: Study mysql_coll_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_coll/integration_test/studies/mysql_coll_params 
+
+Nov/22 11:52:32 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 11:52:32 pysixdesk.lib.submission INFO: 143.0 - 143.3
+
+Nov/22 11:52:32 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 11:56:24 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 11:56:24 pysixdesk.lib.submission INFO: 144.0 - 144.15
+
+Nov/22 11:56:24 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 11:57:55 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:05:44 pysixdesk.lib.workspace INFO: Study mysql_checkpoint_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies/mysql_checkpoint_params 
+
+Nov/22 12:05:44 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:05:44 pysixdesk.lib.submission INFO: 145.0 - 145.3
+
+Nov/22 12:05:44 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 12:09:46 pysixdesk.lib.study WARNING: There isn't complete job with last turn is 100
+Nov/22 12:09:46 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:09:46 pysixdesk.lib.submission INFO: 146.0 - 146.15
+
+Nov/22 12:09:46 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: Inflating paths of workspace integration_test/mysql_checkpoint/integration_test ...
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: Checking directories of workspace integration_test/mysql_checkpoint/integration_test ...
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...workspace directory already exists: /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...studies directory already exists: /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...templates directory already exists: /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/templates
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: Checking template files in /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/templates...
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...template file config.py present.
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...template file fort.3 present.
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...template file hl10.mask present.
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...template file htcondor_run.sub present.
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...template file SurveyWithCrossing_XP_lowb.dat present.
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...template file CollDB.data present.
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...template file allapert.b1 present.
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...template file collimation.mask present.
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...template file pysixdesk.log present.
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...done.
+
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: Loading list of studies in /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies...
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...workspace integration_test/mysql_checkpoint/integration_test contains 1 study:
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...studies found: ['mysql_checkpoint_params']
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: ...done.
+
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: Inflating paths of workspace integration_test/mysql_checkpoint/integration_test ...
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: Inflating path to study mysql_checkpoint_params ...
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: Loading study mysql_checkpoint_params in workspace /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test ...
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: Study mysql_checkpoint_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies/mysql_checkpoint_params 
+
+Nov/22 12:10:07 pysixdesk.lib.workspace INFO: Study mysql_checkpoint_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies/mysql_checkpoint_params 
+
+Nov/22 12:10:07 pysixdesk.lib.dbadaptor WARNING: The db admin_integration_test_mysql_checkpoint_params already exist!
+Nov/22 12:10:07 pysixdesk.lib.dbadaptor WARNING: The db admin_integration_test_mysql_checkpoint_params already exist!
+Nov/22 12:10:07 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:10:07 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_17 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_17 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_18 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_18 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_19 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_19 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_20 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_20 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_21 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_21 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_22 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_22 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_23 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_23 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_24 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_24 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_25 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_25 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_26 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_26 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_27 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_27 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_28 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_28 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_29 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_29 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_30 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_30 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_31 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_31 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_32 into database!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_32 into database!
+Nov/22 12:10:07 pysixdesk.lib.study WARNING: There isn't complete job with last turn is 100
+Nov/22 12:10:07 pysixdesk.lib.study WARNING: There isn't complete job with last turn is 100
+Nov/22 12:10:07 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:10:07 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:10:07 pysixdesk.lib.submission INFO: 147.0 - 147.31
+
+Nov/22 12:10:07 pysixdesk.lib.submission INFO: 147.0 - 147.31
+
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 12:10:07 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 12:10:38 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:10:38 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:11:10 pysixdesk.lib.workspace INFO: Study mysql_checkpoint_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies/mysql_checkpoint_params 
+
+Nov/22 12:11:10 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:11:10 pysixdesk.lib.submission INFO: 148.0 - 148.3
+
+Nov/22 12:11:10 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 12:15:12 pysixdesk.lib.study WARNING: There isn't complete job with last turn is 100
+Nov/22 12:15:12 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:15:12 pysixdesk.lib.submission INFO: 149.0 - 149.15
+
+Nov/22 12:15:12 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: Inflating paths of workspace integration_test/mysql_checkpoint/integration_test ...
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: Checking directories of workspace integration_test/mysql_checkpoint/integration_test ...
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...workspace directory already exists: /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...studies directory already exists: /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...templates directory already exists: /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/templates
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: Checking template files in /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/templates...
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...template file config.py present.
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...template file fort.3 present.
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...template file hl10.mask present.
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...template file htcondor_run.sub present.
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...template file SurveyWithCrossing_XP_lowb.dat present.
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...template file CollDB.data present.
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...template file allapert.b1 present.
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...template file collimation.mask present.
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...template file pysixdesk.log present.
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...done.
+
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: Loading list of studies in /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies...
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...workspace integration_test/mysql_checkpoint/integration_test contains 1 study:
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...studies found: ['mysql_checkpoint_params']
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: ...done.
+
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: Inflating paths of workspace integration_test/mysql_checkpoint/integration_test ...
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: Inflating path to study mysql_checkpoint_params ...
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: Loading study mysql_checkpoint_params in workspace /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test ...
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: Study mysql_checkpoint_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies/mysql_checkpoint_params 
+
+Nov/22 12:15:32 pysixdesk.lib.workspace INFO: Study mysql_checkpoint_params loaded from /home/lcoyle/pysixdesk/integration_test/mysql_checkpoint/integration_test/studies/mysql_checkpoint_params 
+
+Nov/22 12:15:32 pysixdesk.lib.dbadaptor WARNING: The db admin_integration_test_mysql_checkpoint_params already exist!
+Nov/22 12:15:32 pysixdesk.lib.dbadaptor WARNING: The db admin_integration_test_mysql_checkpoint_params already exist!
+Nov/22 12:15:32 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:15:32 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_17 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_17 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_18 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_18 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_19 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_19 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_20 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_20 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_21 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_21 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_22 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_22 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_23 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_23 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_24 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_24 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_25 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_25 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_26 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_26 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_27 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_27 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_28 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_28 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_29 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_29 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_30 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_30 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_31 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_31 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_32 into database!
+Nov/22 12:15:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_32 into database!
+Nov/22 12:15:32 pysixdesk.lib.study WARNING: There isn't complete job with last turn is 100
+Nov/22 12:15:32 pysixdesk.lib.study WARNING: There isn't complete job with last turn is 100
+Nov/22 12:15:33 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:15:33 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:15:33 pysixdesk.lib.submission INFO: 150.0 - 150.31
+
+Nov/22 12:15:33 pysixdesk.lib.submission INFO: 150.0 - 150.31
+
+Nov/22 12:15:33 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 12:15:33 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 12:16:04 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:16:04 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:20:29 pysixdesk.lib.workspace INFO: Study sqllite loaded from /home/lcoyle/pysixdesk/integration_test/sqllite/integration_test/studies/sqllite 
+
+Nov/22 12:20:30 pysixdesk.lib.study INFO: The submitted database sub.db is ready!
+Nov/22 12:20:30 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:20:30 pysixdesk.lib.submission INFO: 151.0 - 151.3
+
+Nov/22 12:20:30 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 12:25:01 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 12:25:01 pysixdesk.lib.gather INFO: preprocess task 3 has completed normally!
+Nov/22 12:25:01 pysixdesk.lib.gather INFO: preprocess task 4 has completed normally!
+Nov/22 12:25:01 pysixdesk.lib.gather INFO: preprocess task 1 has completed normally!
+Nov/22 12:25:02 pysixdesk.lib.gather INFO: preprocess task 2 has completed normally!
+Nov/22 12:25:02 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 12:25:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 12:25:03 pysixdesk.lib.study INFO: The submitted db sub.db is ready!
+Nov/22 12:25:03 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:25:03 pysixdesk.lib.submission INFO: 152.0 - 152.15
+
+Nov/22 12:25:03 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 12:26:03 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 12:26:03 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 3 doesn't exist! The job failed!
+Nov/22 12:26:03 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 4 doesn't exist! The job failed!
+Nov/22 12:26:03 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 6 doesn't exist! The job failed!
+Nov/22 12:26:03 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 9 doesn't exist! The job failed!
+Nov/22 12:26:03 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 13 doesn't exist! The job failed!
+Nov/22 12:26:03 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 12 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 10 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 14 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 15 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 11 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 16 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 8 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 1 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 2 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 7 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 5 doesn't exist! The job failed!
+Nov/22 12:26:04 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 12:26:04 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:30:53 pysixdesk.lib.workspace INFO: Study sqllite loaded from /home/lcoyle/pysixdesk/integration_test/sqllite/integration_test/studies/sqllite 
+
+Nov/22 12:30:53 pysixdesk.lib.study INFO: The submitted database sub.db is ready!
+Nov/22 12:30:53 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:30:54 pysixdesk.lib.submission INFO: 153.0 - 153.3
+
+Nov/22 12:30:54 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 12:34:54 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 12:34:54 pysixdesk.lib.gather INFO: preprocess task 3 has completed normally!
+Nov/22 12:34:55 pysixdesk.lib.gather INFO: preprocess task 4 has completed normally!
+Nov/22 12:34:55 pysixdesk.lib.gather INFO: preprocess task 1 has completed normally!
+Nov/22 12:34:55 pysixdesk.lib.gather INFO: preprocess task 2 has completed normally!
+Nov/22 12:34:55 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 12:34:55 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 12:34:56 pysixdesk.lib.study INFO: The submitted db sub.db is ready!
+Nov/22 12:34:56 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:34:56 pysixdesk.lib.submission INFO: 154.0 - 154.15
+
+Nov/22 12:34:56 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 12:35:57 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 3 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 4 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 6 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 9 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 13 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 12 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 10 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 14 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 15 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 11 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 16 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 8 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 1 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 2 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 7 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 5 doesn't exist! The job failed!
+Nov/22 12:35:57 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 12:35:57 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:36:12 pysixdesk.lib.workspace INFO: Study sqllite loaded from /home/lcoyle/pysixdesk/integration_test/sqllite/integration_test/studies/sqllite 
+
+Nov/22 12:36:13 pysixdesk.lib.study INFO: The submitted database sub.db is ready!
+Nov/22 12:36:13 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:36:13 pysixdesk.lib.submission INFO: 155.0 - 155.3
+
+Nov/22 12:36:13 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 12:40:14 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 12:40:14 pysixdesk.lib.gather INFO: preprocess task 3 has completed normally!
+Nov/22 12:40:14 pysixdesk.lib.gather INFO: preprocess task 4 has completed normally!
+Nov/22 12:40:14 pysixdesk.lib.gather INFO: preprocess task 1 has completed normally!
+Nov/22 12:40:15 pysixdesk.lib.gather INFO: preprocess task 2 has completed normally!
+Nov/22 12:40:15 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 12:40:15 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 12:40:16 pysixdesk.lib.study INFO: The submitted db sub.db is ready!
+Nov/22 12:40:16 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:40:16 pysixdesk.lib.submission INFO: 156.0 - 156.15
+
+Nov/22 12:40:16 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 12:41:16 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 3 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 4 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 6 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 9 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 13 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 12 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 10 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 14 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 15 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 11 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 16 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 8 doesn't exist! The job failed!
+Nov/22 12:41:16 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 1 doesn't exist! The job failed!
+Nov/22 12:41:17 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 2 doesn't exist! The job failed!
+Nov/22 12:41:17 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 7 doesn't exist! The job failed!
+Nov/22 12:41:17 pysixdesk.lib.resultparser WARNING: The sixtrack output file fort.10 for task 5 doesn't exist! The job failed!
+Nov/22 12:41:17 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 12:41:17 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 12:54:15 pysixdesk.lib.workspace INFO: Study sqllite loaded from /home/lcoyle/pysixdesk/integration_test/sqllite/integration_test/studies/sqllite 
+
+Nov/22 12:54:16 pysixdesk.lib.study INFO: The submitted database sub.db is ready!
+Nov/22 12:54:16 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 12:54:16 pysixdesk.lib.submission INFO: 157.0 - 157.3
+
+Nov/22 12:54:16 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 12:58:16 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 13:56:36 pysixdesk.lib.workspace INFO: Study sqllite loaded from /home/lcoyle/pysixdesk/integration_test/sqllite/integration_test/studies/sqllite 
+
+Nov/22 13:56:37 pysixdesk.lib.study INFO: The submitted database sub.db is ready!
+Nov/22 13:56:37 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 13:56:37 pysixdesk.lib.submission INFO: 158.0 - 158.3
+
+Nov/22 13:56:37 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 14:01:14 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 14:01:14 pysixdesk.lib.gather INFO: preprocess task 3 has completed normally!
+Nov/22 14:01:15 pysixdesk.lib.gather INFO: preprocess task 4 has completed normally!
+Nov/22 14:01:15 pysixdesk.lib.gather INFO: preprocess task 1 has completed normally!
+Nov/22 14:01:15 pysixdesk.lib.gather INFO: preprocess task 2 has completed normally!
+Nov/22 14:01:15 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 14:01:15 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 14:04:31 pysixdesk.lib.workspace INFO: Study sqllite loaded from /home/lcoyle/pysixdesk/integration_test/sqllite/integration_test/studies/sqllite 
+
+Nov/22 14:04:32 pysixdesk.lib.study INFO: The submitted database sub.db is ready!
+Nov/22 14:04:32 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 14:04:32 pysixdesk.lib.submission INFO: 159.0 - 159.3
+
+Nov/22 14:04:32 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 14:10:07 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 14:10:07 pysixdesk.lib.gather INFO: preprocess task 3 has completed normally!
+Nov/22 14:10:08 pysixdesk.lib.gather INFO: preprocess task 4 has completed normally!
+Nov/22 14:10:08 pysixdesk.lib.gather INFO: preprocess task 1 has completed normally!
+Nov/22 14:10:08 pysixdesk.lib.gather INFO: preprocess task 2 has completed normally!
+Nov/22 14:10:08 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 14:10:08 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 14:10:09 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 14:10:09 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 14:10:09 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 14:10:09 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 14:10:10 pysixdesk.lib.study INFO: The submitted db sub.db is ready!
+Nov/22 14:10:10 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 14:10:10 pysixdesk.lib.submission INFO: 160.0 - 160.15
+
+Nov/22 14:10:10 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 14:10:10 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 14:28:04 pysixdesk.lib.workspace INFO: Study sqllite loaded from /home/lcoyle/pysixdesk/integration_test/sqllite/integration_test/studies/sqllite 
+
+Nov/22 14:28:04 pysixdesk.lib.study INFO: The submitted database sub.db is ready!
+Nov/22 14:28:04 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 14:28:04 pysixdesk.lib.submission INFO: 161.0 - 161.3
+
+Nov/22 14:28:04 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 14:34:01 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 14:34:02 pysixdesk.lib.gather INFO: preprocess task 3 has completed normally!
+Nov/22 14:34:02 pysixdesk.lib.gather INFO: preprocess task 4 has completed normally!
+Nov/22 14:34:02 pysixdesk.lib.gather INFO: preprocess task 1 has completed normally!
+Nov/22 14:34:02 pysixdesk.lib.gather INFO: preprocess task 2 has completed normally!
+Nov/22 14:34:02 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 14:34:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 14:34:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 14:34:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 14:34:02 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 14:34:03 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 14:34:04 pysixdesk.lib.study INFO: The submitted db sub.db is ready!
+Nov/22 14:34:04 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 14:34:04 pysixdesk.lib.submission INFO: 162.0 - 162.15
+
+Nov/22 14:34:04 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 14:36:05 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 14:36:05 pysixdesk.lib.gather INFO: sixtrack task 3 has completed normally!
+Nov/22 14:36:05 pysixdesk.lib.gather INFO: sixtrack task 4 has completed normally!
+Nov/22 14:36:05 pysixdesk.lib.gather INFO: sixtrack task 6 has completed normally!
+Nov/22 14:36:05 pysixdesk.lib.gather INFO: sixtrack task 9 has completed normally!
+Nov/22 14:36:05 pysixdesk.lib.gather INFO: sixtrack task 13 has completed normally!
+Nov/22 14:36:05 pysixdesk.lib.gather INFO: sixtrack task 12 has completed normally!
+Nov/22 14:36:05 pysixdesk.lib.gather INFO: sixtrack task 10 has completed normally!
+Nov/22 14:36:05 pysixdesk.lib.gather INFO: sixtrack task 14 has completed normally!
+Nov/22 14:36:05 pysixdesk.lib.gather INFO: sixtrack task 15 has completed normally!
+Nov/22 14:36:06 pysixdesk.lib.gather INFO: sixtrack task 11 has completed normally!
+Nov/22 14:36:06 pysixdesk.lib.gather INFO: sixtrack task 16 has completed normally!
+Nov/22 14:36:06 pysixdesk.lib.gather INFO: sixtrack task 8 has completed normally!
+Nov/22 14:36:06 pysixdesk.lib.gather INFO: sixtrack task 1 has completed normally!
+Nov/22 14:36:06 pysixdesk.lib.gather INFO: sixtrack task 2 has completed normally!
+Nov/22 14:36:06 pysixdesk.lib.gather INFO: sixtrack task 7 has completed normally!
+Nov/22 14:36:06 pysixdesk.lib.gather INFO: sixtrack task 5 has completed normally!
+Nov/22 14:36:06 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 14:36:06 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 14:36:23 pysixdesk.lib.workspace INFO: Study sqllite_checkpoint loaded from /home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test/studies/sqllite_checkpoint 
+
+Nov/22 14:36:24 pysixdesk.lib.study INFO: The submitted database sub.db is ready!
+Nov/22 14:36:24 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 14:36:24 pysixdesk.lib.submission INFO: 163.0 - 163.3
+
+Nov/22 14:36:24 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 14:40:25 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 14:40:25 pysixdesk.lib.gather INFO: preprocess task 3 has completed normally!
+Nov/22 14:40:25 pysixdesk.lib.gather INFO: preprocess task 4 has completed normally!
+Nov/22 14:40:25 pysixdesk.lib.gather INFO: preprocess task 1 has completed normally!
+Nov/22 14:40:25 pysixdesk.lib.gather INFO: preprocess task 2 has completed normally!
+Nov/22 14:40:25 pysixdesk.lib.submission ERROR: 
+Couldn't find/remove all jobs matching constraint ((JobStatus==4) && (regexp("/home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test/studies/sqllite_checkpoint", JobBatchName)))
+
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 14:40:25 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 14:40:26 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 14:40:26 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 14:40:26 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 14:40:26 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 14:40:26 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 14:40:26 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 14:40:26 pysixdesk.lib.study WARNING: There isn't complete job with last turn is 100
+Nov/22 14:40:27 pysixdesk.lib.study INFO: The submitted db sub.db is ready!
+Nov/22 14:40:27 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 14:40:27 pysixdesk.lib.submission INFO: 164.0 - 164.15
+
+Nov/22 14:40:27 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 14:42:28 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 14:42:28 pysixdesk.lib.gather INFO: sixtrack task 3 has completed normally!
+Nov/22 14:42:28 pysixdesk.lib.gather INFO: sixtrack task 4 has completed normally!
+Nov/22 14:42:28 pysixdesk.lib.gather INFO: sixtrack task 6 has completed normally!
+Nov/22 14:42:28 pysixdesk.lib.gather INFO: sixtrack task 9 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 13 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 12 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 10 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 14 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 15 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 11 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 16 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 8 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 1 has completed normally!
+Nov/22 14:42:29 pysixdesk.lib.gather INFO: sixtrack task 2 has completed normally!
+Nov/22 14:42:30 pysixdesk.lib.gather INFO: sixtrack task 7 has completed normally!
+Nov/22 14:42:30 pysixdesk.lib.gather INFO: sixtrack task 5 has completed normally!
+Nov/22 14:42:30 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: Inflating paths of workspace integration_test/sqllite_checkpoint/integration_test ...
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: Checking directories of workspace integration_test/sqllite_checkpoint/integration_test ...
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...workspace directory already exists: /home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...studies directory already exists: /home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test/studies
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...templates directory already exists: /home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test/templates
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: Checking template files in /home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test/templates...
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...template file config.py present.
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...template file fort.3 present.
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...template file hl10.mask present.
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...template file htcondor_run.sub present.
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...template file SurveyWithCrossing_XP_lowb.dat present.
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...template file CollDB.data present.
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...template file allapert.b1 present.
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...template file collimation.mask present.
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...template file pysixdesk.log present.
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...done.
+
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: Loading list of studies in /home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test/studies...
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...workspace integration_test/sqllite_checkpoint/integration_test contains 1 study:
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...studies found: ['sqllite_checkpoint']
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: ...done.
+
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: Inflating paths of workspace integration_test/sqllite_checkpoint/integration_test ...
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: Inflating path to study sqllite_checkpoint ...
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: Loading study sqllite_checkpoint in workspace /home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test ...
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: Study sqllite_checkpoint loaded from /home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test/studies/sqllite_checkpoint 
+
+Nov/22 14:42:30 pysixdesk.lib.workspace INFO: Study sqllite_checkpoint loaded from /home/lcoyle/pysixdesk/integration_test/sqllite_checkpoint/integration_test/studies/sqllite_checkpoint 
+
+Nov/22 14:42:30 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 14:42:30 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 is already in the database!
+Nov/22 14:42:30 pysixdesk.lib.study INFO: The sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 is already in the database!
+Nov/22 14:42:31 pysixdesk.lib.study INFO: The submitted db sub.db is ready!
+Nov/22 14:42:31 pysixdesk.lib.study INFO: The submitted db sub.db is ready!
+Nov/22 14:42:31 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 14:42:31 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 14:42:31 pysixdesk.lib.submission INFO: 165.0 - 165.15
+
+Nov/22 14:42:31 pysixdesk.lib.submission INFO: 165.0 - 165.15
+
+Nov/22 14:42:31 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 14:42:31 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 14:43:13 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 14:43:13 pysixdesk.lib.pysixdb INFO: Closed database connection.
+Nov/22 14:55:28 pysixdesk.lib.workspace INFO: Study sqllite_coll loaded from /home/lcoyle/pysixdesk/integration_test/sqllite_coll/integration_test/studies/sqllite_coll 
+
+Nov/22 14:55:29 pysixdesk.lib.study INFO: The submitted database sub.db is ready!
+Nov/22 14:55:29 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 14:55:29 pysixdesk.lib.submission INFO: 166.0 - 166.3
+
+Nov/22 14:55:29 pysixdesk.lib.study INFO: Submit preprocess job successfully!
+Nov/22 15:00:30 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 15:00:31 pysixdesk.lib.gather INFO: preprocess task 3 has completed normally!
+Nov/22 15:00:31 pysixdesk.lib.gather INFO: preprocess task 4 has completed normally!
+Nov/22 15:00:31 pysixdesk.lib.gather INFO: preprocess task 1 has completed normally!
+Nov/22 15:00:32 pysixdesk.lib.gather INFO: preprocess task 2 has completed normally!
+Nov/22 15:00:32 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_1 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_2 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_3 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_4 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_5 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_6 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_7 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_8 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_9 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_10 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_11 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_12 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_1_wu_id_13 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_2_wu_id_14 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_3_wu_id_15 into database!
+Nov/22 15:00:32 pysixdesk.lib.study INFO: Store sixtrack job sixtrack_job_preprocess_id_4_wu_id_16 into database!
+Nov/22 15:00:33 pysixdesk.lib.study INFO: The submitted db sub.db is ready!
+Nov/22 15:00:33 pysixdesk.lib.submission INFO: The htcondor description file is ready!
+Nov/22 15:00:33 pysixdesk.lib.submission INFO: 167.0 - 167.15
+
+Nov/22 15:00:33 pysixdesk.lib.study INFO: Submit sixtrack job successfully!
+Nov/22 15:02:34 pysixdesk.lib.submission INFO: Fetching data files...
+
+Nov/22 15:02:34 pysixdesk.lib.gather INFO: sixtrack task 3 has completed normally!
+Nov/22 15:02:34 pysixdesk.lib.gather INFO: sixtrack task 4 has completed normally!
+Nov/22 15:02:34 pysixdesk.lib.gather INFO: sixtrack task 6 has completed normally!
+Nov/22 15:02:34 pysixdesk.lib.gather INFO: sixtrack task 9 has completed normally!
+Nov/22 15:02:34 pysixdesk.lib.gather INFO: sixtrack task 13 has completed normally!
+Nov/22 15:02:35 pysixdesk.lib.gather INFO: sixtrack task 12 has completed normally!
+Nov/22 15:02:35 pysixdesk.lib.gather INFO: sixtrack task 10 has completed normally!
+Nov/22 15:02:35 pysixdesk.lib.gather INFO: sixtrack task 14 has completed normally!
+Nov/22 15:02:35 pysixdesk.lib.gather INFO: sixtrack task 15 has completed normally!
+Nov/22 15:02:36 pysixdesk.lib.gather INFO: sixtrack task 11 has completed normally!
+Nov/22 15:02:36 pysixdesk.lib.gather INFO: sixtrack task 16 has completed normally!
+Nov/22 15:02:36 pysixdesk.lib.gather INFO: sixtrack task 8 has completed normally!
+Nov/22 15:02:36 pysixdesk.lib.gather INFO: sixtrack task 1 has completed normally!
+Nov/22 15:02:36 pysixdesk.lib.gather INFO: sixtrack task 2 has completed normally!
+Nov/22 15:02:37 pysixdesk.lib.gather INFO: sixtrack task 7 has completed normally!
+Nov/22 15:02:37 pysixdesk.lib.gather INFO: sixtrack task 5 has completed normally!
+Nov/22 15:02:37 pysixdesk.lib.submission ERROR: condor_rm:0:There are no jobs in the queue
+
+Nov/22 15:02:37 pysixdesk.lib.pysixdb INFO: Closed database connection.

@@ -178,13 +178,13 @@ test=%test1; test=%test2; test=%test3
         db_info = {'db_type': 'sql',
                    'db_name': self.test_folder / 'data.db'}
         db = SixDB(db_info, create=True)
-        db.create_table('test_table', {'x': 'int', 'y': 'int', 'wu_id': 'int'},
+        db.create_table('test_table', {'x': 'int', 'y': 'int', 'task_id': 'int'},
                         key_info={})
         x_vals = [1, 2, 3, 4]
         y_vals = [5, 6, 7, 8]
         db.insertm('test_table', {'x': x_vals,
                                   'y': y_vals,
-                                  'wu_id': [1, 2, 3, 4]})
+                                  'task_id': [1, 2, 3, 4]})
         params = StudyParams(mask_path=self.mask_file,
                              fort_path=self.fort_file)
 
@@ -203,7 +203,7 @@ test=%test1; test=%test2; test=%test3
         for i, e in enumerate(product_dict(**params.sixtrack)):
             # only run calculations which require 'test_table'
             out_dict = params.calc(e,
-                                   wu_id=i+1,
+                                   task_id=i+1,
                                    get_val_db=db,
                                    require=['test_table'])
             self.assertTrue('xy' in out_dict.keys())

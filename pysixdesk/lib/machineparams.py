@@ -49,7 +49,7 @@ _HLLHC_DEF = dict(phi_IR1=90.0,  # flat optics: 0.0
                   phi_IR5=0.0,  # flat optics: 90.0
                   b_t_dist=25.,  # [ns]
                   bunch_charge=2.2e11,
-                  emit_norm_x=2.5,  # [um]  # double check normalized emittance vs unormalized emittance
+                  emit_norm_x=2.5,  # [um]  # These need to be norm
                   emit_norm_y=2.5,  # [um]
                   inttunex=62.0,
                   inttuney=60.0,
@@ -64,7 +64,7 @@ _HLLHC_INJ = dict(rfvol=8.0,  # [MV]
                   sigz=0.130,  # [m]
                   sige=4.5e-04,
                   e0=450000.0,  # [MeV]
-                  I_MO=-20,  # [A]
+                  I_MO=-20,  # [A] ??? is this correct ?
                   tunex=62.28,
                   tuney=60.31,
                   )
@@ -73,7 +73,7 @@ _HLLHC_COL = dict(rfvol=16.0,  # [MV]
                   sigz=0.075,  # [m]
                   sige=1.1e-4,
                   e0=7000000.0,  # [MeV]
-                  I_MO=-570,  # [A]
+                  I_MO=-570,  # [A] ??? is this correct ?
                   tunex=62.31,
                   tuney=60.32,
                   )
