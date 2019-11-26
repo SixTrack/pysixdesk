@@ -485,15 +485,8 @@ class Study(object):
         # prepare sixtrack parameters in database
         six_records = records['sixtrack_wu']
         six_news = news['sixtrack_wu']
-        madx_vals = self.db.select('preprocess_wu', ['wu_id'])
-        if not madx_vals:
-            content = "The preprocess_wu table is empty!"
-            self._logger.warning(content)
-            return
-        madx_vals = list(zip(*madx_vals))
-        madx_ids = list(madx_vals[0])
         new_madx_ids = madx_table['wu_id']
-        six_records['preprocess_id'] = madx_ids
+        six_records['preprocess_id'] = pre_wu_ids
         if new_madx_ids:
             six_news['preprocess_id'] = new_madx_ids
         keys = list(self.sixtrack_params.keys())
