@@ -327,6 +327,36 @@ class Study(object):
             self.sixtrack_config['init_state'] = self.tables['init_state']
             self.sixtrack_config['final_state'] = self.tables['final_state']
 
+    def _check_parameter_changes(self):
+        '''Check if the parameters are changed, return the records
+        and new lists'''
+        types = {'preprocess_wu': self.madx_params,
+                'sixtrack_wu': self.sixtrack_params}
+        records = {}
+        news = {}
+        for typ, params in types.items():
+            records[typ] = {}
+            news[typ] = {}
+            for key in params.keys():
+                values = self.db.select(typ, key, DISTINCT=True)
+                if not values:
+                    value = []
+                else:
+                    value = list(zip(*values))[0]
+                    records[typ][key] = value
+                news[typ][key] = []
+                val = params[key]
+                if not isinstance(val, Iterable) or isinstance(val, str):
+                    val = [val]
+                for i in val:
+                    if isinstance(i, Iterable):
+                        i = str(i)
+                    if i not in value:
+                        news[typ][key].append(i)
+            # remove the empty records
+            [news[typ].pop(key) for key in params.keys() if not news[typ][key]]
+        return records, news
+
     def update_db(self, force_update=False, db_check=False):
         '''Update the database whith the user-defined parameters'''
         temp = self.paths["templates"]
@@ -358,6 +388,14 @@ class Study(object):
             self.db.insert('templates', tab)
         else:
             self.db.update('templates', tab)
+
+        outputs = self.db.select('boinc_vars', self.boinc_vars.keys())
+        if not outputs:
+            self.db.insert('boinc_vars', self.boinc_vars)
+        else:
+            self.db.update('boinc_vars', self.boinc_vars)
+
+        # update the parameters
         outputs = self.db.select('env', self.paths.keys())
         envs = {}
         envs.update(self.paths)
@@ -366,26 +404,23 @@ class Study(object):
             self.db.insert('env', envs)
         else:
             self.db.update('env', envs)
-        outputs = self.db.select('boinc_vars', self.boinc_vars.keys())
-        if not outputs:
-            self.db.insert('boinc_vars', self.boinc_vars)
-        else:
-            self.db.update('boinc_vars', self.boinc_vars)
 
+        records, news = self._check_parameter_changes()
         # Fill the preprocess_wu table
+        pre_records = records['preprocess_wu']
+        pre_news = news['preprocess_wu']
+
         keys = list(self.madx_params.keys())
-        param_dict = dict()
-        for key in keys:
-            val = self.madx_params[key]
-            if not isinstance(val, Iterable) or isinstance(val, str):
-                val = [val]  # wrap with list for a single element
-            param_dict[key] = val
 
         check_params = self.db.select('preprocess_wu', keys)
         check_jobs = self.db.select(
-            'preprocess_wu', ['wu_id', 'job_name', 'status'])
+            'preprocess_wu', ['wu_id', 'job_name'])
+        if check_jobs:
+            pre_wu_ids = list(zip(*check_jobs))[0]
+            wu_id = max(pre_wu_ids)
+        else:
+            wu_id = 0
 
-        wu_id = len(check_params)
         wu_id_start = wu_id
         madx_table = OrderedDict()
         for ky in keys:
@@ -399,9 +434,9 @@ class Study(object):
             if (wu_id != 0) and (not db_check):
                 self._logger.warning('''You are going to update the database
                 which is not empty, you must assign 'db_check' to True to
-                avoid duplicate rows! If you are pretty sure there aren't
-                duplicate rows, you can skip db check with 'force_update'.
-                But you should be responsible for this!''')
+                avoid duplicate rows (It would be a little slow)! If you are
+                pretty sure there aren't duplicate rows, you can skip db check
+                with 'force_update'. But you should be responsible for this!''')
                 return
         else:
             db_check = False
@@ -409,29 +444,47 @@ class Study(object):
                 self._logger.warning('Attention! Force update(skip db '
                         'check) is selected, make sure no duplications!')
 
-        for element in self.custom_product_preprocess(param_dict):
-            if db_check and (element in check_params):
-                i = check_params.index(element)
-                name = check_jobs[i][1]
-                content = "The job %s is already in the database!" % name
-                self._logger.warning(content)
-                continue
-            for i in range(len(element)):
-                ky = keys[i]
-                vl = element[i]
-                madx_table[ky].append(vl)
-            prefix = self.madx_input['mask_file'].split('.')[0]
-            job_name = self.name_conven(prefix, keys, element, '')
-            wu_id += 1
-            madx_table['wu_id'].append(wu_id)
-            madx_table['status'].append('incomplete')
-            madx_table['job_name'].append(job_name)
-            madx_table['mtime'].append(int(time.time() * 1E7))
+        def generate_preprocess_records(param_dict, wu_id):
+            for element in self.custom_product_preprocess(param_dict):
+                # avoid empty element
+                if not element:
+                    continue
+                if db_check and (element in check_params):
+                    i = check_params.index(element)
+                    name = check_jobs[i][1]
+                    content = "The job %s is already in the database!" % name
+                    self._logger.warning(content)
+                    continue
+                for i in range(len(element)):
+                    ky = keys[i]
+                    vl = element[i]
+                    madx_table[ky].append(vl)
+                prefix = self.madx_input['mask_file'].split('.')[0]
+                job_name = self.name_conven(prefix, keys, element, '')
+                wu_id += 1
+                madx_table['wu_id'].append(wu_id)
+                madx_table['status'].append('incomplete')
+                madx_table['job_name'].append(job_name)
+                madx_table['mtime'].append(int(time.time() * 1E7))
+            return wu_id
+
+        if wu_id==0 and pre_news:
+            wu_id = generate_preprocess_records(pre_news, wu_id)
+        elif pre_records:
+            param_dict = dict(pre_records)
+            for key in pre_news.keys():
+                param_dict[key] = pre_news[key]
+                wu_id = generate_preprocess_records(param_dict, wu_id)
+                param_dict[key] = list(pre_records[key]) + list(pre_news[key])
+        else:
+            pass
         self.db.insertm('preprocess_wu', madx_table)
         self._logger.info(f'Add {wu_id-wu_id_start} new preprocess '
                 f'jobs into database! A total of {wu_id}!')
 
         # prepare sixtrack parameters in database
+        six_records = records['sixtrack_wu']
+        six_news = news['sixtrack_wu']
         madx_vals = self.db.select('preprocess_wu', ['wu_id'])
         if not madx_vals:
             content = "The preprocess_wu table is empty!"
@@ -439,21 +492,22 @@ class Study(object):
             return
         madx_vals = list(zip(*madx_vals))
         madx_ids = list(madx_vals[0])
+        new_madx_ids = madx_table['wu_id']
+        six_records['preprocess_id'] = madx_ids
+        if new_madx_ids:
+            six_news['preprocess_id'] = new_madx_ids
         keys = list(self.sixtrack_params.keys())
-        param_dict = dict()
-        for key in keys:
-            val = self.sixtrack_params[key]
-            if not isinstance(val, Iterable) or isinstance(val, str):
-                val = [val]  # wrap with list for a single element
-            param_dict[key] = val
-
         keys.append('preprocess_id')
-        param_dict['preprocess_id'] = madx_ids
-        where = 'first_turn is null'
-        outputs = self.db.select('sixtrack_wu', keys, where)
+
+        outputs = self.db.select('sixtrack_wu', keys, where='first_turn is null')
         namevsid = self.db.select('sixtrack_wu', ['wu_id', 'job_name'],
                                   DISTINCT=True)
-        wu_id = len(namevsid)
+        if namevsid:
+            records = list(zip(*namevsid))
+            wu_ids = records[0]
+            wu_id = max(wu_ids) # get the last wu_id
+        else:
+            wu_id = 0
         wu_id_start = wu_id
         six_table = OrderedDict()
         for ky in keys:
@@ -463,34 +517,46 @@ class Study(object):
         six_table['job_name']=[]
         six_table['status']=[]
         six_table['mtime']=[]
-        for element in self.custom_product_sixtrack(param_dict):
-            a = []
-            for i in element:
-                if isinstance(i, Iterable):
-                    i = str(i)
-                a.append(i)
-            element = tuple(a)
-            if db_check and element in outputs:
-                i = outputs.index(element)
-                nm = namevsid[i][1]
-                content = f"The sixtrack job {nm} is already in the database!"
-                self._logger.warning(content)
-                continue
-            for i in range(len(element)):
-                ky = keys[i]
-                vl = element[i]
-                if isinstance(vl, Iterable):
-                    vl = str(vl)
-                six_table[ky].append(vl)
-            pre_id = six_table['preprocess_id'][-1]  # madx_id(wu_id)
-            wu_id += 1
-            six_table['wu_id'].append(wu_id)
-            last_turn = self.sixtrack_params['turnss']
-            six_table['last_turn'].append(last_turn)
-            job_name = f'sixtrack_job_preprocess_id_{pre_id}_wu_id_{wu_id}'
-            six_table['job_name'].append(job_name)
-            six_table['status'].append('incomplete')
-            six_table['mtime'].append(int(time.time() * 1E7))
+        six_table['preprocess_id'] = []
+
+        def generate_sixtrack_records(param_dict, wu_id):
+            for element in self.custom_product_sixtrack(param_dict):
+                # avoid empty element
+                if not element:
+                    continue
+                if db_check and (element in outputs):
+                    i = outputs.index(element)
+                    nm = namevsid[i][1]
+                    content = f"The sixtrack job {nm} is already in the database!"
+                    self._logger.warning(content)
+                    continue
+                for i in range(len(element)):
+                    ky = keys[i]
+                    vl = element[i]
+                    if isinstance(vl, Iterable):
+                        vl = str(vl)
+                    six_table[ky].append(vl)
+                pre_id = six_table['preprocess_id'][-1]  # madx_id(wu_id)
+                wu_id += 1
+                six_table['wu_id'].append(wu_id)
+                last_turn = self.sixtrack_params['turnss']
+                six_table['last_turn'].append(last_turn)
+                job_name = f'sixtrack_job_preprocess_id_{pre_id}_wu_id_{wu_id}'
+                six_table['job_name'].append(job_name)
+                six_table['status'].append('incomplete')
+                six_table['mtime'].append(int(time.time() * 1E7))
+            return wu_id
+
+        if wu_id==0 and six_news:
+            wu_id = generate_sixtrack_records(six_news, wu_id)
+        elif six_records:
+            param_dict = dict(six_records)
+            for key in six_news.keys():
+                param_dict[key] = six_news[key]
+                wu_id = generate_sixtrack_records(param_dict, wu_id)
+                param_dict[key] = list(six_records[key]) + list(six_news[key])
+        else:
+            pass
         self.db.insertm('sixtrack_wu', six_table)
         self._logger.info(f'Add {wu_id-wu_id_start} new sixtrack jobs into '
                 f'database! A total of {wu_id}!')
@@ -561,7 +627,7 @@ class Study(object):
             self._logger.error(content)
 
     def collect_result(self, typ, boinc=False):
-        '''Collect the results of preprocess or  sixtrack jobs'''
+        '''Collect the results of preprocess or sixtrack jobs'''
         config = {}
         info_sec = {}
         config['info'] = info_sec
