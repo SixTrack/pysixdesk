@@ -3,10 +3,22 @@ import logging
 
 from pathlib import Path
 from collections import OrderedDict
+from scan_engine import engine
+from collections import Iterable
 
 from . import machineparams
 from .constants import PROTON_MASS
 from .utils import PYSIXDESK_ABSPATH, merge_dicts
+
+
+class LastUpdatedOrderedDict(OrderedDict):
+    '''Store items in the order the keys were last added.
+    '''
+
+    def __setitem__(self, key, value):
+        if key in self:
+            del self[key]
+        OrderedDict.__setitem__(self, key, value)
 
 
 class StudyParams:
@@ -96,6 +108,13 @@ class StudyParams:
                                            mandatory=['chrom_eps', 'CHROM'])
 
     @property
+    def _sixtrack_only(self):
+        '''Parameters which are exclusively found in the fort.3
+        '''
+        six_only = list(set(self.sixtrack.keys()) - set(self.madx.keys()))
+        return {k: self.sixtrack[k] for k in six_only}
+
+    @property
     def oneturn(self):
         sixtrack = self.sixtrack.copy()
         sixtrack['turnss'] = 1
@@ -152,7 +171,7 @@ class StudyParams:
         '''
         matches = self._extract_patterns(file_path)
 
-        out = OrderedDict()
+        out = LastUpdatedOrderedDict()
         for ph in matches:
             if ph in self.defaults.keys():
                 out[ph] = self.defaults[ph]
@@ -168,13 +187,41 @@ class StudyParams:
             self._logger.debug(f'{k}: {v}')
         return out
 
+    @staticmethod
+    def _engine_dict(**kwargs):
+        '''A wrapper of scan_engine.engine but for dictionnaries.
+        '''
+        keys = kwargs.keys()
+        vals = []
+        for v in kwargs.values():
+            if not isinstance(v, Iterable) or isinstance(v, str):
+                v = [v]
+            vals.append(v)
+        # print(vals)
+        for instance in engine(*vals):
+            yield dict(zip(keys, instance))
+
+    def combine(self):
+        '''Performs the combinations of the user provided parameters.
+
+        Yields:
+            tuple: a tuple containing 2 dictionnaries, the first with the madx
+            parameters, the other with the sixtrack parameters.
+        '''
+        for e in self._engine_dict(**self.madx,
+                                   **self._sixtrack_only,
+                                   **self.phasespace):
+            yield ({k: e[k] for k in self.madx.keys()},
+                   {k: e[k] for k in (list(self.sixtrack.keys()) +
+                                      list(self.phasespace.keys()))})
+
     def calc(self, params, task_id=None, get_val_db=None, require=None):
         """Runs the queued calculations, in order. The output of the queue is put
         in and a dictionnary containing the calculation results is returned.
 
         Args:
-            params (dict): One element of the cartesian product of the
-            parameter dicts.
+            params (dict): One element of the combination of the parameter
+            dict.
             task_id (int): task_id of the require parameters, when fetching the
             data from the database.
             get_val_db (SixDB, optional): SixDB object to fecth values from db

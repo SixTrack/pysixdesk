@@ -1,11 +1,12 @@
 import shutil
 import unittest
-from pathlib import Path
 import sys
+from pathlib import Path
+from scan_engine import Productable as P
+from scan_engine import Zipable as Z
 # give the test runner the import access
 pysixdesk_path = str(Path(__file__).parents[2].absolute())
 sys.path.insert(0, pysixdesk_path)
-from pysixdesk.lib.utils import product_dict
 from pysixdesk.lib.study_params import StudyParams
 from pysixdesk.lib.study_params import set_property
 from pysixdesk.lib.pysixdb import SixDB
@@ -133,7 +134,7 @@ test=%test1; test=%test2; test=%test3
         params.calc_queue.append(times)
 
         self.assertEqual(len(params.calc_queue), 1)
-        for e in product_dict(**params.madx):
+        for e in params._engine_dict(**params.madx):
             out_dict = params.calc(e)
             self.assertTrue('e0_2' in out_dict.keys())
             self.assertTrue(out_dict['e0_2'] == e0_init * 2)
@@ -147,7 +148,7 @@ test=%test1; test=%test2; test=%test3
             return x*2, x*2
         params.calc_queue.append(times)
 
-        for e in product_dict(**params.madx):
+        for e in params._engine_dict(**params.madx):
             with self.assertRaises(ValueError):
                 out_dict = params.calc(e)
 
@@ -167,7 +168,7 @@ test=%test1; test=%test2; test=%test3
             return x*2
         params.calc_queue.append(times)
 
-        for e in product_dict(**params.madx):
+        for e in params._engine_dict(**params.madx):
             out_dict = params.calc(e)
             self.assertTrue({'e0_2', 'e0_4'} <= set(out_dict.keys()))
 
@@ -200,7 +201,7 @@ test=%test1; test=%test2; test=%test3
         def nss_2_calc(nss):
             return nss*2
         params.calc_queue.append(nss_2_calc)
-        for i, e in enumerate(product_dict(**params.sixtrack)):
+        for i, e in enumerate(params._engine_dict(**params.sixtrack)):
             # only run calculations which require 'test_table'
             out_dict = params.calc(e,
                                    task_id=i+1,
@@ -209,11 +210,40 @@ test=%test1; test=%test2; test=%test3
             self.assertTrue('xy' in out_dict.keys())
             self.assertFalse('nss_2' in out_dict.keys())
 
-        for e in product_dict(**params.sixtrack):
+        for e in params._engine_dict(**params.sixtrack):
             # run calculations which don't need db
             out_dict = params.calc(e, require='none')
             self.assertTrue('nss_2' in out_dict.keys())
             self.assertEqual(out_dict['nss_2'], nss_2_calc(params['nss']))
+
+    def test_engine_dict(self):
+        params = StudyParams(mask_path=self.mask_file,
+                             fort_path=self.fort_file)
+
+        inp = {'a': [1, 2],
+               'b': [3, 4]}
+        out = list(params._engine_dict(**inp))
+        self.assertEqual(out, [{'a': 1, 'b': 3},
+                               {'a': 1, 'b': 4},
+                               {'a': 2, 'b': 3},
+                               {'a': 2, 'b': 4},
+                               ])
+
+        inp = {'a': Z(1, 2),
+               'b': Z(3, 4)}
+        out = list(params._engine_dict(**inp))
+        self.assertEqual(out, [{'a': 1, 'b': 3},
+                               {'a': 2, 'b': 4},
+                               ])
+
+        inp = {'a': P(1, 2),
+               'b': P(3, 4)}
+        out = list(params._engine_dict(**inp))
+        self.assertEqual(out, [{'a': 1, 'b': 3},
+                               {'a': 1, 'b': 4},
+                               {'a': 2, 'b': 3},
+                               {'a': 2, 'b': 4},
+                               ])
 
     def tearDown(self):
         shutil.rmtree(self.test_folder.parent, ignore_errors=True)
