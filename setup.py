@@ -1,5 +1,8 @@
 import setuptools
 
+with open('requirements.txt') as fobj:
+    REQUIREMENTS = [l.strip() for l in fobj.readlines()]
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
@@ -13,6 +16,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/SixTrack/pysixdesk",
     packages=setuptools.find_packages(),
+    install_requires=REQUIREMENTS,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
