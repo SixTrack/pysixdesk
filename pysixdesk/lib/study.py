@@ -405,7 +405,7 @@ class Study(object):
                 self.db.update('sixtrack_wu',
                                update_cols,
                                where=f'wu_id={row["wu_id"]}')
-                self._logger.info(f'Updating sixtack_wu row {row["wu_id"]}.')
+                self._logger.info(f'Updating sixtack_wu/wu_id:{row["wu_id"]} with {update_cols}.')
 
     def update_db(self):
         '''Update the database whith the user-defined parameters'''
