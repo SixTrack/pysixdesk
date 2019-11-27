@@ -137,7 +137,7 @@ class PreprocessJob:
             **kwargs: are added to the config.
 
         Returns:
-            dict: fort.3 placeholder dictionnary with the added keys/values.
+            dict: fort.3 placeholder dictionary with the added keys/values.
         """
         # make a dict copy of fort_cfg
         fort_dic = dict(self.fort_cfg.items())

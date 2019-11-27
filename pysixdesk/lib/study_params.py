@@ -173,7 +173,7 @@ class StudyParams:
             the file.
 
         Returns:
-            OrderedDict: dictionnary of the extracted placeholder patterns with
+            OrderedDict: dictionary of the extracted placeholder patterns with
             their values given by 'self.defaults'.
         '''
         matches = self._extract_patterns(file_path)
@@ -196,7 +196,7 @@ class StudyParams:
 
     @staticmethod
     def _engine_dict(**kwargs):
-        '''A wrapper of scan_engine.engine but for dictionnaries.
+        '''A wrapper of scan_engine.engine but for dictionaries.
         '''
         keys = kwargs.keys()
         vals = []
@@ -212,7 +212,7 @@ class StudyParams:
         '''Performs the combinations of the user provided parameters.
 
         Yields:
-            tuple: a tuple containing 2 dictionnaries, the first with the madx
+            tuple: a tuple containing 2 dictionaries, the first with the madx
             parameters, the other with the sixtrack parameters.
         '''
         for e in self._engine_dict(**self.madx,
@@ -224,7 +224,7 @@ class StudyParams:
 
     def calc(self, params, task_id=None, get_val_db=None, require=None):
         """Runs the queued calculations, in order. The output of the queue is put
-        in and a dictionnary containing the calculation results is returned.
+        in and a dictionary containing the calculation results is returned.
 
         Args:
             params (dict): One element of the combination of the parameter
@@ -283,7 +283,7 @@ class StudyParams:
 
         Args:
             require (list): list of keys which must be contained in the
-            'require' attribute dictionnary for the function to be included.
+            'require' attribute dictionary for the function to be included.
 
         Returns:
             list: subset of the calculation queue.
@@ -308,7 +308,7 @@ class StudyParams:
             values.
 
         Returns:
-            dict: dictionnary containing the values of the required parameters.
+            dict: dictionary containing the values of the required parameters.
         '''
         required = {}
         if not hasattr(fun, 'require'):
@@ -324,7 +324,7 @@ class StudyParams:
 
     def __repr__(self):
         '''
-        Unified __repr__ of the three dictionnaries.
+        Unified __repr__ of the three dictionaries.
         '''
         return '\n\n'.join(['Madx params: ' + self.madx.__repr__(),
                             'SixTrack params: ' + self.sixtrack.__repr__(),
@@ -333,7 +333,7 @@ class StudyParams:
     # set and get items like a dict
     def __setitem__(self, key, val):
         '''
-        Adds entry to the appropriate dictionnary(ies) which already contains
+        Adds entry to the appropriate dictionary(ies) which already contains
         the key.
         '''
         if key not in self.keys():
@@ -347,7 +347,7 @@ class StudyParams:
 
     def __getitem__(self, key):
         '''
-        Gets entry from the first dictionnary which contains the key.
+        Gets entry from the first dictionary which contains the key.
         '''
         if key not in self.keys():
             raise KeyError(key)
@@ -363,7 +363,7 @@ class StudyParams:
         """Finds the keys of any entry in 'dic' with a None value.
 
         Args:
-            dic (dict): Dictionnary to check.
+            dic (dict): Dictionary to check.
 
         Returns:
             list: list of keys whose value are None.
@@ -375,7 +375,7 @@ class StudyParams:
         return out
 
     def _remove_none(self, dic):
-        """Removes Nones in dictionnary 'dic'."""
+        """Removes Nones in dictionary 'dic'."""
         for k in self._find_none(dic):
             del dic[k]
 

@@ -141,7 +141,7 @@ class Study(object):
         if not os.path.isdir(self.paths["sixtrack_out"]):
             os.makedirs(self.paths["sixtrack_out"])
 
-        # drop Nones from the param dictionnaries to not have a any NULL types
+        # drop Nones from the param dictionaries to not have a any NULL types
         # which cause problems for the database, I would welcome a more robust
         # solution.
         self.params.drop_none()
