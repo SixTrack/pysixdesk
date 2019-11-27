@@ -20,14 +20,14 @@ class MyStudyCustomizable(MyStudy):
         pass
 
 
-class SqlSettings(MyStudyCustomizable):
+class SQLiteSettings(MyStudyCustomizable):
     def apply_settings(self):
         super().apply_settings()
         print("Using SqlLite")
         self.db_info['db_type'] = 'sql'
 
 
-class MySqlSettings(MyStudyCustomizable):
+class MySQLSettings(MyStudyCustomizable):
     def apply_settings(self):
         super().apply_settings()
         print('Using MySql')
@@ -98,42 +98,42 @@ class CheckpointSettings(MyStudyCustomizable):
 
 
 # complete configs:
-class MySqlConfig(MySqlSettings):
+class MySQLConfig(MySQLSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class MySqlCollConfig(CollSettings, MySqlSettings):
+class MySQLCollConfig(CollSettings, MySQLSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class MySqlCheckpointConfig(CheckpointSettings, MySqlSettings):
+class MySQLCheckpointConfig(CheckpointSettings, MySQLSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class SqlLiteConfig(SqlSettings):
+class SQLiteConfig(SQLiteSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class SqlLiteCollConfig(CollSettings, SqlSettings):
+class SQLiteCollConfig(CollSettings, SQLiteSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class SqlLiteCheckpointConfig(CheckpointSettings, SqlSettings):
+class SQLiteCheckpointConfig(CheckpointSettings, SQLiteSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
