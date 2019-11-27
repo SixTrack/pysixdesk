@@ -41,16 +41,15 @@ class PreprocessJob:
         db_type = cf['db_info']['db_type']
         self.db_type = db_type.lower()
 
-        mask_keys = list(cf['mask'].keys())
+        mask_keys = json.loads(cf['mask']['keys'])
         outputs = self.db.select('preprocess_wu', mask_keys,
                                  where=f'task_id={self.task_id}')
-
         if not outputs[0]:
-            content = "Data not found for preprocess task %s!" % task_id
+            content = "Data not found for preprocess task %s!" % self.task_id
             raise FileNotFoundError(content)
+        self.mask_cfg = dict(zip(mask_keys, outputs[0]))
 
         self.madx_cfg = cf['madx']
-        self.mask_cfg = dict(zip(mask_keys, outputs[0]))
         self._decomp_templates()
 
         output_files = self.madx_cfg["output_files"]
@@ -189,10 +188,6 @@ class PreprocessJob:
         if source_prefix is not None:
             madx_fc3 = source_prefix / madx_fc3
 
-        with open(dest, 'r') as fp:
-            fort_lines = fp.readlines()
-        print(''.join(fort_lines))
-
         # concatenate
         utils.concatenate_files([dest, madx_fc3], output_file)
         # if not source.samefile(output_file):
@@ -222,8 +217,7 @@ class PreprocessJob:
         # else:
         #     self.output_files.append('fort.6')
 
-        print(''.join(outputlines))
-
+        # print(''.join(outputlines))
 
     def dl_output(self):
         """Downloads the output of the job.
@@ -328,8 +322,14 @@ class PreprocessJob:
         mask_name = self.madx_cfg["mask_file"]
         source_path = Path(self.madx_cfg['source_path'])
         shutil.copy2(source_path / mask_name, mask_name)
+        # TODO: the madx['dest_path'] is weird, there is only one input.ini and
+        # it is for the last preprocess_id... all the jobs will have the same
+        # madx_cfg['dest_path']
+        # same for sitrack job, I think this was mistakenly left in and should
+        # be removed
+
         # make destination folder
-        Path(self.madx_cfg['dest_path']).mkdir(parents=True, exist_ok=True)
+        # Path(self.madx_cfg['dest_path']).mkdir(parents=True, exist_ok=True)
 
     def madx_prep(self, output_file='madx_in'):
         '''Replaces the placeholders in the mask_file.

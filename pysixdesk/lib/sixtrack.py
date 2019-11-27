@@ -58,7 +58,7 @@ class TrackingJob:
         self.first_turn = outputs[0][4]
 
         # The fort section is just used for the keys?
-        fort3_keys = list(cf['fort3'].keys())
+        fort3_keys = json.loads(cf['fort3']['keys'])
         fort3_outputs = self.db.select("sixtrack_wu_tmp", fort3_keys,
                                        where=f"task_id={self.task_id}")
         self.fort_cfg = dict(zip(fort3_keys, fort3_outputs[0]))
