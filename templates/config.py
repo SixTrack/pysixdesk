@@ -9,6 +9,8 @@ from pysixdesk import Study
 from pysixdesk.lib.study_params import StudyParams, set_property
 from math import sqrt, pi, sin, cos, tan
 from pysixdesk.lib import machineparams
+from scan_engine import Zipable as Z
+from scan_engine import Productable as P
 
 # logger configuration
 logger = logging.getLogger('pysixdesk')
@@ -61,7 +63,6 @@ class MyStudy(Study):
         # self.params['toggle_coll/'] = '/'
         self.params['SEEDRAN'] = [1, 2]
         self.params['I_MO'] = list(range(100, 200 + 1, 100))
-        print(self.params)
 
         @set_property('input_keys', ['kang', 'kmax'])
         @set_property('output_keys', ['angle'])
