@@ -57,7 +57,6 @@ class TrackingJob:
         self.wu_id = outputs[0][3]
         self.first_turn = outputs[0][4]
 
-        # The fort section is just used for the keys?
         fort3_keys = json.loads(cf['fort3']['keys'])
         fort3_outputs = self.db.select("sixtrack_wu_tmp", fort3_keys,
                                        where=f"task_id={self.task_id}")

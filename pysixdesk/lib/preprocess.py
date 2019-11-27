@@ -341,9 +341,6 @@ class PreprocessJob:
         values = list(self.mask_cfg.values())
         utils.replace(patterns, values, self.madx_cfg["mask_file"],
                       output_file)
-        with open(output_file) as fp:
-            lines = fp.readlines()
-        print(''.join(lines))
         # show diff
         # utils.diff(self.madx_cfg["mask_file"], output_file, logger=self._logger)
 
