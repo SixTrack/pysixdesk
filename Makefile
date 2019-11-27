@@ -22,7 +22,7 @@ test: test-all
 test-all:
 	py.test --junitxml=./reports/junit.xml -o junit_suite_name=$(PKGNAME) tests
 
-test-sqlte:
+test-sqlite:
 	py.test --junitxml=./reports/junit.xml -o junit_suite_name=$(PKGNAME) tests/integration/sqlite
 
 test-mysql:
