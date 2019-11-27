@@ -123,6 +123,8 @@ class DatabaseAdaptor(ABC):
             sql += ' WHERE %s' % where
         if orderby is not None:
             sql += ' ORDER BY %s'(','.join(orderby))
+        if 'limit' in kwargs.keys() and kwargs['limit']:
+            sql += ' limit %s' % kwargs['limit']
         with closing(conn.cursor()) as c:
             c.execute(sql)
             data = c.fetchall()

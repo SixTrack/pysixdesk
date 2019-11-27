@@ -75,6 +75,7 @@ class Study(object):
         self.first_turn = 1  # first turn
         self.last_turn = 100  # last turn
         self.cluster_class = submission.HTCondor
+        self.max_jobsubmit = 15000
 
         self.madx_output = {
             'fc.2': 'fort.2',
@@ -419,6 +420,7 @@ class Study(object):
             pre_wu_ids = list(zip(*check_jobs))[0]
             wu_id = max(pre_wu_ids)
         else:
+            pre_wu_ids = []
             wu_id = 0
 
         wu_id_start = wu_id
@@ -477,7 +479,8 @@ class Study(object):
                 wu_id = generate_preprocess_records(param_dict, wu_id)
                 param_dict[key] = list(pre_records[key]) + list(pre_news[key])
         else:
-            pass
+            self._logger.error('Something wrong! Can not update db!')
+            return
         self.db.insertm('preprocess_wu', madx_table)
         self._logger.info(f'Add {wu_id-wu_id_start} new preprocess '
                 f'jobs into database! A total of {wu_id}!')
@@ -486,7 +489,8 @@ class Study(object):
         six_records = records['sixtrack_wu']
         six_news = news['sixtrack_wu']
         new_madx_ids = madx_table['wu_id']
-        six_records['preprocess_id'] = pre_wu_ids
+        if pre_wu_ids:
+            six_records['preprocess_id'] = pre_wu_ids
         if new_madx_ids:
             six_news['preprocess_id'] = new_madx_ids
         keys = list(self.sixtrack_params.keys())
@@ -549,7 +553,8 @@ class Study(object):
                 wu_id = generate_sixtrack_records(param_dict, wu_id)
                 param_dict[key] = list(six_records[key]) + list(six_news[key])
         else:
-            pass
+            self._logger.error('Something wrong! Can not update db!')
+            return
         self.db.insertm('sixtrack_wu', six_table)
         self._logger.info(f'Add {wu_id-wu_id_start} new sixtrack jobs into '
                 f'database! A total of {wu_id}!')
@@ -675,7 +680,7 @@ class Study(object):
             constraints = "status='incomplete' and preprocess_id in (%s)" % (
                         ','.join(map(str, preprocess_outs[0])))
             action = 'submit'
-        results = self.db.select('sixtrack_wu', where=constraints)
+        results = self.db.select('sixtrack_wu', where=constraints, limit=self.max_jobsubmit)
         if not results:
             content = f"There isn't available sixtrack job to {action}!"
             self._logger.info(content)
@@ -688,10 +693,6 @@ class Study(object):
             status = self.pre_calc(paramsdict, pre_id)  # further calculation
             if status:
                 new_results.append(tuple(paramsdict.values()))
-                # wu_id = paramsdict['wu_id']
-                # turn = paramsdict['last_turn']
-                # where = f"wu_id = {wu_id} and last_turn = {turn}"
-                # self.db.update('sixtrack_wu', paramsdict, where)
         if not new_results:
             content = ("There isn't available sixtrack job to submit due to "
                        "failed further calculation!")
@@ -765,7 +766,7 @@ class Study(object):
             pre_task_ins = dict(zip(names, zip(*pre_task_outs)))
             constr = "first_turn is not null and status='incomplete'"
             cr_ids = self.db.select('sixtrack_wu', ['wu_id', 'first_turn'],
-                                    where=constr)
+                                    where=constr, limit=self.max_jobsubmit)
             if cr_ids:
                 sub_db.create_table('sixtrack_task', self.tables['sixtrack_task'])
                 cr_ids = list(zip(*cr_ids))
@@ -823,7 +824,8 @@ class Study(object):
         else:
             constraints = "status='incomplete'"
             info = 'incomplete'
-        results = self.db.select('preprocess_wu', where=constraints)
+        results = self.db.select('preprocess_wu', where=constraints,
+                limit=self.max_jobsubmit)
         if not results:
             content = f"There isn't {info} preprocess job!"
             self._logger.warning(content)
