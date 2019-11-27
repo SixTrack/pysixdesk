@@ -110,14 +110,13 @@ class MyStudy(Study):
         # self.sixtrack_input['input'] = self.preprocess_output
         # self.sixtrack_input['additional_input'] = ['CollDB.data']
         # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat']
-        # self.params['COLL'] = '/'
+        # self.params['toggle_coll'] = '/'
         # self.params['turnss'] = 200
         # self.params['nss'] = 5000
         # self.params['ax0s'] = 0
         # self.params['ax1s'] = 17
         # self.params['e0'] = 6500000
-        # self.params['POST'] = '/'
-        # self.params['POS1'] = '/'
+        # self.params['toggle_post'] = '/'
         # self.params['dp2'] = 0.00
         # self.params['ition'] = 1
         # self.params['ibtype'] = 1
