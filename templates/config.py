@@ -9,8 +9,6 @@ from pysixdesk import Study
 from pysixdesk.lib.study_params import StudyParams, set_property
 from math import sqrt, pi, sin, cos, tan
 from pysixdesk.lib import machineparams
-from scan_engine import Zipable as Z
-from scan_engine import Productable as P
 
 # logger configuration
 logger = logging.getLogger('pysixdesk')

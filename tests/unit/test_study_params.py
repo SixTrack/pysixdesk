@@ -2,8 +2,6 @@ import shutil
 import unittest
 import sys
 from pathlib import Path
-from scan_engine import Productable as P
-from scan_engine import Zipable as Z
 # give the test runner the import access
 pysixdesk_path = str(Path(__file__).parents[2].absolute())
 sys.path.insert(0, pysixdesk_path)
@@ -222,22 +220,6 @@ test=%test1; test=%test2; test=%test3
 
         inp = {'a': [1, 2],
                'b': [3, 4]}
-        out = list(params._engine_dict(**inp))
-        self.assertEqual(out, [{'a': 1, 'b': 3},
-                               {'a': 1, 'b': 4},
-                               {'a': 2, 'b': 3},
-                               {'a': 2, 'b': 4},
-                               ])
-
-        inp = {'a': Z(1, 2),
-               'b': Z(3, 4)}
-        out = list(params._engine_dict(**inp))
-        self.assertEqual(out, [{'a': 1, 'b': 3},
-                               {'a': 2, 'b': 4},
-                               ])
-
-        inp = {'a': P(1, 2),
-               'b': P(3, 4)}
         out = list(params._engine_dict(**inp))
         self.assertEqual(out, [{'a': 1, 'b': 3},
                                {'a': 1, 'b': 4},

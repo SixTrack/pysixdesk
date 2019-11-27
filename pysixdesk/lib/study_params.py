@@ -3,7 +3,14 @@ import logging
 
 from pathlib import Path
 from collections import OrderedDict
-from scan_engine import engine
+try:
+    from scan_engine import engine
+except ImportError:
+    from itertools import product
+
+    def engine(*args):
+        return product(*args)
+
 from collections import Iterable
 
 from . import machineparams
