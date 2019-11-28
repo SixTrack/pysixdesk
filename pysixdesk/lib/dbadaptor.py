@@ -121,8 +121,10 @@ class DatabaseAdaptor(ABC):
             sql = 'SELECT DISTINCT %s FROM %s' % (cols, table_name)
         if where is not None:
             sql += ' WHERE %s' % where
+        if 'groupby' in kwargs.keys() and kwargs['groupby']:
+            sql += ' GROUP BY %s' % (','.join(kwargs['groupby']))
         if orderby is not None:
-            sql += ' ORDER BY %s'(','.join(orderby))
+            sql += ' ORDER BY %s' % (','.join(orderby))
         if 'limit' in kwargs.keys() and kwargs['limit']:
             sql += ' limit %s' % kwargs['limit']
         with closing(conn.cursor()) as c:
