@@ -25,11 +25,12 @@ class WorkSpace(object):
     |         \|_ config.py
     '''
 
-    def __init__(self, workspace_name='./sandbox'):
+    def __init__(self, workspace_name='./sandbox', templates=None):
         self._logger = logging.getLogger(__name__)
         self.name = workspace_name
         self.paths = {}
         self.studies = []
+        self.templates = templates
         self._update_list_existing_studies()
 
     def _check_name(self):
@@ -96,7 +97,10 @@ class WorkSpace(object):
         content = 'Checking template files in %s...' % (
             self.paths['templates'])
         self._logger.info(content)
-        tem_path = os.path.join(utils.PYSIXDESK_ABSPATH, 'templates')
+        if self.templates:
+            tem_path = self.templates # custom templates
+        else:
+            tem_path = os.path.join(utils.PYSIXDESK_ABSPATH, 'templates')
         for item in os.listdir(tem_path):
             sour = os.path.join(tem_path, item)
             dest = os.path.join(self.paths['templates'], item)
@@ -143,7 +147,7 @@ class WorkSpace(object):
         '''Show all the studies in the current workspace'''
         self._update_list_existing_studies(False)
 
-    def init_study(self, study_name=None, sanity_check=True):
+    def init_study(self, study_name=None, templates=None, sanity_check=True):
         '''Initialise the directory hosting a study'''
 
         # sanity checks
@@ -168,13 +172,17 @@ class WorkSpace(object):
             self._logger.info(content)
 
         # template files
-        for item in os.listdir(self.paths['templates']):
-            sour = os.path.join(self.paths['templates'], item)
+        if templates and os.path.isdir(templates):
+            tem_path = templates # custom templates
+        else:
+            tem_path = self.paths['templates']
+        for item in os.listdir(tem_path):
+            sour = os.path.join(tem_path, item)
             dest = os.path.join(study_path, item)
             if os.path.isfile(sour) and not os.path.isfile(dest):
                 shutil.copy2(sour, dest)
                 content = '...copied template file %s from %s .' % (
-                    item, self.paths['templates'])
+                    item, tem_path)
                 self._logger.info(content)
             else:
                 content = '...template file %s present.' % (item)
