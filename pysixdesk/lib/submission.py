@@ -65,6 +65,8 @@ class HTCondor(Cluster):
             os.remove(job_list)
         with open(job_list, 'w') as f_out:
             for i in task_ids:
+                if isinstance(i, list):
+                    i = '_'.join(map(str, i))
                 f_out.write(str(i))
                 f_out.write('\n')
                 out_f = os.path.join(output_path, str(i))

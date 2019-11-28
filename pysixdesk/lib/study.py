@@ -1,4 +1,5 @@
 import os
+import ast
 import time
 import json
 import shutil
@@ -721,12 +722,15 @@ class Study(object):
             where = f"wu_id={wu_id} and last_turn={last_turn}"  # wu_id is not unique now
             self.db.update('sixtrack_wu', wu_table, where)
         outputs['task_id'] = task_ids
+        #TODO: group the outputs
+        test = self._group_records(outputs, 'amp')
+        print(test)
+        exit()
         db_info = {}
         db_info.update(self.db_info)
         tran_input = []
         if db_info['db_type'].lower() == 'sql':
             sub_name = os.path.join(self.paths['sixtrack_in'], 'sub.db')
-            # sub_main = self.db_info['db_name']
             if os.path.exists(sub_name):
                 os.remove(sub_name)  # remove the old one
             db_info['db_name'] = sub_name
@@ -884,6 +888,44 @@ class Study(object):
         self.submission.prepare(task_ids, trans, exe, 'input.ini', in_path,
                                 out_path, flavour='espresso', *args, **kwargs)
 
+    def _group_records(self, outputs, groupby):
+        '''Group the records from db by given rules'''
+        task_ids = []
+        keys = list(self.sixtrack_params.keys())
+        new_outs = {}
+        for key in keys:
+            new_outs[key] = outputs[key]
+        def fun(elem):
+            if isinstance(elem, str):
+                ele = ast.literal_eval(elem)
+                if isinstance(ele, Iterable):
+                    elem = ele[0]
+                return elem
+            return elem
+        iden_names = sorted(set(new_outs[groupby]), key=fun)
+        records = list(zip(*new_outs.values()))
+        ind = list(new_outs.keys()).index(groupby)
+        group_list = []
+        init = list(records[0])
+        init.pop(ind)
+        results = SpecialDict.fromkeys(init, iden_names)
+        group_list.append(results)
+        for i in range(len(records)):
+            rec = list(records[i])
+            iden = rec.pop(ind)
+            flag = True
+            for li in group_list:
+                flag = li.set(iden, outputs['task'][i], rec)
+            if not flag:
+                res = SpecialDict.fromkeys(rec, iden_names)
+                res.set(iden, outputs['task'][i], rec)
+                group_list.append(res)
+
+        for lis in group_list:
+            lis.clear_none()
+            task_ids.append(list(lis.values()))
+        return task_ids
+
     def pre_calc(self, **kwargs):
         '''Further calculations for the specified parameters'''
         pass
@@ -978,3 +1020,32 @@ class Study(object):
         '''Custom product of the input iterables for sixtrack.
         In default, it's cartesian product'''
         return itertools.product(*param_dict.values())
+
+class SpecialDict(OrderedDict):
+
+    def __init__(self, mark=None, *args, **kwargs):
+        self.mark = mark
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def fromkeys(cls, mark, iterable, value=None):
+        self = cls(mark)
+        for key in iterable:
+            self[key] = value
+        return self
+
+    def set(self, key, value, mark):
+        if mark == self.mark:
+            super().__setitem__(key, value)
+            return True
+        else:
+            return False
+
+    def clear_none(self):
+        keys = list(self.keys())
+        for key in keys:
+            if self[key] is None:
+                dict.pop(self, key)
+
+
+
