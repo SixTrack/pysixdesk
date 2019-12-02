@@ -81,42 +81,44 @@ def gather_results(jobtype, cf, cluster):
     for sec in cf:
         parent_cf[sec] = cf[sec]
     coll_action = False
-    for item in os.listdir(type_path):
-        if item not in valid_task_ids:
-            continue
-        job_path = os.path.join(type_path, item)
-        result_cf = copy.deepcopy(parent_cf)
-        job_table = {}
-        task_table = {}
-        task_table['status'] = 'Success'
-        if os.path.isdir(job_path) and os.listdir(job_path):
-            # parse the results
-            parse_results(jobtype, item, job_path, file_list, task_table,
-                          result_cf)
-            coll_action = True
-            where = 'task_id=%s' % item
-            db.update(f'{jobtype}_task', task_table, where)
-            for sec, vals in result_cf.items():
-                vals['task_id'] = [item]*len(vals['mtime'])
-                db.insertm(sec, vals)
-            if task_table['status'] == 'Success':
-                job_table['status'] = 'complete'
-                job_table['mtime'] = int(time.time() * 1E7)
-                where = "task_id=%s" % item
-                db.update(f'{jobtype}_wu', job_table, where)
-                content = f"{jobtype} task {item} has completed normally!"
-                logger.info(content)
+    for item_group in os.listdir(type_path):
+        item_list = item_group.split('_')
+        for item in item_list:
+            if item not in valid_task_ids:
+                continue
+            job_path = os.path.join(type_path, item_group)
+            result_cf = copy.deepcopy(parent_cf)
+            job_table = {}
+            task_table = {}
+            task_table['status'] = 'Success'
+            if os.path.isdir(job_path) and os.listdir(job_path):
+                # parse the results
+                parse_results(jobtype, item, job_path, file_list, task_table,
+                              result_cf)
+                coll_action = True
+                where = 'task_id=%s' % item
+                db.update(f'{jobtype}_task', task_table, where)
+                for sec, vals in result_cf.items():
+                    vals['task_id'] = [item]*len(vals['mtime'])
+                    db.insertm(sec, vals)
+                if task_table['status'] == 'Success':
+                    job_table['status'] = 'complete'
+                    job_table['mtime'] = int(time.time() * 1E7)
+                    where = "task_id=%s" % item
+                    db.update(f'{jobtype}_wu', job_table, where)
+                    content = f"{jobtype} task {item} has completed normally!"
+                    logger.info(content)
+                else:
+                    where = "task_id=%s" % item
+                    job_table['status'] = 'incomplete'
+                    db.update(f'{jobtype}_wu', job_table, where)
             else:
-                where = "task_id=%s" % item
-                job_table['status'] = 'incomplete'
-                db.update(f'{jobtype}_wu', job_table, where)
-        else:
-            where = 'task_id=%s' % item
-            task_table['status'] = 'Failed'
-            db.update(f'{jobtype}_task', task_table, where)
-            content = "This is a failed job!"
-            logger.warning(content)
-        shutil.rmtree(job_path)
+                where = 'task_id=%s' % item
+                task_table['status'] = 'Failed'
+                db.update(f'{jobtype}_task', task_table, where)
+                content = "This is a failed job!"
+                logger.warning(content)
+            shutil.rmtree(job_path)
     if coll_action:
         cluster.remove(studypath, 4)  # remove the completed condor jobs
     db.close()

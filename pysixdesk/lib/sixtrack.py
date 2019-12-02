@@ -30,8 +30,8 @@ class TrackingJob:
             ValueError: If unalbe to find the preprocess task_id for this job.
         '''
         self._logger = utils.condor_logger('sixtrack')
-        self._dest_path = Path('results')
-        self._dest_path.mkdir(exist_ok=True)
+        self._dest_path = Path('results', str(task_id))
+        self._dest_path.mkdir(parents=True, exist_ok=True)
 
         self.task_id = task_id
         # read database config
@@ -510,24 +510,27 @@ class TrackingJob:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('task_id', type=int,
+    parser.add_argument('task_id', type=str,
                         help='Current work unit ID')
     parser.add_argument('input_info', type=str,
                         help='Path to the db config file.')
     args = parser.parse_args()
-    job = TrackingJob(args.task_id, args.input_info)
-    try:
-        job.run()
-    except Exception as e:
-        if job.db_type == 'mysql':
-            job.db.open()
-            job_table = {}
-            where = "task_id"
-            job_table['status'] = 'incomplete'
-            job_table['mtime'] = int(time.time() * 1E7)
-            job.db.update('sixtrack_wu', job_table,
-                          where=f'task_id={job.task_id}')
-        raise e
-    finally:
-        if job.db_type == 'mysql':
-            job.db.remove('sixtrack_wu_tmp', where=f'task_id={job.task_id}')
+    task_ids = args.task_id
+    task_ids = task_ids.split('_')
+    for task_id in task_ids:
+        job = TrackingJob(task_id, args.input_info)
+        try:
+            job.run()
+        except Exception as e:
+            if job.db_type == 'mysql':
+                job.db.open()
+                job_table = {}
+                where = "task_id"
+                job_table['status'] = 'incomplete'
+                job_table['mtime'] = int(time.time() * 1E7)
+                job.db.update('sixtrack_wu', job_table,
+                              where=f'task_id={job.task_id}')
+            raise e
+        finally:
+            if job.db_type == 'mysql':
+                job.db.remove('sixtrack_wu_tmp', where=f'task_id={job.task_id}')

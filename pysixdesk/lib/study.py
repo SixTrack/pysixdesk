@@ -617,10 +617,12 @@ class Study(object):
             table = {}
             table['status'] = 'submitted'
             for ky, vl in out.items():
-                where = 'task_id=%s' % ky
-                table['unique_id'] = vl
-                table['batch_name'] = batch_name
-                self.db.update(table_name, table, where)
+                keys = ky.split('_')
+                for k in keys:
+                    where = 'task_id=%s' % k
+                    table['unique_id'] = vl
+                    table['batch_name'] = batch_name
+                    self.db.update(table_name, table, where)
         else:
             content = "Failed to submit %s job!" % jobname
             self._logger.error(content)
@@ -662,8 +664,8 @@ class Study(object):
         except Exception as e:
             raise e
 
-    def prepare_sixtrack_input(self, resubmit=False, boinc=False, *args,
-                               **kwargs):
+    def prepare_sixtrack_input(self, resubmit=False, boinc=False, groupby=None,
+            exclude=None, *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
         if self.checkpoint_restart:
             self.prepare_cr()
@@ -722,10 +724,6 @@ class Study(object):
             where = f"wu_id={wu_id} and last_turn={last_turn}"  # wu_id is not unique now
             self.db.update('sixtrack_wu', wu_table, where)
         outputs['task_id'] = task_ids
-        #TODO: group the outputs
-        test = self._group_records(outputs, 'amp')
-        print(test)
-        exit()
         db_info = {}
         db_info.update(self.db_info)
         tran_input = []
@@ -817,6 +815,8 @@ class Study(object):
         in_path = self.paths['sixtrack_in']
         out_path = self.paths['sixtrack_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'sixtrack.py')
+        if groupby:
+            task_ids = self._group_records(outputs, groupby, exclude)
         self.submission.prepare(task_ids, tran_input, exe, 'input.ini', in_path,
                                 out_path, flavour='tomorrow', *args, **kwargs)
 
@@ -888,10 +888,14 @@ class Study(object):
         self.submission.prepare(task_ids, trans, exe, 'input.ini', in_path,
                                 out_path, flavour='espresso', *args, **kwargs)
 
-    def _group_records(self, outputs, groupby):
+    def _group_records(self, outputs, groupby, exclude=None):
         '''Group the records from db by given rules'''
         task_ids = []
         keys = list(self.sixtrack_params.keys())
+        keys.append('preprocess_id')
+        if exclude:
+            for exc in exclude:
+                keys.remove(exc)
         new_outs = {}
         for key in keys:
             new_outs[key] = outputs[key]
@@ -915,10 +919,12 @@ class Study(object):
             iden = rec.pop(ind)
             flag = True
             for li in group_list:
-                flag = li.set(iden, outputs['task'][i], rec)
+                flag = li.set(iden, outputs['task_id'][i], rec)
+                if flag:
+                    break
             if not flag:
                 res = SpecialDict.fromkeys(rec, iden_names)
-                res.set(iden, outputs['task'][i], rec)
+                res.set(iden, outputs['task_id'][i], rec)
                 group_list.append(res)
 
         for lis in group_list:
@@ -1045,7 +1051,7 @@ class SpecialDict(OrderedDict):
         keys = list(self.keys())
         for key in keys:
             if self[key] is None:
-                dict.pop(self, key)
+                self.pop(key)
 
 
 

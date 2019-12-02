@@ -148,7 +148,6 @@ class HTCondor(Cluster):
                 # this will catch the excpetion raised or any unexpected
                 # exception in the try block.
                 self._logger.error(e, exc_info=True)
-                # self._logger.error(outs)
                 return False, None
         return False, None
 

@@ -16,8 +16,9 @@ def parse_results(jobtype, item, job_path, file_list, task_table, result_cf):
     task_table['mtime'] = int(time.time() * 1E7)
     contents = []
     for a in os.walk(job_path):
-        for b in a[2]:
-            contents.append(os.path.join(a[0], b))
+        if a[0] == '.' or str(item) in a[0].split('/'):
+            for b in a[2]:
+                contents.append(os.path.join(a[0], b))
 
     def search_store(key, name):
         search_re = [s for s in contents if name in os.path.basename(s)]
