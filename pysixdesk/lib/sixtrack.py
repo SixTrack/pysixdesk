@@ -450,7 +450,6 @@ class TrackingJob:
             pars = '\n'.join(self.boinc_cfg.values())
             f_out.write(pars)
             f_out.write('\n')
-        print(self.boinc_work)
         for f in [input_zip, boinc_cfg_file]:
             shutil.copy2(f, self.boinc_work)
         self._logger.info("Submit to %s successfully!" % self.boinc_work)

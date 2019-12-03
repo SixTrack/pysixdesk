@@ -359,7 +359,7 @@ class Study(object):
             [news[typ].pop(key) for key in params.keys() if not news[typ][key]]
         return records, news
 
-    def update_db(self, force_update=False, db_check=False):
+    def update_db(self, db_check=False):
         '''Update the database whith the user-defined parameters'''
         temp = self.paths["templates"]
         cont = os.listdir(temp)
@@ -433,19 +433,19 @@ class Study(object):
         madx_table['job_name'] = []
         madx_table['mtime'] = []
 
-        if not force_update:
-            if (wu_id != 0) and (not db_check):
-                self._logger.warning('''You are going to update the database
-                which is not empty, you must assign 'db_check' to True to
-                avoid duplicate rows (It would be a little slow)! If you are
-                pretty sure there aren't duplicate rows, you can skip db check
-                with 'force_update'. But you should be responsible for this!''')
-                return
-        else:
-            db_check = False
-            if wu_id != 0:
-                self._logger.warning('Attention! Force update(skip db '
-                        'check) is selected, make sure no duplications!')
+        #if not force_update:
+        #    if (wu_id != 0) and (not db_check):
+        #        self._logger.warning('''You are going to update the database
+        #        which is not empty, you must assign 'db_check' to True to
+        #        avoid duplicate rows (It would be a little slow)! If you are
+        #        pretty sure there aren't duplicate rows, you can skip db check
+        #        with 'force_update'. But you should be responsible for this!''')
+        #        return
+        #else:
+        #    db_check = False
+        #    if wu_id != 0:
+        #        self._logger.warning('Attention! Force update(skip db '
+        #                'check) is selected, make sure no duplications!')
 
         def generate_preprocess_records(param_dict, wu_id):
             for element in self.custom_product_preprocess(param_dict):
@@ -665,7 +665,7 @@ class Study(object):
             raise e
 
     def prepare_sixtrack_input(self, resubmit=False, boinc=False, groupby=None,
-            exclude=None, *args, **kwargs):
+            *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
         if self.checkpoint_restart:
             self.prepare_cr()
@@ -689,6 +689,7 @@ class Study(object):
             self._logger.info(content)
             return
         names = list(self.tables['sixtrack_wu'].keys())
+        group_results = dict(zip(names, zip(*results)))
         new_results = []
         for result in results:
             paramsdict = dict(zip(names, result))
@@ -724,6 +725,7 @@ class Study(object):
             where = f"wu_id={wu_id} and last_turn={last_turn}"  # wu_id is not unique now
             self.db.update('sixtrack_wu', wu_table, where)
         outputs['task_id'] = task_ids
+        group_results['task_id'] = task_ids
         db_info = {}
         db_info.update(self.db_info)
         tran_input = []
@@ -816,7 +818,7 @@ class Study(object):
         out_path = self.paths['sixtrack_out']
         exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'sixtrack.py')
         if groupby:
-            task_ids = self._group_records(outputs, groupby, exclude)
+            task_ids = self._group_records(group_results, groupby)
         self.submission.prepare(task_ids, tran_input, exe, 'input.ini', in_path,
                                 out_path, flavour='tomorrow', *args, **kwargs)
 
@@ -888,14 +890,11 @@ class Study(object):
         self.submission.prepare(task_ids, trans, exe, 'input.ini', in_path,
                                 out_path, flavour='espresso', *args, **kwargs)
 
-    def _group_records(self, outputs, groupby, exclude=None):
+    def _group_records(self, outputs, groupby):
         '''Group the records from db by given rules'''
         task_ids = []
         keys = list(self.sixtrack_params.keys())
         keys.append('preprocess_id')
-        if exclude:
-            for exc in exclude:
-                keys.remove(exc)
         new_outs = {}
         for key in keys:
             new_outs[key] = outputs[key]
@@ -917,12 +916,11 @@ class Study(object):
         for i in range(len(records)):
             rec = list(records[i])
             iden = rec.pop(ind)
-            flag = True
             for li in group_list:
                 flag = li.set(iden, outputs['task_id'][i], rec)
                 if flag:
                     break
-            if not flag:
+            else:
                 res = SpecialDict.fromkeys(rec, iden_names)
                 res.set(iden, outputs['task_id'][i], rec)
                 group_list.append(res)
