@@ -18,19 +18,20 @@ from pysixdesk.lib.resultparser import parse_results
 
 
 class TrackingJob:
-    def __init__(self, task_id, input_info, group_name):
+    def __init__(self, task_id, input_info, group_name, logger):
         '''Class to handle the execution of the tracking job.
 
         Args:
             task_id (int): Current task ID.
             input_info (str/path): Path to the database configuration file.
             group_name (str): The group name when submitting multi-jobs to one node
+            logger: The logger
 
         Raises:
             FileNotFoundError: If required input file is not found in database.
             ValueError: If unalbe to find the preprocess task_id for this job.
         '''
-        self._logger = utils.condor_logger('sixtrack')
+        self._logger = logger
         self._dest_path = Path('results', str(task_id))
         self._dest_path.mkdir(parents=True, exist_ok=True)
         self.group_name = group_name
@@ -449,6 +450,7 @@ class TrackingJob:
             pars = '\n'.join(self.boinc_cfg.values())
             f_out.write(pars)
             f_out.write('\n')
+        print(self.boinc_work)
         for f in [input_zip, boinc_cfg_file]:
             shutil.copy2(f, self.boinc_work)
         self._logger.info("Submit to %s successfully!" % self.boinc_work)
@@ -520,8 +522,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     group_name = args.task_id
     task_ids = group_name.split('-')
+    LOGGER = utils.condor_logger('sixtrack')
     for task_id in task_ids:
-        job = TrackingJob(task_id, args.input_info, group_name)
+        job = TrackingJob(task_id, args.input_info, group_name, LOGGER)
         try:
             job.run()
         except Exception as e:

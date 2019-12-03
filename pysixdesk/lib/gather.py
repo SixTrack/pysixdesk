@@ -85,9 +85,11 @@ def gather_results(jobtype, cf, cluster):
     for item_group in os.listdir(type_path):
         item_list = item_group.split('-')
         for item in item_list:
+            com_flag = False
             if item not in valid_task_ids:
                 continue
             job_path = os.path.join(type_path, item_group)
+            com_flag = True
             result_cf = copy.deepcopy(parent_cf)
             job_table = {}
             task_table = {}
@@ -119,9 +121,11 @@ def gather_results(jobtype, cf, cluster):
                 db.update(f'{jobtype}_task', task_table, where)
                 content = "This is a failed job!"
                 logger.warning(content)
-        shutil.rmtree(job_path)
+        if com_flag:
+            shutil.rmtree(job_path)
     if coll_action:
-        cluster.remove(studypath, 4)  # remove the completed condor jobs
+        # remove the completed condor jobs (when using spool option)
+        cluster.remove(studypath, 4)
     db.close()
 
 
@@ -151,7 +155,7 @@ def download_from_boinc(info_sec):
     username = getpass.getuser()
     tmp_path = os.path.join('/tmp', username, st_pre)
     if not os.path.isdir(tmp_path):
-        os.mkdir(tmp_path)
+        os.makedirs(tmp_path)
     for res in contents:
         if re.match(r'%s.+\.zip' % st_pre, res):
             try:
