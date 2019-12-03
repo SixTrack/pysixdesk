@@ -53,16 +53,17 @@ def gather_results(jobtype, cf, cluster):
     file_list = info_sec['outs']
     where = "status='submitted'"
     job_ids = db.select(f'{jobtype}_wu', ['task_id', 'unique_id'], where)
-    job_ids = [(str(j), str(i)) for i, j in job_ids]
+    job_ids = [(str(i), str(j)) for i, j in job_ids]
     job_index = dict(job_ids)
     studypath = os.path.dirname(type_path)
-    unfin = cluster.check_running(studypath)
+    unfin = cluster.check_running(studypath)#clusterId.processId
     jbin = dict(job_index)
-    running_jobs = [job_index.pop(unid) for unid in unfin if unid in jbin]
+    running_jobs = [taid for taid, unid in jbin.items() if unid in unfin]
+    [job_index.pop(taid) for taid in running_jobs]
     if running_jobs:
         content = f"The {jobtype} tasks {str(running_jobs)} aren't completed yet!"
         logger.warning(content)
-    valid_task_ids = list(job_index.values())
+    valid_task_ids = list(job_index.keys())
     cluster.download_from_spool(studypath)
 
     if ('boinc' in cf['info'].keys()) and cf['info']['boinc']:
@@ -118,7 +119,7 @@ def gather_results(jobtype, cf, cluster):
                 db.update(f'{jobtype}_task', task_table, where)
                 content = "This is a failed job!"
                 logger.warning(content)
-            shutil.rmtree(job_path)
+        shutil.rmtree(job_path)
     if coll_action:
         cluster.remove(studypath, 4)  # remove the completed condor jobs
     db.close()
