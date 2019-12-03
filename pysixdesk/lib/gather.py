@@ -68,8 +68,8 @@ def gather_results(jobtype, cf, cluster):
     if ('boinc' in cf['info'].keys()) and cf['info']['boinc']:
         content = "Downloading results from boinc spool!"
         logger.info(content)
-        stat, task_ids = download_from_boinc(info_sec)
-        if not stat:
+        task_ids = download_from_boinc(info_sec)
+        if not task_ids:
             return
         unfn_task_ids = [i for i in valid_task_ids if i not in task_ids]
         if unfn_task_ids:
@@ -82,7 +82,7 @@ def gather_results(jobtype, cf, cluster):
         parent_cf[sec] = cf[sec]
     coll_action = False
     for item_group in os.listdir(type_path):
-        item_list = item_group.split('_')
+        item_list = item_group.split('-')
         for item in item_list:
             if item not in valid_task_ids:
                 continue
@@ -134,14 +134,14 @@ def download_from_boinc(info_sec):
     if not os.path.isdir(res_path):
         content = "There isn't job submitted to boinc!"
         logger.warning(content)
-        return 0, []
+        return []
     contents = os.listdir(res_path)
     if 'processed' in contents:
         contents.remove('processed')
     if not contents:
         content = "No result in boinc spool yet!"
         logger.warning(content)
-        return 0, []
+        return []
     out_path = six_path
 
     processed_path = os.path.join(res_path, 'processed')
@@ -167,14 +167,16 @@ def download_from_boinc(info_sec):
         if f10[-1] != '0':
             continue
         match = re.search('task_id', f10)
-        if not match:
+        match_group = re.search('group', f10)
+        if (not match) or (not match_group):
             content = 'Something wrong with the result %s' % f10
             logger.warning(content)
             continue
         task_id = f10[match.end() + 1:].split('_')[0]
-        job_path = os.path.join(out_path, task_id)
+        group_name = f10[match_group.end() + 1:].split('_')[0]
+        job_path = os.path.join(out_path, group_name)
         if not os.path.isdir(job_path):
-            content = "Output path for sixtrack task %s doesn't exist!" % task_id
+            content = f"Output path {job_path} doesn't exist!"
             logger.warning(content)
             os.mkdir(job_path)
         out_name = os.path.join(job_path, 'fort.10.gz')
@@ -183,4 +185,4 @@ def download_from_boinc(info_sec):
             shutil.copyfileobj(f_in, f_out)
         task_ids.append(task_id)
     shutil.rmtree(tmp_path)
-    return 1, task_ids
+    return task_ids

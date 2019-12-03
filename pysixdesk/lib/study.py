@@ -617,7 +617,7 @@ class Study(object):
             table = {}
             table['status'] = 'submitted'
             for ky, vl in out.items():
-                keys = ky.split('_')
+                keys = ky.split('-')
                 for k in keys:
                     where = 'task_id=%s' % k
                     table['unique_id'] = vl

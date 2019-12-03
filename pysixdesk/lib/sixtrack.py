@@ -18,12 +18,13 @@ from pysixdesk.lib.resultparser import parse_results
 
 
 class TrackingJob:
-    def __init__(self, task_id, input_info):
+    def __init__(self, task_id, input_info, group_name):
         '''Class to handle the execution of the tracking job.
 
         Args:
             task_id (int): Current task ID.
             input_info (str/path): Path to the database configuration file.
+            group_name (str): The group name when submitting multi-jobs to one node
 
         Raises:
             FileNotFoundError: If required input file is not found in database.
@@ -32,6 +33,7 @@ class TrackingJob:
         self._logger = utils.condor_logger('sixtrack')
         self._dest_path = Path('results', str(task_id))
         self._dest_path.mkdir(parents=True, exist_ok=True)
+        self.group_name = group_name
 
         self.task_id = task_id
         # read database config
@@ -411,7 +413,8 @@ class TrackingJob:
             str: the boinc job name.
         """
         st_pre = self.boinc_work.parent.name
-        job_name = st_pre + '__' + self.job_name + '_task_id_' + str(self.task_id)
+        job_name = st_pre + '__' + self.job_name + '_task_id_' +\
+                str(self.task_id) + '_group_' + str(self.group_name)
         if not self.boinc_work.is_dir():
             self.boinc_work.mkdir(parents=True, exist_ok=True)
         if not self.boinc_results.is_dir():
@@ -497,7 +500,7 @@ class TrackingJob:
 
         if self.boinc:
             if not self.sixtrack_check_tracking(six_stdout='fort.6'):
-                raise Exception("The job doesn't pass the test!")
+                raise Exception(f"The job {self.task_id} doesn't pass the test!")
 
             job_name = self.boinc_prep()
             # restore the desired number of turns
@@ -515,10 +518,10 @@ if __name__ == '__main__':
     parser.add_argument('input_info', type=str,
                         help='Path to the db config file.')
     args = parser.parse_args()
-    task_ids = args.task_id
-    task_ids = task_ids.split('_')
+    group_name = args.task_id
+    task_ids = group_name.split('-')
     for task_id in task_ids:
-        job = TrackingJob(task_id, args.input_info)
+        job = TrackingJob(task_id, args.input_info, group_name)
         try:
             job.run()
         except Exception as e:
