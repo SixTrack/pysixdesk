@@ -84,12 +84,10 @@ def gather_results(jobtype, cf, cluster):
     coll_action = False
     for item_group in os.listdir(type_path):
         item_list = item_group.split('-')
+        job_path = os.path.join(type_path, item_group)
         for item in item_list:
-            com_flag = False
             if item not in valid_task_ids:
                 continue
-            job_path = os.path.join(type_path, item_group)
-            com_flag = True
             result_cf = copy.deepcopy(parent_cf)
             job_table = {}
             task_table = {}
@@ -121,7 +119,9 @@ def gather_results(jobtype, cf, cluster):
                 db.update(f'{jobtype}_task', task_table, where)
                 content = "This is a failed job!"
                 logger.warning(content)
-        if com_flag:
+            shutil.rmtree(os.path.join(job_path, 'results', item))
+        res_path = os.path.join(job_path, 'results')
+        if os.path.isdir(res_path) and (not os.listdir(res_path)):
             shutil.rmtree(job_path)
     if coll_action:
         # remove the completed condor jobs (when using spool option)
@@ -179,7 +179,7 @@ def download_from_boinc(info_sec):
             continue
         task_id = f10[match.end() + 1:].split('_')[0]
         group_name = f10[match_group.end() + 1:].split('_')[0]
-        job_path = os.path.join(out_path, group_name)
+        job_path = os.path.join(out_path, group_name, 'results', task_id)
         if not os.path.isdir(job_path):
             content = f"Output path {job_path} doesn't exist!"
             logger.warning(content)
