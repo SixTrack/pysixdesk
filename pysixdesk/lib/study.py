@@ -744,7 +744,10 @@ class Study(object):
             pre_task_outs = self.db.select('preprocess_task', where=constr)
             names = list(self.tables['preprocess_task'].keys())
             pre_task_ins = dict(zip(names, zip(*pre_task_outs)))
-            constr = "first_turn is not null and status='incomplete'"
+            if resubmit:
+                constr = "first_turn is not null and status='submitted'"
+            else:
+                constr = "first_turn is not null and status='incomplete'"
             cr_ids = self.db.select('sixtrack_wu', ['wu_id', 'first_turn'],
                                     where=constr)
             if cr_ids:
