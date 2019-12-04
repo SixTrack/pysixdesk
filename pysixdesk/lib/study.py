@@ -450,7 +450,6 @@ class Study(object):
         new_elements = set(self.custom_product_preprocess(pre_news))-\
                 set(self.custom_product_preprocess(pre_records))
 
-        #def generate_preprocess_records(param_dict, wu_id):
         for element in new_elements:
             # avoid empty element
             if not element:
@@ -482,7 +481,7 @@ class Study(object):
         new_madx_ids = madx_table['wu_id']
         if pre_wu_ids:
             six_records['preprocess_id'] = pre_wu_ids
-            six_news['preprocess_id'] = list(pre_wu_ids) + new_madx_ids
+        six_news['preprocess_id'] = list(pre_wu_ids) + new_madx_ids
         keys = list(self.sixtrack_params.keys())
         keys.append('preprocess_id')
 
@@ -508,7 +507,6 @@ class Study(object):
 
         new_elements = set(self.custom_product_sixtrack(six_news))-\
                 set(self.custom_product_sixtrack(six_records))
-        #def generate_sixtrack_records(param_dict, wu_id):
         for element in new_elements:
             # avoid empty element
             if not element:
