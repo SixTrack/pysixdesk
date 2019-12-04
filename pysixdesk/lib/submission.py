@@ -127,8 +127,6 @@ class HTCondor(Cluster):
                 while valid_ids:
                     with open(joblist, 'w') as f_out:
                         sub_ids = valid_ids[:limit]
-                        print(limit)
-                        print(sub_ids)
                         valid_ids = list(set(valid_ids)-set(sub_ids))
                         out_str = '\n'.join(sub_ids)
                         f_out.write(out_str)
