@@ -584,8 +584,8 @@ class Study(object):
         ibatch += 1
         batch_name = batch_name + '_' + str(ibatch)
 
-        status, out = self.submission.submit(input_path, batch_name, trials,
-                                             *args, **kwargs)
+        status, out = self.submission.submit(input_path, batch_name,
+                self.max_jobsubmit, trials, *args, **kwargs)
 
         if status:
             content = "Submit %s job successfully!" % jobname
@@ -659,7 +659,7 @@ class Study(object):
             constraints = "status='incomplete' and preprocess_id in (%s)" % (
                         ','.join(map(str, preprocess_outs[0])))
             action = 'submit'
-        results = self.db.select('sixtrack_wu', where=constraints, limit=self.max_jobsubmit)
+        results = self.db.select('sixtrack_wu', where=constraints)
         if not results:
             content = f"There isn't available sixtrack job to {action}!"
             self._logger.info(content)
@@ -746,7 +746,7 @@ class Study(object):
             pre_task_ins = dict(zip(names, zip(*pre_task_outs)))
             constr = "first_turn is not null and status='incomplete'"
             cr_ids = self.db.select('sixtrack_wu', ['wu_id', 'first_turn'],
-                                    where=constr, limit=self.max_jobsubmit)
+                                    where=constr)
             if cr_ids:
                 sub_db.create_table('sixtrack_task', self.tables['sixtrack_task'])
                 cr_ids = list(zip(*cr_ids))
@@ -806,8 +806,7 @@ class Study(object):
         else:
             constraints = "status='incomplete'"
             info = 'incomplete'
-        results = self.db.select('preprocess_wu', where=constraints,
-                limit=self.max_jobsubmit)
+        results = self.db.select('preprocess_wu', where=constraints)
         if not results:
             content = f"There isn't {info} preprocess job!"
             self._logger.warning(content)
