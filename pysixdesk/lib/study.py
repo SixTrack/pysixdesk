@@ -355,6 +355,7 @@ class Study(object):
                         i = str(i)
                     if i not in value:
                         news[typ][key].append(i)
+            [news[typ][key].extend(value) for key, value in records[typ].items()]
             # remove the empty records
             [news[typ].pop(key) for key in params.keys() if not news[typ][key]]
         return records, news
@@ -446,42 +447,31 @@ class Study(object):
         #    if wu_id != 0:
         #        self._logger.warning('Attention! Force update(skip db '
         #                'check) is selected, make sure no duplications!')
+        new_elements = set(self.custom_product_preprocess(pre_news))-\
+                set(self.custom_product_preprocess(pre_records))
 
-        def generate_preprocess_records(param_dict, wu_id):
-            for element in self.custom_product_preprocess(param_dict):
-                # avoid empty element
-                if not element:
-                    continue
-                if db_check and (element in check_params):
-                    i = check_params.index(element)
-                    name = check_jobs[i][1]
-                    content = "The job %s is already in the database!" % name
-                    self._logger.warning(content)
-                    continue
-                for i in range(len(element)):
-                    ky = keys[i]
-                    vl = element[i]
-                    madx_table[ky].append(vl)
-                prefix = self.madx_input['mask_file'].split('.')[0]
-                job_name = self.name_conven(prefix, keys, element, '')
-                wu_id += 1
-                madx_table['wu_id'].append(wu_id)
-                madx_table['status'].append('incomplete')
-                madx_table['job_name'].append(job_name)
-                madx_table['mtime'].append(int(time.time() * 1E7))
-            return wu_id
-
-        if wu_id==0 and pre_news:
-            wu_id = generate_preprocess_records(pre_news, wu_id)
-        elif pre_records:
-            param_dict = dict(pre_records)
-            for key in pre_news.keys():
-                param_dict[key] = pre_news[key]
-                wu_id = generate_preprocess_records(param_dict, wu_id)
-                param_dict[key] = list(pre_records[key]) + list(pre_news[key])
-        else:
-            self._logger.error('Something wrong! Can not update db!')
-            return
+        #def generate_preprocess_records(param_dict, wu_id):
+        for element in new_elements:
+            # avoid empty element
+            if not element:
+                continue
+            if db_check and (element in check_params):
+                i = check_params.index(element)
+                name = check_jobs[i][1]
+                content = "The job %s is already in the database!" % name
+                self._logger.warning(content)
+                continue
+            for i in range(len(element)):
+                ky = keys[i]
+                vl = element[i]
+                madx_table[ky].append(vl)
+            prefix = self.madx_input['mask_file'].split('.')[0]
+            job_name = self.name_conven(prefix, keys, element, '')
+            wu_id += 1
+            madx_table['wu_id'].append(wu_id)
+            madx_table['status'].append('incomplete')
+            madx_table['job_name'].append(job_name)
+            madx_table['mtime'].append(int(time.time() * 1E7))
         self.db.insertm('preprocess_wu', madx_table)
         self._logger.info(f'Add {wu_id-wu_id_start} new preprocess '
                 f'jobs into database! A total of {wu_id}!')
@@ -492,8 +482,7 @@ class Study(object):
         new_madx_ids = madx_table['wu_id']
         if pre_wu_ids:
             six_records['preprocess_id'] = pre_wu_ids
-        if new_madx_ids:
-            six_news['preprocess_id'] = new_madx_ids
+            six_news['preprocess_id'] = list(pre_wu_ids) + new_madx_ids
         keys = list(self.sixtrack_params.keys())
         keys.append('preprocess_id')
 
@@ -517,45 +506,34 @@ class Study(object):
         six_table['mtime']=[]
         six_table['preprocess_id'] = []
 
-        def generate_sixtrack_records(param_dict, wu_id):
-            for element in self.custom_product_sixtrack(param_dict):
-                # avoid empty element
-                if not element:
-                    continue
-                if db_check and (element in outputs):
-                    i = outputs.index(element)
-                    nm = namevsid[i][1]
-                    content = f"The sixtrack job {nm} is already in the database!"
-                    self._logger.warning(content)
-                    continue
-                for i in range(len(element)):
-                    ky = keys[i]
-                    vl = element[i]
-                    if isinstance(vl, Iterable):
-                        vl = str(vl)
-                    six_table[ky].append(vl)
-                pre_id = six_table['preprocess_id'][-1]  # madx_id(wu_id)
-                wu_id += 1
-                six_table['wu_id'].append(wu_id)
-                last_turn = self.sixtrack_params['turnss']
-                six_table['last_turn'].append(last_turn)
-                job_name = f'sixtrack_job_preprocess_id_{pre_id}_wu_id_{wu_id}'
-                six_table['job_name'].append(job_name)
-                six_table['status'].append('incomplete')
-                six_table['mtime'].append(int(time.time() * 1E7))
-            return wu_id
-
-        if wu_id==0 and six_news:
-            wu_id = generate_sixtrack_records(six_news, wu_id)
-        elif six_records:
-            param_dict = dict(six_records)
-            for key in six_news.keys():
-                param_dict[key] = six_news[key]
-                wu_id = generate_sixtrack_records(param_dict, wu_id)
-                param_dict[key] = list(six_records[key]) + list(six_news[key])
-        else:
-            self._logger.error('Something wrong! Can not update db!')
-            return
+        new_elements = set(self.custom_product_sixtrack(six_news))-\
+                set(self.custom_product_sixtrack(six_records))
+        #def generate_sixtrack_records(param_dict, wu_id):
+        for element in new_elements:
+            # avoid empty element
+            if not element:
+                continue
+            if db_check and (element in outputs):
+                i = outputs.index(element)
+                nm = namevsid[i][1]
+                content = f"The sixtrack job {nm} is already in the database!"
+                self._logger.warning(content)
+                continue
+            for i in range(len(element)):
+                ky = keys[i]
+                vl = element[i]
+                if isinstance(vl, Iterable):
+                    vl = str(vl)
+                six_table[ky].append(vl)
+            pre_id = six_table['preprocess_id'][-1]  # madx_id(wu_id)
+            wu_id += 1
+            six_table['wu_id'].append(wu_id)
+            last_turn = self.sixtrack_params['turnss']
+            six_table['last_turn'].append(last_turn)
+            job_name = f'sixtrack_job_preprocess_id_{pre_id}_wu_id_{wu_id}'
+            six_table['job_name'].append(job_name)
+            six_table['status'].append('incomplete')
+            six_table['mtime'].append(int(time.time() * 1E7))
         self.db.insertm('sixtrack_wu', six_table)
         self._logger.info(f'Add {wu_id-wu_id_start} new sixtrack jobs into '
                 f'database! A total of {wu_id}!')
