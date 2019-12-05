@@ -65,13 +65,15 @@ class HTCondor(Cluster):
             os.remove(job_list)
         with open(job_list, 'w') as f_out:
             for i in task_ids:
+                if isinstance(i, list):
+                    i = '-'.join(map(str, i))
                 f_out.write(str(i))
                 f_out.write('\n')
                 out_f = os.path.join(output_path, str(i))
                 if os.path.exists(out_f):
                     shutil.rmtree(out_f)
                 os.makedirs(out_f)
-        os.chmod(job_list, 0o444)  # change the permission to readonly
+        #os.chmod(job_list, 0o444)  # change the permission to readonly
         trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk'))
         rep = {}
         rep['%func'] = ','.join(map(str, trans))
@@ -95,11 +97,12 @@ class HTCondor(Cluster):
         content = "The htcondor description file is ready!"
         self._logger.info(content)
 
-    def submit(self, input_path, job_name, trials=5, *args, **kwargs):
+    def submit(self, input_path, job_name, limit, trials=5, *args, **kwargs):
         '''Submit the job to the cluster
         Args:
             input_path (string): The input path to hold the input files
             job_name (string): The job name (also is the batch_name for HTCondor)
+            limit (int): The maximum job number per submittion
             trials (int): The maximum number of resubmission when submit failed
         '''
 
@@ -120,14 +123,21 @@ class HTCondor(Cluster):
             args.append('-batch-name')
             args.append(job_name)
             try:
-                process = Popen(['condor_submit', '-terse', *args],
-                                stdout=PIPE, stderr=PIPE,
-                                universal_newlines=True)
+                valid_ids = list(task_ids)
+                while valid_ids:
+                    with open(joblist, 'w') as f_out:
+                        sub_ids = valid_ids[:limit]
+                        valid_ids = list(set(valid_ids)-set(sub_ids))
+                        out_str = '\n'.join(sub_ids)
+                        f_out.write(out_str)
+                    process = Popen(['condor_submit', '-terse', *args],
+                                    stdout=PIPE, stderr=PIPE,
+                                    universal_newlines=True)
 
-                stdout, stderr = process.communicate()
-                self._logger.info(stdout)
-                if stderr:
-                    self._logger.error(stderr)
+                    stdout, stderr = process.communicate()
+                    self._logger.info(stdout)
+                    if stderr:
+                        self._logger.error(stderr)
                 args = ['-constraint', 'JobBatchName=="%s"' % job_name,
                         '-format', '%d.', 'ClusterId', '-format', '%d\n', 'ProcId']
                 uniq_ids = self.check(*args).split()
@@ -146,7 +156,6 @@ class HTCondor(Cluster):
                 # this will catch the excpetion raised or any unexpected
                 # exception in the try block.
                 self._logger.error(e, exc_info=True)
-                # self._logger.error(outs)
                 return False, None
         return False, None
 
