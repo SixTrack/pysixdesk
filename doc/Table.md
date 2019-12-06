@@ -48,7 +48,7 @@ This table will have only one line
 | Field     | Type | Description 
 |-----------|------|------------
 | mask_file | blob | The mask file of madx input file 
-| fort_3    | blob | The mother file of fort.3 
+| fort_file    | blob | The mother file of fort.3 
 
 ## preprocess_wu
 This table will have as many lines as the machine configurations
@@ -87,6 +87,7 @@ This table have at least as many lines as the preprocess\_wu table
 | fort_8      | mediumblob | fort.8
 | fort_16     | mediumblob | fort.16
 | fort_34     | mediumblob | fort.34
+|oneturnresult| mediumblob | the result of oneturn job
 
 ## oneturn_sixtrack_wu
 This table has only one line
@@ -164,6 +165,8 @@ This table will have as many lines as the cartesian product between machine conf
 | Field         | Type       | Description 
 |---------------|------------|------
 | wu_id         | int(11)    | The work unit id 
+| last_turn     | int(11)    | The last turn of the tracking
+| first_turn    | int(11)    | The first turn of the tracking
 | preprocess_id | int(11)    | The work unit id of preprocess job 
 | job_name      | text       | The job name
 | input_file    | blob       | Hold all the required informations for the executable python script 'sixtrack.py' which is used for running actual sixtrack job
@@ -216,6 +219,7 @@ This table at least have as many lines as the sixtrack\_wu
 | Field      | Type       | Description 
 |------------|------------|------
 | task_id    | int(11)    | The unique task id for a submission 
+| last_turn  | int(11)    | The last turn of the tracking
 | wu_id      | int(11)    | The work unit id 
 | fort3      | blob       | The fort.3 file  
 | job_stdout | blob       | The standard output of HTCondor job 
