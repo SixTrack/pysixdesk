@@ -1,7 +1,5 @@
 PKGNAME=pysixdesk
 
-default: build
-
 all: install
 
 install:
