@@ -95,7 +95,7 @@ def diff(file1, file2, logger=None, **kwargs):
         file2 (str/path): path to second file for the diff.
         logger (logging.logger, optional): logger with which to display the
         diff, if None, will use print.
-        **kwargs: additional arguments for `difflib.unified_diff`.
+        kwargs: additional arguments for `difflib.unified_diff`.
     '''
 
     if logger is not None and isinstance(logger, logging.Logger):
@@ -190,7 +190,7 @@ def exc_catch(fun, exc_action=None, *args, **kwargs):
         exc_action (callable, optionnal): callable which will run if "fun"
         raises an Exception. If None will not do anything, the Exception will
         be supressed.
-        *args **kwargs (optionnal): passed on to the wrapped function call.
+        args kwargs (optionnal): passed on to the wrapped function call.
 
     Returns:
         The output of the wrapped function if no exceptions are raised, the
