@@ -52,7 +52,7 @@ class CollSettings(MyStudyCustomizable):
                                   'survey': 'SurveyWithCrossing_XP_lowb.dat'}
         self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
         self.preprocess_output = dict(self.madx_output)
-        self.sixtrack_input['temp'] = 'fort.3'
+        self.sixtrack_input['fort_file'] = 'fort.3'
         self.sixtrack_input['input'] = self.preprocess_output
         self.sixtrack_input['additional_input'] = ['CollDB.data']
         self.sixtrack_output = ['aperture_losses.dat',
