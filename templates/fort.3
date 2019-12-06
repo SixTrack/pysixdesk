@@ -20,16 +20,16 @@ INITIAL COORDINATES-----------------------------------------------------
         0.
         0.
         %dp2
-        %e0
-        %e0
-        %e0
+        %e_0
+        %e_0
+        %e_0
 NEXT
 SYNCHROTRON OSCILLATIONS--------'PLACE AFTER TRACKING PARAMETERS'-------
-      35640 .000347 %rfvol 0. %length %pmass %ition
+      35640 .000347 %rf_vol 0. %length %pmass %ition
       1.       1.
 NEXT
 BEAM
-%bunch_charge   %emit_norm_x  %emit_norm_y  %sigz  %sige  1  %ibtype 1 0
+%bunch_charge   %emit_norm_x  %emit_norm_y  %sig_z  %sig_e  1  %ibtype 1 0
 
 NEXT
 ITERATION-ACCURACY------------------------------------------------------
@@ -46,7 +46,7 @@ NEXT
 %toggle_post/POSTPROCESSING----------------------------------------------------------
 %toggle_post/LHC Dynamic Aperture at Injection Version 5 (1998)
 %toggle_post/20 0 0 1 .08 .08 1 0 0 1. 1.
-%toggle_post/%tunex %tuney 1 1 10 .005 1 .050
+%toggle_post/%tune_x %tune_y 1 1 10 .005 1 .050
 %toggle_post/0 1 0 1 1 1 1 1 %ndafi
 %toggle_post/NEXT
 
@@ -54,7 +54,6 @@ NEXT
 %toggle_diff/%NO  %NV 1E-38 %nsix 0
 %toggle_diff/NEXT
 
-/
 / linear optics functions
 %toggle_coll/LINE
 %toggle_coll/ELEMENT 0 %ilin 1 %EI %EI
@@ -78,7 +77,6 @@ NEXT
 %toggle_coll/"CollDB.data" 1
 %toggle_coll/.FALSE. .FALSE. WAbsVertLowbcoll 101 1 1.
 %toggle_coll/NEXT
-%toggle_coll/
 %toggle_coll/LIMI
 %toggle_coll// DEBUG
 %toggle_coll// PREC 0.001
@@ -89,13 +87,13 @@ NEXT
 ENDE
 
 TUNE VARIATION---------------------------------------------------------
-         mq.7r3.b1..1  %tunex
-         mq.8r3.b1..1  %tuney
+         mq.7r3.b1..1  %tune_x
+         mq.8r3.b1..1  %tune_y
 /          0.
 NEXT
 CHROMATICITY CORRECTION------------------------------------------------
-         ms.11r3.b1 %qprimex
-         ms.12r3.b1 %qprimey
+         ms.11r3.b1 %q_prime_x
+         ms.12r3.b1 %q_prime_y
 NEXT
 
 ORGA--------------------------------------------------------------------
@@ -108,15 +106,15 @@ CODSDO 1.  CODSDE
 CODSFO 1.  CODSFE
 NEXT
 SUBRESONANCE CALCULATION------------------------------------------------
-3 3 %tunex %tuney 1. 1. 0 %length
+3 3 %tune_x %tune_y 1. 1. 0 %length
 NEXT
 RESONANCE COMPENSATION -------------------------------------------------
       1         3       0    0    0         0    0    0
       0                   0 0 0
-     %length %tunex %tuney 1. 1.
+     %length %tune_x %tune_y 1. 1.
                  MSCBH MSCBV
       0          MSCBH MSCBV
-      0          QF QD %tunex %tuney
+      0          QF QD %tune_x %tune_y
 NEXT
 RIPPLE OF POWER SUPPLIES------------------------------------------------
          Q413R   -1.54D-4    4340.580
@@ -126,7 +124,7 @@ LIMITATION OF APERTURE--------------------------------------------------
           AP1        EL      10.       10.
 NEXT
 SEARCH FOR THE BEST POSITIONS FOR COMPENSATION-ELEMENTS-----------------
-         %tunex %tuney 1. 1. %length
+         %tune_x %tune_y 1. 1. %length
          2   3   0   2  -2   0   0   0
          MSCBH MSCBV 
 NEXT

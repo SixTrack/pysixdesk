@@ -7,7 +7,7 @@
 !			FLAGS
 !---------------------------------------------------------------;
 
-mylhcbeam = %lhcbeam ;! LHC beam 1 (clockwise)
+mylhcbeam = %lhc_beam ;! LHC beam 1 (clockwise)
 
 correct_for_MCBX=1;
 nominal_MCBXF_signs=0;
@@ -142,8 +142,8 @@ if (mylhcbeam<3){
 seqedit, sequence=lhcb2; flatten; cycle,start=IP3; flatten; endedit;
 
 !********************************************
-NRJ = %e0 * 1e-3; ! [MeV] --> [GeV]
-I_MO = %I_MO; !-570
+NRJ = %e_0 * 1e-3; ! [MeV] --> [GeV]
+I_MO = %i_mo; !-570
 
 !General switch to select collision (0/1)
 ON_COLLISION := 0;
@@ -154,21 +154,21 @@ b_t_dist := %b_t_dist; !25 bunch separation [ns]
 emit_norm_x := %emit_norm_x * 1e-6; ! [um] --> [m]
 emit_norm_y := %emit_norm_y * 1e-6; ! [um] --> [m]
 Nb_0 := %bunch_charge;
-sigt := %sigz; ! bunch length [m] in collision
-sige := %sige;
+sigt := %sig_z; ! bunch length [m] in collision
+sige := %sig_e;
 gamma_rel := NRJ/pmass;
 epsx := emit_norm_x /gamma_rel;
 epsy := emit_norm_y /gamma_rel;
 
 !********************************************
 
-qx00 = %inttunex;  !integer h tune
-qy00 = %inttuney;  !integer v tune
+qx00 = %int_tune_x;  !integer h tune
+qy00 = %int_tune_y;  !integer v tune
 tsplit = qx00 - qy00;   !new tune split
-qx0 = %tunex;
-qy0 = %tuney;
-qprimex = %qprimex;
-qprimey = %qprimey;
+qx0 = %tune_x;
+qy0 = %tune_y;
+qprimex = %q_prime_x;
+qprimey = %q_prime_y;
 
 if (NRJ<4999.9999){
 	!Inj. optics in thin lens
@@ -726,8 +726,8 @@ ON_LSF=1;
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-if (NRJ<4999.999) {readtable, file="wise/injection_errors-emfqcs-%SEEDRAN.tfs" ;};
-if (NRJ>5000.000) {readtable, file="wise/collision_errors-emfqcs-%SEEDRAN.tfs" ;};
+if (NRJ<4999.999) {readtable, file="wise/injection_errors-emfqcs-%seed_ran.tfs" ;};
+if (NRJ>5000.000) {readtable, file="wise/collision_errors-emfqcs-%seed_ran.tfs" ;};
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 !             apply field errors to MB magnets
@@ -767,7 +767,7 @@ call,file="db5/measured_errors/Set_alignment_errors.madx";
 
 ! New IT/D1/D2/Q4/Q5
 
-myseed=%SEEDRAN;
+myseed=%seed_ran;
 
 /*
 eoption,seed=myseed+101;
@@ -992,10 +992,10 @@ call, file="slhc/errors2/corr_value.madx";
 
 ON_BB_CHARGE:=1;
 
-!if (NRJ<4999.9999) {VRF400:=%rfvol ;LAGRF400.B1=0.5; LAGRF400.B2=0.;};
-!if (NRJ>5000.0000) {VRF400:=%rfvol ;LAGRF400.B1=0.5; LAGRF400.B2=0.;};
+!if (NRJ<4999.9999) {VRF400:=%rf_vol ;LAGRF400.B1=0.5; LAGRF400.B2=0.;};
+!if (NRJ>5000.0000) {VRF400:=%rf_vol ;LAGRF400.B1=0.5; LAGRF400.B2=0.;};
 
-VRF400:=%rfvol;
+VRF400:=%rf_vol;
 LAGRF400.B1=0.5;
 LAGRF400.B2=0.;
 

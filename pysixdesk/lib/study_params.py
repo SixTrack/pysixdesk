@@ -3,15 +3,9 @@ import logging
 
 from pathlib import Path
 from collections import OrderedDict
-try:
-    from scan_engine import engine
-except ImportError:
-    from itertools import product
-
-    def engine(*args):
-        return product(*args)
-
-from collections import Iterable
+from itertools import product
+from functools import partial
+from collections.abc import Iterable
 
 from . import machineparams
 from .constants import PROTON_MASS
@@ -195,8 +189,8 @@ class StudyParams:
         return out
 
     @staticmethod
-    def _engine_dict(**kwargs):
-        '''A wrapper of scan_engine.engine but for dictionaries.
+    def _product_dict(**kwargs):
+        '''A wrapper of product but for dictionaries.
         '''
         keys = kwargs.keys()
         vals = []
@@ -205,7 +199,7 @@ class StudyParams:
                 v = [v]
             vals.append(v)
         # print(vals)
-        for instance in engine(*vals):
+        for instance in product(*vals):
             yield dict(zip(keys, instance))
 
     def combine(self):
@@ -215,9 +209,9 @@ class StudyParams:
             tuple: a tuple containing 2 dictionaries, the first with the madx
             parameters, the other with the sixtrack parameters.
         '''
-        for e in self._engine_dict(**self.madx,
-                                   **self._sixtrack_only,
-                                   **self.phasespace):
+        for e in self._product_dict(**self.madx,
+                                    **self._sixtrack_only,
+                                    **self.phasespace):
             yield ({k: e[k] for k in self.madx.keys()},
                    {k: e[k] for k in (list(self.sixtrack.keys()) +
                                       list(self.phasespace.keys()))})
@@ -228,17 +222,17 @@ class StudyParams:
 
         Args:
             params (dict): One element of the combination of the parameter
-            dict.
+                dict.
             task_id (int): task_id of the require parameters, when fetching the
-            data from the database.
+                data from the database.
             get_val_db (SixDB, optional): SixDB object to fecth values from db
-            in for the calculations.
+                in for the calculations.
             require (list, str, optional): If 'all' will run all function in
-            calculation queue.
-            If None or 'none', will run all calculations which don't require
-            any database.
-            If list of table names, will run calculations whose 'require'
-            attribute's keys are a subset of the provided list.
+                calculation queue.
+                If None or 'none', will run all calculations which don't require
+                any database.
+                If list of table names, will run calculations whose 'require'
+                attribute's keys are a subset of the provided list.
         """
         params = params.copy()
         if require == 'all':
@@ -283,7 +277,7 @@ class StudyParams:
 
         Args:
             require (list): list of keys which must be contained in the
-            'require' attribute dictionary for the function to be included.
+                'require' attribute dictionary for the function to be included.
 
         Returns:
             list: subset of the calculation queue.
@@ -305,7 +299,7 @@ class StudyParams:
             db (SicDB): Database from which to extract the values.
             fun (callable): calculation queue function.
             task_id (int): task_id of the row from which to fetch the parameter
-            values.
+                values.
 
         Returns:
             dict: dictionary containing the values of the required parameters.
@@ -380,19 +374,23 @@ class StudyParams:
             del dic[k]
 
     def drop_none(self):
-        """
-        Drop Nones from 'self.madx', 'self.sixtrack' and 'self.phasespace'.
+        """Drop Nones from 'self.madx', 'self.sixtrack' and 'self.phasespace'.
         """
         self._remove_none(self.madx)
         self._remove_none(self.sixtrack)
         self._remove_none(self.phasespace)
 
 
-def set_property(key, value):
-    '''
-    Simple decorator to add attributes to functions.
+def _set_property(key, value):
+    '''Simple decorator to add attributes to functions.
     '''
     def decorated_func(func):
         setattr(func, key, value)
         return func
     return decorated_func
+
+
+# predefined properties
+set_input_keys = partial(_set_property, 'input_keys')
+set_output_keys = partial(_set_property, 'output_keys')
+set_requirements = partial(_set_property, 'require')

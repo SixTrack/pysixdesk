@@ -65,7 +65,7 @@ class CollSettings(MyStudyCustomizable):
         self.params['nss'] = 60
         self.params['ax0s'] = 0
         self.params['ax1s'] = 17
-        self.params['e0'] = 6500000
+        self.params['e_0'] = 6500000
         self.params['toggle_post/'] = '/'
         # self.params.oneturn['toggle_post/'] = ''
         self.params['dp2'] = 0.00

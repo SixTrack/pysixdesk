@@ -6,7 +6,10 @@ import logging
 
 from pysixdesk.lib import submission
 from pysixdesk import Study
-from pysixdesk.lib.study_params import StudyParams, set_property
+from pysixdesk.lib.study_params import StudyParams
+from pysixdesk.lib.study_params import set_input_keys
+from pysixdesk.lib.study_params import set_requirements
+from pysixdesk.lib.study_params import set_output_keys
 from math import sqrt, pi, sin, cos, tan
 from pysixdesk.lib import machineparams
 
@@ -59,17 +62,17 @@ class MyStudy(Study):
         self.params['kang'] = list(range(1, 1 + 2))  # The angle
         self.params['kmax'] = 5
         # self.params['toggle_coll/'] = '/'
-        self.params['SEEDRAN'] = [1, 2]
-        self.params['I_MO'] = list(range(100, 200 + 1, 100))
+        self.params['seed_ran'] = [1, 2]
+        self.params['i_mo'] = list(range(100, 200 + 1, 100))
 
-        @set_property('input_keys', ['kang', 'kmax'])
-        @set_property('output_keys', ['angle'])
+        @set_input_keys(['kang', 'kmax'])
+        @set_output_keys(['angle'])
         def calc_angle(kang, kmax):
             return kang / (kmax + 1)  # 1-->pi/2, 0.5-->pi/4, ...
         self.params.calc_queue.append(calc_angle)
 
-        @set_property('input_keys', ['angle'])
-        @set_property('output_keys', ['ratio'])
+        @set_input_keys(['angle'])
+        @set_output_keys(['ratio'])
         def calc_ratio(angle):
             ratio = abs(tan((pi / 2) * angle))
             if ratio < 1e-15:
@@ -80,11 +83,11 @@ class MyStudy(Study):
         self.params.calc_queue.append(calc_ratio)
 
         # should it not be betax and betax2 ?
-        @set_property('require', {'oneturn_sixtrack_results': ['betax', 'betax2']})
-        @set_property('input_keys', ['angle', 'ratio', 'emit_norm_x', 'e0', 'pmass', 'amp'])
-        @set_property('output_keys', ['ax0s', 'ax1s'])
-        def calc_amp(angle, ratio, emit, e0, pmass, amp, betax=None, betax2=None):
-            gamma = e0 / pmass
+        @set_requirements({'oneturn_sixtrack_results': ['betax', 'betax2']})
+        @set_input_keys(['angle', 'ratio', 'emit_norm_x', 'e_0', 'pmass', 'amp'])
+        @set_output_keys(['ax0s', 'ax1s'])
+        def calc_amp(angle, ratio, emit, e_0, pmass, amp, betax=None, betax2=None):
+            gamma = e_0 / pmass
             factor = sqrt(emit / gamma)
             ax0t = factor * (sqrt(betax) + sqrt(betax2 * ratio) * cos((pi / 2) * angle))
             return amp[0] * ax0t, amp[1] * ax0t
@@ -106,7 +109,7 @@ class MyStudy(Study):
         #         'survey':'SurveyWithCrossing_XP_lowb.dat'}
         # self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
         # self.preprocess_output = dict(self.madx_output)
-        # self.sixtrack_input['temp'] = 'fort.3'
+        # self.sixtrack_input['fort_file'] = 'fort.3'
         # self.sixtrack_input['input'] = self.preprocess_output
         # self.sixtrack_input['additional_input'] = ['CollDB.data']
         # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat']
@@ -115,7 +118,7 @@ class MyStudy(Study):
         # self.params['nss'] = 5000
         # self.params['ax0s'] = 0
         # self.params['ax1s'] = 17
-        # self.params['e0'] = 6500000
+        # self.params['e_0'] = 6500000
         # self.params['toggle_post'] = '/'
         # self.params['dp2'] = 0.00
         # self.params['ition'] = 1

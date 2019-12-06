@@ -6,7 +6,9 @@ from pathlib import Path
 pysixdesk_path = str(Path(__file__).parents[2].absolute())
 sys.path.insert(0, pysixdesk_path)
 from pysixdesk.lib.study_params import StudyParams
-from pysixdesk.lib.study_params import set_property
+from pysixdesk.lib.study_params import set_input_keys
+from pysixdesk.lib.study_params import set_output_keys
+from pysixdesk.lib.study_params import set_requirements
 from pysixdesk.lib.pysixdb import SixDB
 
 
@@ -21,16 +23,16 @@ class ParamsTest(unittest.TestCase):
         self.fort_file = Path(self.test_folder / 'test_fort.3')
 
         # some realistic mask file content
-        mask_content = r'''NRJ= %e0 ; ! collision
-I_MO=%I_MO; !-20
+        mask_content = r'''NRJ= %e_0 ; ! collision
+I_MO=%i_mo; !-20
 b_t_dist := %b_t_dist; !25 bunch separation [ns]
 emit_norm := %emit_norm * 1e-6; Nb_0:=%bunch_charge;
-sigt_col=%sigz; ! bunch length [m] in collision
+sigt_col=%sig_z; ! bunch length [m] in collision
 test=%test1; test=%test2; test=%test3
 '''
         # placeholders in mask_content
-        self.mask_ph = set(['e0', 'I_MO', 'b_t_dist', 'emit_norm',
-                            'bunch_charge', 'sigz', 'test1', 'test2', 'test3'])
+        self.mask_ph = set(['e_0', 'i_mo', 'b_t_dist', 'emit_norm',
+                            'bunch_charge', 'sig_z', 'test1', 'test2', 'test3'])
         # some realistic fort.3 content
         fort_content = r'''GEOME-STRENG TITLE:%Runnam
 %turnss 0 %nss %ax0s %ax1s 0 %imc
@@ -40,17 +42,17 @@ test=%test1; test=%test2; test=%test3
         %dp1
         0.
         %dp2
-        %e0
-        %e0
-        %e0
-      35640 .000347 %rfvol 0. %length %pmass %ition
+        %e_0
+        %e_0
+        %e_0
+      35640 .000347 %rf_vol 0. %length %pmass %ition
 %test1 %test2 %test3
 %toggle_diff/DIFF
 '''
         # placeholders in fort_content
         self.fort_ph = set(['Runnam', 'turnss', 'nss', 'ax0s', 'ax1s', 'imc',
                             'idfor', 'iclo6', 'writebins', 'ratios', 'dp1',
-                            'dp2', 'e0', 'rfvol', 'length', 'pmass', 'ition',
+                            'dp2', 'e_0', 'rf_vol', 'length', 'pmass', 'ition',
                             'test1', 'test2', 'test3', 'toggle_diff/'])
 
         with open(self.mask_file, 'w') as m_f:
@@ -123,30 +125,30 @@ test=%test1; test=%test2; test=%test3
     def test_calc_queue(self):
         params = StudyParams(mask_path=self.mask_file,
                              fort_path=self.fort_file)
-        e0_init = params['e0']
+        e0_init = params['e_0']
 
-        @set_property('input_keys', ['e0'])
-        @set_property('output_keys', ['e0_2'])
+        @set_input_keys(['e_0'])
+        @set_output_keys(['e_0_2'])
         def times(x):
             return x*2
         params.calc_queue.append(times)
 
         self.assertEqual(len(params.calc_queue), 1)
-        for e in params._engine_dict(**params.madx):
+        for e in params._product_dict(**params.madx):
             out_dict = params.calc(e)
-            self.assertTrue('e0_2' in out_dict.keys())
-            self.assertTrue(out_dict['e0_2'] == e0_init * 2)
+            self.assertTrue('e_0_2' in out_dict.keys())
+            self.assertTrue(out_dict['e_0_2'] == e0_init * 2)
 
         params.calc_queue = []
 
         # expected exceptions, returning more values than out_keys
-        @set_property('input_keys', ['e0'])
-        @set_property('output_keys', ['e0_2'])
+        @set_input_keys(['e_0'])
+        @set_output_keys(['e_0_2'])
         def times(x):
             return x*2, x*2
         params.calc_queue.append(times)
 
-        for e in params._engine_dict(**params.madx):
+        for e in params._product_dict(**params.madx):
             with self.assertRaises(ValueError):
                 out_dict = params.calc(e)
 
@@ -154,21 +156,21 @@ test=%test1; test=%test2; test=%test3
         # input of another.
         # reset queue
         params.calc_queue = []
-        @set_property('input_keys', ['e0'])
-        @set_property('output_keys', ['e0_2'])
+        @set_input_keys(['e_0'])
+        @set_output_keys(['e_0_2'])
         def times(x):
             return x*2
         params.calc_queue.append(times)
 
-        @set_property('input_keys', ['e0_2'])
-        @set_property('output_keys', ['e0_4'])
+        @set_input_keys(['e_0_2'])
+        @set_output_keys(['e_0_4'])
         def times(x):
             return x*2
         params.calc_queue.append(times)
 
-        for e in params._engine_dict(**params.madx):
+        for e in params._product_dict(**params.madx):
             out_dict = params.calc(e)
-            self.assertTrue({'e0_2', 'e0_4'} <= set(out_dict.keys()))
+            self.assertTrue({'e_0_2', 'e_0_4'} <= set(out_dict.keys()))
 
     def test_calc_queue_db(self):
         # this tests the reading from database as calculation input. Using
@@ -188,18 +190,18 @@ test=%test1; test=%test2; test=%test3
                              fort_path=self.fort_file)
 
         # this calculation takes input from data in the test table
-        @set_property('require', {'test_table': ['x', 'y']})
-        @set_property('output_keys', ['xy', 'xyy'])
+        @set_requirements({'test_table': ['x', 'y']})
+        @set_output_keys(['xy', 'xyy'])
         def times_table(x=None, y=None):
             return x * y, x * y * y
         params.calc_queue.append(times_table)
 
-        @set_property('input_keys', ['nss'])
-        @set_property('output_keys', ['nss_2'])
+        @set_input_keys(['nss'])
+        @set_output_keys(['nss_2'])
         def nss_2_calc(nss):
             return nss*2
         params.calc_queue.append(nss_2_calc)
-        for i, e in enumerate(params._engine_dict(**params.sixtrack)):
+        for i, e in enumerate(params._product_dict(**params.sixtrack)):
             # only run calculations which require 'test_table'
             out_dict = params.calc(e,
                                    task_id=i+1,
@@ -208,19 +210,19 @@ test=%test1; test=%test2; test=%test3
             self.assertTrue('xy' in out_dict.keys())
             self.assertFalse('nss_2' in out_dict.keys())
 
-        for e in params._engine_dict(**params.sixtrack):
+        for e in params._product_dict(**params.sixtrack):
             # run calculations which don't need db
             out_dict = params.calc(e, require='none')
             self.assertTrue('nss_2' in out_dict.keys())
             self.assertEqual(out_dict['nss_2'], nss_2_calc(params['nss']))
 
-    def test_engine_dict(self):
+    def test_product_dict(self):
         params = StudyParams(mask_path=self.mask_file,
                              fort_path=self.fort_file)
 
         inp = {'a': [1, 2],
                'b': [3, 4]}
-        out = list(params._engine_dict(**inp))
+        out = list(params._product_dict(**inp))
         self.assertEqual(out, [{'a': 1, 'b': 3},
                                {'a': 1, 'b': 4},
                                {'a': 2, 'b': 3},
