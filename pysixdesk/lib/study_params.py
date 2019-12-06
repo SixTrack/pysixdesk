@@ -37,15 +37,15 @@ class StudyParams:
     '''
 
     def __init__(self,
-                 mask_path=Path(PYSIXDESK_ABSPATH) / 'templates/hl10.mask',
-                 fort_path=Path(PYSIXDESK_ABSPATH) / 'templates/fort.3',
+                 mask_path=Path(PYSIXDESK_ABSPATH) / 'templates' / 'hl10.mask',
+                 fort_path=Path(PYSIXDESK_ABSPATH) / 'templates' / 'fort.3',
                  machine_defaults=machineparams.HLLHC['col']):
         """
         Args:
             mask_path (str, path): path to the mask file
             fort_path (str, path): path to the fort file
             machine_defaults (dict): dictionary containing the default
-            parameters of the desired machine/configuration.
+                parameters of the desired machine/configuration.
         """
         if not isinstance(mask_path, Path):
             mask_path = Path(mask_path)
@@ -80,7 +80,7 @@ class StudyParams:
                             "idfor": 0,
                             "imc": 1,
                             "ilin": 1,
-                            "ition": 1,  # This control above or below transition, should be auto depending on energy ?
+                            "ition": 1,  # This control above or below transition
                             "length": 26658.864,
                             "ndafi": 1,
                             "nss": 30,  # should this be 60? 30?
@@ -143,7 +143,7 @@ class StudyParams:
 
         Args:
             file (str, path): path to the file from which to extract the
-            placeholder patterns.
+                placeholder patterns.
         Returns:
             list: list containing the regexp matches, i.e. the placeholders
         '''
@@ -161,10 +161,10 @@ class StudyParams:
         Args:
             file_path (str, path): path to file to extract placeholder patterns
             keep_none (bool, optional): if True, keeps the None entries in the
-            output dict.
+                output dict.
             mandatory (list, optional): if provided will add the keys in the
-            provided list to the output dict, regardless if they are found in
-            the file.
+                provided list to the output dict, regardless if they are found
+                in the file.
 
         Returns:
             OrderedDict: dictionary of the extracted placeholder patterns with
