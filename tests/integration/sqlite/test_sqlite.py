@@ -16,7 +16,7 @@ import pysixdesk
 
 
 class SQLiteStudy:
-    '''Runs a typical SqlLite test.
+    '''Runs a typical SQLite test.
     Note, this method is not supposed to run on it's own, it must be subclassed
     and combined with the unittest.TestCase class for the self.assertEqual,
     self.assertTrue, and other attributes/methods to be defined.
@@ -89,7 +89,7 @@ class SQLiteStudy:
 
 class SQLiteDB(SQLiteStudy, unittest.TestCase):
     def setUp(self):
-        self.test_folder = Path('integration_test/sqllite')
+        self.test_folder = Path('integration_test/sqlite')
         self.test_folder.mkdir(parents=True, exist_ok=True)
         self.ws_name = 'integration_test'
         self.ws = pysixdesk.WorkSpace(str(self.test_folder / self.ws_name))

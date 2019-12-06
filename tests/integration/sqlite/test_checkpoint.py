@@ -19,14 +19,14 @@ from .test_sqlite import SQLiteStudy
 
 class SQLiteDBCheckpoint(SQLiteStudy, unittest.TestCase):
     def setUp(self):
-        self.test_folder = Path('integration_test/sqllite_checkpoint')
+        self.test_folder = Path('integration_test/sqlite_checkpoint')
         self.test_folder.mkdir(parents=True, exist_ok=True)
         self.ws_name = 'integration_test'
         self.ws = pysixdesk.WorkSpace(str(self.test_folder / self.ws_name))
         self.st_name = 'sqlite_checkpoint'
         self.st = None
 
-    def test_sqllite_study_restart(self):
+    def test_sqlite_study_restart(self):
         # run a normal sqlite study. with the correct executable.
         self.sqlite_study(config='SQLiteCheckpointConfig')
         # continue previous study

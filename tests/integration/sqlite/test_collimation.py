@@ -18,7 +18,7 @@ from .test_sqlite import SQLiteStudy
 
 class SQLiteDBColl(SQLiteStudy, unittest.TestCase):
     def setUp(self):
-        self.test_folder = Path('integration_test/sqllite_coll')
+        self.test_folder = Path('integration_test/sqlite_coll')
         self.test_folder.mkdir(parents=True, exist_ok=True)
         self.ws_name = 'integration_test'
         self.ws = pysixdesk.WorkSpace(str(self.test_folder / self.ws_name))
