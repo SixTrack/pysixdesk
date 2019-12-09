@@ -717,23 +717,40 @@ class Study(object):
         pre_ids = outputs['preprocess_id']
         task_table = {}
         wu_table = {}
-        task_ids = []
+        task_ids = OrderedDict()
+        mtime = int(time.time() * 1E7)
+        task_table['wu_id'] = []
+        task_table['last_turn'] = []
+        task_table['mtime'] = []
         self._logger.info("creating new lines in sixtrack_task table.....")
         bar = utils.ProgressBar(len(last_turns))
         for wu_id, last_turn in zip(wu_ids, last_turns):
             bar.update()
-            task_table['wu_id'] = wu_id
-            task_table['last_turn'] = last_turn
-            task_table['mtime'] = int(time.time() * 1E7)
-            self.db.insert('sixtrack_task', task_table)
-            where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
-            task_id = self.db.select('sixtrack_task', ['task_id'], where)
-            task_id = task_id[0][0]
-            task_ids.append(task_id)
-            wu_table['task_id'] = task_id
-            wu_table['mtime'] = int(time.time() * 1E7)
-            where = f"wu_id={wu_id} and last_turn={last_turn}"  # wu_id is not unique now
-            self.db.update('sixtrack_wu', wu_table, where)
+            where = f'wu_id={wu_id} and last_turn={last_turn} and status is null'
+            chck = self.db.select('sixtrack_task', ['task_id'], where)
+            if chck:
+                task_id = chck[0][0]
+                task_ids[task_id] = (wu_id, last_turn)
+            else:
+                task_table['wu_id'].append(wu_id)
+                task_table['last_turn'].append(last_turn)
+                task_table['mtime'].append(mtime)
+        if task_table['wu_id']:
+            self.db.insertm('sixtrack_task', task_table)
+            where = f"mtime={mtime}"
+            reviews = self.db.select('sixtrack_task', ['task_id', 'wu_id', 'last_turn'], where)
+            for ti, wi, lt in reviews:
+                task_ids[ti] = (wi, lt)
+        wu_table['task_id'] = list(task_ids.keys())
+        wu_table['mtime'] = [int(time.time() * 1E7), ]*len(task_ids)
+        where = {}
+        where['wu_id'] = []
+        where['last_turn'] = []
+        for i in task_ids.values():
+            where['wu_id'].append(i[0])
+            where['last_turn'].append(i[1])# wu_id is not unique now
+        self.db.updatem('sixtrack_wu', wu_table, where)
+
         outputs['task_id'] = task_ids
         group_results['task_id'] = task_ids
         db_info = {}
@@ -855,22 +872,36 @@ class Study(object):
         wu_ids = outputs['wu_id']
         task_table = {}
         wu_table = {}
-        task_ids = []
         self._logger.info("creating new lines in preprocess_task table.....")
         bar = utils.ProgressBar(len(wu_ids))
+        mtime = int(time.time() * 1E7)
+        task_table['wu_id'] = []
+        task_table['mtime'] = []
+        task_ids = OrderedDict()
         for wu_id in wu_ids:
             bar.update()
-            task_table['wu_id'] = wu_id
-            task_table['mtime'] = int(time.time() * 1E7)
-            self.db.insert('preprocess_task', task_table)
-            where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
-            task_id = self.db.select('preprocess_task', ['task_id'], where)
-            task_id = task_id[0][0]
-            task_ids.append(task_id)
-            wu_table['task_id'] = task_id
-            wu_table['mtime'] = int(time.time() * 1E7)
-            where = "wu_id=%s" % wu_id
-            self.db.update('preprocess_wu', wu_table, where)
+            where = f'wu_id={wu_id} and status is null'
+            chck = self.db.select('preprocess_task', ['task_id'], where)
+            if chck:
+                task_ids[chck[0][0]] = wu_id
+            else:
+                task_table['wu_id'].append(wu_id)
+                task_table['mtime'].append(mtime)
+                #self.db.insert('preprocess_task', task_table)
+                #where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
+                #task_id = self.db.select('preprocess_task', ['task_id'], where)
+                #task_id = task_id[0][0]
+        if task_table['wu_id']:
+            self.db.insertm('preprocess_task', task_table)
+            where = f"mtime={mtime}"
+            task_ids_new = self.db.select('preprocess_task', ['wu_id', 'task_id'], where)
+            for i in task_ids_new:
+                task_ids[i[1]]=i[0]
+        wu_table['task_id'] = list(task_ids.keys())
+        wu_table['mtime'] = [int(time.time() * 1E7),] * len(task_ids)
+        where = dict([('wu_id', wu_ids)])
+        self.db.updatem('preprocess_wu', wu_table, where)
+
         db_info = {}
         db_info.update(self.db_info)
         if db_info['db_type'].lower() == 'sql':

@@ -157,6 +157,38 @@ class DatabaseAdaptor(ABC):
             c.execute(sql_cmd, vals)
         conn.commit()
 
+    def updatem(self, conn, table_name, values, where, ph):
+        '''Update multi data in a table
+        @conn A connection of database
+        @table_name(str) The table name
+        @values(dict) The column names with new values
+        @where(dict) Selection conditions for updating values
+        with one-to-one mapping
+        @ph The placeholder for the selected database, e.g. ?, %s
+        '''
+
+        if len(values) == 0:
+            return
+        sql = 'UPDATE %s SET %s where %s'
+        keys = values.keys()
+        keys = [i.replace('.', '_') for i in keys]
+        vals = [values[key] for key in keys]
+        valsn = zip(*vals)
+        keys_where = where.keys()
+        keys_where = [i.replace('.', '_') for i in keys_where]
+        vals_where = [where[key] for key in keys_where]
+        vals_wheren = zip(*vals_where)
+        for val, val_where in zip(valsn, vals_wheren):
+            ques = (ph,) * len(keys)
+            sets = ['='.join(it) for it in zip(keys, ques)]
+            sets = ','.join(sets)
+            sets_where = ['='.join(map(str,it)) for it in zip(keys_where, val_where)]
+            sets_where = ' and '.join(sets_where)
+            sql_cmd = sql % (table_name, sets, sets_where)
+            with closing(conn.cursor()) as c:
+                c.execute(sql_cmd, val)
+        conn.commit()
+
     def delete(self, conn, table_name, where):
         '''Remove rows based on specified conditions
         @conn A connection of database
@@ -219,6 +251,11 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
     def update(self, conn, table_name, values, where):
         '''update values'''
         super(SQLDatabaseAdaptor, self).update(conn, table_name, values, where,
+                                               '?')
+
+    def updatem(self, conn, table_name, values, where):
+        '''update values'''
+        super(SQLDatabaseAdaptor, self).updatem(conn, table_name, values, where,
                                                '?')
 
 
@@ -344,4 +381,9 @@ class MySQLDatabaseAdaptor(DatabaseAdaptor):
     def update(self, conn, table_name, values, where):
         '''update values'''
         super(MySQLDatabaseAdaptor, self).update(conn, table_name, values,
+                                                 where, '%s')
+
+    def updatem(self, conn, table_name, values, where):
+        '''update values'''
+        super(MySQLDatabaseAdaptor, self).updatem(conn, table_name, values,
                                                  where, '%s')
