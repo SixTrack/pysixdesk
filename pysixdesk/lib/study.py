@@ -339,7 +339,10 @@ class Study(object):
         for typ, params in types.items():
             records[typ] = {}
             news[typ] = {}
+            self._logger.info(f'checking {typ} paramter changes....')
+            bar = utils.ProgressBar(len(params))
             for key in params.keys():
+                bar.update()
                 values = self.db.select(typ, key, DISTINCT=True)
                 if not values:
                     value = []
@@ -450,7 +453,10 @@ class Study(object):
         new_elements = set(self.custom_product_preprocess(pre_news))-\
                 set(self.custom_product_preprocess(pre_records))
 
+        self._logger.info("updating preprocess_wu table.....")
+        bar = utils.ProgressBar(len(new_elements))
         for element in new_elements:
+            bar.update()
             # avoid empty element
             if not element:
                 continue
@@ -507,7 +513,10 @@ class Study(object):
 
         new_elements = set(self.custom_product_sixtrack(six_news))-\
                 set(self.custom_product_sixtrack(six_records))
+        self._logger.info("updating sixtrack_wu table.....")
+        bar = utils.ProgressBar(len(new_elements))
         for element in new_elements:
+            bar.update()
             # avoid empty element
             if not element:
                 continue
@@ -667,7 +676,10 @@ class Study(object):
         names = list(self.tables['sixtrack_wu'].keys())
         group_results = dict(zip(names, zip(*results)))
         new_results = []
+        self._logger.info("Doing the calculation for sixtrack jobs.....")
+        bar = utils.ProgressBar(len(results))
         for result in results:
+            bar.update()
             paramsdict = dict(zip(names, result))
             pre_id = paramsdict['preprocess_id']
             status = self.pre_calc(paramsdict, pre_id)  # further calculation
@@ -687,7 +699,10 @@ class Study(object):
         task_table = {}
         wu_table = {}
         task_ids = []
+        self._logger.info("creating new lines in sixtrack_task table.....")
+        bar = utils.ProgressBar(len(last_turns))
         for wu_id, last_turn in zip(wu_ids, last_turns):
+            bar.update()
             task_table['wu_id'] = wu_id
             task_table['last_turn'] = last_turn
             task_table['mtime'] = int(time.time() * 1E7)
@@ -821,7 +836,10 @@ class Study(object):
         task_table = {}
         wu_table = {}
         task_ids = []
+        self._logger.info("creating new lines in preprocess_task table.....")
+        bar = utils.ProgressBar(len(wu_ids))
         for wu_id in wu_ids:
+            bar.update()
             task_table['wu_id'] = wu_id
             task_table['mtime'] = int(time.time() * 1E7)
             self.db.insert('preprocess_task', task_table)
@@ -891,7 +909,10 @@ class Study(object):
         init.pop(ind)
         results = SpecialDict.fromkeys(init, iden_names)
         group_list.append(results)
+        self._logger.info("Making the group.....")
+        bar = utils.ProgressBar(len(records))
         for i in range(len(records)):
+            bar.update()
             rec = list(records[i])
             iden = rec.pop(ind)
             for li in group_list:

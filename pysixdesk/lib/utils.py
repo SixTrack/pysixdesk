@@ -2,6 +2,7 @@ import os
 import io
 import re
 import sys
+import math
 import gzip
 import shutil
 import logging
@@ -235,3 +236,23 @@ def condor_logger(name):
     logger.addHandler(h2)
     logger.setLevel(logging.DEBUG)
     return logger
+
+class ProgressBar(object):
+    '''
+    A very lightweight progress bar to monitor the submit progress
+    '''
+
+    def __init__(self, total, width=50):
+        self.width = 50
+        self.total = total
+        self.num = 0
+
+    def update(self):
+        self.num += 1
+        per = self.num/self.total
+        i = math.floor(per*100)
+        j = math.floor(self.width*per)
+        if self.num == self.total:
+            print(f'\r %d%%|[%-{self.width}s]' % (i, '='*j))
+        else:
+            print(f'\r %d%%|[%-{self.width}s]' % (i, '='*j), end='')
