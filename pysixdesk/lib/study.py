@@ -545,26 +545,43 @@ class Study(object):
         self._logger.info(f'Add {wu_id-wu_id_start} new sixtrack jobs into '
                 f'database! A total of {wu_id}!')
 
-    def info(self, job=2, where=None):
+    def info(self, job=2, verbose=False, where=None):
         '''Print the status information of this study.
         job=
         0: print madx, oneturn sixtrack job
         1: print sixtrack job
         2: print madx, oneturn sixtrack and sixtrack jobs
         where: the filter condition for database query, e.g. "status='complete'"'''
-        query = ['wu_id', 'job_name', 'status', 'unique_id']
+        query_list = ['wu_id', 'job_name', 'status', 'unique_id']
+        typ = ['preprocess_wu', 'sixtrack_wu']
+        titles = ['madx and one turn sixtrack jobs:', 'Sixtrack jobs:']
+        def query(index):
+            wus = self.db.select(typ[int(index)], query_list, where)
+            content = '\n'+titles[int(index)] + '\n'
+            comp = []
+            subm = []
+            incm = []
+            if wus:
+                results = dict(zip(query_list, zip(*wus)))
+                for ele in results['status']:
+                    if ele == 'complete':
+                        comp.append(ele)
+                    if ele == 'submitted':
+                        subm.append(ele)
+                    if ele == 'incomplete':
+                        incm.append(ele)
+            content += f'complete: {len(comp)} \n'
+            content += f'submitted: {len(subm)} \n'
+            content += f'incomplete: {len(incm)}\n'
+            self._logger.info(content)
+            if verbose:
+                print(query_list)
+                for i in wus:
+                    print(i)
         if job == 0 or job == 2:
-            wus = self.db.select('preprocess_wu', query, where)
-            print('madx and one turn sixtrack jobs:')
-            print(query)
-            for i in wus:
-                print(i)
+            query(0)
         if job == 1 or job == 2:
-            six = self.db.select('sixtrack_wu', query, where)
-            print('Sixtrack jobs:')
-            print(query)
-            for j in six:
-                print(j)
+            query(1)
 
     def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
@@ -652,6 +669,7 @@ class Study(object):
     def prepare_sixtrack_input(self, resubmit=False, boinc=False, groupby=None,
             *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
+        self._logger.info("Going to prepare input files for sixtrack jobs....")
         if self.checkpoint_restart:
             self.prepare_cr()
         where = "status='complete'"
@@ -676,6 +694,7 @@ class Study(object):
         names = list(self.tables['sixtrack_wu'].keys())
         group_results = dict(zip(names, zip(*results)))
         new_results = []
+        self._logger.info(f"Detected {len(results)} sixtrack jobs needed to {action}")
         self._logger.info("Doing the calculation for sixtrack jobs.....")
         bar = utils.ProgressBar(len(results))
         for result in results:
@@ -818,6 +837,7 @@ class Study(object):
 
     def prepare_preprocess_input(self, resubmit=False, *args, **kwargs):
         '''Prepare the input files for madx and one turn sixtrack job'''
+        self._logger.info("Going to prepare input files for preprocess jobs....")
         if resubmit:
             constraints = "status='submitted'"
             info = 'submitted'
@@ -935,6 +955,7 @@ class Study(object):
 
     def prepare_cr(self):
         '''Prepare the checkpoint data, add new lines in db'''
+        self._logger.info("CR feature is turned on, preparing checkpoint data...")
         checks_1 = self.db.select('sixtrack_wu', ['wu_id'], DISTINCT=True)
         if checks_1:
             checks_1 = list(zip(*checks_1))[0]

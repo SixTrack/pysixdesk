@@ -63,8 +63,11 @@ class HTCondor(Cluster):
         job_list = os.path.join(input_path, 'job_id.list')
         if os.path.exists(job_list):
             os.remove(job_list)
+        self._logger.info(f'Creating jobid.list file and output folder....')
+        bar = utils.ProgressBar(len(task_ids))
         with open(job_list, 'w') as f_out:
             for i in task_ids:
+                bar.update()
                 if isinstance(i, list):
                     i = '-'.join(map(str, i))
                 f_out.write(str(i))
@@ -88,6 +91,7 @@ class HTCondor(Cluster):
         sub_file = os.path.join(input_path, self.sub_name)
         if os.path.exists(sub_file):
             os.remove(sub_file)  # remove the old one
+        self._logger.info(f'Creating actual htcondor description file....')
         with open(sub_temp, 'r') as f_in:
             with open(sub_file, 'w') as f_out:
                 conts = f_in.read()
@@ -116,14 +120,16 @@ class HTCondor(Cluster):
             task_ids = f_in.read().split()
         scont = 1
         while scont <= trials:
+            self._logger.info(f'Submitting jobs to HTCondor....')
             args = list(args)
             for ky in kwargs.keys():
                 args = args + ['-' + ky, kwargs[ky]]
             args.append(sub)
             args.append('-batch-name')
             args.append(job_name)
+            valid_ids = list(task_ids)
+            subed_ids = []
             try:
-                valid_ids = list(task_ids)
                 while valid_ids:
                     with open(joblist, 'w') as f_out:
                         sub_ids = valid_ids[:limit]
@@ -138,25 +144,25 @@ class HTCondor(Cluster):
                     self._logger.info(stdout)
                     if stderr:
                         self._logger.error(stderr)
-                args = ['-constraint', 'JobBatchName=="%s"' % job_name,
-                        '-format', '%d.', 'ClusterId', '-format', '%d\n', 'ProcId']
-                uniq_ids = self.check(*args).split()
-                status = len(task_ids) == len(uniq_ids)
-                if not status:
-                    content = "There is something wrong during submitting!"
-                    self._logger.error(content)
-                    scont += 1
-                else:
-                    comb = list(zip(task_ids, uniq_ids))
-                    out = dict(comb)
-                    # remove job list after successful submission
-                    os.remove(joblist)
-                    return True, out
+                    subed_ids.extend(sub_ids)
             except Exception as e:
                 # this will catch the excpetion raised or any unexpected
                 # exception in the try block.
                 self._logger.error(e, exc_info=True)
-                return False, None
+            args = ['-constraint', 'JobBatchName=="%s"' % job_name,
+                    '-format', '%d.', 'ClusterId', '-format', '%d\n', 'ProcId']
+            uniq_ids = self.check(*args).split()
+            status = len(subed_ids) == len(uniq_ids)
+            if not status:
+                content = "There is something wrong during submitting!"
+                self._logger.error(content)
+                scont += 1
+            else:
+                comb = list(zip(task_ids, uniq_ids))
+                out = dict(comb)
+                # remove job list after successful submission
+                os.remove(joblist)
+                return True, out
         return False, None
 
     def check_format(self, unique_id):
