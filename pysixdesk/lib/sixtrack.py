@@ -108,7 +108,7 @@ class TrackingJob:
 
         Returns:
             bool: Converted bool, True if string in ['true', 'yes', 'on'] and
-            False is string in ['false', 'no', 'off'].
+                False if string in ['false', 'no', 'off'].
 
         Raises:
             ValueError: If string not recognised.
@@ -145,7 +145,7 @@ class TrackingJob:
 
         Raises:
             FileNotFoundError: If unable to find input buffers in database.
-            Or unable to find checkpoint buffers.
+                Or unable to find checkpoint buffers.
         '''
 
         inp = self.six_cfg["input_files"]
@@ -193,7 +193,8 @@ class TrackingJob:
         Args:
             folder (str, optional): name of temp folder.
             symlink_parent (bool, optional): controls whether to symlink input
-            files and extra files from the parent dir to the temporary folder.
+                files and extra files from the parent dir to the temporary
+                folder.
             extra (list, optional): list of extra files to symlink.
 
         Raises:
@@ -253,8 +254,8 @@ class TrackingJob:
         Args:
             fort_cfg (dict): dict containing the placeholder/value pairs.
             source_prefix (str/path, optional): if provided, will use the
-            provided folder prefix when looking for the fort_file and fc.3
-            files.
+                provided folder prefix when looking for the fort_file and fc.3
+                files.
             output_file (str, optional): name of the prepared fort.3 file.
 
         """
@@ -382,11 +383,11 @@ class TrackingJob:
 
         Args:
             six_stdout (str, optional): file containing sixtrack's standard
-            output.
+                output.
 
         Returns:
             bool: True if the ratio of particles which survived the tracking is
-            >= than self.surv_precent. False otherwise.
+                >= than self.surv_precent. False otherwise.
         '''
         with open(six_stdout, 'r') as f_in:
             lines = f_in.readlines()

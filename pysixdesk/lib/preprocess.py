@@ -235,8 +235,8 @@ class PreprocessJob:
 
         try:
             utils.download_output(dl_list, self._dest_path)
-            content = f"All requested results have been stored in {self._dest_path}"
-            self._logger.info(content)
+            msg = f"All requested results have been stored in {self._dest_path}"
+            self._logger.info(msg)
         except Exception:
             self._logger.warning("Job failed!", exc_info=True)
 
@@ -434,9 +434,7 @@ class PreprocessJob:
 
     def sixtrack_job(self):
         ''''Controls sixtrack job execution.
-            '''
-        # these oneturn chroma jobs params are hardcoded
-
+        '''
         try:
             self._sixtrack_job('first_oneturn', dp1='.0', dp2='.0', ition='0')
         except Exception as e:
