@@ -128,7 +128,7 @@ class StudyParams:
         return sixtrack
 
     def keys(self):
-        """Gets the keys of 'self.madx', 'self.sixtrack' and 'self.phasespace'
+        """Gets the keys of 'self.madx', 'self.sixtrack' and 'self.phasespace'.
 
         Returns:
             list: list of keys.
@@ -138,8 +138,7 @@ class StudyParams:
                 list(self.phasespace.keys()))
 
     def _extract_patterns(self, file):
-        '''
-        Extracts the patterns from a file.
+        '''Extracts the patterns from a file.
 
         Args:
             file (str, path): path to the file from which to extract the
@@ -154,8 +153,7 @@ class StudyParams:
         return matches
 
     def find_patterns(self, file_path, keep_none=True, mandatory=None):
-        '''
-        Reads file at 'file_path' and populates a dict with the matched
+        '''Reads file at 'file_path' and populates a dict with the matched
         patterns and values taken from 'self.defaults'.
 
         Args:
@@ -168,7 +166,7 @@ class StudyParams:
 
         Returns:
             OrderedDict: dictionary of the extracted placeholder patterns with
-            their values given by 'self.defaults'.
+                their values given by 'self.defaults'.
         '''
         matches = self._extract_patterns(file_path)
 
@@ -202,12 +200,12 @@ class StudyParams:
         for instance in product(*vals):
             yield dict(zip(keys, instance))
 
-    def combine(self):
+    def combinations(self):
         '''Performs the combinations of the user provided parameters.
 
         Yields:
             tuple: a tuple containing 2 dictionaries, the first with the madx
-            parameters, the other with the sixtrack parameters.
+                parameters, the other with the sixtrack parameters.
         '''
         for e in self._product_dict(**self.madx,
                                     **self._sixtrack_only,
@@ -229,8 +227,8 @@ class StudyParams:
                 in for the calculations.
             require (list, str, optional): If 'all' will run all function in
                 calculation queue.
-                If None or 'none', will run all calculations which don't require
-                any database.
+                If None or 'none', will run all calculations which don't
+                require any database.
                 If list of table names, will run calculations whose 'require'
                 attribute's keys are a subset of the provided list.
         """
@@ -272,8 +270,7 @@ class StudyParams:
         return out_dict
 
     def _filter_queue(self, require):
-        '''
-        Filters the calculation queue based on the 'require' attribute.
+        '''Filters the calculation queue based on the 'require' attribute.
 
         Args:
             require (list): list of keys which must be contained in the
@@ -292,8 +289,7 @@ class StudyParams:
         return queue
 
     def _get_required_values(self, db, fun, task_id):
-        '''
-        Gets the values needed in the dict fun.require from the database.
+        '''Gets the values needed in the dict fun.require from the database.
 
         Args:
             db (SicDB): Database from which to extract the values.
@@ -317,8 +313,7 @@ class StudyParams:
         return required
 
     def __repr__(self):
-        '''
-        Unified __repr__ of the three dictionaries.
+        '''Unified __repr__ of the three dictionaries.
         '''
         return '\n\n'.join(['Madx params: ' + self.madx.__repr__(),
                             'SixTrack params: ' + self.sixtrack.__repr__(),
@@ -326,8 +321,7 @@ class StudyParams:
 
     # set and get items like a dict
     def __setitem__(self, key, val):
-        '''
-        Adds entry to the appropriate dictionary(ies) which already contains
+        '''Adds entry to the appropriate dictionary(ies) which already contains
         the key.
         '''
         if key not in self.keys():
@@ -340,8 +334,7 @@ class StudyParams:
             self.sixtrack[key] = val
 
     def __getitem__(self, key):
-        '''
-        Gets entry from the first dictionary which contains the key.
+        '''Gets entry from the first dictionary which contains the key.
         '''
         if key not in self.keys():
             raise KeyError(key)
@@ -369,7 +362,8 @@ class StudyParams:
         return out
 
     def _remove_none(self, dic):
-        """Removes Nones in dictionary 'dic'."""
+        """Removes Nones in dictionary 'dic'.
+        """
         for k in self._find_none(dic):
             del dic[k]
 

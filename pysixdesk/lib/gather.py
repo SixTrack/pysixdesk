@@ -53,23 +53,24 @@ def gather_results(jobtype, cf, cluster):
     file_list = info_sec['outs']
     where = "status='submitted'"
     job_ids = db.select(f'{jobtype}_wu', ['task_id', 'unique_id'], where)
-    job_ids = [(str(j), str(i)) for i, j in job_ids]
+    job_ids = [(str(i), str(j)) for i, j in job_ids]
     job_index = dict(job_ids)
     studypath = os.path.dirname(type_path)
-    unfin = cluster.check_running(studypath)
+    unfin = cluster.check_running(studypath)#clusterId.processId
     jbin = dict(job_index)
-    running_jobs = [job_index.pop(unid) for unid in unfin if unid in jbin]
+    running_jobs = [taid for taid, unid in jbin.items() if unid in unfin]
+    [job_index.pop(taid) for taid in running_jobs]
     if running_jobs:
         content = f"The {jobtype} tasks {str(running_jobs)} aren't completed yet!"
         logger.warning(content)
-    valid_task_ids = list(job_index.values())
+    valid_task_ids = list(job_index.keys())
     cluster.download_from_spool(studypath)
 
     if ('boinc' in cf['info'].keys()) and cf['info']['boinc']:
         content = "Downloading results from boinc spool!"
         logger.info(content)
-        stat, task_ids = download_from_boinc(info_sec)
-        if not stat:
+        task_ids = download_from_boinc(info_sec)
+        if not task_ids:
             return
         unfn_task_ids = [i for i in valid_task_ids if i not in task_ids]
         if unfn_task_ids:
@@ -81,44 +82,50 @@ def gather_results(jobtype, cf, cluster):
     for sec in cf:
         parent_cf[sec] = cf[sec]
     coll_action = False
-    for item in os.listdir(type_path):
-        if item not in valid_task_ids:
-            continue
-        job_path = os.path.join(type_path, item)
-        result_cf = copy.deepcopy(parent_cf)
-        job_table = {}
-        task_table = {}
-        task_table['status'] = 'Success'
-        if os.path.isdir(job_path) and os.listdir(job_path):
-            # parse the results
-            parse_results(jobtype, item, job_path, file_list, task_table,
-                          result_cf)
-            coll_action = True
-            where = 'task_id=%s' % item
-            db.update(f'{jobtype}_task', task_table, where)
-            for sec, vals in result_cf.items():
-                vals['task_id'] = [item]*len(vals['mtime'])
-                db.insertm(sec, vals)
-            if task_table['status'] == 'Success':
-                job_table['status'] = 'complete'
-                job_table['mtime'] = int(time.time() * 1E7)
-                where = "task_id=%s" % item
-                db.update(f'{jobtype}_wu', job_table, where)
-                content = f"{jobtype} task {item} has completed normally!"
-                logger.info(content)
+    for item_group in os.listdir(type_path):
+        item_list = item_group.split('-')
+        job_path = os.path.join(type_path, item_group)
+        for item in item_list:
+            if item not in valid_task_ids:
+                continue
+            result_cf = copy.deepcopy(parent_cf)
+            job_table = {}
+            task_table = {}
+            task_table['status'] = 'Success'
+            if os.path.isdir(job_path) and os.listdir(job_path):
+                # parse the results
+                parse_results(jobtype, item, job_path, file_list, task_table,
+                              result_cf)
+                coll_action = True
+                where = 'task_id=%s' % item
+                db.update(f'{jobtype}_task', task_table, where)
+                for sec, vals in result_cf.items():
+                    vals['task_id'] = [item]*len(vals['mtime'])
+                    db.insertm(sec, vals)
+                if task_table['status'] == 'Success':
+                    job_table['status'] = 'complete'
+                    job_table['mtime'] = int(time.time() * 1E7)
+                    where = "task_id=%s" % item
+                    db.update(f'{jobtype}_wu', job_table, where)
+                    content = f"{jobtype} task {item} has completed normally!"
+                    logger.info(content)
+                else:
+                    where = "task_id=%s" % item
+                    job_table['status'] = 'incomplete'
+                    db.update(f'{jobtype}_wu', job_table, where)
             else:
-                where = "task_id=%s" % item
-                job_table['status'] = 'incomplete'
-                db.update(f'{jobtype}_wu', job_table, where)
-        else:
-            where = 'task_id=%s' % item
-            task_table['status'] = 'Failed'
-            db.update(f'{jobtype}_task', task_table, where)
-            content = "This is a failed job!"
-            logger.warning(content)
-        shutil.rmtree(job_path)
+                where = 'task_id=%s' % item
+                task_table['status'] = 'Failed'
+                db.update(f'{jobtype}_task', task_table, where)
+                content = "This is a failed job!"
+                logger.warning(content)
+            shutil.rmtree(os.path.join(job_path, 'results', item))
+        res_path = os.path.join(job_path, 'results')
+        if os.path.isdir(res_path) and (not os.listdir(res_path)):
+            shutil.rmtree(job_path)
     if coll_action:
-        cluster.remove(studypath, 4)  # remove the completed condor jobs
+        # remove the completed condor jobs (when using spool option)
+        cluster.remove(studypath, 4)
     db.close()
 
 
@@ -132,14 +139,14 @@ def download_from_boinc(info_sec):
     if not os.path.isdir(res_path):
         content = "There isn't job submitted to boinc!"
         logger.warning(content)
-        return 0, []
+        return []
     contents = os.listdir(res_path)
     if 'processed' in contents:
         contents.remove('processed')
     if not contents:
         content = "No result in boinc spool yet!"
         logger.warning(content)
-        return 0, []
+        return []
     out_path = six_path
 
     processed_path = os.path.join(res_path, 'processed')
@@ -148,7 +155,7 @@ def download_from_boinc(info_sec):
     username = getpass.getuser()
     tmp_path = os.path.join('/tmp', username, st_pre)
     if not os.path.isdir(tmp_path):
-        os.mkdir(tmp_path)
+        os.makedirs(tmp_path)
     for res in contents:
         if re.match(r'%s.+\.zip' % st_pre, res):
             try:
@@ -165,14 +172,16 @@ def download_from_boinc(info_sec):
         if f10[-1] != '0':
             continue
         match = re.search('task_id', f10)
-        if not match:
+        match_group = re.search('group', f10)
+        if (not match) or (not match_group):
             content = 'Something wrong with the result %s' % f10
             logger.warning(content)
             continue
         task_id = f10[match.end() + 1:].split('_')[0]
-        job_path = os.path.join(out_path, task_id)
+        group_name = f10[match_group.end() + 1:].split('_')[0]
+        job_path = os.path.join(out_path, group_name, 'results', task_id)
         if not os.path.isdir(job_path):
-            content = "Output path for sixtrack task %s doesn't exist!" % task_id
+            content = f"Output path {job_path} doesn't exist!"
             logger.warning(content)
             os.mkdir(job_path)
         out_name = os.path.join(job_path, 'fort.10.gz')
@@ -181,4 +190,4 @@ def download_from_boinc(info_sec):
             shutil.copyfileobj(f_in, f_out)
         task_ids.append(task_id)
     shutil.rmtree(tmp_path)
-    return 1, task_ids
+    return task_ids

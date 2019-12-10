@@ -18,20 +18,23 @@ from pysixdesk.lib.resultparser import parse_results
 
 
 class TrackingJob:
-    def __init__(self, task_id, input_info):
+    def __init__(self, task_id, input_info, group_name, logger):
         '''Class to handle the execution of the tracking job.
 
         Args:
             task_id (int): Current task ID.
             input_info (str/path): Path to the database configuration file.
+            group_name (str): The group name when submitting multi-jobs to one node
+            logger: The logger
 
         Raises:
             FileNotFoundError: If required input file is not found in database.
             ValueError: If unalbe to find the preprocess task_id for this job.
         '''
-        self._logger = utils.condor_logger('sixtrack')
-        self._dest_path = Path('results')
-        self._dest_path.mkdir(exist_ok=True)
+        self._logger = logger
+        self._dest_path = Path('results', str(task_id))
+        self._dest_path.mkdir(parents=True, exist_ok=True)
+        self.group_name = group_name
 
         self.task_id = task_id
         # read database config
@@ -281,8 +284,6 @@ class TrackingJob:
 
         # concatenate
         utils.concatenate_files([dest, madx_fc3], output_file)
-        # if not source.samefile(output_file):
-        #     utils.diff(source, output_file, logger=self._logger)
 
     def sixtrack_run(self, output_file):
         """Runs sixtrack.
@@ -296,7 +297,6 @@ class TrackingJob:
         # write stdout to file
         outputlines = six_output.readlines()
         self._logger.info('Sixtrack is done!')
-        # output_name = Path.cwd().parent / (job_name + '.output')
 
         if outputlines:
             with open(output_file, 'w') as six_out:
@@ -305,17 +305,16 @@ class TrackingJob:
             # For some sixtrack version, the stdout will be automatically
             # written to fort.6
             shutil.copy2('fort.6', output_file)
-        # else:
-        #     self.output_files.append('fort.6')
-
-        # print(''.join(outputlines))
 
     def dl_output(self):
         """Downloads the output of the job.
         """
         # Download the requested files.
         down_list = list(self.six_out)
-        down_list.append('fort.3')
+        if self.boinc:
+            down_list = ['fort.3']
+        else:
+            down_list.append('fort.3')
         for cr_f in self.cr_files:
             if Path(cr_f).exists():
                 down_list.append(cr_f)
@@ -327,9 +326,6 @@ class TrackingJob:
             utils.download_output(down_list, self._dest_path)
             content = f"All requested results have been stored in {self._dest_path}"
             self._logger.info(content)
-            if self.boinc:
-                down_list = ['fort.3']
-                utils.download_output(down_list, self._dest_path)
         except Exception:
             self._logger.warning("Job failed!", exc_info=True)
 
@@ -418,7 +414,8 @@ class TrackingJob:
             str: the boinc job name.
         """
         st_pre = self.boinc_work.parent.name
-        job_name = st_pre + '__' + self.job_name + '_task_id_' + str(self.task_id)
+        job_name = st_pre + '__' + self.job_name + '_task_id_' +\
+                str(self.task_id) + '_group_' + str(self.group_name)
         if not self.boinc_work.is_dir():
             self.boinc_work.mkdir(parents=True, exist_ok=True)
         if not self.boinc_results.is_dir():
@@ -438,7 +435,7 @@ class TrackingJob:
         """
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'
-        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16']
+        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16'] + self.cr_inputs
         with zipfile.ZipFile(input_zip, 'w', zipfile.ZIP_DEFLATED) as ziph:
             for infile in inputs:
                 if infile in os.listdir('.'):
@@ -504,7 +501,7 @@ class TrackingJob:
 
         if self.boinc:
             if not self.sixtrack_check_tracking(six_stdout='fort.6'):
-                raise Exception("The job doesn't pass the test!")
+                raise Exception(f"The job {self.task_id} doesn't pass the test!")
 
             job_name = self.boinc_prep()
             # restore the desired number of turns
@@ -517,26 +514,28 @@ class TrackingJob:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('task_id', type=int,
+    parser.add_argument('task_id', type=str,
                         help='Current work unit ID')
     parser.add_argument('input_info', type=str,
                         help='Path to the db config file.')
     args = parser.parse_args()
-    job = TrackingJob(args.task_id, args.input_info)
-    try:
-        job.run()
-    except Exception as e:
-        if job.db_type == 'mysql':
-            job.db.open()
-            job_table = {}
-            where = "task_id"
-            job_table['status'] = 'incomplete'
-            job_table['mtime'] = int(time.time() * 1E7)
-            job.db.update('sixtrack_wu', job_table,
-                          where=f'task_id={job.task_id}')
-            # this error msg is not correct.
-            # logger.error("Error during reconnection.")
-        raise e
-    finally:
-        if job.db_type == 'mysql':
-            job.db.remove('sixtrack_wu_tmp', where=f'task_id={job.task_id}')
+    group_name = args.task_id
+    task_ids = group_name.split('-')
+    LOGGER = utils.condor_logger('sixtrack')
+    for task_id in task_ids:
+        job = TrackingJob(task_id, args.input_info, group_name, LOGGER)
+        try:
+            job.run()
+        except Exception as e:
+            if job.db_type == 'mysql':
+                job.db.open()
+                job_table = {}
+                where = "task_id"
+                job_table['status'] = 'incomplete'
+                job_table['mtime'] = int(time.time() * 1E7)
+                job.db.update('sixtrack_wu', job_table,
+                              where=f'task_id={job.task_id}')
+            raise e
+        finally:
+            if job.db_type == 'mysql':
+                job.db.remove('sixtrack_wu_tmp', where=f'task_id={job.task_id}')

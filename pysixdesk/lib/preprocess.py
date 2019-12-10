@@ -28,8 +28,8 @@ class PreprocessJob:
             FileNotFoundError: If required input file is not found in database.
         '''
         self._logger = utils.condor_logger('preprocess')
-        self._dest_path = Path('results')
-        self._dest_path.mkdir(exist_ok=True)
+        self._dest_path = Path('results', str(task_id))
+        self._dest_path.mkdir(parents=True, exist_ok=True)
 
         self.task_id = task_id
         # read database config
