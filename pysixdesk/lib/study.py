@@ -751,6 +751,7 @@ class Study(object):
             where['last_turn'].append(i[1])# wu_id is not unique now
         self.db.updatem('sixtrack_wu', wu_table, where)
 
+        task_ids = list(task_ids.keys())
         outputs['task_id'] = task_ids
         group_results['task_id'] = task_ids
         db_info = {}
@@ -902,6 +903,7 @@ class Study(object):
         where = dict([('wu_id', wu_ids)])
         self.db.updatem('preprocess_wu', wu_table, where)
 
+        task_ids = list(task_ids.keys())
         db_info = {}
         db_info.update(self.db_info)
         if db_info['db_type'].lower() == 'sql':
