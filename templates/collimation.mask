@@ -1,0 +1,136 @@
+option, warn,info;
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/HLLHCV1.4/ slhc";
+system,"ln -fns  /afs/cern.ch/eng/lhc/optics/runIII lhc";
+
+
+mylhcbeam=1; ! For Beam 1
+!mylhcbeam=4; ! For Beam 4
+
+!is_thin=0; ! For thick optics
+is_thin=1; ! For thin optics
+
+
+!----Sequence definition 
+Option, -echo,-warn,-info;
+call,file="slhc/toolkit/macro.madx";
+call, file="slhc/aperture/const_for_aperture.madx";
+if (mylhcbeam<3){ call,file="lhc/lhc.seq";};
+if (mylhcbeam>3){ call,file="lhc/lhcb4.seq";};
+call,file="slhc/hllhc_sequence.madx";
+
+!----Aperture definition 
+call, file="lhc/aperture/aperture.b1.madx";
+call, file="lhc/aperture/aperture.b2.madx";
+call, file="lhc/aperture/aper_tol.b1.madx";
+call, file="lhc/aperture/aper_tol.b2.madx";
+!call,file="slhc/aperture/exp_pipe_model_after_LS3.madx";
+!call,file="slhc/aperture/exp_pipe_install_after_LS3.madx";
+call, file="slhc/aperture/aperture_upgrade_IT.madx";
+call, file="slhc/aperture/aperture_upgrade_MS.madx";
+
+!----Optics
+if (is_thin==0){
+call,file="slhc/round/opt_round_150_1500.madx";
+};
+
+if (is_thin==1){
+exec, myslice;
+call,file="slhc/round/opt_round_150_1500_thin.madx";
+};
+
+
+!----Exp. configuration in IR1, IR2, IR5 and IR8***
+on_sep1:=-0.75;on_x1:=295;phi_IR1 :=  0; on_sol_atlas:=0;on_crab1:=0;
+on_sep5:= 0.75;on_x5:=295;phi_IR5 := 90; on_sol_cms  :=0;on_crab5:=0;
+on_sep2:= 2;on_x2:= 200;on_a2=0;on_alice:=7000/nrj;on_sol_alice:=0;
+on_sep8:=-2;on_x8:=-250;on_a8=0;on_lhcb :=7000/nrj;
+on_disp=1;
+
+!----Twiss
+exec,mk_beam(7000);
+
+if (mylhcbeam<3){
+ seqedit, sequence=lhcb1;
+   flatten;
+   cycle, start=IP1;
+ endedit;
+
+
+
+!---- Apply local orbit bump
+
+/*
+use,    period=lhcb1;
+match, x=0;
+
+    vary, name=acbch7.r7b1,  step=1.e-6;
+    vary, name=acbch9.r7b1,  step=1.e-6;
+    vary, name=acbh11.r7b1,  step=1.e-6;
+
+
+!---------- BUMP FOR PARALLEL ENVELOPE ---------
+
+    constraint, sequence=lhcb1, range=MBH.A9R7.B1,  x =   0.001;
+
+!-----------------------------------------------
+
+
+    constraint, sequence=lhcb1, range=MCBCH.7R7.B1,  x =   0.000;
+    constraint, sequence=lhcb1, range=MCBH.11R7.B1,  x =   0.000;
+
+
+   JACOBIAN, calls=1000, tolerance=1.0e-21;
+ENDMATCH;
+*/
+
+
+!---- save twiss file 
+use,sequence=lhcb1;
+ select, flag=twiss, clear;
+ select, flag=twiss, column=KEYWORD,NAME,S,L,X,Y,BETX,BETY,ALFX,ALFY,MUX,MUY,DX,DY,DPX,DPY,PX,PY,KMIN,KMAX,APER_1, APER_2, APER_3, APER_4;
+ twiss,  sequence=lhcb1, file=twiss_HLLHCv1p4_b1_standard_thin.tfs; save;
+
+!----save aperture file 
+ select, flag=twiss, clear;
+ select, flag=twiss, column=KEYWORD, NAME, PARENT, S, L, APER_1, APER_2, APER_3, APER_4;
+ twiss,  sequence=lhcb1, file=aperture_HLLHCv1p4_b1.tfs; save;
+
+
+
+!----DISPERSION SINGLE PASS
+
+/*
+use,sequence=lhcb1;
+ savebeta,label=btcp,place=TCP.C6L7.B1;
+ select, flag=twiss, clear;
+ select, flag=twiss, column=KEYWORD,NAME,S,L,X,Y,BETX,BETY,ALFX,ALFY,MUX,MUY,DX,DY,DPX,DPY,PX,PY;
+
+
+twiss,  sequence=lhcb1, file=twiss_lhcb1_periodic.tfs; save;
+
+seqedit,sequence=lhcb1;flatten;cycle,start=TCP.C6L7.B1;endedit;
+
+use,sequence=lhcb1;
+twiss,  sequence=lhcb1, betx=btcp->betx, bety=btcp->bety, alfx=btcp->alfx, alfy=btcp->alfy, mux=0, muy=0, dx=0, dpx=0, dy=0, dpy=0, file=twiss_lhcb1_tcp_dispersion_sp.tfs; save;
+
+!--------------------------------------------------------------------------------------
+*/
+};
+
+
+if (mylhcbeam>3){
+ seqedit, sequence=lhcb2;
+   flatten;
+   cycle, start=IP1;
+ endedit;
+
+use,sequence=lhcb2;
+ select, flag=twiss, clear;
+ select, flag=twiss, column=KEYWORD,NAME,S,L,X,Y,BETX,BETY,ALFX,ALFY,MUX,MUY,DX,DY,DPX,DPY,PX,PY;
+twiss,  sequence=lhcb2, file=twiss_hllhc_b2_round.tfs; save;
+
+};
+
+if (is_thin==1){ sixtrack, radius=17E-03; };
+
+system, "rm db5 slhc lhc";

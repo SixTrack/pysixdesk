@@ -1,0 +1,1100 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pysixdesk.lib package &#8212; pysixdesk 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pysixdesk-lib-package">
+<h1>pysixdesk.lib package<a class="headerlink" href="#pysixdesk-lib-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pysixdesk.lib.configbash">
+<span id="pysixdesk-lib-configbash-module"></span><h2>pysixdesk.lib.configbash module<a class="headerlink" href="#module-pysixdesk.lib.configbash" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.configbash.BashStudy">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.configbash.</code><code class="sig-name descname">BashStudy</code><span class="sig-paren">(</span><em class="sig-param">name='study'</em>, <em class="sig-param">location='.'</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.configbash.BashStudy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pysixdesk.lib.study.Study" title="pysixdesk.lib.study.Study"><code class="xref py py-class docutils literal notranslate"><span class="pre">pysixdesk.lib.study.Study</span></code></a></p>
+<dl class="method">
+<dt id="pysixdesk.lib.configbash.BashStudy.initialize">
+<code class="sig-name descname">initialize</code><span class="sig-paren">(</span><em class="sig-param">mfile</em>, <em class="sig-param">*files</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.configbash.BashStudy.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up a study from the initial files of old version sixdesk,
+e.g. sixdeskenv,sixenv</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.configbash.BashStudy.parse_bash_script">
+<code class="sig-name descname">parse_bash_script</code><span class="sig-paren">(</span><em class="sig-param">mfile</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.configbash.BashStudy.parse_bash_script" title="Permalink to this definition">¶</a></dt>
+<dd><p>parse the bash input file for the old version sixdesk</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.configbash.num">
+<code class="sig-prename descclassname">pysixdesk.lib.configbash.</code><code class="sig-name descname">num</code><span class="sig-paren">(</span><em class="sig-param">val</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.configbash.num" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.configbash.peel_str">
+<code class="sig-prename descclassname">pysixdesk.lib.configbash.</code><code class="sig-name descname">peel_str</code><span class="sig-paren">(</span><em class="sig-param">val, query=['(', ')', '\n', ' '], replace=['', '', '', '']</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.configbash.peel_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.constants">
+<span id="pysixdesk-lib-constants-module"></span><h2>pysixdesk.lib.constants module<a class="headerlink" href="#module-pysixdesk.lib.constants" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pysixdesk.lib.dbadaptor">
+<span id="pysixdesk-lib-dbadaptor-module"></span><h2>pysixdesk.lib.dbadaptor module<a class="headerlink" href="#module-pysixdesk.lib.dbadaptor" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.dbadaptor.</code><code class="sig-name descname">DatabaseAdaptor</code><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor.create_table">
+<code class="sig-name descname">create_table</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">name</em>, <em class="sig-param">columns</em>, <em class="sig-param">keys</em>, <em class="sig-param">recreate</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor.create_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new table</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor.delete">
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">where</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove rows based on specified conditions
+&#64;conn A connection of database
+&#64;table_name(str) The table name
+&#64;where(str) Selection condition which is mandatory here!</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor.drop_table">
+<code class="sig-name descname">drop_table</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor.drop_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop an exist table</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor.insert">
+<code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">values</em>, <em class="sig-param">ph</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert a row of values
+&#64;conn A connection of database
+&#64;table_name(str) The table name
+&#64;values(dict) The values required to insert into database
+&#64;ph The placeholder for the selected database, e.g. ?, %s</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor.insertm">
+<code class="sig-name descname">insertm</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">values</em>, <em class="sig-param">ph</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor.insertm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert multiple rows once
+&#64;conn A connection of database
+&#64;table_name(str) The table name
+&#64;values(dict) The values required to insert into database
+&#64;ph The placeholder for the selected database, e.g. ?, %s</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor.new_connection">
+<em class="property">abstract </em><code class="sig-name descname">new_connection</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor.new_connection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor.select">
+<code class="sig-name descname">select</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">cols='*'</em>, <em class="sig-param">where=None</em>, <em class="sig-param">orderby=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select values with conditions
+&#64;conn A connection of database
+&#64;table_name(str) The table name
+&#64;cols(list) The column names
+&#64;where(str) Selection condition
+&#64;orderby(list) Order condition
+&#64;**kwargs Some other conditions</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor.setting">
+<em class="property">abstract </em><code class="sig-name descname">setting</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">settings</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor.setting" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.DatabaseAdaptor.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">values</em>, <em class="sig-param">where</em>, <em class="sig-param">ph</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update data in a table
+&#64;conn A connection of database
+&#64;table_name(str) The table name
+&#64;values(dict) The column names with new values
+&#64;where(str) Selection condition
+&#64;ph The placeholder for the selected database, e.g. ?, %s</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.dbadaptor.</code><code class="sig-name descname">MySQLDatabaseAdaptor</code><a class="headerlink" href="#pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor" title="pysixdesk.lib.dbadaptor.DatabaseAdaptor"><code class="xref py py-class docutils literal notranslate"><span class="pre">pysixdesk.lib.dbadaptor.DatabaseAdaptor</span></code></a></p>
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.create_db">
+<code class="sig-name descname">create_db</code><span class="sig-paren">(</span><em class="sig-param">host</em>, <em class="sig-param">user</em>, <em class="sig-param">passwd</em>, <em class="sig-param">db_name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.create_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.create_table">
+<code class="sig-name descname">create_table</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">name</em>, <em class="sig-param">columns</em>, <em class="sig-param">keys</em>, <em class="sig-param">recreate</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.create_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new table</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.fetch_tables">
+<code class="sig-name descname">fetch_tables</code><span class="sig-paren">(</span><em class="sig-param">conn</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.fetch_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch all the table names in the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.insert">
+<code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">values</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert a row of values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.insertm">
+<code class="sig-name descname">insertm</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">values</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.insertm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert multi rows of values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.new_connection">
+<code class="sig-name descname">new_connection</code><span class="sig-paren">(</span><em class="sig-param">host</em>, <em class="sig-param">user</em>, <em class="sig-param">passwd</em>, <em class="sig-param">db_name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.new_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect to an existing database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.setting">
+<code class="sig-name descname">setting</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">settings</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.setting" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">values</em>, <em class="sig-param">where</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.MySQLDatabaseAdaptor.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>update values</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.dbadaptor.</code><code class="sig-name descname">SQLDatabaseAdaptor</code><a class="headerlink" href="#pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pysixdesk.lib.dbadaptor.DatabaseAdaptor" title="pysixdesk.lib.dbadaptor.DatabaseAdaptor"><code class="xref py py-class docutils literal notranslate"><span class="pre">pysixdesk.lib.dbadaptor.DatabaseAdaptor</span></code></a></p>
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.create_table">
+<code class="sig-name descname">create_table</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">name</em>, <em class="sig-param">columns</em>, <em class="sig-param">keys</em>, <em class="sig-param">recreate</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.create_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new table</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.fetch_tables">
+<code class="sig-name descname">fetch_tables</code><span class="sig-paren">(</span><em class="sig-param">conn</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.fetch_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch all the table names in the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.insert">
+<code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">values</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert a row of values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.insertm">
+<code class="sig-name descname">insertm</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">values</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.insertm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert multi rows of values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.new_connection">
+<code class="sig-name descname">new_connection</code><span class="sig-paren">(</span><em class="sig-param">db_name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.new_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new connection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.setting">
+<code class="sig-name descname">setting</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">settings</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.setting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the settings of the database via pragma command</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">table_name</em>, <em class="sig-param">values</em>, <em class="sig-param">where</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbadaptor.SQLDatabaseAdaptor.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>update values</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.dbtypedict">
+<span id="pysixdesk-lib-dbtypedict-module"></span><h2>pysixdesk.lib.dbtypedict module<a class="headerlink" href="#module-pysixdesk.lib.dbtypedict" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.dbtypedict.MySQLDict">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.dbtypedict.</code><code class="sig-name descname">MySQLDict</code><a class="headerlink" href="#pysixdesk.lib.dbtypedict.MySQLDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pysixdesk.lib.dbtypedict.SQLiteDict">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.dbtypedict.</code><code class="sig-name descname">SQLiteDict</code><a class="headerlink" href="#pysixdesk.lib.dbtypedict.SQLiteDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.dbtypedict.bigint_check">
+<code class="sig-prename descclassname">pysixdesk.lib.dbtypedict.</code><code class="sig-name descname">bigint_check</code><span class="sig-paren">(</span><em class="sig-param">val</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.dbtypedict.bigint_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks to see if <cite>val</cite> is or contains BIGINTs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>val</strong> (<em>int</em><em>, </em><em>float</em><em>, </em><em>list</em>) – value or list of values to check.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if <cite>val</cite> contains one or more BIGINT, False if not.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.fort2_tools">
+<span id="pysixdesk-lib-fort2-tools-module"></span><h2>pysixdesk.lib.fort2_tools module<a class="headerlink" href="#module-pysixdesk.lib.fort2_tools" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.fort2_tools.Fort2Struct">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.fort2_tools.</code><code class="sig-name descname">Fort2Struct</code><a class="headerlink" href="#pysixdesk.lib.fort2_tools.Fort2Struct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Structure containing fort.2 information</p>
+<dl class="method">
+<dt id="pysixdesk.lib.fort2_tools.Fort2Struct.createDrift">
+<code class="sig-name descname">createDrift</code><span class="sig-paren">(</span><em class="sig-param">iSing=None</em>, <em class="sig-param">L=None</em>, <em class="sig-param">lDebug=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.fort2_tools.Fort2Struct.createDrift" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a new drift, ie the SINGLE ELEMENT and the BLOCk
+if iSing and iBlock are not None, an existing one is cloned</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.fort2_tools.Fort2Struct.echoDimensions">
+<code class="sig-name descname">echoDimensions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.fort2_tools.Fort2Struct.echoDimensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>return dimensions of arrays (ie SINGLE ELEMENTs, BLOCs,
+LATTICE ELEMENTs)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.fort2_tools.Fort2Struct.getIBlock">
+<code class="sig-name descname">getIBlock</code><span class="sig-paren">(</span><em class="sig-param">tmpName</em>, <em class="sig-param">key='NAME'</em>, <em class="sig-param">lDebug=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.fort2_tools.Fort2Struct.getIBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>return index of BLOC named tmpName from list of BLOCks</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.fort2_tools.Fort2Struct.getIDriftFromBlockName">
+<code class="sig-name descname">getIDriftFromBlockName</code><span class="sig-paren">(</span><em class="sig-param">tmpName</em>, <em class="sig-param">lDebug=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.fort2_tools.Fort2Struct.getIDriftFromBlockName" title="Permalink to this definition">¶</a></dt>
+<dd><p>return index of drift in list of BLOCks and in list of SINGLE
+ELEMENTs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.fort2_tools.Fort2Struct.getISingEl">
+<code class="sig-name descname">getISingEl</code><span class="sig-paren">(</span><em class="sig-param">tmpName</em>, <em class="sig-param">lDebug=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.fort2_tools.Fort2Struct.getISingEl" title="Permalink to this definition">¶</a></dt>
+<dd><p>return index of SINGLE ELEMENT named tmpName from list of SINGLE
+ELEMENTs</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.fort2_tools.fort2_to_twiss">
+<code class="sig-prename descclassname">pysixdesk.lib.fort2_tools.</code><code class="sig-name descname">fort2_to_twiss</code><span class="sig-paren">(</span><em class="sig-param">struct</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.fort2_tools.fort2_to_twiss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms fort.2 in a Twiss-like structure, including the extra field
+S</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.fort2_tools.read_fort2">
+<code class="sig-prename descclassname">pysixdesk.lib.fort2_tools.</code><code class="sig-name descname">read_fort2</code><span class="sig-paren">(</span><em class="sig-param">file</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.fort2_tools.read_fort2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.fort2_tools.twiss_to_fort2">
+<code class="sig-prename descclassname">pysixdesk.lib.fort2_tools.</code><code class="sig-name descname">twiss_to_fort2</code><span class="sig-paren">(</span><em class="sig-param">sequence</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.fort2_tools.twiss_to_fort2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms a twiss-like structure into fort.2. The twiss structure
+should contain the same fields as the output in fort2_to_twiss</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.fort2_tools.write_fort2">
+<code class="sig-prename descclassname">pysixdesk.lib.fort2_tools.</code><code class="sig-name descname">write_fort2</code><span class="sig-paren">(</span><em class="sig-param">file</em>, <em class="sig-param">struct</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.fort2_tools.write_fort2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the modified fort.2 file</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.gather">
+<span id="pysixdesk-lib-gather-module"></span><h2>pysixdesk.lib.gather module<a class="headerlink" href="#module-pysixdesk.lib.gather" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pysixdesk.lib.gather.download_from_boinc">
+<code class="sig-prename descclassname">pysixdesk.lib.gather.</code><code class="sig-name descname">download_from_boinc</code><span class="sig-paren">(</span><em class="sig-param">info_sec</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.gather.download_from_boinc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download results from boinc</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.gather.preprocess_results">
+<code class="sig-prename descclassname">pysixdesk.lib.gather.</code><code class="sig-name descname">preprocess_results</code><span class="sig-paren">(</span><em class="sig-param">cf</em>, <em class="sig-param">cluster</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.gather.preprocess_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gather the results of madx and oneturn sixtrack jobs and store in
+database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.gather.run">
+<code class="sig-prename descclassname">pysixdesk.lib.gather.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">wu_id</em>, <em class="sig-param">infile</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.gather.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.gather.sixtrack_results">
+<code class="sig-prename descclassname">pysixdesk.lib.gather.</code><code class="sig-name descname">sixtrack_results</code><span class="sig-paren">(</span><em class="sig-param">cf</em>, <em class="sig-param">cluster</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.gather.sixtrack_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gather the results of sixtrack jobs and store in database</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.generate_fort2">
+<span id="pysixdesk-lib-generate-fort2-module"></span><h2>pysixdesk.lib.generate_fort2 module<a class="headerlink" href="#module-pysixdesk.lib.generate_fort2" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pysixdesk.lib.generate_fort2.add_aperture">
+<code class="sig-prename descclassname">pysixdesk.lib.generate_fort2.</code><code class="sig-name descname">add_aperture</code><span class="sig-paren">(</span><em class="sig-param">sequence</em>, <em class="sig-param">name</em>, <em class="sig-param">position</em>, <em class="sig-param">index</em>, <em class="sig-param">precision=0.0001</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.generate_fort2.add_aperture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add aperture marker to fort.2 file sequence</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.generate_fort2.aperture_type">
+<code class="sig-prename descclassname">pysixdesk.lib.generate_fort2.</code><code class="sig-name descname">aperture_type</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">aperture</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.generate_fort2.aperture_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform BeamLossPattern aperture type into LIMI block aperture type</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.generate_fort2.assign_apertures">
+<code class="sig-prename descclassname">pysixdesk.lib.generate_fort2.</code><code class="sig-name descname">assign_apertures</code><span class="sig-paren">(</span><em class="sig-param">F2sequence</em>, <em class="sig-param">TWstruct</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.generate_fort2.assign_apertures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign apertures to fort.2 lenses, interpolated as done in
+BeamLossPattern</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.generate_fort2.checkNameLengths">
+<code class="sig-prename descclassname">pysixdesk.lib.generate_fort2.</code><code class="sig-name descname">checkNameLengths</code><span class="sig-paren">(</span><em class="sig-param">tmpSequence</em>, <em class="sig-param">tmpAperLimi</em>, <em class="sig-param">maxLen=16</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.generate_fort2.checkNameLengths" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.generate_fort2.clean_apertures">
+<code class="sig-prename descclassname">pysixdesk.lib.generate_fort2.</code><code class="sig-name descname">clean_apertures</code><span class="sig-paren">(</span><em class="sig-param">struct</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.generate_fort2.clean_apertures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean apertures (take only non-zero apertures and remove redundant ones)
+I remove apertures if they only have drifts in between and
+the same aperture values, so I leave only the first and the last aperture,
+the middle one are redundant. Two are enough
+for a backtracking, if they only have drifts between them.
+Here we don’t need to include the offsets</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.generate_fort2.merge_survey">
+<code class="sig-prename descclassname">pysixdesk.lib.generate_fort2.</code><code class="sig-name descname">merge_survey</code><span class="sig-paren">(</span><em class="sig-param">TWstruct</em>, <em class="sig-param">SUstruct</em>, <em class="sig-param">SUregions</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.generate_fort2.merge_survey" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge survey data with the aperture model:
+Assign an interpolate aperture to the survey points from the aperture model</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.generate_fort2.read_survey">
+<code class="sig-prename descclassname">pysixdesk.lib.generate_fort2.</code><code class="sig-name descname">read_survey</code><span class="sig-paren">(</span><em class="sig-param">file1</em>, <em class="sig-param">dS=0.001</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.generate_fort2.read_survey" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read Survey file
+dS=shift in s-coordinate [m] for inserting 0-offset elements before/after
+survey segment</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.generate_fort2.rename_apertures">
+<code class="sig-prename descclassname">pysixdesk.lib.generate_fort2.</code><code class="sig-name descname">rename_apertures</code><span class="sig-paren">(</span><em class="sig-param">struct</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.generate_fort2.rename_apertures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rename apertures to reduce number of new single elements</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.generate_fort2.run">
+<code class="sig-prename descclassname">pysixdesk.lib.generate_fort2.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">fc2</em>, <em class="sig-param">aperture</em>, <em class="sig-param">survery=None</em>, <em class="sig-param">ldebug=False</em>, <em class="sig-param">lold=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.generate_fort2.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.machineparams">
+<span id="pysixdesk-lib-machineparams-module"></span><h2>pysixdesk.lib.machineparams module<a class="headerlink" href="#module-pysixdesk.lib.machineparams" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.machineparams.HLLHC">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.machineparams.</code><code class="sig-name descname">HLLHC</code><a class="headerlink" href="#pysixdesk.lib.machineparams.HLLHC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pysixdesk.lib.machineparams.ParentMachine" title="pysixdesk.lib.machineparams.ParentMachine"><code class="xref py py-class docutils literal notranslate"><span class="pre">pysixdesk.lib.machineparams.ParentMachine</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pysixdesk.lib.machineparams.LHC">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.machineparams.</code><code class="sig-name descname">LHC</code><a class="headerlink" href="#pysixdesk.lib.machineparams.LHC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pysixdesk.lib.machineparams.ParentMachine" title="pysixdesk.lib.machineparams.ParentMachine"><code class="xref py py-class docutils literal notranslate"><span class="pre">pysixdesk.lib.machineparams.ParentMachine</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pysixdesk.lib.machineparams.MachineConfig">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.machineparams.</code><code class="sig-name descname">MachineConfig</code><span class="sig-paren">(</span><em class="sig-param">machine</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.machineparams.MachineConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pysixdesk.lib.machineparams.MachineConfig.parameters">
+<code class="sig-name descname">parameters</code><span class="sig-paren">(</span><em class="sig-param">runtype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.machineparams.MachineConfig.parameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pysixdesk.lib.machineparams.ParentMachine">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.machineparams.</code><code class="sig-name descname">ParentMachine</code><a class="headerlink" href="#pysixdesk.lib.machineparams.ParentMachine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Parent class representing an empty machine</p>
+<dl class="method">
+<dt id="pysixdesk.lib.machineparams.ParentMachine.parameters">
+<code class="sig-name descname">parameters</code><span class="sig-paren">(</span><em class="sig-param">runtype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.machineparams.ParentMachine.parameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.preprocess">
+<span id="pysixdesk-lib-preprocess-module"></span><h2>pysixdesk.lib.preprocess module<a class="headerlink" href="#module-pysixdesk.lib.preprocess" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pysixdesk.lib.preprocess.madxjob">
+<code class="sig-prename descclassname">pysixdesk.lib.preprocess.</code><code class="sig-name descname">madxjob</code><span class="sig-paren">(</span><em class="sig-param">madx_config</em>, <em class="sig-param">mask_config</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.preprocess.madxjob" title="Permalink to this definition">¶</a></dt>
+<dd><p>MADX job to generate input files for sixtrack</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.preprocess.new_fort2">
+<code class="sig-prename descclassname">pysixdesk.lib.preprocess.</code><code class="sig-name descname">new_fort2</code><span class="sig-paren">(</span><em class="sig-param">config</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.preprocess.new_fort2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate new fort.2 with aperture markers and survey and fort3.limit</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.preprocess.run">
+<code class="sig-prename descclassname">pysixdesk.lib.preprocess.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">wu_id</em>, <em class="sig-param">input_info</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.preprocess.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.preprocess.sixtrackjob">
+<code class="sig-prename descclassname">pysixdesk.lib.preprocess.</code><code class="sig-name descname">sixtrackjob</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">config_re</em>, <em class="sig-param">jobname</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.preprocess.sixtrackjob" title="Permalink to this definition">¶</a></dt>
+<dd><p>One turn sixtrack job</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.preprocess.sixtrackjobs">
+<code class="sig-prename descclassname">pysixdesk.lib.preprocess.</code><code class="sig-name descname">sixtrackjobs</code><span class="sig-paren">(</span><em class="sig-param">config</em>, <em class="sig-param">fort3_config</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.preprocess.sixtrackjobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manage all the one turn sixtrack job</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.pysixdb">
+<span id="pysixdesk-lib-pysixdb-module"></span><h2>pysixdesk.lib.pysixdb module<a class="headerlink" href="#module-pysixdesk.lib.pysixdb" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.pysixdb.SixDB">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.pysixdb.</code><code class="sig-name descname">SixDB</code><span class="sig-paren">(</span><em class="sig-param">db_info</em>, <em class="sig-param">settings=None</em>, <em class="sig-param">create=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Disconnect the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.create_table">
+<code class="sig-name descname">create_table</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">table_info</em>, <em class="sig-param">key_info={}</em>, <em class="sig-param">recreate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.create_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new table or recreate an existing table</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.create_tables">
+<code class="sig-name descname">create_tables</code><span class="sig-paren">(</span><em class="sig-param">tables</em>, <em class="sig-param">tables_keys={}</em>, <em class="sig-param">recreate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.create_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create multiple tables</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.drop_table">
+<code class="sig-name descname">drop_table</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.drop_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop a table</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.fetch_tables">
+<code class="sig-name descname">fetch_tables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.fetch_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the table names in the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.info_check">
+<code class="sig-name descname">info_check</code><span class="sig-paren">(</span><em class="sig-param">dbtype</em>, <em class="sig-param">db_info</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.info_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if all the necessary information for database is there.
+And  check if the parameter’s type is correct, if not, correct it</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.insert">
+<code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">values</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert a row of values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.insertm">
+<code class="sig-name descname">insertm</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">values</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.insertm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert multiple rows</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">where</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reomve rows based on specified conditions</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.select">
+<code class="sig-name descname">select</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">columns='*'</em>, <em class="sig-param">where=None</em>, <em class="sig-param">orderby=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select values with specified conditions</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.setting">
+<code class="sig-name descname">setting</code><span class="sig-paren">(</span><em class="sig-param">settings</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.setting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the settings of the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.pysixdb.SixDB.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">values</em>, <em class="sig-param">where=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.pysixdb.SixDB.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update data in a table</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.resultparser">
+<span id="pysixdesk-lib-resultparser-module"></span><h2>pysixdesk.lib.resultparser module<a class="headerlink" href="#module-pysixdesk.lib.resultparser" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pysixdesk.lib.resultparser.parse_preprocess">
+<code class="sig-prename descclassname">pysixdesk.lib.resultparser.</code><code class="sig-name descname">parse_preprocess</code><span class="sig-paren">(</span><em class="sig-param">item</em>, <em class="sig-param">job_path</em>, <em class="sig-param">file_list</em>, <em class="sig-param">task_table</em>, <em class="sig-param">oneturn_table</em>, <em class="sig-param">oneturn_param_names</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.resultparser.parse_preprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the results of preprocess jobs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.resultparser.parse_sixtrack">
+<code class="sig-prename descclassname">pysixdesk.lib.resultparser.</code><code class="sig-name descname">parse_sixtrack</code><span class="sig-paren">(</span><em class="sig-param">item</em>, <em class="sig-param">job_path</em>, <em class="sig-param">file_list</em>, <em class="sig-param">task_table</em>, <em class="sig-param">f10_table</em>, <em class="sig-param">f10_names</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.resultparser.parse_sixtrack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the results of sixtrack job</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.sixtrack">
+<span id="pysixdesk-lib-sixtrack-module"></span><h2>pysixdesk.lib.sixtrack module<a class="headerlink" href="#module-pysixdesk.lib.sixtrack" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pysixdesk.lib.sixtrack.check_tracking">
+<code class="sig-prename descclassname">pysixdesk.lib.sixtrack.</code><code class="sig-name descname">check_tracking</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">surv_percent=1</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.sixtrack.check_tracking" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the tracking result to see how many particles survived</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.sixtrack.run">
+<code class="sig-prename descclassname">pysixdesk.lib.sixtrack.</code><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">wu_id</em>, <em class="sig-param">input_info</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.sixtrack.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.sixtrack.sixtrackjob">
+<code class="sig-prename descclassname">pysixdesk.lib.sixtrack.</code><code class="sig-name descname">sixtrackjob</code><span class="sig-paren">(</span><em class="sig-param">sixtrack_config</em>, <em class="sig-param">config_param</em>, <em class="sig-param">boinc_vars</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.sixtrack.sixtrackjob" title="Permalink to this definition">¶</a></dt>
+<dd><p>The actual sixtrack job</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.study">
+<span id="pysixdesk-lib-study-module"></span><h2>pysixdesk.lib.study module<a class="headerlink" href="#module-pysixdesk.lib.study" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.study.Study">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.study.</code><code class="sig-name descname">Study</code><span class="sig-paren">(</span><em class="sig-param">name='example_study'</em>, <em class="sig-param">loc='/home/xiaohanlu/workspace/pysixdesk/doc'</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.cluster_class">
+<em class="property">property </em><code class="sig-name descname">cluster_class</code><a class="headerlink" href="#pysixdesk.lib.study.Study.cluster_class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.cluster_module">
+<em class="property">property </em><code class="sig-name descname">cluster_module</code><a class="headerlink" href="#pysixdesk.lib.study.Study.cluster_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.cluster_name">
+<em class="property">property </em><code class="sig-name descname">cluster_name</code><a class="headerlink" href="#pysixdesk.lib.study.Study.cluster_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.collect_result">
+<code class="sig-name descname">collect_result</code><span class="sig-paren">(</span><em class="sig-param">typ</em>, <em class="sig-param">boinc=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.collect_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect the results of preprocess or  sixtrack jobs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.customize">
+<code class="sig-name descname">customize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.customize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the column names of database tables  and initialize the
+submission module after the user define the necessary variables.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.info">
+<code class="sig-name descname">info</code><span class="sig-paren">(</span><em class="sig-param">job=2</em>, <em class="sig-param">where=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the status information of this study.
+job=
+0: print madx, oneturn sixtrack job
+1: print sixtrack job
+2: print madx, oneturn sixtrack and sixtrack jobs
+where: the filter condition for database query, e.g. “status=’complete’”</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.init_boinc_dir">
+<code class="sig-name descname">init_boinc_dir</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.init_boinc_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialise the boinc directory</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.name_conven">
+<code class="sig-name descname">name_conven</code><span class="sig-paren">(</span><em class="sig-param">prefix</em>, <em class="sig-param">keys</em>, <em class="sig-param">values</em>, <em class="sig-param">suffix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.name_conven" title="Permalink to this definition">¶</a></dt>
+<dd><p>The convention for naming input file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.pre_calc">
+<code class="sig-name descname">pre_calc</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.pre_calc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Further calculations for the specified parameters</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.prepare_preprocess_input">
+<code class="sig-name descname">prepare_preprocess_input</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.prepare_preprocess_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the input files for madx and one turn sixtrack job</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.prepare_sixtrack_input">
+<code class="sig-name descname">prepare_sixtrack_input</code><span class="sig-paren">(</span><em class="sig-param">boinc=False</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.prepare_sixtrack_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the input files for sixtrack job</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.purge_table">
+<code class="sig-name descname">purge_table</code><span class="sig-paren">(</span><em class="sig-param">table_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.purge_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean the invalid lines in the specified table</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.submit">
+<code class="sig-name descname">submit</code><span class="sig-paren">(</span><em class="sig-param">typ</em>, <em class="sig-param">trials=5</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.submit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sumbit the preporcess or sixtrack jobs to htctondor.
+&#64;type(0,1 or 2) The job type, 0 is preprocess job, 1 is sixtrack job,
+2 is collimation job
+&#64;trials The maximum number of trials of submission</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.study.Study.update_db">
+<code class="sig-name descname">update_db</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.study.Study.update_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the database whith the user-defined parameters</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.submission">
+<span id="pysixdesk-lib-submission-module"></span><h2>pysixdesk.lib.submission module<a class="headerlink" href="#module-pysixdesk.lib.submission" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.submission.Cluster">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.submission.</code><code class="sig-name descname">Cluster</code><span class="sig-paren">(</span><em class="sig-param">temp_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.Cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dl class="method">
+<dt id="pysixdesk.lib.submission.Cluster.check">
+<em class="property">abstract </em><code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.Cluster.check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.submission.Cluster.prepare">
+<em class="property">abstract </em><code class="sig-name descname">prepare</code><span class="sig-paren">(</span><em class="sig-param">wu_ids</em>, <em class="sig-param">trans</em>, <em class="sig-param">exe</em>, <em class="sig-param">exe_args</em>, <em class="sig-param">input_path</em>, <em class="sig-param">output_path</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.Cluster.prepare" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.submission.Cluster.remove">
+<em class="property">abstract </em><code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.Cluster.remove" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.submission.Cluster.submit">
+<em class="property">abstract </em><code class="sig-name descname">submit</code><span class="sig-paren">(</span><em class="sig-param">input_path</em>, <em class="sig-param">job_name</em>, <em class="sig-param">trials=5</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.Cluster.submit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pysixdesk.lib.submission.HTCondor">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.submission.</code><code class="sig-name descname">HTCondor</code><span class="sig-paren">(</span><em class="sig-param">temp_path=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.HTCondor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pysixdesk.lib.submission.Cluster" title="pysixdesk.lib.submission.Cluster"><code class="xref py py-class docutils literal notranslate"><span class="pre">pysixdesk.lib.submission.Cluster</span></code></a></p>
+<p>The HTCondor management system</p>
+<dl class="method">
+<dt id="pysixdesk.lib.submission.HTCondor.check">
+<code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.HTCondor.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the job status</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.submission.HTCondor.check_format">
+<code class="sig-name descname">check_format</code><span class="sig-paren">(</span><em class="sig-param">unique_id</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.HTCondor.check_format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the job status with fixed format
+&#64;unique_id(int or str) The unique id of the job, e.g: cluster_id.proc_id
+&#64;return(int or None) The job status</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.submission.HTCondor.check_running">
+<code class="sig-name descname">check_running</code><span class="sig-paren">(</span><em class="sig-param">studypath</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.HTCondor.check_running" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the unfininshed job
+&#64;studypath The absolute path of the study
+&#64;return(list or None) The unique id (ClusterId.ProcId) list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.submission.HTCondor.prepare">
+<code class="sig-name descname">prepare</code><span class="sig-paren">(</span><em class="sig-param">wu_ids</em>, <em class="sig-param">trans</em>, <em class="sig-param">exe</em>, <em class="sig-param">exe_args</em>, <em class="sig-param">input_path</em>, <em class="sig-param">output_path</em>, <em class="sig-param">flavour='tomorrow'</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.HTCondor.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the submission file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wu_ids</strong> (<em>int</em>) – The job ids for submission</p></li>
+<li><p><strong>trans</strong> (<em>list</em>) – The python modules needed by the executables</p></li>
+<li><p><strong>exe</strong> (<em>str</em>) – The executable</p></li>
+<li><p><strong>exe_args</strong> (<em>str</em>) – The additional arguments for executable except for wu_id</p></li>
+<li><p><strong>input_path</strong> (<em>str</em>) – The folder with input files</p></li>
+<li><p><strong>output_path</strong> (<em>str</em>) – The output folder</p></li>
+<li><p><strong>flavour</strong> (<em>str</em>) – The queue types of HTCondor</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.submission.HTCondor.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.HTCondor.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cancel the submitted jobs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.submission.HTCondor.submit">
+<code class="sig-name descname">submit</code><span class="sig-paren">(</span><em class="sig-param">input_path</em>, <em class="sig-param">job_name</em>, <em class="sig-param">trials=5</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.submission.HTCondor.submit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit the job to the cluster
+&#64;input_path The input path to hold the input files
+&#64;job_name The job name (also is the batch_name for HTCondor)
+&#64;trails The maximum number of resubmission when submit failed</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.twiss_tools">
+<span id="pysixdesk-lib-twiss-tools-module"></span><h2>pysixdesk.lib.twiss_tools module<a class="headerlink" href="#module-pysixdesk.lib.twiss_tools" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.twiss_tools.TwissStruct">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.twiss_tools.</code><code class="sig-name descname">TwissStruct</code><a class="headerlink" href="#pysixdesk.lib.twiss_tools.TwissStruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Structure containing Twiss file information</p>
+<dl class="attribute">
+<dt id="pysixdesk.lib.twiss_tools.TwissStruct.APER_COLUMNS">
+<code class="sig-name descname">APER_COLUMNS</code><em class="property"> = ['APERTYPE', 'APER_1', 'APER_2', 'APER_3', 'APER_4']</em><a class="headerlink" href="#pysixdesk.lib.twiss_tools.TwissStruct.APER_COLUMNS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pysixdesk.lib.twiss_tools.TwissStruct.APER_VALUES">
+<code class="sig-name descname">APER_VALUES</code><em class="property"> = ['APER_1', 'APER_2', 'APER_3', 'APER_4']</em><a class="headerlink" href="#pysixdesk.lib.twiss_tools.TwissStruct.APER_VALUES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.twiss_tools.TwissStruct.as_dict">
+<code class="sig-name descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.twiss_tools.TwissStruct.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.twiss_tools.compare_aperture">
+<code class="sig-prename descclassname">pysixdesk.lib.twiss_tools.</code><code class="sig-name descname">compare_aperture</code><span class="sig-paren">(</span><em class="sig-param">element1, element2, KEYS=['APER_1', 'APER_2', 'APER_3', 'APER_4']</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.twiss_tools.compare_aperture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if the two elements have the same aperture values</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.twiss_tools.empty_aperture">
+<code class="sig-prename descclassname">pysixdesk.lib.twiss_tools.</code><code class="sig-name descname">empty_aperture</code><span class="sig-paren">(</span><em class="sig-param">element</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.twiss_tools.empty_aperture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if the element doesn’t have apertures defined</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.twiss_tools.read_icosim_csv">
+<code class="sig-prename descclassname">pysixdesk.lib.twiss_tools.</code><code class="sig-name descname">read_icosim_csv</code><span class="sig-paren">(</span><em class="sig-param">file</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.twiss_tools.read_icosim_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads an Icosim csv file in a TwissStruct</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.twiss_tools.read_twiss">
+<code class="sig-prename descclassname">pysixdesk.lib.twiss_tools.</code><code class="sig-name descname">read_twiss</code><span class="sig-paren">(</span><em class="sig-param">file</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.twiss_tools.read_twiss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads a Twiss file in a TwissStruct</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.twiss_tools.split_line">
+<code class="sig-prename descclassname">pysixdesk.lib.twiss_tools.</code><code class="sig-name descname">split_line</code><span class="sig-paren">(</span><em class="sig-param">line</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.twiss_tools.split_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits a line in fields, keeping quoted strings as a single field and
+striping out the quotes (double quotes only)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.twiss_tools.update_dict_entries">
+<code class="sig-prename descclassname">pysixdesk.lib.twiss_tools.</code><code class="sig-name descname">update_dict_entries</code><span class="sig-paren">(</span><em class="sig-param">dest</em>, <em class="sig-param">origin</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.twiss_tools.update_dict_entries" title="Permalink to this definition">¶</a></dt>
+<dd><p>update dest entries with those in origin</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.utils">
+<span id="pysixdesk-lib-utils-module"></span><h2>pysixdesk.lib.utils module<a class="headerlink" href="#module-pysixdesk.lib.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pysixdesk.lib.utils.check">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param">files</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the existence of the files and rename them if the files is a dict
+which looks like {‘file1_oldName’: ‘file1_newName’,
+‘file2_oldName’: ‘file2_newName’}</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.check_fort3_block">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">check_fort3_block</code><span class="sig-paren">(</span><em class="sig-param">fort3</em>, <em class="sig-param">block</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.check_fort3_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the existence of the given block in fort.3</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.compress_buf">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">compress_buf</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">source='file'</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.compress_buf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data compression for storing in database
+The data source can be file,gzip,str</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.concatenate_files">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">concatenate_files</code><span class="sig-paren">(</span><em class="sig-param">source</em>, <em class="sig-param">dest</em>, <em class="sig-param">ignore='ENDE'</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.concatenate_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenate the given files</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.condor_logger">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">condor_logger</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.condor_logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepares a logger for job on HTCondor. It splits the levels to stdout
+and stderr, and disables module level logging.</p>
+<p>DEBUG, INFO go to stdout
+WARNING, ERROR go to stderr</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.decode_strings">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">decode_strings</code><span class="sig-paren">(</span><em class="sig-param">inputs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.decode_strings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert special-format string to list or directory</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.decompress_buf">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">decompress_buf</code><span class="sig-paren">(</span><em class="sig-param">buf</em>, <em class="sig-param">out</em>, <em class="sig-param">des='file'</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.decompress_buf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data decompression to retrieve from database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.diff">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">diff</code><span class="sig-paren">(</span><em class="sig-param">file1</em>, <em class="sig-param">file2</em>, <em class="sig-param">logger=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.diff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays the diff of two files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file1</strong> (<em>str/path</em>) – path to first file for the diff.</p></li>
+<li><p><strong>file2</strong> (<em>str/path</em>) – path to second file for the diff.</p></li>
+<li><p><strong>logger</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">logging.logger</span></code>, optional) – logger with which to display the
+diff, if None, will use <cite>print</cite>.</p></li>
+<li><p><strong>**kwargs</strong> – additional arguments for <cite>difflib.unified_diff</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.download_output">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">download_output</code><span class="sig-paren">(</span><em class="sig-param">filenames</em>, <em class="sig-param">dest</em>, <em class="sig-param">zp=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.download_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the requested files to the given destinaion.
+If zp is true, then zip the files before download.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.encode_strings">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">encode_strings</code><span class="sig-paren">(</span><em class="sig-param">inputs</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.encode_strings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert list or directory to special-format string</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.evlt">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">evlt</code><span class="sig-paren">(</span><em class="sig-param">fun</em>, <em class="sig-param">inputs</em>, <em class="sig-param">action=&lt;built-in function exit&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.evlt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the specified function</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pysixdesk.lib.utils.replace">
+<code class="sig-prename descclassname">pysixdesk.lib.utils.</code><code class="sig-name descname">replace</code><span class="sig-paren">(</span><em class="sig-param">patterns</em>, <em class="sig-param">replacements</em>, <em class="sig-param">source</em>, <em class="sig-param">dest</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.utils.replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads a source file and writes the destination file.
+In each line, replaces patterns with repleacements.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib.workspace">
+<span id="pysixdesk-lib-workspace-module"></span><h2>pysixdesk.lib.workspace module<a class="headerlink" href="#module-pysixdesk.lib.workspace" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pysixdesk.lib.workspace.WorkSpace">
+<em class="property">class </em><code class="sig-prename descclassname">pysixdesk.lib.workspace.</code><code class="sig-name descname">WorkSpace</code><span class="sig-paren">(</span><em class="sig-param">workspace_name='./sandbox'</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.workspace.WorkSpace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>class for handling workspaces.</p>
+<div class="line-block">
+<div class="line">Current structure:</div>
+<div class="line">./sandbox/</div>
+<div class="line-block">
+<div class="line">|_ studies/</div>
+<div class="line-block">
+<div class="line">|_ test/</div>
+<div class="line">|_ study_000/</div>
+<div class="line">|_ study_001/</div>
+<div class="line">|_ study_002/</div>
+</div>
+<div class="line">|_ templates/</div>
+<div class="line-block">
+<div class="line">|_ htcondor_run.sub</div>
+<div class="line">|_ hl10.mask</div>
+<div class="line">|_ fort.3.mother2</div>
+<div class="line">|_ fort.3.mother1</div>
+<div class="line">|_ config.py</div>
+</div>
+</div>
+</div>
+<dl class="method">
+<dt id="pysixdesk.lib.workspace.WorkSpace.init_study">
+<code class="sig-name descname">init_study</code><span class="sig-paren">(</span><em class="sig-param">study_name=None</em>, <em class="sig-param">sanity_check=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.workspace.WorkSpace.init_study" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialise the directory hosting a study</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.workspace.WorkSpace.load_study">
+<code class="sig-name descname">load_study</code><span class="sig-paren">(</span><em class="sig-param">study_name</em>, <em class="sig-param">sanity_check=True</em>, <em class="sig-param">module_path=None</em>, <em class="sig-param">class_name='MyStudy'</em><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.workspace.WorkSpace.load_study" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a study</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pysixdesk.lib.workspace.WorkSpace.show_studies">
+<code class="sig-name descname">show_studies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pysixdesk.lib.workspace.WorkSpace.show_studies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show all the studies in the current workspace</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pysixdesk.lib">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pysixdesk.lib" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">pysixdesk</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Xiaohan Lu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/pysixdesk.lib.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
