@@ -12,7 +12,7 @@ The interface requires python3, and it is being developed with `python3.6.8`.
 
 ## Authors
 
-L.&nbsp;Coyle (CERN).
+L.&nbsp;Coyle (CERN),
 X.&nbsp;Lu (CSNS, CERN),
 A.&nbsp;Mereghetti (CERN).
 
