@@ -52,7 +52,9 @@ class SubmissionTest(unittest.TestCase):
         self.assertEqual(contents['error'], f'{output_path}/$(wu_id)/htcondor.$(ClusterId).$(ProcId).err')
         self.assertEqual(contents['log'], f'{output_path}/$(wu_id)/htcondor.$(ClusterId).$(ProcId).log')
 
-        _, out = self.cluster.submit(self.sub_folder_in, 'unit_test_submission')
+        _, out = self.cluster.submit(self.sub_folder_in,
+                                     'unit_test_submission',
+                                     limit=None)
         self.jobs = out
         self.assertEqual(list(out.keys()), [str(i) for i in self.wu_ids])
 
