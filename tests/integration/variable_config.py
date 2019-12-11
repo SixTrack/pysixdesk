@@ -121,21 +121,21 @@ class MySqlCheckpointConfig(CheckpointSettings, MySqlSettings):
         self.customize(fake=False)
 
 
-class SqlLiteConfig(SqlSettings):
+class SqliteConfig(SqlSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class SqlLiteCollConfig(CollSettings, SqlSettings):
+class SqliteCollConfig(CollSettings, SqlSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class SqlLiteCheckpointConfig(CheckpointSettings, SqlSettings):
+class SqliteCheckpointConfig(CheckpointSettings, SqlSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()

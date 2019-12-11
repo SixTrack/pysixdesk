@@ -485,7 +485,7 @@ class Study(object):
         six_records = records['sixtrack_wu']
         six_news = news['sixtrack_wu']
         new_madx_ids = madx_table['wu_id']
-        if pre_wu_ids:
+        if pre_wu_ids and six_records:
             six_records['preprocess_id'] = pre_wu_ids
         six_news['preprocess_id'] = list(pre_wu_ids) + new_madx_ids
         keys = list(self.sixtrack_params.keys())
