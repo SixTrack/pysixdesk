@@ -2,6 +2,7 @@ import os
 import io
 import re
 import sys
+import math
 import gzip
 import shutil
 import logging
@@ -99,7 +100,7 @@ def diff(file1, file2, logger=None, **kwargs):
         file2 (str/path): path to second file for the diff.
         logger (logging.logger, optional): logger with which to display the
         diff, if None, will use print.
-        **kwargs: additional arguments for `difflib.unified_diff`.
+        kwargs: additional arguments for `difflib.unified_diff`.
     '''
 
     if logger is not None and isinstance(logger, logging.Logger):
@@ -194,7 +195,7 @@ def exc_catch(fun, exc_action=None, *args, **kwargs):
         exc_action (callable, optionnal): callable which will run if "fun"
         raises an Exception. If None will not do anything, the Exception will
         be supressed.
-        *args **kwargs (optionnal): passed on to the wrapped function call.
+        args kwargs (optionnal): passed on to the wrapped function call.
 
     Returns:
         The output of the wrapped function if no exceptions are raised, the
@@ -250,3 +251,24 @@ def merge_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
+
+
+class ProgressBar(object):
+    '''
+    A very lightweight progress bar to monitor the submit progress
+    '''
+
+    def __init__(self, total, width=50):
+        self.width = width
+        self.total = total
+        self.num = 0
+
+    def update(self):
+        self.num += 1
+        per = self.num/self.total
+        i = math.floor(per*100)
+        j = math.floor(self.width*per)
+        if self.num == self.total:
+            print(f'\r %d%%|[%-{self.width}s]' % (i, '='*j))
+        else:
+            print(f'\r %d%%|[%-{self.width}s]' % (i, '='*j), end='')

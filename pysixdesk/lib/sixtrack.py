@@ -365,6 +365,7 @@ class TrackingJob:
             self._logger.warning("This is a failed job!")
 
         self.db.update(f'sixtrack_wu', job_table, f'task_id={self.task_id}')
+        shutil.rmtree(self._dest_path)
 
     def run(self):
         '''Main execution logic

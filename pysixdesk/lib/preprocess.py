@@ -275,6 +275,7 @@ class PreprocessJob:
             self._logger.warning("This is a failed job!")
 
         self.db.update(f'preprocess_wu', job_table, f'task_id={self.task_id}')
+        shutil.rmtree(self._dest_path)
 
     def run(self):
         '''Main execution logic.
@@ -360,6 +361,7 @@ class PreprocessJob:
         self._logger.info("MADX job is running...")
         output = os.popen(command)
         output = output.readlines()
+        print('\n'.join(output))
         with open('madx_stdout', 'w') as mad_out:
             mad_out.writelines(output)
         if 'finished normally' not in output[-2]:

@@ -23,14 +23,14 @@ class MyStudyCustomizable(MyStudy):
 class SQLiteSettings(MyStudyCustomizable):
     def apply_settings(self):
         super().apply_settings()
-        print("Using SqlLite")
+        print("Using SQLite")
         self.db_info['db_type'] = 'sql'
 
 
 class MySQLSettings(MyStudyCustomizable):
     def apply_settings(self):
         super().apply_settings()
-        print('Using MySql')
+        print('Using MySQL')
         self.db_info['db_type'] = 'mysql'
 
 
