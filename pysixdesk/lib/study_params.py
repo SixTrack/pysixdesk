@@ -208,6 +208,12 @@ class StudyParams:
             iterable: iterable on the cartesian product of the input parameter
                 values.
         """
+        # TODO: decide if the overwriting of this method should be done by
+        # doing someting like:
+        # self.params.combinations = other_method
+        # in config.py
+        # Or maybe it should be an argument in the init of this class and
+        # default to this ?
         return product(*param_dict.values())
 
     def combinations(self):
