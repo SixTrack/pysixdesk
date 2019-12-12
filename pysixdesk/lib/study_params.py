@@ -187,18 +187,28 @@ class StudyParams:
         return out
 
     @staticmethod
-    def _product_dict(**kwargs):
-        '''A wrapper of product but for dictionaries.
+    def _combinations_prep(**kwargs):
+        '''Sanitizes the paramter values.
         '''
-        keys = kwargs.keys()
-        vals = []
-        for v in kwargs.values():
+        for k, v in kwargs.items():
             if not isinstance(v, Iterable) or isinstance(v, str):
-                v = [v]
-            vals.append(v)
-        # print(vals)
-        for instance in product(*vals):
-            yield dict(zip(keys, instance))
+                kwargs[k] = [v]
+        return kwargs
+
+    @staticmethod
+    def combination_logic(param_dict):
+        """This method defines the combination logic of the parameters, by
+        default, it will do the cartesian product of the values. This method
+        can be overwritten, to define exotic parameter scanning behaviour.
+
+        Args:
+            param_dict: dictionary containing lists of the parameters.
+
+        Returns:
+            iterable: iterable on the cartesian product of the input parameter
+                values.
+        """
+        return product(*param_dict.values())
 
     def combinations(self):
         '''Performs the combinations of the user provided parameters.
@@ -207,9 +217,11 @@ class StudyParams:
             tuple: a tuple containing 2 dictionaries, the first with the madx
                 parameters, the other with the sixtrack parameters.
         '''
-        for e in self._product_dict(**self.madx,
-                                    **self._sixtrack_only,
-                                    **self.phasespace):
+        param_dict = self._combinations_prep(**self.madx,
+                                             **self._sixtrack_only,
+                                             **self.phasespace)
+        for e in (dict(zip(param_dict.keys(), e))
+                  for e in self.combination_logic(param_dict)):
             yield ({k: e[k] for k in self.madx.keys()},
                    {k: e[k] for k in (list(self.sixtrack.keys()) +
                                       list(self.phasespace.keys()))})
