@@ -339,7 +339,10 @@ class Study(object):
         for typ, params in types.items():
             records[typ] = {}
             news[typ] = {}
+            self._logger.info(f'checking {typ} paramter changes....')
+            bar = utils.ProgressBar(len(params))
             for key in params.keys():
+                bar.update()
                 values = self.db.select(typ, key, DISTINCT=True)
                 if not values:
                     value = []
@@ -450,7 +453,10 @@ class Study(object):
         new_elements = set(self.custom_product_preprocess(pre_news))-\
                 set(self.custom_product_preprocess(pre_records))
 
+        self._logger.info("updating preprocess_wu table.....")
+        bar = utils.ProgressBar(len(new_elements))
         for element in new_elements:
+            bar.update()
             # avoid empty element
             if not element:
                 continue
@@ -479,7 +485,7 @@ class Study(object):
         six_records = records['sixtrack_wu']
         six_news = news['sixtrack_wu']
         new_madx_ids = madx_table['wu_id']
-        if pre_wu_ids:
+        if pre_wu_ids and six_records:
             six_records['preprocess_id'] = pre_wu_ids
         six_news['preprocess_id'] = list(pre_wu_ids) + new_madx_ids
         keys = list(self.sixtrack_params.keys())
@@ -507,7 +513,10 @@ class Study(object):
 
         new_elements = set(self.custom_product_sixtrack(six_news))-\
                 set(self.custom_product_sixtrack(six_records))
+        self._logger.info("updating sixtrack_wu table.....")
+        bar = utils.ProgressBar(len(new_elements))
         for element in new_elements:
+            bar.update()
             # avoid empty element
             if not element:
                 continue
@@ -536,26 +545,43 @@ class Study(object):
         self._logger.info(f'Add {wu_id-wu_id_start} new sixtrack jobs into '
                 f'database! A total of {wu_id}!')
 
-    def info(self, job=2, where=None):
+    def info(self, job=2, verbose=False, where=None):
         '''Print the status information of this study.
         job=
         0: print madx, oneturn sixtrack job
         1: print sixtrack job
         2: print madx, oneturn sixtrack and sixtrack jobs
         where: the filter condition for database query, e.g. "status='complete'"'''
-        query = ['wu_id', 'job_name', 'status', 'unique_id']
+        query_list = ['wu_id', 'job_name', 'status', 'unique_id']
+        typ = ['preprocess_wu', 'sixtrack_wu']
+        titles = ['madx and one turn sixtrack jobs:', 'Sixtrack jobs:']
+        def query(index):
+            wus = self.db.select(typ[int(index)], query_list, where)
+            content = '\n'+titles[int(index)] + '\n'
+            comp = []
+            subm = []
+            incm = []
+            if wus:
+                results = dict(zip(query_list, zip(*wus)))
+                for ele in results['status']:
+                    if ele == 'complete':
+                        comp.append(ele)
+                    if ele == 'submitted':
+                        subm.append(ele)
+                    if ele == 'incomplete':
+                        incm.append(ele)
+            content += f'complete: {len(comp)} \n'
+            content += f'submitted: {len(subm)} \n'
+            content += f'incomplete: {len(incm)}\n'
+            self._logger.info(content)
+            if verbose:
+                print(query_list)
+                for i in wus:
+                    print(i)
         if job == 0 or job == 2:
-            wus = self.db.select('preprocess_wu', query, where)
-            print('madx and one turn sixtrack jobs:')
-            print(query)
-            for i in wus:
-                print(i)
+            query(0)
         if job == 1 or job == 2:
-            six = self.db.select('sixtrack_wu', query, where)
-            print('Sixtrack jobs:')
-            print(query)
-            for j in six:
-                print(j)
+            query(1)
 
     def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
@@ -643,6 +669,7 @@ class Study(object):
     def prepare_sixtrack_input(self, resubmit=False, boinc=False, groupby=None,
             *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
+        self._logger.info("Going to prepare input files for sixtrack jobs....")
         if self.checkpoint_restart:
             self.prepare_cr()
         where = "status='complete'"
@@ -667,7 +694,11 @@ class Study(object):
         names = list(self.tables['sixtrack_wu'].keys())
         group_results = dict(zip(names, zip(*results)))
         new_results = []
+        self._logger.info(f"Detected {len(results)} sixtrack jobs needed to {action}")
+        self._logger.info("Doing the calculation for sixtrack jobs.....")
+        bar = utils.ProgressBar(len(results))
         for result in results:
+            bar.update()
             paramsdict = dict(zip(names, result))
             pre_id = paramsdict['preprocess_id']
             status = self.pre_calc(paramsdict, pre_id)  # further calculation
@@ -686,20 +717,41 @@ class Study(object):
         pre_ids = outputs['preprocess_id']
         task_table = {}
         wu_table = {}
-        task_ids = []
+        task_ids = OrderedDict()
+        mtime = int(time.time() * 1E7)
+        task_table['wu_id'] = []
+        task_table['last_turn'] = []
+        task_table['mtime'] = []
+        self._logger.info("creating new lines in sixtrack_task table.....")
+        bar = utils.ProgressBar(len(last_turns))
         for wu_id, last_turn in zip(wu_ids, last_turns):
-            task_table['wu_id'] = wu_id
-            task_table['last_turn'] = last_turn
-            task_table['mtime'] = int(time.time() * 1E7)
-            self.db.insert('sixtrack_task', task_table)
-            where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
-            task_id = self.db.select('sixtrack_task', ['task_id'], where)
-            task_id = task_id[0][0]
-            task_ids.append(task_id)
-            wu_table['task_id'] = task_id
-            wu_table['mtime'] = int(time.time() * 1E7)
-            where = f"wu_id={wu_id} and last_turn={last_turn}"  # wu_id is not unique now
-            self.db.update('sixtrack_wu', wu_table, where)
+            bar.update()
+            where = f'wu_id={wu_id} and last_turn={last_turn} and status is null'
+            chck = self.db.select('sixtrack_task', ['task_id'], where)
+            if chck:
+                task_id = chck[0][0]
+                task_ids[task_id] = (wu_id, last_turn)
+            else:
+                task_table['wu_id'].append(wu_id)
+                task_table['last_turn'].append(last_turn)
+                task_table['mtime'].append(mtime)
+        if task_table['wu_id']:
+            self.db.insertm('sixtrack_task', task_table)
+            where = f"mtime={mtime}"
+            reviews = self.db.select('sixtrack_task', ['task_id', 'wu_id', 'last_turn'], where)
+            for ti, wi, lt in reviews:
+                task_ids[ti] = (wi, lt)
+        wu_table['task_id'] = list(task_ids.keys())
+        wu_table['mtime'] = [int(time.time() * 1E7), ]*len(task_ids)
+        where = {}
+        where['wu_id'] = []
+        where['last_turn'] = []
+        for i in task_ids.values():
+            where['wu_id'].append(i[0])
+            where['last_turn'].append(i[1])# wu_id is not unique now
+        self.db.updatem('sixtrack_wu', wu_table, where)
+
+        task_ids = list(task_ids.keys())
         outputs['task_id'] = task_ids
         group_results['task_id'] = task_ids
         db_info = {}
@@ -803,6 +855,7 @@ class Study(object):
 
     def prepare_preprocess_input(self, resubmit=False, *args, **kwargs):
         '''Prepare the input files for madx and one turn sixtrack job'''
+        self._logger.info("Going to prepare input files for preprocess jobs....")
         if resubmit:
             constraints = "status='submitted'"
             info = 'submitted'
@@ -820,19 +873,37 @@ class Study(object):
         wu_ids = outputs['wu_id']
         task_table = {}
         wu_table = {}
-        task_ids = []
+        self._logger.info("creating new lines in preprocess_task table.....")
+        bar = utils.ProgressBar(len(wu_ids))
+        mtime = int(time.time() * 1E7)
+        task_table['wu_id'] = []
+        task_table['mtime'] = []
+        task_ids = OrderedDict()
         for wu_id in wu_ids:
-            task_table['wu_id'] = wu_id
-            task_table['mtime'] = int(time.time() * 1E7)
-            self.db.insert('preprocess_task', task_table)
-            where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
-            task_id = self.db.select('preprocess_task', ['task_id'], where)
-            task_id = task_id[0][0]
-            task_ids.append(task_id)
-            wu_table['task_id'] = task_id
-            wu_table['mtime'] = int(time.time() * 1E7)
-            where = "wu_id=%s" % wu_id
-            self.db.update('preprocess_wu', wu_table, where)
+            bar.update()
+            where = f'wu_id={wu_id} and status is null'
+            chck = self.db.select('preprocess_task', ['task_id'], where)
+            if chck:
+                task_ids[chck[0][0]] = wu_id
+            else:
+                task_table['wu_id'].append(wu_id)
+                task_table['mtime'].append(mtime)
+                #self.db.insert('preprocess_task', task_table)
+                #where = "mtime=%s and wu_id=%s" % (task_table['mtime'], wu_id)
+                #task_id = self.db.select('preprocess_task', ['task_id'], where)
+                #task_id = task_id[0][0]
+        if task_table['wu_id']:
+            self.db.insertm('preprocess_task', task_table)
+            where = f"mtime={mtime}"
+            task_ids_new = self.db.select('preprocess_task', ['wu_id', 'task_id'], where)
+            for i in task_ids_new:
+                task_ids[i[1]]=i[0]
+        wu_table['task_id'] = list(task_ids.keys())
+        wu_table['mtime'] = [int(time.time() * 1E7),] * len(task_ids)
+        where = dict([('wu_id', wu_ids)])
+        self.db.updatem('preprocess_wu', wu_table, where)
+
+        task_ids = list(task_ids.keys())
         db_info = {}
         db_info.update(self.db_info)
         if db_info['db_type'].lower() == 'sql':
@@ -891,7 +962,10 @@ class Study(object):
         init.pop(ind)
         results = SpecialDict.fromkeys(init, iden_names)
         group_list.append(results)
+        self._logger.info("Making the group.....")
+        bar = utils.ProgressBar(len(records))
         for i in range(len(records)):
+            bar.update()
             rec = list(records[i])
             iden = rec.pop(ind)
             for li in group_list:
@@ -914,6 +988,7 @@ class Study(object):
 
     def prepare_cr(self):
         '''Prepare the checkpoint data, add new lines in db'''
+        self._logger.info("CR feature is turned on, preparing checkpoint data...")
         checks_1 = self.db.select('sixtrack_wu', ['wu_id'], DISTINCT=True)
         if checks_1:
             checks_1 = list(zip(*checks_1))[0]
