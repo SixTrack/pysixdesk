@@ -24,8 +24,9 @@ class TrackingJob:
         Args:
             task_id (int): Current task ID.
             input_info (str/path): Path to the database configuration file.
-            group_name (str): The group name when submitting multi-jobs to one node
-            logger: The logger
+            group_name (str): The group name when submitting multi-jobs to one
+                node.
+            logger (logging.Logger): The logger
 
         Raises:
             FileNotFoundError: If required input file is not found in database.

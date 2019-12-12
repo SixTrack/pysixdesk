@@ -257,7 +257,6 @@ class Study(object):
 
         prep_to_be_inserted = []
         six_to_be_inserted = []
-        # do mtime only once ?
         mtime = int(time.time()) * 1E7
         # iterate over the the input combinations
         for six_wu_id, (prep_wu_entry, six_wu_entry) in enumerate(self.params.combinations(), 1):
