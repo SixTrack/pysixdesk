@@ -907,8 +907,12 @@ class Study(object):
         group_ind = param_dict_keys.index(group_key)
         task_id_ind = param_dict_keys.index('task_id')
 
+        # sort rows wrt to the chosen group_key
+        sorted_rows = sorted(zip(*param_dict.values()),
+                             key=lambda x: x[group_ind])
         task_ids = []
-        for _, g in groupby(zip(*param_dict.values()),
+        # group rows wrt to the chosen group_key
+        for _, g in groupby(sorted_rows,
                             key=lambda x: x[group_ind]):
             task_ids.append([i[task_id_ind] for i in g])
 
