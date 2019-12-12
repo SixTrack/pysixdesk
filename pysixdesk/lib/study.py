@@ -826,7 +826,7 @@ class Study(object):
     def _group_records(self, outputs, groupby):
         '''Group the records from db by given rules'''
         task_ids = []
-        keys = list(self.sixtrack_params.keys())
+        keys = list(self.params.sixtrack.keys())
         keys.append('preprocess_id')
         new_outs = {}
         for key in keys:
