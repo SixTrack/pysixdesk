@@ -60,6 +60,14 @@ test=%test1; test=%test2; test=%test3
         with open(self.fort_file, 'w') as f_f:
             f_f.write(fort_content)
 
+    # this is needed for the tests in order to have more control on the
+    # parameter combinations. In normal usage, use params.combinations() to
+    # to perform the combinations of the parameters.
+    @staticmethod
+    def _manual_combination(params, param_dict):
+        return (dict(zip(param_dict.keys(), e))
+                for e in params.combination_logic(params._combinations_prep(**param_dict)))
+
     def test_placeholder_pattern(self):
         params = StudyParams(mask_path=self.mask_file,
                              fort_path=self.fort_file)
@@ -134,7 +142,7 @@ test=%test1; test=%test2; test=%test3
         params.calc_queue.append(times)
 
         self.assertEqual(len(params.calc_queue), 1)
-        for e in params._product_dict(**params.madx):
+        for e in self._manual_combination(params, params.madx):
             out_dict = params.calc(e)
             self.assertTrue('e_0_2' in out_dict.keys())
             self.assertTrue(out_dict['e_0_2'] == e0_init * 2)
@@ -148,7 +156,7 @@ test=%test1; test=%test2; test=%test3
             return x*2, x*2
         params.calc_queue.append(times)
 
-        for e in params._product_dict(**params.madx):
+        for e in self._manual_combination(params, params.madx):
             with self.assertRaises(ValueError):
                 out_dict = params.calc(e)
 
@@ -168,7 +176,7 @@ test=%test1; test=%test2; test=%test3
             return x*2
         params.calc_queue.append(times)
 
-        for e in params._product_dict(**params.madx):
+        for e in self._manual_combination(params, params.madx):
             out_dict = params.calc(e)
             self.assertTrue({'e_0_2', 'e_0_4'} <= set(out_dict.keys()))
 
@@ -201,7 +209,7 @@ test=%test1; test=%test2; test=%test3
         def nss_2_calc(nss):
             return nss*2
         params.calc_queue.append(nss_2_calc)
-        for i, e in enumerate(params._product_dict(**params.sixtrack)):
+        for i, e in enumerate(self._manual_combination(params, params.sixtrack)):
             # only run calculations which require 'test_table'
             out_dict = params.calc(e,
                                    task_id=i+1,
@@ -210,7 +218,7 @@ test=%test1; test=%test2; test=%test3
             self.assertTrue('xy' in out_dict.keys())
             self.assertFalse('nss_2' in out_dict.keys())
 
-        for e in params._product_dict(**params.sixtrack):
+        for e in self._manual_combination(params, params.sixtrack):
             # run calculations which don't need db
             out_dict = params.calc(e, require='none')
             self.assertTrue('nss_2' in out_dict.keys())
@@ -222,7 +230,7 @@ test=%test1; test=%test2; test=%test3
 
         inp = {'a': [1, 2],
                'b': [3, 4]}
-        out = list(params._product_dict(**inp))
+        out = list(self._manual_combination(params, inp))
         self.assertEqual(out, [{'a': 1, 'b': 3},
                                {'a': 1, 'b': 4},
                                {'a': 2, 'b': 3},
