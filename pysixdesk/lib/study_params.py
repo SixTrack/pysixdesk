@@ -12,16 +12,6 @@ from .constants import PROTON_MASS
 from .utils import PYSIXDESK_ABSPATH, merge_dicts
 
 
-class LastUpdatedOrderedDict(OrderedDict):
-    '''Store items in the order the keys were last added.
-    '''
-
-    def __setitem__(self, key, value):
-        if key in self:
-            del self[key]
-        OrderedDict.__setitem__(self, key, value)
-
-
 class StudyParams:
     '''
     Looks for any placeholders in the provided paths and extracts the
@@ -171,7 +161,7 @@ class StudyParams:
         '''
         matches = self._extract_patterns(file_path)
 
-        out = LastUpdatedOrderedDict()
+        out = OrderedDict()
         for ph in matches:
             if ph in self.defaults.keys():
                 out[ph] = self.defaults[ph]
@@ -375,27 +365,15 @@ class StudyParams:
         if key in self.sixtrack.keys():
             return self.sixtrack[key]
 
-    @staticmethod
-    def _find_none(dic):
-        """Finds the keys of any entry in 'dic' with a None value.
+    def _remove_none(self, dic):
+        """Removes Nones in dictionary 'dic'.
+        Note, it modifies the dictionary inplace.
 
         Args:
             dic (dict): Dictionary to check.
-
-        Returns:
-            list: list of keys whose value are None.
         """
-        out = []
-        for k, v in dic.items():
-            if v is None:
-                out.append(k)
-        return out
-
-    def _remove_none(self, dic):
-        """Removes Nones in dictionary 'dic'.
-        """
-        for k in self._find_none(dic):
-            del dic[k]
+        for key in [k for k, v in dic.items() if v is None]:
+            del dic[key]
 
     def drop_none(self):
         """Drop Nones from 'self.madx', 'self.sixtrack' and 'self.phasespace'.
