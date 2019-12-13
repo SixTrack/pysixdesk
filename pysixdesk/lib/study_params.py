@@ -42,8 +42,8 @@ class StudyParams:
                  machine_defaults=machineparams.HLLHC['col']):
         """
         Args:
-            mask_path (str, path): path to the mask file
-            fort_path (str, path): path to the fort file
+            mask_path (str, path): path to the mask file.
+            fort_path (str, path): path to the fort file.
             machine_defaults (dict): dictionary containing the default
                 parameters of the desired machine/configuration.
         """
@@ -97,7 +97,7 @@ class StudyParams:
         self.machine_defaults = machine_defaults
         self.defaults = merge_dicts(self.f3_defaults, self.machine_defaults)
         # phasespace params
-        # TODO: find sensible defaults
+        # TODO: find sensible defaults for the phasespace parameters.
         amp = [8, 10, 12]  # The amplitude
         self.phasespace = {"amp": list(zip(amp, amp[1:])),
                            "kang": list(range(1, 1 + 1)),
@@ -122,8 +122,8 @@ class StudyParams:
         sixtrack['nss'] = 1
         sixtrack['Runnam'] = 'FirstTurn'
         # oneturn job must output fort.10 --> POST block
-        # oneturn job cannot do collimation
         sixtrack['toggle_post/'] = ''
+        # oneturn job cannot do collimation
         sixtrack['toggle_coll/'] = '/'
         return sixtrack
 
@@ -157,7 +157,8 @@ class StudyParams:
         patterns and values taken from 'self.defaults'.
 
         Args:
-            file_path (str, path): path to file to extract placeholder patterns
+            file_path (str, path): path to file frim which to extract
+                placeholder patterns.
             keep_none (bool, optional): if True, keeps the None entries in the
                 output dict.
             mandatory (list, optional): if provided will add the keys in the
@@ -189,6 +190,13 @@ class StudyParams:
     @staticmethod
     def _combinations_prep(**kwargs):
         '''Sanitizes the paramter values.
+
+        Args:
+            **kwargs: Parameter name = parameter value.
+
+        Returns:
+            dict: Dictionary of the parameter values with the values changed to
+                lists, if not already.
         '''
         for k, v in kwargs.items():
             if not isinstance(v, Iterable) or isinstance(v, str):
@@ -198,8 +206,9 @@ class StudyParams:
     @staticmethod
     def combination_logic(param_dict):
         """This method defines the combination logic of the parameters, by
-        default, it will do the cartesian product of the values. This method
-        can be overwritten, to define exotic parameter scanning behaviour.
+        default, it will do the cartesian product of the values, using
+        itertools.product. This method can be overwritten, to define exotic
+        parameter scanning behaviour.
 
         Args:
             param_dict: dictionary containing lists of the parameters.
@@ -233,8 +242,8 @@ class StudyParams:
                                       list(self.phasespace.keys()))})
 
     def calc(self, params, task_id=None, get_val_db=None, require=None):
-        """Runs the queued calculations, in order. The output of the queue is put
-        in and a dictionary containing the calculation results is returned.
+        """Runs the queued calculations, in order. A dictionary containing the
+        calculation results is returned.
 
         Args:
             params (dict): One element of the combination of the parameter
@@ -249,6 +258,9 @@ class StudyParams:
                 require any database.
                 If list of table names, will run calculations whose 'require'
                 attribute's keys are a subset of the provided list.
+
+        Returns:
+            dict: Dictionary containing the output of the calculations.
         """
         params = params.copy()
         if require == 'all':

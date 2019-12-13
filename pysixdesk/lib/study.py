@@ -250,6 +250,8 @@ class Study(object):
         prep_entries = self.db.select('preprocess_wu', madx_keys)
         prep_wu_done = set(prep_entries)
         # these are used to keep track of the preprocess_wu_id
+        # increments prep_wu_id everytime a new parameter config is seen
+        # and add it to the set of seen paramter configs.
         prep_wu_seen = set()
         prep_wu_id = 0
         # sixtrack_wu already in the table
@@ -261,6 +263,8 @@ class Study(object):
         mtime = int(time.time()) * 1E7
         # iterate over the the input combinations
         for six_wu_id, (prep_wu_entry, six_wu_entry) in enumerate(self.params.combinations(), 1):
+            # this sanitization could be moved to inside the
+            # self.params.combinations method
             # sanitize any tuples
             prep_wu_entry = {k: json.dumps(v) if isinstance(v, tuple) else v
                              for k, v in prep_wu_entry.items()}
@@ -481,6 +485,7 @@ class Study(object):
         else:
             self.db.update('env', envs)
 
+        # update preprocess_wu and sixtrack_wu with parameter combinations.
         self._update_db_params()
 
     def info(self, job=2, verbose=False, where=None):
@@ -613,7 +618,11 @@ class Study(object):
     def prepare_sixtrack_input(self, resubmit=False, boinc=False, groupby=None,
                                *args, **kwargs):
         '''Prepare the input files for sixtrack job'''
+        # Prepares the sixtrack config dict, in the self.sixtrack_config
+        # attribute
         self._prep_sixtrack_cfg()
+        # Run any input paramter based calculations and update the sixtrack_wu
+        # with the results.
         self._run_calcs()
 
         self._logger.info("Going to prepare input files for sixtrack jobs....")
@@ -644,8 +653,6 @@ class Study(object):
             self._logger.info(content)
             return
 
-        # TODO: check to make sure the group_results dict of the master branch
-        # isn't essential
         outputs = dict(zip(names, zip(*outputs)))
         outputs['boinc'] = ['false'] * len(outputs['wu_id'])
         if boinc:
@@ -795,6 +802,8 @@ class Study(object):
 
     def prepare_preprocess_input(self, resubmit=False, *args, **kwargs):
         '''Prepare the input files for madx and one turn sixtrack job'''
+        # Prepares the preprocess config dict, in the self.preprocess_config
+        # attribute.
         self._prep_preprocessing_cfg()
 
         self._logger.info("Going to prepare input files for preprocess jobs....")

@@ -255,8 +255,8 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def updatem(self, conn, table_name, values, where):
         '''update values'''
-        super(SQLDatabaseAdaptor, self).updatem(conn, table_name, values, where,
-                                               '?')
+        super(SQLDatabaseAdaptor, self).updatem(conn, table_name, values,
+                                                where, '?')
 
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):
