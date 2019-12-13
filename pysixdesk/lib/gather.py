@@ -119,15 +119,15 @@ def gather_results(jobtype, cf, cluster):
                 db.update(f'{jobtype}_task', task_table, where)
                 content = "This is a failed job!"
                 logger.warning(content)
-            # item_path = os.path.join(job_path, 'results', item)
-            # if os.path.exists(item_path):
-            #     shutil.rmtree(item_path)
-        # res_path = os.path.join(job_path, 'results')
-        # if os.path.isdir(res_path) and (not os.listdir(res_path)):
-        #     shutil.rmtree(job_path)
-    # if coll_action:
-    #     # remove the completed condor jobs (when using spool option)
-    #     cluster.remove(studypath, 4)
+            item_path = os.path.join(job_path, 'results', item)
+            if os.path.exists(item_path):
+                shutil.rmtree(item_path)
+        res_path = os.path.join(job_path, 'results')
+        if os.path.isdir(res_path) and (not os.listdir(res_path)):
+            shutil.rmtree(job_path)
+    if coll_action:
+        # remove the completed condor jobs (when using spool option)
+        cluster.remove(studypath, 4)
     db.close()
 
 
