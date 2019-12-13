@@ -70,7 +70,7 @@ class StudyParams:
                             "idfor": 0,
                             "imc": 1,
                             "ilin": 1,
-                            "ition": 1,  # This control above or below transition
+                            "ition": 1,
                             "length": 26658.864,
                             "ndafi": 1,
                             "nss": 30,  # should this be 60? 30?
@@ -171,7 +171,8 @@ class StudyParams:
             for k in mandatory:
                 out[k] = self.defaults[k]
 
-        self._logger.debug(f'Found {len(matches)} placeholders in {file_path}.')
+        self._logger.debug(f'Found {len(matches)} placeholders in '
+                           f'{file_path}.')
         self._logger.debug(f'With {len(set(matches))} unique placeholders.')
         for k, v in out.items():
             self._logger.debug(f'{k}: {v}')

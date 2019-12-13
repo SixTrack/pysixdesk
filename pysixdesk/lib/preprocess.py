@@ -336,7 +336,8 @@ class PreprocessJob:
         utils.replace(patterns, values, self.madx_cfg["mask_file"],
                       output_file)
         # show diff
-        # utils.diff(self.madx_cfg["mask_file"], output_file, logger=self._logger)
+        # utils.diff(self.madx_cfg["mask_file"], output_file,
+        #            logger=self._logger)
 
     def madx_run(self, mask):
         """Runs madx.
@@ -400,14 +401,16 @@ class PreprocessJob:
         # check for fort.10
         # output_name = Path.cwd().parent / (job_name + '.output')
         if not Path('fort.10').is_file:
-            self._logger.error("The %s sixtrack job FAILED!" % job_name)
-            self._logger.error("Check the file %s which contains the SixTrack fort.6 output." % job_name)
+            self._logger.error(f"The {job_name} sixtrack job FAILED!")
+            self._logger.error(f"Check the file {job_name} which contains the "
+                               "SixTrack fort.6 output.")
             raise FileNotFoundError('"fort.10" not found.')
         else:
             # move fort.10 out of temp folder
             result_name = Path.cwd().parent / ('fort.10' + '_' + job_name)
             shutil.move('fort.10', result_name)
-            self._logger.info('Sixtrack job %s has completed normally!' % job_name)
+            self._logger.info(f'Sixtrack job {job_name} has completed '
+                              'normally!')
 
     def _sixtrack_job(self, job_name, **kwargs):
         '''One turn sixtrack job.

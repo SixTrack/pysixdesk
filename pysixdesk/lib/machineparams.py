@@ -1,7 +1,4 @@
 from .utils import merge_dicts
-'''
-these default settings really need to be checked
-'''
 
 # LHC settings
 LHC = {}

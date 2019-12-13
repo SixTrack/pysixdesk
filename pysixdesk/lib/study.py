@@ -1,5 +1,4 @@
 import os
-import ast
 import time
 import json
 import shutil
@@ -7,7 +6,6 @@ import logging
 import getpass
 import configparser
 from collections import OrderedDict
-from collections.abc import Iterable
 from itertools import groupby
 
 from . import utils
@@ -126,11 +124,13 @@ class Study(object):
                     d = os.path.join(temp, item)
                     if os.path.isfile(s):
                         shutil.copy2(s, d)
-                content = "Copy templates from default source templates folder!"
+                content = ("Copying templates from default source templates "
+                           "folder!")
                 self._logger.info(content)
 
             else:
-                content = "The default source templates folder %s is invalid!" % tem_path
+                content = (f"The default source templates folder {tem_path} "
+                           "is invalid!")
                 raise NotADirectoryError(content)
 
     def customize(self):
@@ -175,7 +175,8 @@ class Study(object):
                 self.db_info['host'] = client.get('host', fallback='127.0.0.1')
                 self.db_info['port'] = client.get('port', fallback='3306')
             else:
-                raise FileNotFoundError(".my.cnf in $HOME dir is needed for login!")
+                raise FileNotFoundError(".my.cnf in $HOME dir is needed for "
+                                        "login!")
         else:
             content = "Unknown database type %s! Must be either 'sql' or 'mysql'." % db_type
             raise ValueError(content)
@@ -204,7 +205,8 @@ class Study(object):
             self.preprocess_output['fort3.limi'] = 'fort3.limi'
             table.init_collimation_tables()
             table.customize_tables('templates',
-                    list(self.collimation_input.keys()), 'MEDIUMBLOB')
+                                   list(self.collimation_input.keys()),
+                                   'MEDIUMBLOB')
 
         table.customize_tables('templates', list(self.madx_input.keys()),
                                'BLOB')
@@ -255,7 +257,8 @@ class Study(object):
         prep_wu_seen = set()
         prep_wu_id = 0
         # sixtrack_wu already in the table
-        six_entries = self.db.select('sixtrack_wu', six_keys + ['preprocess_id'])
+        six_entries = self.db.select('sixtrack_wu',
+                                     six_keys + ['preprocess_id'])
         six_wu_done = set(six_entries)
 
         prep_to_be_inserted = []
@@ -298,12 +301,14 @@ class Study(object):
                     self._logger.info(f"Queued {prep_job_name} for storage in "
                                       "preprocess_wu table.")
                 else:
-                    msg = f"Job {prep_job_name} already in preprocess_wu table."
+                    msg = (f"Job {prep_job_name} already in preprocess_wu "
+                           "table.")
                     self._logger.warning(msg)
 
             six_job_name = f'sixtrack_job_preprocess_id_{prep_wu_id}_wu_id_{six_wu_id}'
             # populate sixtrack_wu
-            six_values_tuple = tuple(list(six_wu_entry.values()) + [prep_wu_id])
+            six_values_tuple = tuple(list(six_wu_entry.values()) +
+                                     [prep_wu_id])
             if six_values_tuple not in six_wu_done:
                 six_wu_done.add(six_values_tuple)
 
@@ -472,7 +477,8 @@ class Study(object):
         tab['fort_file'] = utils.compress_buf(value)
         if self.collimation:
             for key in self.collimation_input.keys():
-                val = os.path.join(self.study_path, self.collimation_input[key])
+                val = os.path.join(self.study_path,
+                                   self.collimation_input[key])
                 tab[key] = utils.compress_buf(val)
         if 'additional_input' in self.sixtrack_input.keys():
             inp = self.sixtrack_input['additional_input']
@@ -572,8 +578,12 @@ class Study(object):
         ibatch += 1
         batch_name = batch_name + '_' + str(ibatch)
 
-        status, out = self.submission.submit(input_path, batch_name,
-                self.max_jobsubmit, trials, *args, **kwargs)
+        status, out = self.submission.submit(input_path,
+                                             batch_name,
+                                             self.max_jobsubmit,
+                                             trials,
+                                             *args,
+                                             **kwargs)
 
         if status:
             content = "Submit %s job successfully!" % jobname
@@ -695,8 +705,9 @@ class Study(object):
                 task_table['mtime'].append(mtime)
         if task_table['wu_id']:
             self.db.insertm('sixtrack_task', task_table)
-            where = f"mtime={mtime}"
-            reviews = self.db.select('sixtrack_task', ['task_id', 'wu_id', 'last_turn'], where)
+            reviews = self.db.select('sixtrack_task',
+                                     ['task_id', 'wu_id', 'last_turn'],
+                                     where=f'mtime={mtime}')
             for ti, wi, lt in reviews:
                 task_ids[ti] = (wi, lt)
         wu_table['task_id'] = list(task_ids.keys())
@@ -706,7 +717,7 @@ class Study(object):
         where['last_turn'] = []
         for i in task_ids.values():
             where['wu_id'].append(i[0])
-            where['last_turn'].append(i[1])# wu_id is not unique now
+            where['last_turn'].append(i[1])  # wu_id is not unique now
         self.db.updatem('sixtrack_wu', wu_table, where)
 
         task_ids = list(task_ids.keys())
@@ -763,7 +774,8 @@ class Study(object):
             cr_ids = self.db.select('sixtrack_wu', ['wu_id', 'first_turn'],
                                     where=constr)
             if cr_ids:
-                sub_db.create_table('sixtrack_task', self.tables['sixtrack_task'])
+                sub_db.create_table('sixtrack_task',
+                                    self.tables['sixtrack_task'])
                 cr_ids = list(zip(*cr_ids))
                 constr = "wu_id in (%s) and last_turn in (%s)" % (
                         ','.join(map(str, cr_ids[0])),
@@ -808,7 +820,8 @@ class Study(object):
         tran_input.append(input_info)
         in_path = self.paths['sixtrack_in']
         out_path = self.paths['sixtrack_out']
-        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'sixtrack.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH,
+                           'pysixdesk/lib', 'sixtrack.py')
         if groupby:
             task_ids = self._group_records(outputs, groupby)
         self.submission.prepare(task_ids, tran_input, exe, 'input.ini',
@@ -821,7 +834,7 @@ class Study(object):
         # attribute.
         self._prep_preprocessing_cfg()
 
-        self._logger.info("Going to prepare input files for preprocess jobs....")
+        self._logger.info("Preparing input files for preprocess jobs....")
         if resubmit:
             constraints = "status='submitted'"
             info = 'submitted'
@@ -861,7 +874,8 @@ class Study(object):
         if task_table['wu_id']:
             self.db.insertm('preprocess_task', task_table)
             where = f"mtime={mtime}"
-            task_ids_new = self.db.select('preprocess_task', ['wu_id', 'task_id'], where)
+            task_ids_new = self.db.select('preprocess_task',
+                                          ['wu_id', 'task_id'], where)
             for i in task_ids_new:
                 task_ids[i[1]] = i[0]
         wu_table['task_id'] = list(task_ids.keys())
@@ -890,7 +904,7 @@ class Study(object):
             sub_db.insertm('preprocess_wu', outputs)
             sub_db.close()
             db_info['db_name'] = 'sub.db'
-            content = "The submitted database %s is ready!" % db_info['db_name']
+            content = f"The submitted database {db_info['db_name']} is ready!"
             self._logger.info(content)
             trans.append(sub_name)
 
@@ -903,7 +917,8 @@ class Study(object):
         trans.append(input_info)
         in_path = self.paths['preprocess_in']
         out_path = self.paths['preprocess_out']
-        exe = os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk/lib', 'preprocess.py')
+        exe = os.path.join(utils.PYSIXDESK_ABSPATH,
+                           'pysixdesk/lib', 'preprocess.py')
         self.submission.prepare(task_ids, trans, exe, 'input.ini', in_path,
                                 out_path, flavour='espresso', *args, **kwargs)
 
@@ -944,7 +959,7 @@ class Study(object):
 
     def prepare_cr(self):
         '''Prepare the checkpoint data, add new lines in db'''
-        self._logger.info("CR feature is turned on, preparing checkpoint data...")
+        self._logger.info("CR feature is ON, preparing checkpoint data...")
         checks_1 = self.db.select('sixtrack_wu', ['wu_id'], DISTINCT=True)
         if checks_1:
             checks_1 = list(zip(*checks_1))[0]
