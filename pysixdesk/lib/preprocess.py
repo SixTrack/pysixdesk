@@ -324,14 +324,6 @@ class PreprocessJob:
         mask_name = self.madx_cfg["mask_file"]
         source_path = Path(self.madx_cfg['source_path'])
         shutil.copy2(source_path / mask_name, mask_name)
-        # TODO: the madx['dest_path'] is weird, there is only one input.ini and
-        # it is for the last preprocess_id... all the jobs will have the same
-        # madx_cfg['dest_path']
-        # same for sitrack job, I think this was mistakenly left in and should
-        # be removed
-
-        # make destination folder
-        # Path(self.madx_cfg['dest_path']).mkdir(parents=True, exist_ok=True)
 
     def madx_prep(self, output_file='madx_in'):
         '''Replaces the placeholders in the mask_file.
@@ -361,7 +353,6 @@ class PreprocessJob:
         self._logger.info("MADX job is running...")
         output = os.popen(command)
         output = output.readlines()
-        print('\n'.join(output))
         with open('madx_stdout', 'w') as mad_out:
             mad_out.writelines(output)
         if 'finished normally' not in output[-2]:
