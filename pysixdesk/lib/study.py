@@ -420,6 +420,9 @@ class Study(object):
         madx_wu_task = self.db.select('preprocess_task',
                                       ['wu_id', 'task_id'])
         pre_to_task_id = dict(madx_wu_task)
+
+        calc_out_to_be_updated = []
+        where_to_be_updated = []
         # run the calculations
         for row in six_wu_entries:
             result = self.params.calc(row,
@@ -432,10 +435,22 @@ class Study(object):
                 for k, v in result.items():
                     if k in row.keys():
                         update_cols[k] = v
-                self.db.update('sixtrack_wu',
-                               update_cols,
-                               where=f'wu_id={row["wu_id"]}')
-                self._logger.info(f'Updating sixtack_wu/wu_id:{row["wu_id"]} with {update_cols}.')
+                calc_out_to_be_updated.append(update_cols)
+                where_to_be_updated.append({'wu_id': row['wu_id']})
+                self._logger.info('Queued update of sixtack_wu/wu_id:'
+                                  f'{row["wu_id"]} with {update_cols}.')
+
+        # update everything at once
+        self._logger.info(f'Updating {len(calc_out_to_be_updated)} rows of '
+                          'sixtrack_wu.')
+        # turn list of dicts into dict of lists
+        calc_out_to_be_updated = {k: [dic[k] for dic in calc_out_to_be_updated]
+                                  for k in calc_out_to_be_updated[0]}
+        where_to_be_updated = {k: [dic[k] for dic in where_to_be_updated]
+                               for k in where_to_be_updated[0]}
+        self.db.updatem('sixtrack_wu',
+                        calc_out_to_be_updated,
+                        where=where_to_be_updated)
 
     def update_db(self, db_check=False):
         '''Update the database whith the user-defined parameters'''
