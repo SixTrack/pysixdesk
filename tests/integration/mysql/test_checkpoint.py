@@ -23,7 +23,7 @@ class MySqlDBCheckpoint(MySQLStudy, unittest.TestCase):
         self.test_folder.mkdir(parents=True, exist_ok=True)
         self.ws_name = 'integration_test'
         self.ws = pysixdesk.WorkSpace(str(self.test_folder / self.ws_name))
-        self.st_name = 'mysql_checkpoint_params_2'
+        self.st_name = 'mysql_checkpoint'
         self.st = None
 
     def test_mysql_study_restart(self):
