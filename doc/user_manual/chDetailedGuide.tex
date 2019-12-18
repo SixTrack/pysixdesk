@@ -1,0 +1,350 @@
+
+\chapter{Detailed Guide}
+
+\section{Step-by-Step Guide}
+
+This section will introduce the detailed steps and logics to setup a workspace and an actual study.
+
+\subsection{set up the worksapce}
+After importing all the necessary modules from pysixdesk, a workspace could be setup by the following command:
+\begin{lstlisting}[language=Python]
+myWS = WorkSpace('./myWS')
+\end{lstlisting}
+where \textbf{'./myWS'} is the workspace name, this step will create a new folder with the following tree structure:
+
+\begin{forest}
+  for tree={
+    font=\ttfamily,
+    grow'=0,
+    child anchor=west,
+    parent anchor=south,
+    anchor=west,
+    calign=first,
+    edge path={
+      \noexpand\path [draw, \forestoption{edge}]
+      (!u.south west) +(7.5pt,0) |- node[fill,inner sep=1.25pt] {} (.child anchor)\forestoption{edge label};
+    },
+    before typesetting nodes={
+      if n=1
+        {insert before={[,phantom]}}
+        {}
+    },
+    fit=band,
+    before computing xy={l=15pt},
+  }
+[myWS/
+  [studies/
+  ]
+  [templates/
+    [hl10.mask]
+    [fort.3]
+    [config.py]
+    [htcondor\_run.sub]
+    [CollDB.data]
+  ]
+]
+\end{forest}
+
+The studies folder contains different studies. A new study folder will be added when the user initialize a study.
+
+All the files under templates folder were copied from the templates folder in pysixdesk program by default. The user can use different templates as needed by assigning the argument 'templates' to a custom path:
+\begin{lstlisting}[language=Python]
+myWS = WorkSpace('./myWS', templates = <your path>)
+\end{lstlisting}
+The program will copy templates from $<$your path$>$, so in $<$your path$>$ there should have 'config.py', 'mask file', 'fort.3' and 'htcondor\_run.sub' at least.
+
+\subsection{set up a study}
+After setting up the workspace, a study could be initialized by the following command:
+
+\begin{lstlisting}[language=Python]
+myWS.init_study('myStudy')
+\end{lstlisting}
+This action will create a new study folder under 'studies' folder with the following tree structure:
+
+\begin{forest}
+  for tree={
+    font=\ttfamily,
+    grow'=0,
+    child anchor=west,
+    parent anchor=south,
+    anchor=west,
+    calign=first,
+    edge path={
+      \noexpand\path [draw, \forestoption{edge}]
+      (!u.south west) +(7.5pt,0) |- node[fill,inner sep=1.25pt] {} (.child anchor)\forestoption{edge label};
+    },
+    before typesetting nodes={
+      if n=1
+        {insert before={[,phantom]}}
+        {}
+    },
+    fit=band,
+    before computing xy={l=15pt},
+  }
+  [studies/
+    [myStudy/
+      [config.py]
+      [hl10.mask]
+      [fort.3]
+      [htcondor\_run.sub]
+      [CollDB.data]
+      [preprocess\_input/]
+      [preprocess\_output/]
+      [sixtrack\_input/]
+      [sixtrack\_output/]
+    ]
+  ]
+\end{forest}
+
+Note that the template files under myStudy folder were copied from the templates folder in workspace (myWS). And similarly the user can set up a study with custom template files:
+\begin{lstlisting}[language=Python]
+myWS.init_study('myStudy', templates=<your path>)
+\end{lstlisting}
+
+The preprocess\_input (sixtrack\_input) folder holds all the input information for preprocess (sixtrack) jobs, and preprocess\_output (sixtrack\_output) holds the results of preprocess (sixtrack) jobs.
+
+\subsection{Config parameters}
+After initilizing a study, the user should edit the 'config.py' to prepare the parameters.
+The editable parameters are shown as below:
+\begin{lstlisting}[language=Python]
+self.paths['madx_exe']  # the path of madx executable
+self.paths['sixtrack_exe'] # the path of sixtrack executable
+self.paths['boinc_spool'] # the path of boinc spool
+self.oneturn = True # switch for one turn sixtrack job
+self.collimation = False # switch for preprocess job for collimation study (merge aperture marker into fort.2, generate fort3.limi file)
+
+self.checkpoint_restart = False # flag for CR feature
+self.first_turn = 1 # the first turn when sixtrack job continue with checkpoint file
+self.last_turn = 100 # the last turn of the sixtrack tracking
+
+self.db_info['db_type'] = 'sql' # database type 'sql' or 'mysql'
+self.max_submitjob = 15000 # the maximum number of jobs to submit per cluster id
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python]
+#The keys are the names of madx output files, the values are the names of the input files needed by sixtrack. Due to they have the different naming covention, so there is an additional step to change the names of the files based on key-value map.
+self.madx_output = {
+     'fc.2': 'fort.2',
+     'fc.3': 'fort.3.mad',
+     'fc.3.aux': 'fort.3.aux',
+     'fc.8': 'fort.8',
+     'fc.16': 'fort.16',
+     'fc.34': 'fort.34'}
+self.madx_input['mask_file'] = 'hl10.mask'
+self.madx_params = {} # The parameters for madx
+#e.g.
+self.madx_params['SEED'] = [1,2,3]
+self.madx_params['IOCT'] = [100, 200]
+self.madx_params['QP'] = [1,2,3]
+.....
+#Every placeholder in mask file should be found in self.madx_params dict.
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python]
+self.oneturn_sixtrack_input['fort_file'] = 'fort.3'
+self.oneturn_sixtrack_params = {}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python]
+#preprocess_output will add 'oneturnresult' automatically.
+self.preprocess_output = dict{self.madx_output}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python]
+self.sixtrack_input['fort_file'] = 'fort.3'
+self.sixtrack_params = {} # parameters for sixtrack
+#e.g.
+self.sixtrack_params['amp'] = [(8,10), (10,12)]
+self.sixtrack_params['kang'] = [1,2,3,4]
+self.sixtrack_params['turnss'] = 100
+self.sixtrack_params['nss'] = 1
+self.sixtrack_params['e0'] = 7000000
+......
+# Every placeholder in template 'fort.3' should be found in self.sixtrack_params dict. 
+
+self.sixtrack_input['input'] = dict(self.preprocess_output)
+#The outputs of preprocess job will be the inputs for sixtrack job
+self.sixtrack_input['additional_input'] = [] # additional input files needed by sixtrack jobs if any
+\end{lstlisting}
+
+For preprocess job for collimation study:
+\begin{lstlisting}[language=Python]
+self.collimation_input = {'aperture':'allapert.b1', 'survey':'SurveyWithCrossing_XP_lowb.dat'}
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python]
+# some other general parameters
+self.env['emit'] = 3.75
+self.env['gamma'] = 7460.5
+self.env['kmax'] = 5
+\end{lstlisting}
+
+Settings of boinc:
+\begin{lstlisting}[language=Python]
+self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinc/'
+self.boinc_vars['workunitName'] = 'pysixdesk'
+self.boinc_vars['fpopsEstimate'] = 30 * 2 * 10e5 / 2 * 10e6 * 6
+self.boinc_vars['fpopsBound'] = self.boinc_vars['fpopsEstimate'] * 1000
+self.boinc_vars['memBound'] = 100000000
+self.boinc_vars['diskBound'] = 200000000
+self.boinc_vars['delayBound'] = 2400000
+self.boinc_vars['redundancy'] = 2
+self.boinc_vars['copies'] = 2
+self.boinc_vars['errors'] = 5
+self.boinc_vars['numIssues'] = 5
+self.boinc_vars['resultsWithoutConcensus'] = 3
+self.boinc_vars['appName'] = 'sixtrack'
+self.boinc_vars['appVer'] = 50205
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python]
+# Select the cluster to submit jobs, HTCondor in default
+self.cluster_class = submission.HTCondor 
+\end{lstlisting}
+And a custom cluster could be used to submit jobs. In order to use it, please make sure that the file containing the custom cluster class which extends from submission.Cluster in the path PYTHONPATH. Then just assign the cluster\_class attribute in config.py to the desired class:
+\begin{lstlisting}[language=Python]
+ import cluster
+ ...
+ def __init__(self, name='study', location=os.getcwd()):
+     super(MyStudy, self).__init__(name, location)
+     self.cluster_class = cluster.custom
+\end{lstlisting}
+
+\subsection{Load study}\label{loadstudy}
+After the user prepare all the necessary , a study object could be loaded with the command:
+
+\begin{lstlisting}[language=Python]
+mystudy = myWS.load_study('myStudy')
+\end{lstlisting}
+By defaults, the program will find the configuration file 'config.py' under study path to create the study object with the default class name 'MyStudy'. But, it is also possible to create the study object with a custom configuration file and a different class name:
+
+\begin{lstlisting}[language=Python]
+mystudy = myWS.load_study('myStudy', module_path=<config file path>, class_name=custom_name)
+\end{lstlisting}
+
+During the process of creating study object, a database will be set up and the necessary directories and files will aslo be created. The concerned steps could be found in the class method 'customize'.
+
+\subsection{Update database}
+In section \ref{loadstudy}, a study object was obtained from the load\_study method. Now the user can update the DB with the given parameters:
+
+\begin{lstlisting}[language=Python]
+mystudy.update_db()
+\end{lstlisting}
+
+For the db table 'templates', 'boinc\_vars' and 'env', the program will update  the new values (overide old values) from the configuration file whenever the user call the update\_db method. And for the table 'preprocess\_wu', 'sixtrack\_wu', the program will check the parameter changes at first to avoid duplicate records and create new lines to insert the new values. 
+
+\subsection{Prepare input files}
+Before submitting jobs to batch-system, the user should prepare the necessary input files at first, such as 'htcondor\_run.sub', 'job\_id.list', 'sub.db'(for sqlite3). This can be done issuing the following command: 
+
+\begin{lstlisting}[language=Python]
+mystudy.prepare_preprocess_input()
+\end{lstlisting}
+
+This action will query all the incomplete jobs from db and write the corresponding task\_ids into job\_id.list. If the user use sqlite3 as the db, a small local db 'sub.db' will also be formed to store the necessary information needed by the jobs, this db file will be submitted to HTCondor together with the jobs.
+
+If by any chance the jobs are removed or disappear, e.g. the user realizes wrong paratemeters are set after submission and remove all the submitted jobs via command 'condor\_rm'. The user can resubmit the jobs by the following command:
+\begin{lstlisting}[language=Python]
+mystudy.prepare_preprocess_input(resubmit=True)
+\end{lstlisting}
+This action will submit again all jobs.
+
+For sixtrack jobs, the command is:
+
+\begin{lstlisting}[language=Python]
+mystudy.prepare_sixtrack_input()
+or
+mystudy.prepare_sixtrack_input(resubmit=True)
+\end{lstlisting}
+Sixtrack jobs can be submitted to Boinc with the following command:
+\begin{lstlisting}[language=Python]
+mystudy.prepare_sixtrack_input(boinc=True)
+\end{lstlisting}
+Please note that the jobs will be anyway submitted to HTCondor at first, and executed with a few turns to check correctness of the configuration and survival of particles within the very first turns automatically. If the job pass the test, it will be submitted to Boinc.
+
+Another special feature of sixtrack job is that the jobs could be grouped based on a specified parameter:
+\begin{lstlisting}[language=Python]
+mystudy.prepare_sixtrack_input(groupby='amp')
+\end{lstlisting}
+This action will group the jobs wrt amplitude, and submit the groups to HTCondor which means one condor node will hold a group of jobs.
+
+\subparagraph{pre-calculation}~
+
+For the DA studies, there are some preliminary calculations are performed  before submitting the actual jobs, the namely calculations are defined in 'config.py' file and can be modified at user's will:
+\begin{lstlisting}[language=Python]
+def pre_calc(self, paramdict, pre_id):
+    '''Further calculations for the specified parameters'''
+    # The angle should be calculated before amplitude
+    keys = list(paramdict.keys())
+    status = []
+    status.append(self.formulas('kang', 'angle', paramdict, pre_id))
+    status.append(self.formulas('amp', ['ax0s', 'ax1s'], paramdict, pre_id))
+    param_keys = list(paramdict.keys())
+    [paramdict.pop(key) for key in param_keys if key not in keys]
+    return all(status)
+
+def formulas(self, source, dest, paramdict, pre_id):
+    '''The formulas for the further calculations,
+    this function should be customized by the user!
+    @source The source parameter name
+    @dest  The destination parameter name
+    @paramdict The parameter dictionary, the source parameter in the dict
+    will be replaced by destination parameter after calculation
+    @pre_id The identified preprocess job id
+    @return The status'''
+\end{lstlisting}
+
+\subsection{Submission}
+If preparation of input files is succeeded, the user could find 'htcondor\_run.sub', 'job\_id.list', 'input.ini' and 'sub.db'(only for sqlite3) under preprocess\_input (for MADX/one-turn jobs) or sixtrack\_input (for actual sixtrack jobs) folder, then the user could submit the prepared jobs with the following command:
+\begin{lstlisting}[language=Python]
+mystudy.submit(0, 5) #0 stand for preprocess job, 5 is the maximum number of trials
+or
+mystudy.submit(1, 5) # 1 stand for sixtrack job
+\end{lstlisting}
+This action will submit the preprocess or sixtrack jobs to HTCondor.
+
+Note: HTCondor has a limitation, the maximum number of jobs presently set of 15000 for one cluser Id. If the total number of jobs exceeds this limitation, the submission will fail. There is an argument 'max\_jobsubmit' in config file to control the maximum job number of one submission. If the total number of jobs is larger than max\_jobsubmit, the program will split all the jobs in several clusers.
+
+\subsection{Collection}
+For sqlite3 DB, the user can collect the results with the following command:
+\begin{lstlisting}[language=Python]
+mystudy.collect_result(0)
+or
+mystudy.collect_result(1)
+\end{lstlisting}
+
+This action will look through the preprocess\_output (for preprocess jobs) or sixtrack\_output (for actual sixtrack jobs) folder to get the results downloaded from HTCondor. In general, the subfolder name is the task\_id or grouped task\_ids.
+Before looking through the result folder, the program will query the job status (condor\_q) firstly to check which jobs are not finished yet.
+
+And due to the program could submit jobs to HTCondor from a local computer with 'spool' option. 
+\begin{lstlisting}[language=Python]
+mystudy.submit(1, '-spool')
+\end{lstlisting}
+So the program will also try to download results from HTCondor spool directory after checking the job status.
+\begin{lstlisting}[language=Python]
+unfin = cluster.check_running(studypath)#clusterId.processId
+......
+cluster.download_from_spool(studypath)
+\end{lstlisting}
+
+If the user submit jobs to boinc, results can be downloaded from the boinc spool directory with the following codes:
+\begin{lstlisting}[language=Python]
+if ('boinc' in cf['info'].keys()) and cf['info']['boinc']:
+    content = "Downloading results from boinc spool!"
+    logger.info(content)
+    task_ids = download_from_boinc(info_sec)
+\end{lstlisting}
+The results from boinc will be copied to corresponding folders under sixtrack\_output directory, then be parsed and pushed to db.
+
+
+%\subsection{Command Line Arguments} \label{sec:cmdarg}
+%
+%SixTrack does not require any command line arguments, but can optionally take the file name for the main input file as well as the geometry file as the first and second argument, respectively.
+%See also Sections~\ref{InFiles} and~\ref{ProVer}.
+%
+%\bigskip
+%\noindent In addition, SixTrack can echo the version number and exit with the following flags:
+%\begin{itemize}
+%    \item[\texttt{-v}] Echo program name and version as a single line, and exit.
+%    \item[\texttt{-V}] Echo program name, version, release date, and git hash on four lines, and exit.
+%    \item[\texttt{-nv}] Echo the numerical version as an integer, and exit,
+%\end{itemize}
