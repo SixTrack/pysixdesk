@@ -66,16 +66,18 @@ class HTCondor(Cluster):
         self._logger.info(f'Creating jobid.list file and output folder....')
         bar = utils.ProgressBar(len(task_ids))
         with open(job_list, 'w') as f_out:
+            val_task_ids = []
             for i in task_ids:
                 bar.update()
                 if isinstance(i, list):
                     i = '-'.join(map(str, i))
-                f_out.write(str(i))
-                f_out.write('\n')
+                val_task_ids.append(i)
                 out_f = os.path.join(output_path, str(i))
                 if os.path.exists(out_f):
                     shutil.rmtree(out_f)
                 os.makedirs(out_f)
+            cont = '\n'.join(map(str, val_task_ids))
+            f_out.write(cont)
         #os.chmod(job_list, 0o444)  # change the permission to readonly
         trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk'))
         rep = {}
