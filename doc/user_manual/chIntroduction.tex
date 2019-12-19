@@ -21,7 +21,6 @@ The native environment of pySixDesk is CERN's lxplus login service;The guideline
     \item python3, as main language.
 \end{enumerate}
 
-% ================================================================================================================================ %
 
 \paragraph{Shell set-up}~
 
@@ -88,6 +87,23 @@ After the preprocess jobs are finished, the user can begin to prepare and submit
 
 The detailed command to manage these steps will introduce in the next chapter.
 
+\paragraph{parameter scan}~
+
+For both madx job and sixtrack job, the user can scan the paratemeter conveniently in pysixdesk. Define the paratemeters for scan as list, and by default the program will generate all the studies over a Cartesian grid. For example, if the user is working on DA study and going to do the phase space scan:
+
+\begin{lstlisting}
+...
+self.sixtrack_params['amp'] = [(8,10), (10, 12)]
+self.sixtrack_params['kang'] = [1,2]
+...
+\end{lstlisting}
+
+And the program will insert 4 new lines in the table sixtrack\_wu with:
+\begin{lstlisting}
+(...(8,10), 1...), (...(8,10), 2...), (...(10,12), 1...), (...(10,12), 2...)
+\end{lstlisting}
+The user can also use a custom algorithm to do the scan except for Cartesian grid, just override the 'custom\_product\_preprocess' and 'custom\_product\_sixtrack' method with a new algorithm in the config.py file.
+
 \section{Database}
 
 In pySixDesk, sqlite3 and mysql are employed as the main databases to store the data. sqlite3 is the local file-based db, and mysql is the server-based db. For sqlite3 database, it will sit in your study path with an unified name \textbf{data.db}, and for mysql database, we use the DB-On-Demand server which is managed by CERN IT.
@@ -124,7 +140,7 @@ collimation_losses
 \end{lstlisting}
 The detailed description of the tables can be found in \url{https://github.com/SixTrack/pysixdesk/blob/master/doc/Table.md}
 
-\paragraph{Special features}~
+\section{Special features}
 
 There are also some special features in pysixdesk:
 \begin{enumerate}
@@ -140,7 +156,7 @@ Note that the user should submit jobs with '-spool' option from a local computer
 Note that the user should make sure the sixtrack executable in use is compiled with the CR option.
 \end{enumerate}
 
-\paragraph{Tests}~
+\section{Tests}
 
 Below is a scalability test result for different databases. The test condition: 300 preprocess jobs, 30000 sixtrackjobs. All operations were done on CERN lxplus and all jobs were submitted to HTCondor.
 \begin{table}[h]
