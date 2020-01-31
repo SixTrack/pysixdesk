@@ -590,7 +590,10 @@ class Study(object):
             self._logger.info(content)
             table = {}
             table['status'] = 'submitted'
+            self._logger.info(f"Updating the {table_name} table for job status.....")
+            bar = utils.ProgressBar(len(out))
             for ky, vl in out.items():
+                bar.update()
                 keys = ky.split('-')
                 for k in keys:
                     where = 'task_id=%s' % k
@@ -807,7 +810,8 @@ class Study(object):
             self.db.update('sixtrack_wu', job_table, where)
             self.db.create_table('sixtrack_wu_tmp', self.tables['sixtrack_wu'],
                                  self.table_keys['sixtrack_wu'])
-            self.db.insertm('sixtrack_wu_tmp', outputs)
+            if not resubmit:
+                self.db.insertm('sixtrack_wu_tmp', outputs)
         if boinc:
             self.init_boinc_dir()
 
