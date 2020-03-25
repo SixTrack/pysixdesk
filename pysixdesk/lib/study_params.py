@@ -46,7 +46,7 @@ class StudyParams:
         # comment regexp
         self._reg_comment = re.compile(r'^(\s?!|\s?/).*', re.MULTILINE)
         # placeholder pattern regexp
-        self._reg = re.compile(r'%([a-zA-Z0-9_]+/?)')
+        self._reg = re.compile(r'%(?!FILE|%)([a-zA-Z0-9_]+/?)')
         self.fort_path = fort_path
         self.mask_path = mask_path
         # initialize empty calculation queue

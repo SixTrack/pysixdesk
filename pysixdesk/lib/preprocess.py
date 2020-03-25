@@ -190,7 +190,13 @@ class PreprocessJob:
             madx_fc3 = source_prefix / madx_fc3
 
         # concatenate
-        utils.concatenate_files([dest, madx_fc3], output_file)
+        # utils.concatenate_files([dest, madx_fc3], output_file)
+        utils.sandwich(dest,
+                       output_file,
+                       path_prefix=source_prefix,
+                       logger=self._logger)
+        # with open(output_file, 'r') as fp:
+        #     print(''.join(fp.readlines()))
         # if not source.samefile(output_file):
         #     utils.diff(source, output_file, logger=self._logger)
 
@@ -338,6 +344,8 @@ class PreprocessJob:
         # show diff
         # utils.diff(self.madx_cfg["mask_file"], output_file,
         #            logger=self._logger)
+        # with open(output_file, 'r') as fp:
+        #     print(''.join(fp.readlines()))
 
     def madx_run(self, mask):
         """Runs madx.
@@ -361,6 +369,8 @@ class PreprocessJob:
             raise Exception(content)
         else:
             self._logger.info("MADX has completed properly!")
+        # with open('madx_stdout', 'r') as fp:
+        #     print(''.join(fp.readlines()))
 
     def madx_job(self):
         """Controls madx job execution.

@@ -284,8 +284,16 @@ class TrackingJob:
         if source_prefix is not None:
             madx_fc3 = source_prefix / madx_fc3
 
+        utils.sandwich(dest,
+                       output_file,
+                       path_prefix=source_prefix,
+                       logger=self._logger)
+        # with open(output_file, 'r') as fp:
+        #     lines = fp.readlines()
+        #     print(''.join(lines))
+
         # concatenate
-        utils.concatenate_files([dest, madx_fc3], output_file)
+        # utils.concatenate_files([dest, madx_fc3], output_file)
 
     def sixtrack_run(self, output_file):
         """Runs sixtrack.
