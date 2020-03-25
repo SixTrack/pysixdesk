@@ -9,7 +9,7 @@ from collections.abc import Iterable
 
 from . import machineparams
 from .constants import PROTON_MASS
-from .utils import PYSIXDESK_ABSPATH, merge_dicts
+from .utils import PYSIXDESK_ABSPATH
 
 
 class StudyParams:
@@ -85,7 +85,7 @@ class StudyParams:
                             "writebins": 1,
                             }
         self.machine_defaults = machine_defaults
-        self.defaults = merge_dicts(self.f3_defaults, self.machine_defaults)
+        self.defaults = {**self.f3_defaults, **self.machine_defaults}
         # phasespace params
         # TODO: find sensible defaults for the phasespace parameters.
         amp = [8, 10, 12]  # The amplitude
