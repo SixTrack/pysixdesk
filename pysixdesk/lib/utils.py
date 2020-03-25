@@ -287,15 +287,13 @@ def condor_logger(name):
     return logger
 
 
-def merge_dicts(x, y):
-    """Merges two dicts.
-
-    Returns:
-        dict: Merged dict
-    """
-    z = x.copy()
-    z.update(y)
-    return z
+def linspace(a, b, n):
+    '''Numpyless linear spacing function.
+    '''
+    if n < 2:
+        return a
+    diff = (float(b) - a)/(n - 1)
+    return [diff * i + a for i in range(n)]
 
 
 class ProgressBar(object):

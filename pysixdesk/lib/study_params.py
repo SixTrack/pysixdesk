@@ -1,6 +1,7 @@
 import re
 import logging
 
+from math import pi
 from pathlib import Path
 from collections import OrderedDict
 from itertools import product
@@ -9,7 +10,7 @@ from collections.abc import Iterable
 
 from . import machineparams
 from .constants import PROTON_MASS
-from .utils import PYSIXDESK_ABSPATH
+from .utils import PYSIXDESK_ABSPATH, linspace
 
 
 class StudyParams:
@@ -90,8 +91,7 @@ class StudyParams:
         # TODO: find sensible defaults for the phasespace parameters.
         amp = [8, 10, 12]  # The amplitude
         self.phasespace = {"amp": list(zip(amp, amp[1:])),
-                           "kang": list(range(1, 1 + 1)),
-                           "kmax": 5,
+                           "angle": self.da_angles(),
                            }
 
         self.madx = self.find_patterns(self.mask_path)
@@ -116,6 +116,10 @@ class StudyParams:
         # oneturn job cannot do collimation
         sixtrack['toggle_coll/'] = '/'
         return sixtrack
+
+    @staticmethod
+    def da_angles(start=0, end=pi/2, n=7):
+            return linspace(start, end, n + 2)[1: -1]  # exclusive
 
     def keys(self):
         """Gets the keys of 'self.madx', 'self.sixtrack' and 'self.phasespace'.

@@ -1,6 +1,7 @@
 import shutil
 import unittest
 import sys
+from math import pi, cos, sqrt, sin
 from pathlib import Path
 # give the test runner the import access
 pysixdesk_path = str(Path(__file__).parents[2].absolute())
@@ -236,6 +237,22 @@ test=%test1; test=%test2; test=%test3
                                {'a': 2, 'b': 3},
                                {'a': 2, 'b': 4},
                                ])
+
+    def test_da_angle(self):
+        # make sure the angle calculation is correct
+        params = StudyParams(mask_path=self.mask_file,
+                             fort_path=self.fort_file)
+
+        # make sure default angles are ~correct
+        self.assertEqual(len(params['angle']), 7)
+
+        # one angle between ]0, pi/2[ --> pi/4
+        angles = params.da_angles(start=0, end=pi/2, n=1)
+        self.assertEqual(angles, [pi/4])
+
+        # 3 angles between ]0, pi/2[ --> pi/8 increments
+        angles = params.da_angles(start=0, end=pi/2, n=3)
+        self.assertEqual(angles, [(i + 1) * pi / 8 for i in range(3)])
 
     def tearDown(self):
         shutil.rmtree(self.test_folder.parent, ignore_errors=True)
