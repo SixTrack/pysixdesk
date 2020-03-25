@@ -83,7 +83,7 @@ class Study(object):
             'fc.34': 'fort.34'}
 
         self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
-        self.sixtrack_input['temp'] = 'fort.3'
+        self.sixtrack_input['fort_file'] = 'fort.3'
         self.sixtrack_output = ['fort.10']
 
         self.db_info['db_type'] = 'sql'
