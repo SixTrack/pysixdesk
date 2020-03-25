@@ -445,17 +445,18 @@ class Study(object):
                 self._logger.info('Queued update of sixtack_wu/wu_id:'
                                   f'{row["wu_id"]} with {update_cols}.')
 
-        # update everything at once
-        self._logger.info(f'Updating {len(calc_out_to_be_updated)} rows of '
-                          'sixtrack_wu.')
-        # turn list of dicts into dict of lists
-        calc_out_to_be_updated = {k: [dic[k] for dic in calc_out_to_be_updated]
-                                  for k in calc_out_to_be_updated[0]}
-        where_to_be_updated = {k: [dic[k] for dic in where_to_be_updated]
-                               for k in where_to_be_updated[0]}
-        self.db.updatem('sixtrack_wu',
-                        calc_out_to_be_updated,
-                        where=where_to_be_updated)
+        if calc_out_to_be_updated:
+            # update everything at once
+            self._logger.info(f'Updating {len(calc_out_to_be_updated)} rows of '
+                              'sixtrack_wu.')
+            # turn list of dicts into dict of lists
+            calc_out_to_be_updated = {k: [dic[k] for dic in calc_out_to_be_updated]
+                                      for k in calc_out_to_be_updated[0]}
+            where_to_be_updated = {k: [dic[k] for dic in where_to_be_updated]
+                                   for k in where_to_be_updated[0]}
+            self.db.updatem('sixtrack_wu',
+                            calc_out_to_be_updated,
+                            where=where_to_be_updated)
 
     def update_db(self, db_check=False):
         '''Update the database whith the user-defined parameters'''
@@ -670,7 +671,9 @@ class Study(object):
             action = 'resubmit'
         else:
             constraints = "status='incomplete' and preprocess_id in %s" % str(
-                preprocess_outs[0])
+                preprocess_outs[0]).replace(',)', ')')  # if there is a single
+            # job, the comma of the tuple (1,) breaks the sql query because
+            # there is no proper sql sanitization...
             action = 'submit'
         names = self.tables['sixtrack_wu'].keys()
         outputs = self.db.select('sixtrack_wu',

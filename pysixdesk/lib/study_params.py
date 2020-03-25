@@ -180,7 +180,7 @@ class StudyParams:
 
     @staticmethod
     def _combinations_prep(**kwargs):
-        '''Sanitizes the paramter values.
+        '''Sanitizes the parameter values.
 
         Args:
             **kwargs: Parameter name = parameter value.
