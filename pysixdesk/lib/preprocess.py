@@ -495,5 +495,5 @@ if __name__ == '__main__':
         where = f"task_id={job.task_id}"
         job_table['status'] = 'incomplete'
         job_table['mtime'] = int(time.time() * 1E7)
-        job.db.update('preprocess_wu'. job_table, where)
+        job.db.update('preprocess_wu', job_table, where)
         raise e
