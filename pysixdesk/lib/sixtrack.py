@@ -292,6 +292,15 @@ class TrackingJob:
         #     lines = fp.readlines()
         #     print(''.join(lines))
 
+        # UGLY HACK TO GENERATE THE distribution.
+        try:
+            amps = json.loads(fort_cfg['amp'])
+            print(f'python init_dist.py {amps[0]} {amps[1]} {fort_cfg["angle"]} {fort_cfg["nss"]}')
+            os.system(f'python init_dist.py {amps[0]} {amps[1]} {fort_cfg["angle"]} {fort_cfg["nss"]}')
+        except Exception as e:
+            print('failed to run init_dist.py')
+            print(e)
+
         # concatenate
         # utils.concatenate_files([dest, madx_fc3], output_file)
 

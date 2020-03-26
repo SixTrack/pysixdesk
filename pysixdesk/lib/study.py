@@ -394,6 +394,9 @@ class Study(object):
         self.sixtrack_config['sixtrack']['output_files'] = json.dumps(self.sixtrack_output)
         self.sixtrack_config['sixtrack']['test_turn'] = json.dumps(self.env['test_turn'])
         self.sixtrack_config['six_results'] = self.tables['six_results']
+        # TODO: UGLY HACK TO ADD THE aperture_losses FILE...
+        self.sixtrack_config['aperture_losses'] = self.tables['aperture_losses']
+
         if self.collimation:
             self.sixtrack_config['aperture_losses'] = self.tables['aperture_losses']
             self.sixtrack_config['collimation_losses'] = self.tables['collimation_losses']
@@ -628,6 +631,8 @@ class Study(object):
             info_sec['boinc_results'] = self.env['boinc_results']
             info_sec['boinc'] = boinc
             info_sec['st_pre'] = self.st_pre
+            # TODO: UGLY HACK TO PARSE THE APERTURE_LOSSES FILE...
+            config['aperture_losses'] = self.tables['aperture_losses']
 
             info_sec['outs'] = Table.result_table(self.sixtrack_output)
             if self.collimation:
