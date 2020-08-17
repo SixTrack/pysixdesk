@@ -15,13 +15,13 @@ else:
 import pysixdesk
 
 
-class SqliteStudy:
+class SQLiteStudyGrouped:
     '''Runs a typical Sqlite test.
     Note, this method is not supposed to run on it's own, it must be subclassed
     and combined with the unittest.TestCase class for the self.assertEqual,
     self.assertTrue, and other attributes/methods to be defined.
     '''
-    def sqlite_study(self, config="SqliteConfig"):
+    def sqlite_study(self, config="SQLiteConfig"):
         self.ws.init_study(self.st_name)
         self.assertTrue(self.st_name in self.ws.studies)
 
@@ -60,7 +60,7 @@ class SqliteStudy:
         # TODO: add check on result collection
 
         self.st.prepare_sixtrack_input(groupby='amp')
-        amplist = self.st.sixtrack_params['amp']
+        amplist = self.st.params['amp']
 
         # getting the expected list of sixtrack wu_ids.
         where = "status='complete'"
@@ -77,7 +77,7 @@ class SqliteStudy:
         self.st.submit(1)
         self.assertEqual(len(self.st.submission.check_running(self.st.study_path)),
                          len(six_wu_ids)/len(amplist))
-        #TODO: we should add more detailed assert here to check if group
+        # TODO: we should add more detailed assert here to check if group
         #      method works as expected
 
         print('waiting for sixtrack job to finish...')
@@ -90,17 +90,17 @@ class SqliteStudy:
         # TODO: add check on result collection
 
 
-class SqlDB(SqliteStudy, unittest.TestCase):
+class SQLiteDBGrouped(SQLiteStudyGrouped, unittest.TestCase):
     def setUp(self):
         self.test_folder = Path('integration_test/sqlite')
         self.test_folder.mkdir(parents=True, exist_ok=True)
         self.ws_name = 'integration_test'
         self.ws = pysixdesk.WorkSpace(str(self.test_folder / self.ws_name))
-        self.st_name = 'sqlite'
+        self.st_name = 'sqlite_grouped'
         self.st = None
 
     def test_sqlite_study(self):
-        self.sqlite_study(config='SqliteConfig')
+        self.sqlite_study(config='SQLiteConfig')
 
     def tearDown(self):
         # remove directory

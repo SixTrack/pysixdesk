@@ -59,6 +59,55 @@ def download_output(filenames, dest, zp=True):
                 shutil.copy(filename, dest)
 
 
+def sandwich(in_file, out_file, path_prefix='', logger=None):
+    '''
+    Looks for any patterns matching '^%FILE:.*' in in_file, then replaces the
+    match with the content of the file following the match.
+    A path prefix can be specified to look for matched file in another
+    directory. If the matched file is not found, comment out the pattern.
+    Example:
+        contents of in_file:
+            aaaaaaaaa
+            %FILE:insert.txt
+            aaaaaaaaa
+        contents of insert.txt:
+            bbbbbbbbb
+            bbbbbbbbb
+        writes to out_file:
+            aaaaaaaaa
+            bbbbbbbbb
+            bbbbbbbbb
+            aaaaaaaaa
+    TODO: maybe it's best to return the the sandwiched lines and not write the
+    file, so that more parsing can happen in memory without reopening and
+    writing files. Also might be best to take as input the contents itself for
+    the same reason.
+    '''
+
+    if logger is not None:
+        display = logger.warning
+    else:
+        display = print
+
+    with open(in_file, 'r') as f:
+        in_lines = f.read()
+
+    reg = re.compile(r'^%FILE:.*', re.MULTILINE)
+    for m in re.finditer(reg, in_lines):
+        m_str = m.group()
+        try:
+            with open(os.path.join(path_prefix, m_str.split(':')[1].lstrip()), 'r') as f:
+                file_lines = f.read()
+            in_lines = re.sub(f'{m_str}', file_lines, in_lines)
+        except FileNotFoundError as e:
+            display(e)
+            display(f'Commenting out {m_str} for {out_file}')
+            in_lines = re.sub(f'{m_str}', f'/{m_str}', in_lines)
+
+    with open(out_file, 'w') as out:
+        out.write(in_lines)
+
+
 def check_fort3_block(fort3, block):
     '''Check the existence of the given block in fort.3'''
 
@@ -95,7 +144,7 @@ def diff(file1, file2, logger=None, **kwargs):
         file1 (str/path): path to first file for the diff.
         file2 (str/path): path to second file for the diff.
         logger (logging.logger, optional): logger with which to display the
-        diff, if None, will use print.
+            diff, if None, will use print.
         kwargs: additional arguments for `difflib.unified_diff`.
     '''
 
@@ -189,8 +238,8 @@ def exc_catch(fun, exc_action=None, *args, **kwargs):
     Args:
         fun (callable): The wrapped function.
         exc_action (callable, optionnal): callable which will run if "fun"
-        raises an Exception. If None will not do anything, the Exception will
-        be supressed.
+            raises an Exception. If None will not do anything, the Exception
+            will be supressed.
         args kwargs (optionnal): passed on to the wrapped function call.
 
     Returns:
@@ -237,13 +286,23 @@ def condor_logger(name):
     logger.setLevel(logging.DEBUG)
     return logger
 
+
+def linspace(a, b, n):
+    '''Numpyless linear spacing function.
+    '''
+    if n < 2:
+        return a
+    diff = (float(b) - a)/(n - 1)
+    return [diff * i + a for i in range(n)]
+
+
 class ProgressBar(object):
     '''
     A very lightweight progress bar to monitor the submit progress
     '''
 
     def __init__(self, total, width=50):
-        self.width = 50
+        self.width = width
         self.total = total
         self.num = 0
 

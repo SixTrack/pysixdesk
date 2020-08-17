@@ -29,7 +29,7 @@ class DatabaseAdaptor(ABC):
             auto_keys = keys['autoincrement']
             for ky in auto_keys:
                 columns[ky] = columns[ky] + ' AUTO_INCREMENT'
-        col = [' '.join(map(str, i)) for i in columns.items()]
+        col = [f'`{k}` {v}' for k, v in columns.items()]
         col = [j.replace('.', '_') for j in col]
         cols = ','.join(map(str, col))
         fill = cols
@@ -72,7 +72,7 @@ class DatabaseAdaptor(ABC):
         sql = 'INSERT INTO %s (%s) VALUES (%s)'
         keys = list(values.keys())
         vals = [values[key] for key in keys]
-        keys = [i.replace('.', '_') for i in keys]
+        keys = [f"`{i.replace('.', '_')}`" for i in keys]
         cols = ','.join(keys)
         ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
@@ -92,7 +92,7 @@ class DatabaseAdaptor(ABC):
         sql = 'INSERT INTO %s (%s) VALUES (%s)'
         keys = list(values.keys())
         vals = [values[key] for key in keys]
-        keys = [i.replace('.', '_') for i in keys]
+        keys = [f"`{i.replace('.', '_')}`" for i in keys]
         cols = ','.join(keys)
         ques = ','.join((ph,) * len(keys))
         sql_cmd = sql % (table_name, cols, ques)
@@ -114,7 +114,7 @@ class DatabaseAdaptor(ABC):
         if len(cols) == 0:
             return []
         if (isinstance(cols, Iterable) and not isinstance(cols, str)):
-            cols = [i.replace('.', '_') for i in cols]
+            cols = [f"`{i.replace('.', '_')}`" for i in cols]
             cols = ','.join(cols)
         sql = 'SELECT %s FROM %s' % (cols, table_name)
         if 'DISTINCT' in kwargs.keys() and kwargs['DISTINCT']:
@@ -146,7 +146,7 @@ class DatabaseAdaptor(ABC):
         sql = 'UPDATE %s SET %s '
         keys = values.keys()
         vals = [values[key] for key in keys]
-        keys = [i.replace('.', '_') for i in keys]
+        keys = [f"`{i.replace('.', '_')}`" for i in keys]
         ques = (ph,) * len(keys)
         sets = ['='.join(it) for it in zip(keys, ques)]
         sets = ','.join(sets)
@@ -182,7 +182,7 @@ class DatabaseAdaptor(ABC):
             ques = (ph,) * len(keys)
             sets = ['='.join(it) for it in zip(keys, ques)]
             sets = ','.join(sets)
-            sets_where = ['='.join(map(str,it)) for it in zip(keys_where, val_where)]
+            sets_where = ['='.join(map(str, it)) for it in zip(keys_where, val_where)]
             sets_where = ' and '.join(sets_where)
             sql_cmd = sql % (table_name, sets, sets_where)
             with closing(conn.cursor()) as c:
@@ -255,8 +255,8 @@ class SQLDatabaseAdaptor(DatabaseAdaptor):
 
     def updatem(self, conn, table_name, values, where):
         '''update values'''
-        super(SQLDatabaseAdaptor, self).updatem(conn, table_name, values, where,
-                                               '?')
+        super(SQLDatabaseAdaptor, self).updatem(conn, table_name, values,
+                                                where, '?')
 
 
 class MySQLDatabaseAdaptor(DatabaseAdaptor):

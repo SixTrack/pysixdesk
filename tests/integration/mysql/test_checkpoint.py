@@ -14,10 +14,10 @@ else:
     os.environ['PYTHONPATH'] = f"{pysixdesk_path}"
 import pysixdesk
 # import the standard MySql study
-from .test_mysql import MySqlStudy
+from .test_mysql import MySQLStudy
 
 
-class MySqlDBCheckpoint(MySqlStudy, unittest.TestCase):
+class MySqlDBCheckpoint(MySQLStudy, unittest.TestCase):
     def setUp(self):
         self.test_folder = Path('integration_test/mysql_checkpoint')
         self.test_folder.mkdir(parents=True, exist_ok=True)
@@ -28,12 +28,12 @@ class MySqlDBCheckpoint(MySqlStudy, unittest.TestCase):
 
     def test_mysql_study_restart(self):
         # run a normal mysql study. with the correct executable.
-        self.mysql_study(config='MySqlCheckpointConfig')
+        self.mysql_study(config='MySQLCheckpointConfig')
         # continue previous study
         self.st = self.ws.load_study(self.st_name,
                                      module_path=str(Path(__file__).parents[1] /
                                                      'variable_config.py'),
-                                     class_name='MySqlCheckpointConfig')
+                                     class_name='MySQLCheckpointConfig')
         self.assertTrue(self.st.checkpoint_restart)
 
         self.st.prepare_sixtrack_input()

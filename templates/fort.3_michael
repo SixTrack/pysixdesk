@@ -1,26 +1,29 @@
 GEOME-STRENG TITLE:%Runnam
 PRINTOUT OF INPUT PARAMETERS--------------------------------------------
 NEXT
+
 SETTING----------------------------------------------------------------
 INITIALSTATE text
 FINALSTATE text
 NEXT
+
 TRACKING PARAMETERS-----------------------------------------------------
 %turnss 0 %nss %ax0s %ax1s 0 %imc
 1 1 %idfor 1 %iclo6
 0 0 1 1 %writebins 50000 2
 NEXT
+
 INITIAL COORDINATES-----------------------------------------------------
         2 0. 0. %ratio 0
         0.
         0.
-        0. 
+        0.
         0.
         0.
         %dp1
-        .000001 
+        .000001
         0.
-        0. 
+        0.
         0.
         0.
         %dp2
@@ -28,14 +31,38 @@ INITIAL COORDINATES-----------------------------------------------------
         %e_0
         %e_0
 NEXT
+
+RANDOM NUMBERS
+   SEED %sixtrack_seed
+NEXT
+
+/ FILL ID COUNT 1 1
+DIST
+   FORMAT ID XN YN
+   READ input_dist.txt
+   FILL ZN FLOAT 0.0
+
+   FILL PXN FLOAT 0.0
+   FILL PYN FLOAT 0.0
+   FILL PZN FLOAT 0.0001
+
+   FILL ION_A INT 1
+   FILL ION_Z INT 1
+   FILL CHARGE INT 1
+   FILL MASS FLOAT %pmass
+   EMITTANCE %emit_norm_x %emit_norm_y
+NEXT
+
 SYNCHROTRON OSCILLATIONS--------'PLACE AFTER TRACKING PARAMETERS'-------
       35640 .000347 %rf_vol 0. %length %pmass %ition
       1.       1.
 NEXT
-BEAM
-%bunch_charge   %emit_norm_x  %emit_norm_y  %sig_z  %sig_e  1  %ibtype 1 0
 
-NEXT
+/ Beam block is actually already in the fort.3.mad file
+/ BEAM
+/ %bunch_charge   %emit_norm_x  %emit_norm_y  %sig_z  %sig_e  1  %ibtype 1 0
+/ NEXT
+
 ITERATION-ACCURACY------------------------------------------------------
        50 1D-12 1D-15
        10 1D-10 1D-10
@@ -45,6 +72,19 @@ NEXT
 
 FLUCTUATION
 100000 1 7 3
+NEXT
+
+%FILE: fort.3.mad
+
+LIMI
+DEBUG
+LOAD fort.3.aper
+PRIN sixtrack_aper
+/ BACKTRKOFF
+NEXT
+
+DUMP
+   ip3 1 0 1 dump_init.txt 1 1
 NEXT
 
 %toggle_post/POSTPROCESSING----------------------------------------------------------
@@ -62,30 +102,25 @@ NEXT
 %toggle_coll/LINE
 %toggle_coll/ELEMENT 0 %ilin 1 %EI %EI
 %toggle_coll/NEXT
+
 %toggle_coll/COLLIMATION
-%toggle_coll/.TRUE. 
+%toggle_coll/.TRUE.
 %toggle_coll/1 6500000
 %toggle_coll/3 5.0 0.015 0. 0. "distr_in.dat" 1.129E-4 75.5
 %toggle_coll/.FALSE. 15. 18.0  18.0  20.0  5.7  7.7  7.7  10.0  12. 999.0  9.0  8.5  999.0
-%toggle_coll/10.5   30.0   10.5   30.0   10.5   30.0   10.5   30.0   
+%toggle_coll/10.5   30.0   10.5   30.0   10.5   30.0   10.5   30.0
 %toggle_coll/ 0 19789.0 20150.0 1 1
 %toggle_coll/ -1.3899e-6 -9.345e-5 5.05324e-3 -1.6595e-2 2.15955e-2 -9.96261e-3 1.0
 %toggle_coll/ -1.3899e-6 -9.345e-5 5.05324e-3 -1.6595e-2 2.15955e-2 -9.96261e-3 1.0
 %toggle_coll/3.5 3.5 3.5 3.5
-%toggle_coll/.FALSE. .FALSE. 0 .TRUE. TCLD.A9R7.B1 .FALSE. .TRUE. .TRUE. .TRUE. 
+%toggle_coll/.FALSE. .FALSE. 0 .TRUE. TCLD.A9R7.B1 .FALSE. .TRUE. .TRUE. .TRUE.
 %toggle_coll/ 0 0 0 0
 %toggle_coll/ 0 0 0 0 0 0 0 0 0 0 .FALSE.
 %toggle_coll/.FALSE. 6.003 .0015
-%toggle_coll/0 0 .FALSE. .FALSE. 
+%toggle_coll/0 0 .FALSE. .FALSE.
 %toggle_coll/28 0.1 0.05 0.05 3
 %toggle_coll/"CollDB.data" 1
 %toggle_coll/.FALSE. .FALSE. WAbsVertLowbcoll 101 1 1.
-%toggle_coll/NEXT
-%toggle_coll/LIMI
-%toggle_coll// DEBUG
-%toggle_coll// PREC 0.001
-%toggle_coll// PRIN ape_dump.dat
-%toggle_coll/LOAD fort3.limi
 %toggle_coll/NEXT
 
 ENDE
@@ -130,7 +165,7 @@ NEXT
 SEARCH FOR THE BEST POSITIONS FOR COMPENSATION-ELEMENTS-----------------
          %tune_x %tune_y 1. 1. %length
          2   3   0   2  -2   0   0   0
-         MSCBH MSCBV 
+         MSCBH MSCBV
 NEXT
 ORBIT ADJUSTMENT--------------------------------------------------------
 

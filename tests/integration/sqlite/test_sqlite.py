@@ -15,13 +15,13 @@ else:
 import pysixdesk
 
 
-class SqliteStudy:
-    '''Runs a typical Sqlite test.
+class SQLiteStudy:
+    '''Runs a typical SQLite test.
     Note, this method is not supposed to run on it's own, it must be subclassed
     and combined with the unittest.TestCase class for the self.assertEqual,
     self.assertTrue, and other attributes/methods to be defined.
     '''
-    def sqlite_study(self, config="SqliteConfig"):
+    def sqlite_study(self, config="SQLiteConfig"):
         self.ws.init_study(self.st_name)
         self.assertTrue(self.st_name in self.ws.studies)
 
@@ -87,7 +87,7 @@ class SqliteStudy:
         # TODO: add check on result collection
 
 
-class SqlDB(SqliteStudy, unittest.TestCase):
+class SQLiteDB(SQLiteStudy, unittest.TestCase):
     def setUp(self):
         self.test_folder = Path('integration_test/sqlite')
         self.test_folder.mkdir(parents=True, exist_ok=True)
@@ -97,7 +97,7 @@ class SqlDB(SqliteStudy, unittest.TestCase):
         self.st = None
 
     def test_sqlite_study(self):
-        self.sqlite_study(config='SqliteConfig')
+        self.sqlite_study(config='SQLiteConfig')
 
     def tearDown(self):
         # remove directory

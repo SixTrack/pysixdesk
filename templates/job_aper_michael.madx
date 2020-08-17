@@ -1,0 +1,840 @@
+! Links definitions
+!option, warn,info;
+!###################################################################################################################################
+!############################## CREATE SOFT LINKS AND DIRECTORIES ##################################################################
+!###################################################################################################################################
+System,"rm -r temp";
+System,"rm -r output";
+System,"mkdir temp";
+System,"mkdir output";
+!######################################################################
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/V6.503 db5";
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/HLLHCV1.2 slhc";
+
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/V6.503/FiDeL fidel";
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/V6.503/WISE wise";
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/runII/2016 optics2016";
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/runII/2017 optics2017";
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/runII/2018 optics2018";
+
+! system,"ln -fns /afs/cern.ch/work/m/mischenk/public/sixtrack_aperture/aperture_model aperture_model";
+
+!system,"ln -fns /afs/cern.ch/work/l/lcoyle/public/sixtrack_aperture/4Loic/prepareInput prepareInput";
+!######################################################################
+
+!######################################################################
+
+
+
+!###################################################################################################################################
+!############################## TUNE AND CHROMA ####################################################################################
+!###################################################################################################################################
+qxinit = %tune_x; ! change tunes to nominal injection tunes , likely 0.275/0.295
+qyinit = %tune_y;
+qxinitint = %int_tune_x;
+qyinitint = %int_tune_y; ! WATCH OUT - ALL THESE VALUES ARE USED BY MATCHING ROUTINES AND THE DQMIN CALCULATION LATER ON IN THE SCIPT...
+ptcqxinit := qxinit-qxinitint;
+ptcqyinit := qyinit-qyinitint;
+dqxinit = %q_prime_x;
+dqyinit = %q_prime_y;
+
+!some values required by new correction macros
+tsplit= abs(qxinitint-qyinitint);   !new tune split
+qx00 = qxinitint;  !integer h tune
+qy00 = qyinitint;  !integer v tune
+
+value, qxinit, qyinit;
+value, qx00, qy00;
+value, tsplit;
+value, ptcqxinit, ptcqyinit;
+
+!######### CALL MACRO FACILITIES ###########################################
+
+call,file="slhc/toolkit/macro.madx";
+
+!###################################################################################################################################
+!!!!POINTS TO CHECK WHEN EDITING THE SCRIPT
+!###################################################################################################################################
+!! OPTIC: set optics below in the set up lattice section, just pick the .str file desired
+!!
+!! ERRORS: Magnetic errors are applied piecewise to keep orbit and coupling under control. Should ensure when changing seed/script
+!! that all relevant parts are varied. This is mostly redundancy to ensure all seeds and configs run. Can be reduced if confident
+!! the mask will run.
+!! LINEAR OPTICS: Have assumed correction of a2 and b2 errors in the IR magnets has already been applied at both injection and top
+!! energy. Block is there, but commented out.
+!! CORRS: a2 is compensated effectively using tracking data and the OMC codes. This is to allow setting of a well defined amp and
+!! phase of f1001 at the end of the mask, reflecting operational procedure for optics MDs.
+!! CORRS: b2 is corrected by application nominal corrections determined for the WISE zero uncertainty seed in the thin lattice.
+!! Probably underestimates the true beta-beating, but okayish for now.
+!! CORRS: b3. b3 at injection is compensated by application of nominal correction determined for the WISE zero uncertainty seed in
+!! the thin lattice, with the bad arc depowered and the correction redistributed to the other arcs as per operation.
+!! CORRS: b3. b3 at top energy is compensated by applying the MCS settings found in LSA.
+!! CORRS: b3. Note that at injection the b3 is complicated by the decay. Should be possible in the future to use timestamped wise
+!! predictions, alongside the real machine settings, but both have to changed consistently.
+!! CORRS: 2016 -> Spool piece settings are NOT included in the normal beam-processes! They have a separate BP. If you take spools
+!! from the regular beam-process you will be off by up to an order of magnitude.
+!! XING SCHEME: settings from 2016 will not be valid with 2012 sequences etc (ie definition is totally different, for some Runi
+!! sequences don't set values in urad, set fractions of nominal). Also with Runi sequences watch out for changing definitions of the
+!! xing scheme between strength files for different beams and optics. Always check explicitly with a twiss.
+!! XING SCHEME: Make sure internal xings from alice spectrometer are what is desired. This is set explicitly later on in the script.
+!! ORBIT: if want virtual correctors to match to zero or to target set explicitly towards end of script
+!! ORBIT: running with virtual correctors to match orbit will make this SLOW! for tracking. If don't care too much about orbit can
+!! match using old method, just check the RMS and P2P at the end to make sure it is sensible.
+!! MO: script assumes uniform powering (with exception of ROD.A56.B1) consistent with Landau damping knob. For Asymettric powering
+!! marco needs to be edited later on.
+!! BEAMBASED: Effective models for MCD feeddown based on injection measurements, and measured detuning at 40cm are implemented later
+!! on in the scipt.
+!!
+!! MATCHING: at end of script switch to PTC based tune matching. This is slow...
+
+
+!###################################################################################################################################
+!############################## OPTIONS ############################################################################################
+!###################################################################################################################################
+mylhcbeam=1;
+is_thin=1;
+
+
+
+!###################################################################################################################################
+!############################## SET UP LANDAU OCTUPOLES ############################################################################
+!###################################################################################################################################
+I_MO = %i_mo ; ! -6.5 ; !2012 first half of year
+NRJ = %e_0 * 1e-3 ;  ! 450.0;
+brho:=NRJ*1e9/clight;
+MOpowering=Kmax_MO*I_MO/Imax_MO/brho;
+MOFpowering=MOpowering;
+MODpowering=MOpowering;
+value, NRJ;
+
+		! The setting of MO powering will be applied to all MO later in the script, then ROD.A56.B1 is rescaled according to the knob
+
+		! INJECTION FROM 11-03-2016 = 0.0
+                ! INJECTION from 29-03-2016 = +9.0
+		! INJECTION late  2016 = +18 (as of 19/08/2016)
+		! END of RAMP = +6 (?? -> May)
+		! END of RAMP = +15 (as of 11/05/2016)
+		! END of RAMP = +13.38 (as of 03/09/2016)
+		! LSA history shows constant KO powering in 2016 from end of ramp to end of squeeze
+		!
+		! NOTE THAT ROD.A56.B1 IS HARWARE LIMITED TO A WEAKER VALUE THAN ALL OTHER CIRCUITS. So Runii does not have uniform powering of all MO.
+		! DO NOT COMPARE TO THE KMAX AS DEFINED IN CORR_VALUE. THE DEFINITION OF MAX FIELD STRENGTH DOESNT AGREE WITH THE FIDEL DOCUMENTATION.
+    ! VALUE OF KMAX FROM SCRIPT INCLUDED HERE IS ONLY A TINY DIFFERENCE FROM FIDEL MEASUREMENTS.
+
+if(mylhcbeam<3){ call,file="optics2018/lhc_as-built.seq";   };
+if(mylhcbeam>3){ call,file="optics2018/lhcb4_as-built.seq"; };
+
+
+!----------------------------------------------------------------
+! M.S.: Install markers for VCTYF (Y-chamber). Should replace TANs apts.
+!--------------------------DECLARATION---------------------------
+! AP014: marker, apertype= RECTELLIPSE, aperture= {0.106, 0.106, 0.106, 0.106};
+! AP020: marker, apertype= RECTELLIPSE, aperture= {0.026, 0.026, 0.026, 0.026};
+
+!--------------------------TOLERANCE ---------------------------
+! RtolTrip := 0.00147;   HtolTrip := 0.00000;   VtolTrip := 0.000;
+! RtolCold := 0.00171;   HtolCold := 0.00036;   VtolCold := 0.000;
+! RtolWarm := 0.00200;   HtolWarm := 0.00036;   VtolWarm := 0.000;
+! RtolCham := 0.00400;   HtolCham := 0.00000;   VtolCham := 0.000;
+
+! IP1
+!VCTYF.4L1.A.B1: AP020, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=-0.16, slot_id= 2538069;
+!VCTYF.4L1.B.B1: AP020, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=-0.16, slot_id= 2538069;
+!VCTYF.4L1.C.B1: AP014, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0, slot_id= 2538069;
+!VCTYF.4L1.D.B1: AP014, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0, slot_id= 2538069;
+!
+!VCTYF.4R1.A.B1: AP014, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0, slot_id=2538065;
+!VCTYF.4R1.B.B1: AP014, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0, slot_id=2538065;
+!VCTYF.4R1.C.B1: AP020, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0.16, slot_id=2538065;
+!VCTYF.4R1.D.B1: AP020, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0.16, slot_id=2538065;
+
+! IP5
+!VCTYF.4L5.A.B1: AP020, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=-0.16, slot_id= 2538061;
+!VCTYF.4L5.B.B1: AP020, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=-0.16, slot_id= 2538061;
+!VCTYF.4L5.C.B1: AP014, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0, slot_id= 2538061;
+!VCTYF.4L5.D.B1: AP014, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0, slot_id= 2538061;
+!
+!VCTYF.4R5.A.B1: AP014, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0, slot_id= 2538063;
+!VCTYF.4R5.B.B1: AP014, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0, slot_id= 2538063;
+!VCTYF.4R5.C.B1: AP020, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0.16, slot_id= 2538063;
+!VCTYF.4R5.D.B1: AP020, aper_tol:={RtolWarm, HtolWarm, VtolWarm}, mech_sep=0.16, slot_id= 2538063;
+
+
+!seqedit,sequence=lhcb1;
+! IP1
+!remove, element=tanar.4r1;
+!remove, element=tanal.4l1;
+!
+!install, element=VCTYF.4L1.A.B1, at=-144.7225+(0-IP1OFS.B1)*DS, from=IP1.L1;
+!install, element=VCTYF.4L1.B.B1, at=-141.019+(0-IP1OFS.B1)*DS, from=IP1.L1;
+!install, element=VCTYF.4L1.C.B1, at=-140.112+(0-IP1OFS.B1)*DS, from=IP1.L1;
+!install, element=VCTYF.4L1.D.B1, at=-139.8185+(0-IP1OFS.B1)*DS, from=IP1.L1;
+!
+!install, element=VCTYF.4R1.A.B1, at=139.8185+(1-IP1OFS.B1)*DS, from=IP1;
+!install, element=VCTYF.4R1.B.B1, at=140.112+(1-IP1OFS.B1)*DS, from=IP1;
+!install, element=VCTYF.4R1.C.B1, at=141.019+(1-IP1OFS.B1)*DS, from=IP1;
+!install, element=VCTYF.4R1.D.B1, at=144.7225+(1-IP1OFS.B1)*DS, from=IP1;
+
+! IP5
+! Remove TANs
+!remove, element=tanc.4l5;
+!remove, element=tanc.4r5;
+
+! Remove some instrument (markers?) that result in negative drifts ... (not important for apt.??)
+!remove, element=x5zdc.a4l5;
+!remove, element=x5zdc.b4r5;
+
+!install, element=VCTYF.4L5.A.B1, at=-144.7225+(-307-IP5OFS.B1)*DS, from=IP5;
+!install, element=VCTYF.4L5.B.B1, at=-141.019+(-307-IP5OFS.B1)*DS, from=IP5;
+!install, element=VCTYF.4L5.C.B1, at=-140.112+(-307-IP5OFS.B1)*DS, from=IP5;
+!install, element=VCTYF.4L5.D.B1, at=-139.8185+(-307-IP5OFS.B1)*DS, from=IP5;
+!
+!install, element=VCTYF.4R5.A.B1, at=139.8185+(-307-IP5OFS.B1)*DS, from=IP5;
+!install, element=VCTYF.4R5.B.B1, at=140.112+(-307-IP5OFS.B1)*DS, from=IP5;
+!install, element=VCTYF.4R5.C.B1, at=141.019+(-307-IP5OFS.B1)*DS, from=IP5;
+!install, element=VCTYF.4R5.D.B1, at=144.7225+(-307-IP5OFS.B1)*DS, from=IP5;
+!endedit;
+
+!add_ape=1;
+Option, -echo,-warn,-info;
+if ( add_ape==1 ) {
+call,file="aperture_model/const_for_aperture.madx";
+! read macro for correcting aperture
+! call,file="aperture.madx";
+};
+
+
+! aperture model (before slicing)
+if ( add_ape==1 ) {
+  call,file="aperture_model/aperture.b1.madx";
+  call,file="aperture_model/aperture.b2.madx";
+  call,file="aperture_model/aper_tol.b1.madx";
+  call,file="aperture_model/aper_tol.b2.madx";
+  !call,file="slhc_ape/aperture/aperture_upgrade_IT.madx";
+  !call,file="slhc_ape/aperture/aperture_upgrade_MS.madx";
+  ! avoid zero apertures:
+  ! ...found with: grep TCT ape.B1.tfs | grep -v MK | awk '{if ($6==0) {print ($2)}}'
+  TCTPH.4L5.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+  TCTPV.4L5.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+  TCTPH.4L1.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+  TCTPV.4L1.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+  ! ...found with: grep TCL ape.B1.tfs | grep -v MK | awk '{if ($6==0) {print ($2)}}'
+  TCL.4R1.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+  TCL.5R1.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+  TCL.6R1.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+  TCL.4R5.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+  TCL.5R5.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+  TCL.6R5.B1, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99}, APER_TOL={0,0,0}, APER_TILT=0;
+};
+
+! Slice nominal sequence
+if ( add_ape==1 ) {make_end_markers=1;};
+!exec,myslice;
+
+!###################################################################################################################################
+!############################## SET UP LATTICE 2017 ################################################################################
+!###################################################################################################################################
+
+!if(is_thin==1) { call,file="optics2018/toolkit/slice.madx"; };
+if(is_thin==1) { slicefactor=8;
+	         beam;
+	         call,file="optics2018/toolkit/myslice.madx";
+		 beam;
+		 use, sequence=lhcb1; makethin, sequence=lhcb1, style=teapot, makedipedge=true;
+		 use, sequence=lhcb2; makethin, sequence=lhcb2, style=teapot, makedipedge=true;
+
+};
+
+!=================
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++;
+! aperture model (after slicing and loading optics)
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++;
+if ( add_ape==1 ) {
+ save, sequence=lhcb1, file=lhcb1.seq; call, file=lhcb1.seq;
+ save, sequence=lhcb2, file=lhcb2.seq; call, file=lhcb2.seq;
+ select, flag=twiss, clear;
+ select, flag=twiss, column=KEYWORD,NAME,S,L,APERTYPE,APER_1,APER_2,APER_3,APER_4,APTOL_1,APTOL_2,APTOL_3,APOFF_1,APOFF_2;
+
+! use, sequence=lhcb1;
+! select, flag=twiss, clear;
+! select, flag=twiss, column=KEYWORD,NAME,S,L,APERTYPE,APER_1,APER_2,APER_3,APER_4,APTOL_1,APTOL_2,APTOL_3,APOFF_1,APOFF_2;
+! twiss,  sequence=lhcb1, centre, file="ape.MS.before.tfs"; save;
+! stop;
+
+call,file="aperoffset_elements_MS.madx"; ! Beam 1 only
+
+! use, sequence=lhcb1;
+! select, flag=twiss, clear;
+! select, flag=twiss, column=KEYWORD,NAME,S,L,APERTYPE,APER_1,APER_2,APER_3,APER_4,APTOL_1,APTOL_2,APTOL_3,APOFF_1,APOFF_2;
+! twiss,  sequence=lhcb1, centre, file="ape.MS.after.tfs"; save;
+! stop;
+
+!
+print, text="loading experimental vacuum chambers";
+call,file="aperture_model/exp_pipe_model_after_LS1.madx";
+call,file="aperture_model/exp_pipe_install_after_LS1.madx";
+call,file="aperture_model/pseudo_coll.madx";
+! racetracks with APER_1=0.0:
+! ALICEPIPE40.L2, APERTYPE=RACETRACK, APERTURE={0.017,0.050,0.017,0};
+! ALICEPIPE31.L2, APERTYPE=RACETRACK, APERTURE={0.03375,0.0475,0.03375,0};
+! BTVSS.6L2.B1  , APERTYPE=RACETRACK, APERTURE={0.03375,0.0475,0.03375,0};
+ALICEPIPE40.L2, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99};
+ALICEPIPE31.L2, APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99};
+BTVSS.6L2.B1  , APERTYPE=RECTELLIPSE, APERTURE={9.99,9.99,9.99,9.99};
+! ALICEPIPE40.L2, APERTYPE=RECTELLIPSE, APERTURE={0.03375,0.0475,0.03375,0.03375};
+! ALICEPIPE31.L2, APERTYPE=RECTELLIPSE, APERTURE={0.03375,0.0475,0.03375,0.03375};
+! print, text="correcting aperture model";
+!exec,correct_aperture_model;
+
+! +=+=+= c6t fatal - negative drift in front of taxn.4l5_mken, length -0.000000
+!seqedit,sequence=lhcb1;
+!select,flag=seqedit, pattern="^VTAXN*";
+!remove,element=selected;
+!endedit;
+!
+!! +=+=+= c6t fatal - negative drift in front of e.tcld.8r7.b1, length -0.000000
+!seqedit,sequence=lhcb1;
+!select,flag=seqedit, pattern="^E.TCLD*";
+!remove,element=selected;
+!endedit;
+!
+!! +=+=+= c6t fatal - negative drift in front of ip6, length -0.000000
+!seqedit,sequence=lhcb1;
+!select,flag=seqedit, pattern="MSDB2.4L6.B1_MKEX";
+!remove,element=selected;
+!select,flag=seqedit, pattern="MSDB2.4R6.B1_MKEN";
+!remove,element=selected;
+!select,flag=seqedit, pattern="^MSIA.EXIT*";
+!remove,element=selected;
+!endedit;
+};
+
+
+
+! Just add pseudo collimators (primaries)
+call,file="/afs/cern.ch/work/l/lcoyle/public/sixtrack_dist_michael/new_study/pseudo_coll.madx";
+
+
+
+
+!********************************************
+
+use, sequence=lhcb1;
+select, flag=twiss, clear;
+select, flag=twiss, column=KEYWORD,NAME,S,L,APERTYPE,APER_1,APER_2,APER_3,APER_4,APTOL_1,APTOL_2,APTOL_3,APOFF_1,APOFF_2;
+twiss,  sequence=lhcb1, centre, file="ape.B1.tfs"; save;
+! ! create sixtrack input files
+! sixtrack, radius=17E-03, cavall, aperture;
+! stop;
+!=================
+
+!Cycling w.r.t. to IP3 (mandatory to find closed orbit in collision in the presence of errors)
+if(mylhcbeam==1) {seqedit,sequence=lhcb1;flatten;cycle,start=IP3;endedit;}
+if(mylhcbeam>1)  {seqedit,sequence=lhcb2;flatten;cycle,start=IP3;endedit;}
+
+
+if(is_thin==0){call, file="optics2018/PROTON/opticsfile.1";
+}
+else {         call, file="optics2018/PROTON/opticsfile.1";
+}
+
+emit_norm_x = %emit_norm_x * 1e-6; ! [um] --> [m]
+emit_norm_y = %emit_norm_y * 1e-6; ! [um] --> [m]
+gamma_rel := NRJ/pmass;
+epsx := emit_norm_x / gamma_rel;
+epsy := emit_norm_y / gamma_rel;
+value, epsx, epsy;
+
+if (mylhcbeam<3){ beam, sequence=lhcb1, bv= 1, energy=NRJ, particle=proton, npart=1.0e10, kbunch=1, ex=epsx, ey=epsy;
+   		  beam, sequence=lhcb2, bv=-1, energy=NRJ, particle=proton, npart=1.0e10, kbunch=1, ex=epsx, ey=epsy;};
+if (mylhcbeam>3){ beam, sequence=lhcb2, bv= 1, energy=NRJ, particle=proton, npart=1.0e10, kbunch=1, ex=epsx, ey=epsy;};
+
+if(mylhcbeam==1) {Use, sequence=lhcb1;}
+if(mylhcbeam>1) {Use, sequence=lhcb2;}
+
+
+ select,flag=twiss,clear;
+ select, flag=twiss, pattern="IP", column=name,s,betx,bety,x,y,px,py;
+ twiss, chrom, sequence=lhcb1, table, file=twiss.final.b1.dat;
+
+!###################################################################################################################################
+!################################ SETUP FOR ORBIT and ERROR CORRECTIONS ############################################################
+!###################################################################################################################################
+on_x1= 0    ; on_sep1= 0 ; on_o1= 0 ;
+on_x2= 0    ; on_sep2= 0 ; on_o2= 0 ; on_oe2=0; on_a2= 0 ;
+on_x5= 0    ; on_sep5= 0 ; on_o5= 0 ;
+on_x8= 0    ; on_sep8= 0 ; on_o8= 0 ; on_a8= 0 ;  on_sep8h= 0 ; on_x8v= 0 ;
+on_alice= 0 ;
+on_sol_alice=0;
+on_lhcb = 0 ;
+on_sol_atlas=0;
+on_sol_cms=0;
+
+  on_x1  :=  0.000  ;
+  on_sep1:=   0  ;
+  on_oh1 :=    0.000  ;
+  on_ov1 :=    0.000  ;
+  phi_IR1:=   90.000  ;
+  on_ssep1:=on_sep1;
+  on_xx1  := on_x1 ;
+  on_x5  :=  0.000  ;
+  on_sep5:=    0.0  ;
+  on_oh5 :=    0.000  ;
+  on_ov5 :=   0.000  ;
+  phi_IR5:=    0.000  ;
+  on_ssep5:=on_sep5;
+  on_xx5  := on_x5 ;
+  on_x2  :=  0.000  ;
+  on_sep2:=    0.000  ;
+  on_a2  :=    0.000  ;
+  on_o2  :=    0.000  ;
+  on_oh2 :=    0.000  ;
+  on_ov2 :=   0.000  ;
+  phi_IR2:=   90.000  ;
+  on_x8  := 0.000  ;
+  on_sep8:=   0.000  ;
+  on_a8  :=    0.000  ;
+  on_o8  :=    0.000  ;
+  on_oh8 :=    0.000  ;
+  on_ov8 :=    0.000  ;
+  phi_IR8:=  180.000  ;
+
+
+select,flag=twiss,clear;
+if(mylhcbeam==1) {twiss,sequence=lhcb1,table=nominal; };
+if(mylhcbeam>1) {twiss,sequence=lhcb2,table=nominal; };
+
+ beta.ip1=table(twiss,IP1,betx);
+
+! print nominal optics parameter at the MB, MQS and MSS for
+! b2, b3, b4, b5, a2 and a3 correction
+ select, flag=twiss, clear;
+ select, flag=twiss,pattern=MB\.   ,class=multipole,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,pattern=MQT\.14,class=multipole,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,pattern=MQT\.15,class=multipole,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,pattern=MQT\.16,class=multipole,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,pattern=MQT\.17,class=multipole,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,pattern=MQT\.18,class=multipole,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,pattern=MQT\.19,class=multipole,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,pattern=MQT\.20,class=multipole,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,pattern=MQT\.21,class=multipole,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,class=MQS                      ,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,class=MSS                      ,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,class=MCO                      ,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,class=MCD                      ,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ select, flag=twiss,class=MCS                      ,column=name,k0L,k1L,betx,bety,dx,mux,muy;
+ twiss,  file='temp/optics0_MB.mad';
+
+! print nominal optics parameter at the D1, MQX and triplet corrector
+! for triplet correction
+ select, flag=twiss, clear;
+ select, flag=twiss, pattern=MQX  , class=multipole, column=name,betx,bety,x,y;
+ select, flag=twiss, pattern=MBX  , class=multipole, column=name,betx,bety,x,y;
+ select, flag=twiss, pattern=MBRC , class=multipole, column=name,betx,bety,x,y;
+ select, flag=twiss, pattern=MQSX                  , column=name,betx,bety,x,y;
+ select, flag=twiss, pattern=MCSX                  , column=name,betx,bety,x,y;
+ select, flag=twiss, pattern=MCTX                  , column=name,betx,bety,x,y;
+ select, flag=twiss, pattern=MCOSX                 , column=name,betx,bety,x,y;
+ select, flag=twiss, pattern=MCOX                  , column=name,betx,bety,x,y;
+ select, flag=twiss, pattern=MCSSX                 , column=name,betx,bety,x,y;
+ twiss,  file='temp/optics0_inser.mad';
+
+
+Use, sequence=lhcb1;
+select,flag=twiss,clear;
+select, flag=twiss, pattern="IP1",   column=name,s,betx,bety,alfx,alfy,dx,dpx,mux,muy;
+select, flag=twiss, pattern="IP2",   column=name,s,betx,bety,alfx,alfy,dx,dpx,mux,muy;
+select, flag=twiss, pattern="IP5",   column=name,s,betx,bety,alfx,alfy,dx,dpx,mux,muy;
+select, flag=twiss, pattern="IP8",   column=name,s,betx,bety,alfx,alfy,dx,dpx,mux,muy;
+twiss,sequence=lhcb1,file=twiss.b1;system,"cat twiss.b1";
+
+Use, sequence=lhcb2;
+select,flag=twiss,clear;
+select, flag=twiss, pattern="IP1",   column=name,s,betx,bety,alfx,alfy,dx,dpx,mux,muy;
+select, flag=twiss, pattern="IP2",   column=name,s,betx,bety,alfx,alfy,dx,dpx,mux,muy;
+select, flag=twiss, pattern="IP5",   column=name,s,betx,bety,alfx,alfy,dx,dpx,mux,muy;
+select, flag=twiss, pattern="IP8",   column=name,s,betx,bety,alfx,alfy,dx,dpx,mux,muy;
+twiss, sequence=lhcb2,file=twiss.b2;system,"cat twiss.b2";
+
+Use, sequence=lhcb1;
+select,flag=twiss,clear;
+select, flag=twiss, pattern="IP1",   column=name,s,x,y,px,py;
+select, flag=twiss, pattern="IP2",   column=name,s,x,y,px,py;
+select, flag=twiss, pattern="IP5",   column=name,s,x,y,px,py;
+select, flag=twiss, pattern="IP8",   column=name,s,x,y,px,py;
+twiss, sequence=lhcb1, file=twiss.b1;system,"cat twiss.b1";
+
+Use, sequence=lhcb2;
+select,flag=twiss,clear;
+select, flag=twiss, pattern="IP1",   column=name,s,x,y,px,py;
+select, flag=twiss, pattern="IP2",   column=name,s,x,y,px,py;
+select, flag=twiss, pattern="IP5",   column=name,s,x,y,px,py;
+select, flag=twiss, pattern="IP8",   column=name,s,x,y,px,py;
+twiss, sequence=lhcb2, file=twiss.b2;system,"cat twiss.b2";
+
+if(mylhcbeam==1) {Use, sequence=lhcb1;}
+if(mylhcbeam>1) {Use, sequence=lhcb2;}
+
+
+if(mylhcbeam==1){
+   match;
+     global, q1=qxinit, q2=qyinit;
+     global, dq1=dqxinit, dq2=dqyinit;
+     vary,   name=dQx.b1, step=1.0E-7 ;
+     vary,   name=dQy.b1, step=1.0E-7 ;
+     vary,   name=dQpx.b1, step=1.0E-7 ;
+     vary,   name=dQpy.b1, step=1.0E-7 ;
+     lmdif,  calls=100, tolerance=1.0E-21;
+   endmatch;
+}
+if(mylhcbeam>1){
+   match;
+     global, q1=qxinit, q2=qyinit;
+     global, dq1=dqxinit, dq2=dqyinit;
+     vary,   name=dQx.b2, step=1.0E-7 ;
+     vary,   name=dQy.b2, step=1.0E-7 ;
+     vary,   name=dQpx.b2, step=1.0E-7 ;
+     vary,   name=dQpy.b2, step=1.0E-7 ;
+     lmdif,  calls=100, tolerance=1.0E-21;
+   endmatch;
+}
+
+
+!###################################################################################################################################
+!################################ CALL ERROR SUBROUTINES ###########################################################################
+!###################################################################################################################################
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!         Call error subroutines (nominal machine and new IT/D1)
+!                         and error tables
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+call,file="optics2016/measured_errors/Msubroutines_new.madx"; ! think the new subroutines are only relevant for MSS - not used pre-2017 so shouldnt make a difference compared to old Msubroutines...
+call,file="optics2016/measured_errors/Msubroutines_MS_MSS_MO_new.madx";
+call,file="optics2016/toolkit/Orbit_Routines.madx";
+call,file="optics2016/toolkit/SelectLHCMonCor.madx";
+readtable, file="optics2016/measured_errors/rotations_Q2_integral.tab";
+call,file="optics2016/errors/macro_error.madx";  ! some macros for error generation
+
+
+
+
+!###################################################################################################################################
+!################################ APPLY THE MAGNETIC ERRORS ########################################################################
+!###################################################################################################################################
+!###################################################################################################################################
+!###################################################################################################################################
+
+
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!                Switch ON/OFF some multipole
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+exec, ON_ALL_MULT;
+ON_LSF:=1;            ! to be set to 0 if run is performed on BOINC. ! double check if this is still true - and if wise actually includes any of these errors
+
+ ON_A1s  =  0 ; ON_A1r  =  0 ; ON_B1s  =  0 ; ON_B1r  =  0 ;
+ ON_A2s  =  0 ; ON_A2r  =  0 ; ON_B2s  =  0 ; ON_B2r  =  0 ;
+ ON_A3s  =  1 ; ON_A3r  =  1 ; ON_B3s  =  1 ; ON_B3r  =  1 ;
+ ON_A4s  =  1 ; ON_A4r  =  1 ; ON_B4s  =  1 ; ON_B4r  =  1 ;
+ ON_A5s  =  1 ; ON_A5r  =  1 ; ON_B5s  =  1 ; ON_B5r  =  1 ;
+ ON_A6s  =  1 ; ON_A6r  =  1 ; ON_B6s  =  1 ; ON_B6r  =  1 ;
+ ON_A7s  =  1 ; ON_A7r  =  1 ; ON_B7s  =  1 ; ON_B7r  =  1 ;
+ ON_A8s  =  1 ; ON_A8r  =  1 ; ON_B8s  =  1 ; ON_B8r  =  1 ;
+ ON_A9s  =  1 ; ON_A9r  =  1 ; ON_B9s  =  1 ; ON_B9r  =  1 ;
+ ON_A10s =  1 ; ON_A10r =  1 ; ON_B10s =  1 ; ON_B10r =  1 ;
+ ON_A11s =  1 ; ON_A11r =  1 ; ON_B11s =  1 ; ON_B11r =  1 ;
+ ON_A12s =  ON_LSF; ON_A12r = ON_LSF; ON_B12s = ON_LSF; ON_B12r =  ON_LSF;
+ ON_A13s =  ON_LSF; ON_A13r = ON_LSF; ON_B13s = ON_LSF; ON_B13r =  ON_LSF;
+ ON_A14s =  ON_LSF; ON_A14r = ON_LSF; ON_B14s = ON_LSF; ON_B14r =  ON_LSF;
+ ON_A15s =  ON_LSF; ON_A15r = ON_LSF; ON_B15s = ON_LSF; ON_B15r =  ON_LSF;
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+! Define the seed number (for statistical error assignment in the new IT/D1)
+! and call the corresponding measured error table for nominal LHC magnets
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!For the madx file
+! eoption,seed=1;
+! if (NRJ==450)  {readtable, file="wise/After_sector_3-4_repair/injection/injection_errors-emfqcs-1.tfs";}
+!!!!for the mask
+eoption,seed=%seed_ran;
+! for some reason the NRJ variable gets emptied and these ifs fail....
+NRJ = %e_0 * 1e-3 ;
+if(NRJ<6499.99){
+	readtable, file="wise/After_sector_3-4_repair/injection/injection_errors-emfqcs-%seed_ran.tfs" ;
+}
+if(NRJ>6499.99){
+	readtable, file="fidel/collision_3500/collision_3500_errors-emfqcs-%seed_ran.tfs" ;
+}
+
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!             apply field errors to MB and MQ magnets
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ call,   file="optics2016/measured_errors/Efcomp_MB.madx"  ;
+ call,   file="optics2016/measured_errors/Efcomp_MQ.madx"  ;
+
+!!!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!!!           apply field errors to all other quads and dipoles
+!!!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!!! Nominal LHC magnets
+ call,   file="optics2016/measured_errors/Efcomp_MBRB.madx"; ! for IP4
+ call,   file="optics2016/measured_errors/Efcomp_MBRS.madx"; ! for IP4
+ call,   file="optics2016/measured_errors/Efcomp_MBRC.madx"; ! this is the D2
+ call,   file="optics2016/measured_errors/Efcomp_MBX.madx" ; ! D in IP2 and 8
+ call,   file="optics2016/measured_errors/Efcomp_MBW.madx" ; ! this is for IP7 and IP3
+ call,   file="optics2016/measured_errors/Efcomp_MBXW.madx"; ! this is the D1 in IP1 and IP5
+!
+ call,   file="optics2016/measured_errors/Efcomp_MQM.madx" ;
+ call,   file="optics2016/measured_errors/Efcomp_MQMC.madx";
+ call,   file="optics2016/measured_errors/Efcomp_MQML.madx";
+ call,   file="optics2016/measured_errors/Efcomp_MQTL.madx";
+ call,   file="optics2016/measured_errors/Efcomp_MQW.madx" ;
+ call,   file="optics2016/measured_errors/Efcomp_MQY.madx" ;
+ call,   file="optics2016/measured_errors/Efcomp_MQX.madx" ; !!! Assume local corrections for coupling and optics errors in the IRs have been applied
+
+
+!##############################################################################
+!########## GET NOMINAL CORRECTIONS FOR DIPOLES & TRIPLETS ETC ################
+!##############################################################################
+if(is_thin==1) {
+	value,NRJ;
+/*
+       !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+       !               correction of field errors in MB (compatible with V6.503 & SLHC)
+       !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        select, flag=error, clear;
+	select, flag=error, pattern=MB\.,class=multipole;
+	esave,  file="temp/MB.errors";
+	system, "slhc/errors/corr_MB_phaseI";
+	call, file="temp/MB_corr_setting.mad";
+	value, kcs.a12b1;
+	value, kcs.a78b1;
+	value, kcs.a12b2;
+        value, kcs.a78b2;
+*/
+
+	select, flag=error, clear;
+	select, flag=error, pattern=MB\.,class=multipole;
+	esave,  file="temp/MB.errors";
+	system, "optics2016/errors/corr_MB_v5";
+	call, file="temp/MB_corr_setting.mad";
+	value, kcs.a12b1;
+	value, kcs.a78b1;
+	value, kcs.a12b2;
+  value, kcs.a78b2;
+
+  KSS.a12B1  := 0 ;
+  KSS.a23B1  := 0 ;
+  KSS.a34B1  := 0 ;
+  KSS.a45B1  := 0 ;
+  KSS.a56B1  := 0 ;
+  KSS.a67B1  := 0 ;
+  KSS.a78B1  := 0 ;
+  KSS.a81B1  := 0 ;
+
+  KCO.a12B1  := 0 ;
+  KCO.a23B1  := 0 ;
+  KCO.a34B1  := 0 ;
+  KCO.a45B1  := 0 ;
+  KCO.a56B1  := 0 ;
+  KCO.a67B1  := 0 ;
+  KCO.a78B1  := 0 ;
+  KCO.a81B1  := 0 ;
+
+};
+!MQS BEAM1
+CMRS.b1      :=   0.000000000000E+00 ;
+CMIS.b1      :=   0.000000000000E+00 ;
+CMRS.b1_sq   :=   0.000000000000E+00 ;
+CMIS.b1_sq   :=   0.000000000000E+00 ;
+ona2_b1      :=   0.000000000000E+00 ;
+ KQS.R1B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.266278479040E-01) * CMRS.b1 + (-0.899733288016E-02) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+ KQS.L2B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.266278479040E-01) * CMRS.b1 + (-0.899733288016E-02) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+KQS.A23B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.142516736842E-01) * CMRS.b1 + ( 0.848602983914E-02) * CMIS.b1 + ( 0.302173156154E-01) * CMRS.b1_sq + ( 0.109843179604E-01) * CMIS.b1_sq  ;
+ KQS.R3B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.171205193764E-01) * CMRS.b1 + (-0.807870546221E-02) * CMIS.b1 + (-0.402300957758E-01) * CMRS.b1_sq + (-0.822964594698E-02) * CMIS.b1_sq  ;
+ KQS.L4B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.171205193764E-01) * CMRS.b1 + (-0.807870546221E-02) * CMIS.b1 + (-0.402300957758E-01) * CMRS.b1_sq + (-0.822964594698E-02) * CMIS.b1_sq  ;
+KQS.A45B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.113812285983E-01) * CMRS.b1 + ( 0.955159460427E-02) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+ KQS.R5B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.792323136002E-02) * CMRS.b1 + ( 0.100926247998E-01) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+ KQS.L6B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.792323136002E-02) * CMRS.b1 + ( 0.100926247998E-01) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+KQS.A67B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.158692136780E-01) * CMRS.b1 + ( 0.106460324212E-01) * CMIS.b1 + (-0.709778694350E-01) * CMRS.b1_sq + ( 0.349381515069E-01) * CMIS.b1_sq  ;
+ KQS.R7B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.739140462540E-02) * CMRS.b1 + (-0.987710657697E-02) * CMIS.b1 + (-0.549901960504E-02) * CMRS.b1_sq + (-0.185504800255E-01) * CMIS.b1_sq  ;
+ KQS.L8B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.739140462540E-02) * CMRS.b1 + (-0.987710657697E-02) * CMIS.b1 + (-0.549901960504E-02) * CMRS.b1_sq + (-0.185504800255E-01) * CMIS.b1_sq  ;
+KQS.A81B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.241324775639E-01) * CMRS.b1 + (-0.962582146500E-02) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+
+
+KQTF.A81B1  :=    0.000000000000E+00 + ( 0.386712697356E-02) * dQx.b1 + ( 0.714404818290E-03) * dQy.b1 + ( 0.000000000000E+00) * dQx.b1_sq + ( 0.000000000000E+00) * dQy.b1_sq  ;
+KQTF.A12B1  :=    0.000000000000E+00 + ( 0.386712697356E-02) * dQx.b1 + ( 0.714404818290E-03) * dQy.b1 + ( 0.000000000000E+00) * dQx.b1_sq + ( 0.000000000000E+00) * dQy.b1_sq  ;
+KQTF.A45B1  :=    0.000000000000E+00 + ( 0.386712697356E-02) * dQx.b1 + ( 0.714404818290E-03) * dQy.b1 + ( 0.000000000000E+00) * dQx.b1_sq + ( 0.000000000000E+00) * dQy.b1_sq  ;
+KQTF.A56B1  :=    0.000000000000E+00 + ( 0.386712697356E-02) * dQx.b1 + ( 0.714404818290E-03) * dQy.b1 + ( 0.000000000000E+00) * dQx.b1_sq + ( 0.000000000000E+00) * dQy.b1_sq  ;
+KQTD.A81B1  :=    0.000000000000E+00 + (-0.675151714265E-03) * dQx.b1 + (-0.361436046931E-02) * dQy.b1 + ( 0.000000000000E+00) * dQx.b1_sq + ( 0.000000000000E+00) * dQy.b1_sq  ;
+KQTD.A12B1  :=    0.000000000000E+00 + (-0.675151714265E-03) * dQx.b1 + (-0.361436046931E-02) * dQy.b1 + ( 0.000000000000E+00) * dQx.b1_sq + ( 0.000000000000E+00) * dQy.b1_sq  ;
+KQTD.A45B1  :=    0.000000000000E+00 + (-0.675151714265E-03) * dQx.b1 + (-0.361436046931E-02) * dQy.b1 + ( 0.000000000000E+00) * dQx.b1_sq + ( 0.000000000000E+00) * dQy.b1_sq  ;
+KQTD.A56B1  :=    0.000000000000E+00 + (-0.675151714265E-03) * dQx.b1 + (-0.361436046931E-02) * dQy.b1 + ( 0.000000000000E+00) * dQx.b1_sq + ( 0.000000000000E+00) * dQy.b1_sq  ;
+KQTF.A78B1  :=    0.761119694300E-03 + ( 0.386712697356E-02) * dQx.b1 + ( 0.714404818290E-03) * dQy.b1 + ( 0.724644665413E-02) * dQx.b1_sq + ( 0.132484451020E-02) * dQy.b1_sq  ;
+KQTF.A23B1  :=   -0.771991245000E-03 + ( 0.386712697356E-02) * dQx.b1 + ( 0.714404818290E-03) * dQy.b1 + ( 0.724644665413E-02) * dQx.b1_sq + ( 0.132484451020E-02) * dQy.b1_sq  ;
+KQTF.A34B1  :=   -0.771991245000E-03 + ( 0.386712697356E-02) * dQx.b1 + ( 0.714404818290E-03) * dQy.b1 + ( 0.724644665413E-02) * dQx.b1_sq + ( 0.132484451020E-02) * dQy.b1_sq  ;
+KQTF.A67B1  :=    0.761119694300E-03 + ( 0.386712697356E-02) * dQx.b1 + ( 0.714404818290E-03) * dQy.b1 + ( 0.724644665413E-02) * dQx.b1_sq + ( 0.132484451020E-02) * dQy.b1_sq  ;
+KQTD.A78B1  :=   -0.933337382400E-03 + (-0.675151714265E-03) * dQx.b1 + (-0.361436046931E-02) * dQy.b1 + (-0.134618584897E-02) * dQx.b1_sq + (-0.720260248926E-02) * dQy.b1_sq  ;
+KQTD.A23B1  :=    0.915761029700E-03 + (-0.675151714265E-03) * dQx.b1 + (-0.361436046931E-02) * dQy.b1 + (-0.134618584897E-02) * dQx.b1_sq + (-0.720260248926E-02) * dQy.b1_sq  ;
+KQTD.A34B1  :=    0.915761029700E-03 + (-0.675151714265E-03) * dQx.b1 + (-0.361436046931E-02) * dQy.b1 + (-0.134618584897E-02) * dQx.b1_sq + (-0.720260248926E-02) * dQy.b1_sq  ;
+KQTD.A67B1  :=   -0.933337382400E-03 + (-0.675151714265E-03) * dQx.b1 + (-0.361436046931E-02) * dQy.b1 + (-0.134618584897E-02) * dQx.b1_sq + (-0.720260248926E-02) * dQy.b1_sq  ;
+
+
+!###################################################################################################################################
+!############################## MISALIGN MCD #######################################################################################
+!###################################################################################################################################
+
+ SELECT, FLAG=ERROR, CLEAR;
+ SELECT,FLAG=ERROR,CLASS=MCO;
+ EOPTION,ADD=TRUE;
+ EALIGN,DX:=-0.00020,DY:=0.000;
+ SELECT, FLAG=ERROR, CLEAR;
+ SELECT,FLAG=ERROR,CLASS=MCD;
+ EOPTION,ADD=TRUE;
+ EALIGN,DX:=-0.00020,DY:=0.000;
+
+if(mylhcbeam==1){
+   match;
+     global, q1=qxinit, q2=qyinit;
+     vary,   name=dQx.b1, step=1.0E-7 ;
+     vary,   name=dQy.b1, step=1.0E-7 ;
+     lmdif,  calls=1000, tolerance=1.0E-21;
+   endmatch;
+   match;
+     global, dq1=dqxinit, dq2=dqyinit;
+     vary,   name=dQpx.b1, step=1.0E-7 ;
+     vary,   name=dQpy.b1, step=1.0E-7 ;
+     lmdif,  calls=1000, tolerance=1.0E-21;
+   endmatch;
+}
+
+!###########################################################################################################################################################################################
+!!###############!! APPLY THE MO
+!###########################################################################################################################################################################################
+if(mylhcbeam==1){
+ kof.a12b1 := MOFpowering;
+ kof.a23b1 := MOFpowering;
+ kof.a34b1 := MOFpowering;
+ kof.a45b1 := MOFpowering;
+ kof.a56b1 := MOFpowering;
+ kof.a67b1 := MOFpowering;
+ kof.a78b1 := MOFpowering;
+ kof.a81b1 := MOFpowering;
+
+ kod.a12b1 := MODpowering;
+ kod.a23b1 := MODpowering;
+ kod.a34b1 := MODpowering;
+ kod.a45b1 := MODpowering;
+ kod.a56b1 := MODpowering*0.775; !THIS MO IS HARDWARE LIMITED IN RUNii;
+ kod.a67b1 := MODpowering;
+ kod.a78b1 := MODpowering;
+ kod.a81b1 := MODpowering;
+}
+if(mylhcbeam>1){
+ kof.a12b2 := MOFpowering;
+ kof.a23b2 := MOFpowering;
+ kof.a34b2 := MOFpowering;
+ kof.a45b2 := MOFpowering;
+ kof.a56b2 := MOFpowering;
+ kof.a67b2 := MOFpowering;
+ kof.a78b2 := MOFpowering;
+ kof.a81b2 := MOFpowering;
+
+ kod.a12b2 := MODpowering;
+ kod.a23b2 := MODpowering;
+ kod.a34b2 := MODpowering;
+ kod.a45b2 := MODpowering;
+ kod.a56b2 := MODpowering;
+ kod.a67b2 := MODpowering;
+ kod.a78b2 := MODpowering;
+ kod.a81b2 := MODpowering;
+}
+
+ !MQS BEAM1
+CMRS.b1      :=   0.000000000000E+00 ;
+CMIS.b1      :=   0.000000000000E+00 ;
+CMRS.b1_sq   :=   0.000000000000E+00 ;
+CMIS.b1_sq   :=   0.000000000000E+00 ;
+ona2_b1      :=   0.000000000000E+00 ;
+ KQS.R1B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.266278479040E-01) * CMRS.b1 + (-0.899733288016E-02) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+ KQS.L2B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.266278479040E-01) * CMRS.b1 + (-0.899733288016E-02) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+KQS.A23B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.142516736842E-01) * CMRS.b1 + ( 0.848602983914E-02) * CMIS.b1 + ( 0.302173156154E-01) * CMRS.b1_sq + ( 0.109843179604E-01) * CMIS.b1_sq  ;
+ KQS.R3B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.171205193764E-01) * CMRS.b1 + (-0.807870546221E-02) * CMIS.b1 + (-0.402300957758E-01) * CMRS.b1_sq + (-0.822964594698E-02) * CMIS.b1_sq  ;
+ KQS.L4B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.171205193764E-01) * CMRS.b1 + (-0.807870546221E-02) * CMIS.b1 + (-0.402300957758E-01) * CMRS.b1_sq + (-0.822964594698E-02) * CMIS.b1_sq  ;
+KQS.A45B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.113812285983E-01) * CMRS.b1 + ( 0.955159460427E-02) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+ KQS.R5B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.792323136002E-02) * CMRS.b1 + ( 0.100926247998E-01) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+ KQS.L6B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.792323136002E-02) * CMRS.b1 + ( 0.100926247998E-01) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+KQS.A67B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.158692136780E-01) * CMRS.b1 + ( 0.106460324212E-01) * CMIS.b1 + (-0.709778694350E-01) * CMRS.b1_sq + ( 0.349381515069E-01) * CMIS.b1_sq  ;
+ KQS.R7B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.739140462540E-02) * CMRS.b1 + (-0.987710657697E-02) * CMIS.b1 + (-0.549901960504E-02) * CMRS.b1_sq + (-0.185504800255E-01) * CMIS.b1_sq  ;
+ KQS.L8B1   :=  (   0.000000000000E+00) * ona2_b1 + (-0.739140462540E-02) * CMRS.b1 + (-0.987710657697E-02) * CMIS.b1 + (-0.549901960504E-02) * CMRS.b1_sq + (-0.185504800255E-01) * CMIS.b1_sq  ;
+KQS.A81B1   :=  (   0.000000000000E+00) * ona2_b1 + ( 0.241324775639E-01) * CMRS.b1 + (-0.962582146500E-02) * CMIS.b1 + ( 0.000000000000E+00) * CMRS.b1_sq + ( 0.000000000000E+00) * CMIS.b1_sq  ;
+ !MQS BEAM2
+CMRS.b2      :=   0.000000000000E+00 ;
+CMIS.b2      :=   0.000000000000E+00 ;
+CMRS.b2_sq   :=   0.000000000000E+00 ;
+CMIS.b2_sq   :=   0.000000000000E+00 ;
+ona2_b2      :=   0.000000000000E+00 ;
+KQS.A12B2   :=  (   0.519213248459E-03) * ona2_b2 + ( 0.124458484817E-01) * CMRS.b2 + (-0.207596749726E-01) * CMIS.b2 + ( 0.000000000000E+00) * CMRS.b2_sq + ( 0.000000000000E+00) * CMIS.b2_sq  ;
+ KQS.R2B2   :=  (  -0.952785714091E-03) * ona2_b2 + ( 0.121456161967E-01) * CMRS.b2 + ( 0.397509215137E-02) * CMIS.b2 + ( 0.200920340631E-01) * CMRS.b2_sq + ( 0.712846355318E-02) * CMIS.b2_sq  ;
+ KQS.L3B2   :=  (  -0.952785714091E-03) * ona2_b2 + ( 0.121456161967E-01) * CMRS.b2 + ( 0.397509215137E-02) * CMIS.b2 + ( 0.200920340631E-01) * CMRS.b2_sq + ( 0.712846355318E-02) * CMIS.b2_sq  ;
+KQS.A34B2   :=  (  -0.217284900157E-03) * ona2_b2 + (-0.179258964749E-01) * CMRS.b2 + ( 0.371667140033E-02) * CMIS.b2 + (-0.405188393546E-01) * CMRS.b2_sq + ( 0.212647436428E-01) * CMIS.b2_sq  ;
+ KQS.R4B2   :=  (   0.186949354181E-03) * ona2_b2 + ( 0.128662566995E-01) * CMRS.b2 + ( 0.360504223421E-02) * CMIS.b2 + ( 0.000000000000E+00) * CMRS.b2_sq + ( 0.000000000000E+00) * CMIS.b2_sq  ;
+ KQS.L5B2   :=  (   0.186949354181E-03) * ona2_b2 + ( 0.128662566995E-01) * CMRS.b2 + ( 0.360504223421E-02) * CMIS.b2 + ( 0.000000000000E+00) * CMRS.b2_sq + ( 0.000000000000E+00) * CMIS.b2_sq  ;
+KQS.A56B2   :=  (   0.397814910113E-03) * ona2_b2 + ( 0.148124920807E-01) * CMRS.b2 + ( 0.138602241563E-02) * CMIS.b2 + ( 0.000000000000E+00) * CMRS.b2_sq + ( 0.000000000000E+00) * CMIS.b2_sq  ;
+ KQS.R6B2   :=  (  -0.138800614213E-03) * ona2_b2 + (-0.614988295119E-02) * CMRS.b2 + ( 0.179020058982E-01) * CMIS.b2 + (-0.327505145607E-01) * CMRS.b2_sq + ( 0.624417187334E-01) * CMIS.b2_sq  ;
+ KQS.L7B2   :=  (  -0.138800614213E-03) * ona2_b2 + (-0.614988295119E-02) * CMRS.b2 + ( 0.179020058982E-01) * CMIS.b2 + (-0.327505145607E-01) * CMRS.b2_sq + ( 0.624417187334E-01) * CMIS.b2_sq  ;
+KQS.A78B2   :=  (   0.907653646559E-03) * ona2_b2 + (-0.117937801373E-01) * CMRS.b2 + (-0.447830183312E-02) * CMIS.b2 + (-0.188089814503E-01) * CMRS.b2_sq + (-0.897287738080E-02) * CMIS.b2_sq  ;
+ KQS.R8B2   :=  (   0.173286377641E-03) * ona2_b2 + ( 0.144218507771E-01) * CMRS.b2 + (-0.211979276194E-01) * CMIS.b2 + ( 0.000000000000E+00) * CMRS.b2_sq + ( 0.000000000000E+00) * CMIS.b2_sq  ;
+ KQS.L1B2   :=  (   0.173286377641E-03) * ona2_b2 + ( 0.144218507771E-01) * CMRS.b2 + (-0.211979276194E-01) * CMIS.b2 + ( 0.000000000000E+00) * CMRS.b2_sq + ( 0.000000000000E+00) * CMIS.b2_sq  ;
+
+
+
+if(mylhcbeam==1){
+CMRS.b1      :=   0.0000 ;
+CMIS.b1      :=  -0.0000 ;
+}
+if(mylhcbeam>1){
+CMRS.b2      :=   0.0000 ;
+CMIS.b2      :=  -0.0000 ;
+}
+
+
+
+if(mylhcbeam==1){
+   match;
+     global, q1=qxinit, q2=qyinit;
+     vary,   name=dQx.b1, step=1.0E-7 ;
+     vary,   name=dQy.b1, step=1.0E-7 ;
+     lmdif,  calls=1000, tolerance=1.0E-21;
+   endmatch;
+   match;
+     global, dq1=dqxinit, dq2=dqyinit;
+     vary,   name=dQpx.b1, step=1.0E-7 ;
+     vary,   name=dQpy.b1, step=1.0E-7 ;
+     lmdif,  calls=1000, tolerance=1.0E-21;
+   endmatch;
+}
+
+
+
+twiss, file="twiss.tfs";
+
+VRF400:= %rf_vol;
+LAGRF400.B1=0.5;
+LAGRF400.B2=0.;
+
+twiss;
+!emit;
+ value, table(summ,q1);
+ value, table(summ,q2);
+ value, table(summ,dq1);
+ value, table(summ,dq2);
+
+if ( add_ape==1 ) {
+sixtrack,cavall, radius=0.017, aperture;
+} else {
+sixtrack,cavall, radius=0.017, aperture;
+};
+
+!use, sequence=lhcb1;
+!select, flag=twiss, clear;
+!select, flag=twiss, column=KEYWORD,NAME,S,BETX,BETY;
+!twiss,  sequence=lhcb1, centre, file="twiss_betas"; save;
+
+stop;

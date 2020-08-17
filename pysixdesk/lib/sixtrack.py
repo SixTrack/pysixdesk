@@ -24,8 +24,9 @@ class TrackingJob:
         Args:
             task_id (int): Current task ID.
             input_info (str/path): Path to the database configuration file.
-            group_name (str): The group name when submitting multi-jobs to one node
-            logger: The logger
+            group_name (str): The group name when submitting multi-jobs to one
+                node.
+            logger (logging.Logger): The logger
 
         Raises:
             FileNotFoundError: If required input file is not found in database.
@@ -60,7 +61,7 @@ class TrackingJob:
         self.wu_id = outputs[0][3]
         self.first_turn = outputs[0][4]
 
-        fort3_keys = list(cf['fort3'].keys())
+        fort3_keys = json.loads(cf['fort3']['keys'])
         fort3_outputs = self.db.select("sixtrack_wu_tmp", fort3_keys,
                                        where=f"task_id={self.task_id}")
         self.fort_cfg = dict(zip(fort3_keys, fort3_outputs[0]))
@@ -108,7 +109,7 @@ class TrackingJob:
 
         Returns:
             bool: Converted bool, True if string in ['true', 'yes', 'on'] and
-            False is string in ['false', 'no', 'off'].
+                False if string in ['false', 'no', 'off'].
 
         Raises:
             ValueError: If string not recognised.
@@ -145,7 +146,7 @@ class TrackingJob:
 
         Raises:
             FileNotFoundError: If unable to find input buffers in database.
-            Or unable to find checkpoint buffers.
+                Or unable to find checkpoint buffers.
         '''
 
         inp = self.six_cfg["input_files"]
@@ -193,7 +194,8 @@ class TrackingJob:
         Args:
             folder (str, optional): name of temp folder.
             symlink_parent (bool, optional): controls whether to symlink input
-            files and extra files from the parent dir to the temporary folder.
+                files and extra files from the parent dir to the temporary
+                folder.
             extra (list, optional): list of extra files to symlink.
 
         Raises:
@@ -231,7 +233,7 @@ class TrackingJob:
             **kwargs: are added to the config.
 
         Returns:
-            dict: fort.3 placeholder dictionnary with the added keys/values.
+            dict: fort.3 placeholder dictionary with the added keys/values.
         """
         # make a dict copy of fort_cfg
         fort_dic = dict(self.fort_cfg.items())
@@ -253,8 +255,8 @@ class TrackingJob:
         Args:
             fort_cfg (dict): dict containing the placeholder/value pairs.
             source_prefix (str/path, optional): if provided, will use the
-            provided folder prefix when looking for the fort_file and fc.3
-            files.
+                provided folder prefix when looking for the fort_file and fc.3
+                files.
             output_file (str, optional): name of the prepared fort.3 file.
 
         """
@@ -282,8 +284,25 @@ class TrackingJob:
         if source_prefix is not None:
             madx_fc3 = source_prefix / madx_fc3
 
+        utils.sandwich(dest,
+                       output_file,
+                       path_prefix=source_prefix,
+                       logger=self._logger)
+        # with open(output_file, 'r') as fp:
+        #     lines = fp.readlines()
+        #     print(''.join(lines))
+
+        # UGLY HACK TO GENERATE THE distribution.
+        try:
+            amps = json.loads(fort_cfg['amp'])
+            print(f'python init_dist.py {amps[0]} {amps[1]} {fort_cfg["angle"]} {fort_cfg["nss"]}')
+            os.system(f'python init_dist.py {amps[0]} {amps[1]} {fort_cfg["angle"]} {fort_cfg["nss"]}')
+        except Exception as e:
+            print('failed to run init_dist.py')
+            print(e)
+
         # concatenate
-        utils.concatenate_files([dest, madx_fc3], output_file)
+        # utils.concatenate_files([dest, madx_fc3], output_file)
 
     def sixtrack_run(self, output_file):
         """Runs sixtrack.
@@ -383,11 +402,11 @@ class TrackingJob:
 
         Args:
             six_stdout (str, optional): file containing sixtrack's standard
-            output.
+                output.
 
         Returns:
             bool: True if the ratio of particles which survived the tracking is
-            >= than self.surv_precent. False otherwise.
+                >= than self.surv_precent. False otherwise.
         '''
         with open(six_stdout, 'r') as f_in:
             lines = f_in.readlines()
