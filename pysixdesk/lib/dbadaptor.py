@@ -1,0 +1,389 @@
+import sqlite3
+import pymysql
+import logging
+from collections.abc import Iterable
+from contextlib import closing
+from abc import ABC, abstractmethod
+
+
+class DatabaseAdaptor(ABC):
+
+    def __init__(self):
+        self._logger = logging.getLogger(__name__)
+
+    @abstractmethod
+    def new_connection(self, name):
+        pass
+
+    @abstractmethod
+    def setting(self, conn, settings):
+        pass
+
+    def create_table(self, conn, name, columns, keys, recreate):
+        '''Create a new table'''
+        c = conn.cursor()
+        if recreate:
+            c.execute("DROP TABLE IF EXISTS %s" % name)
+        sql = 'CREATE TABLE IF NOT EXISTS %s (%s)'
+        if 'autoincrement' in keys.keys():
+            auto_keys = keys['autoincrement']
+            for ky in auto_keys:
+                columns[ky] = columns[ky] + ' AUTO_INCREMENT'
+        col = [' '.join(map(str, i)) for i in columns.items()]
+        col = [j.replace('.', '_') for j in col]
+        cols = ','.join(map(str, col))
+        fill = cols
+        if 'primary' in keys.keys():
+            prim = keys['primary']
+            if prim:
+                prim_key = ','.join(map(str, prim))
+                prim_sql = ', PRIMARY KEY(%s)' % prim_key
+                fill += prim_sql
+        if 'foreign' in keys.keys():
+            fore = keys['foreign']
+            if fore:
+                for k in fore.keys():
+                    fore_k = ','.join(fore[k][0])
+                    ref_k = ','.join(fore[k][1])
+                    fore_sql = ', FOREIGN KEY(%s) REFERENCES %s(%s) ON UPDATE\
+                                CASCADE ON DELETE CASCADE' % (fore_k, k, ref_k)
+                    fill += fore_sql
+        sql_cmd = sql % (name, fill)
+        c.execute(sql_cmd)
+        c.close()
+        conn.commit()
+
+    def drop_table(self, conn, table_name):
+        '''Drop an exist table'''
+        with closing(conn.cursor()) as c:
+            sql = 'DROP TABLE IF EXISTS %s' % table_name
+            c.execute(sql)
+        conn.commit()
+
+    def insert(self, conn, table_name, values, ph):
+        '''Insert a row of values
+        @conn A connection of database
+        @table_name(str) The table name
+        @values(dict) The values required to insert into database
+        @ph The placeholder for the selected database, e.g. ?, %s
+        '''
+        if len(values) == 0:
+            return
+        sql = 'INSERT INTO %s (%s) VALUES (%s)'
+        keys = list(values.keys())
+        vals = [values[key] for key in keys]
+        keys = [i.replace('.', '_') for i in keys]
+        cols = ','.join(keys)
+        ques = ','.join((ph,) * len(keys))
+        sql_cmd = sql % (table_name, cols, ques)
+        with closing(conn.cursor()) as c:
+            c.execute(sql_cmd, vals)
+        conn.commit()
+
+    def insertm(self, conn, table_name, values, ph):
+        '''Insert multiple rows once
+        @conn A connection of database
+        @table_name(str) The table name
+        @values(dict) The values required to insert into database
+        @ph The placeholder for the selected database, e.g. ?, %s
+        '''
+        if len(values) == 0:
+            return
+        sql = 'INSERT INTO %s (%s) VALUES (%s)'
+        keys = list(values.keys())
+        vals = [values[key] for key in keys]
+        keys = [i.replace('.', '_') for i in keys]
+        cols = ','.join(keys)
+        ques = ','.join((ph,) * len(keys))
+        sql_cmd = sql % (table_name, cols, ques)
+        vals = list(zip(*vals))
+        with closing(conn.cursor()) as c:
+            c.executemany(sql_cmd, vals)
+        conn.commit()
+
+    def select(self, conn, table_name, cols='*', where=None, orderby=None,
+               **kwargs):
+        '''Select values with conditions
+        @conn A connection of database
+        @table_name(str) The table name
+        @cols(list) The column names
+        @where(str) Selection condition
+        @orderby(list) Order condition
+        @**kwargs Some other conditions
+        '''
+        if len(cols) == 0:
+            return []
+        if (isinstance(cols, Iterable) and not isinstance(cols, str)):
+            cols = [i.replace('.', '_') for i in cols]
+            cols = ','.join(cols)
+        sql = 'SELECT %s FROM %s' % (cols, table_name)
+        if 'DISTINCT' in kwargs.keys() and kwargs['DISTINCT']:
+            sql = 'SELECT DISTINCT %s FROM %s' % (cols, table_name)
+        if where is not None:
+            sql += ' WHERE %s' % where
+        if 'groupby' in kwargs.keys() and kwargs['groupby']:
+            sql += ' GROUP BY %s' % (','.join(kwargs['groupby']))
+        if orderby is not None:
+            sql += ' ORDER BY %s' % (','.join(orderby))
+        if 'limit' in kwargs.keys() and kwargs['limit']:
+            sql += ' limit %s' % kwargs['limit']
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+            data = c.fetchall()
+        return data
+
+    def update(self, conn, table_name, values, where, ph):
+        '''Update data in a table
+        @conn A connection of database
+        @table_name(str) The table name
+        @values(dict) The column names with new values
+        @where(str) Selection condition
+        @ph The placeholder for the selected database, e.g. ?, %s
+        '''
+
+        if len(values) == 0:
+            return
+        sql = 'UPDATE %s SET %s '
+        keys = values.keys()
+        vals = [values[key] for key in keys]
+        keys = [i.replace('.', '_') for i in keys]
+        ques = (ph,) * len(keys)
+        sets = ['='.join(it) for it in zip(keys, ques)]
+        sets = ','.join(sets)
+        if where is not None:
+            sql = sql + 'WHERE ' + where
+        sql_cmd = sql % (table_name, sets)
+        with closing(conn.cursor()) as c:
+            c.execute(sql_cmd, vals)
+        conn.commit()
+
+    def updatem(self, conn, table_name, values, where, ph):
+        '''Update multi data in a table
+        @conn A connection of database
+        @table_name(str) The table name
+        @values(dict) The column names with new values
+        @where(dict) Selection conditions for updating values
+        with one-to-one mapping
+        @ph The placeholder for the selected database, e.g. ?, %s
+        '''
+
+        if len(values) == 0:
+            return
+        sql = 'UPDATE %s SET %s where %s'
+        keys = values.keys()
+        keys = [i.replace('.', '_') for i in keys]
+        vals = [values[key] for key in keys]
+        valsn = zip(*vals)
+        keys_where = where.keys()
+        keys_where = [i.replace('.', '_') for i in keys_where]
+        vals_where = [where[key] for key in keys_where]
+        vals_wheren = zip(*vals_where)
+        for val, val_where in zip(valsn, vals_wheren):
+            ques = (ph,) * len(keys)
+            sets = ['='.join(it) for it in zip(keys, ques)]
+            sets = ','.join(sets)
+            sets_where = ['='.join(map(str,it)) for it in zip(keys_where, val_where)]
+            sets_where = ' and '.join(sets_where)
+            sql_cmd = sql % (table_name, sets, sets_where)
+            with closing(conn.cursor()) as c:
+                c.execute(sql_cmd, val)
+        conn.commit()
+
+    def delete(self, conn, table_name, where):
+        '''Remove rows based on specified conditions
+        @conn A connection of database
+        @table_name(str) The table name
+        @where(str) Selection condition which is mandatory here!
+        '''
+        sql = 'DELETE FROM %s WHERE %s' % (table_name, where)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+        conn.commit()
+
+
+class SQLDatabaseAdaptor(DatabaseAdaptor):
+
+    def __init__(self):
+        super().__init__()
+
+    def new_connection(self, db_name, **kwargs):
+        '''Create a new connection'''
+        if '.db' not in db_name:
+            db_name = db_name + '.db'
+        conn = sqlite3.connect(db_name)
+        return conn
+
+    def setting(self, conn, settings):
+        '''Execute the settings of the database via pragma command'''
+        with closing(conn.cursor()) as c:
+            for key, value in settings.items():
+                sql = 'PRAGMA %s=%s' % (key, str(value))
+                c.execute(sql)
+        conn.commit()
+
+    def create_table(self, conn, name, columns, keys, recreate):
+        '''Create a new table'''
+        if 'autoincrement' in keys.keys():
+            auto_keys = keys.pop('autoincrement')
+            if 'primary' in keys.keys():
+                prim_keys = keys['primary']
+                for ky in auto_keys:
+                    if ky in prim_keys and columns[ky] != 'INTEGER':
+                        columns[ky] = 'INTEGER'
+        super(SQLDatabaseAdaptor, self).create_table(conn, name, columns, keys,
+                                                     recreate)
+
+    def fetch_tables(self, conn):
+        '''Fetch all the table names in the database'''
+        with closing(conn.cursor()) as c:
+            c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            out = c.fetchall()
+        return list(out)
+
+    def insert(self, conn, table_name, values):
+        '''Insert a row of values'''
+        super(SQLDatabaseAdaptor, self).insert(conn, table_name, values, '?')
+
+    def insertm(self, conn, table_name, values):
+        '''Insert multi rows of values'''
+        super(SQLDatabaseAdaptor, self).insertm(conn, table_name, values, '?')
+
+    def update(self, conn, table_name, values, where):
+        '''update values'''
+        super(SQLDatabaseAdaptor, self).update(conn, table_name, values, where,
+                                               '?')
+
+    def updatem(self, conn, table_name, values, where):
+        '''update values'''
+        super(SQLDatabaseAdaptor, self).updatem(conn, table_name, values, where,
+                                               '?')
+
+
+class MySQLDatabaseAdaptor(DatabaseAdaptor):
+
+    def __init__(self):
+        super().__init__()
+
+    def create_db(self, host, user, passwd, db_name, **kwargs):
+        '''Create a new database'''
+
+        conn = pymysql.connect(host, user, passwd, **kwargs)
+        c = conn.cursor()
+        sql = "SELECT schema_name FROM information_schema.schemata\
+                WHERE schema_name='%s'" % db_name
+        c.execute(sql)
+        out = c.fetchall()
+
+        if not out:
+            try:
+                sql = "CREATE DATABASE %s" % db_name
+                c.execute(sql)
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                content = "Failed to create new db %s!" % db_name
+                self._logger.error(content, exc_info=True)
+            finally:
+                c.close()
+                conn.close()
+        else:
+            c.close()
+            conn.close()
+            content = "The db %s already exist!" % db_name
+            self._logger.warning(content)
+
+    def new_connection(self, host, user, passwd, db_name=None, **kwargs):
+        '''Connect to an existing database'''
+        conn = pymysql.connect(host, user, passwd, db_name, **kwargs)
+        return conn
+
+    def setting(self, conn, settings):
+        pass
+
+    def create_user(self, conn, username, passwd, host='%'):
+        '''Create a new user'''
+        if self.check_user(conn, username):
+            self._logger.info('The user %s already exists!' % username)
+            return
+        sql = "CREATE USER '%s'@'%s' IDENTIFIED BY '%s'" % (
+                username, host, passwd)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def check_user(self, conn, username):
+        '''Check the existence of the given username'''
+        sql = "SELECT user FROM mysql.user"
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+            out = c.fetchall()
+        out = list(zip(*out))
+        return username in out[0]
+
+    def remove_user(self, conn, username):
+        '''Remove an user permanently'''
+        if not self.check_user(conn, username):
+            self._logger.info("The user %s doesn't exist!" % username)
+            return
+        sql = "DROP USER %s" % (username)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def grant(self, conn, username, privileges, pattern, grant=False, host='%'):
+        '''Grant specified privileges on given pattern(db.table) to an user'''
+        sql = "GRANT %s ON %s To '%s'@'%s'" % (
+                privileges, pattern, username, host)
+        if isinstance(grant, bool) and grant:
+            sql += ' WITH GRANT OPTION'
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def show_grants(self, conn, username):
+        '''Show the grants for the given user'''
+        if not self.check_user(conn, username):
+            self._logger.info("The user %s doesn't exist!" % username)
+            return
+        sql = "SHOW GRANTS FOR %s" % (username)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+            out = c.fetchall()
+        out = list(zip(*out))
+        return list(out[0])
+
+    def revoke(self, conn, username, privileges, pattern, host='%'):
+        '''Revoke specified privileges on given pattern(db.table) from an user'''
+        sql = "REVOKE %s ON %s FROM '%s'@'%s'" % (
+                privileges, pattern, username, host)
+        with closing(conn.cursor()) as c:
+            c.execute(sql)
+
+    def create_table(self, conn, name, columns, keys, recreate):
+        '''Create a new table'''
+        super(MySQLDatabaseAdaptor, self).create_table(conn, name, columns,
+                                                       keys, recreate)
+
+    def fetch_tables(self, conn):
+        '''Fetch all the table names in the database'''
+        with conn.cursor() as c:
+            c.execute("show tables")
+            a = list(c)
+        return a
+
+    def insert(self, conn, table_name, values):
+        '''Insert a row of values'''
+        super(MySQLDatabaseAdaptor, self).insert(conn, table_name, values,
+                                                 '%s')
+
+    def insertm(self, conn, table_name, values):
+        '''Insert multi rows of values'''
+        super(MySQLDatabaseAdaptor, self).insertm(conn, table_name, values,
+                                                  '%s')
+
+    def update(self, conn, table_name, values, where):
+        '''update values'''
+        super(MySQLDatabaseAdaptor, self).update(conn, table_name, values,
+                                                 where, '%s')
+
+    def updatem(self, conn, table_name, values, where):
+        '''update values'''
+        super(MySQLDatabaseAdaptor, self).updatem(conn, table_name, values,
+                                                 where, '%s')

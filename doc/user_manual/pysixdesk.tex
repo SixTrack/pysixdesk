@@ -1,0 +1,198 @@
+\documentclass[twoside,a4paper,11pt]{book}
+\usepackage[twoside,a4paper,top=25mm,bottom=25mm,left=20mm,right=20mm]{geometry}
+
+\usepackage{float}
+%\usepackage{graphics}
+\usepackage[dvips]{epsfig,rotating}
+\usepackage{longtable,booktabs}
+\usepackage{verbatim}
+\usepackage{listings}
+\usepackage[table]{xcolor}
+\usepackage{forest}
+ 
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+ 
+\lstset{style=mystyle}
+
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{siunitx}
+
+%\usepackage{html}
+
+% Table Settings
+\usepackage{longtable}
+\usepackage{tabu}
+\usepackage{multirow}
+\usepackage{tabularx}
+% \usepackage{makecell}
+\tabulinesep=^1mm_1mm
+\renewcommand{\arraystretch}{1.1}
+
+\usepackage{caption}
+\captionsetup[table]{skip=2pt}
+
+\usepackage{todonotes}
+%\usepackage{draftwatermark}
+
+\usepackage{fancyvrb}
+
+% Colours
+\definecolor{cverbbg}{gray}{0.95}
+\definecolor{cverbbd}{gray}{0.35}
+\definecolor{notered}{rgb}{0.70,0.0,0.0}
+\definecolor{linkred}{rgb}{0.70,0.1,0.0}
+
+% Links
+\usepackage{hyperref}
+\usepackage{url}
+\hypersetup{colorlinks=true, citecolor=blue, urlcolor=blue, linkcolor=linkred}
+\urlstyle{same}
+
+% Index
+\usepackage{makeidx}
+\makeindex
+
+% Verbatim Box
+\newenvironment{cverbatim}
+ {\SaveVerbatim{cverb}}
+ {\endSaveVerbatim
+  \scriptsize\flushleft\addtolength{\leftskip}{5mm}
+  \fboxrule=0.4pt\fboxsep=0.6em
+  \fcolorbox{cverbbd}{cverbbg}{\BUseVerbatim{cverb}}%
+  \endflushleft\normalsize
+}
+
+\newenvironment{ctverbatim}
+ {\SaveVerbatim{ctverb}}
+ {\endSaveVerbatim
+  \tiny\flushleft\addtolength{\leftskip}{5mm}
+  \fboxrule=0.4pt\fboxsep=0.6em
+  \fcolorbox{cverbbd}{cverbbg}{\BUseVerbatim{ctverb}}%
+  \endflushleft\normalsize
+}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\pagestyle{headings}
+\raggedbottom
+
+% Page Layout
+%*************
+
+\usepackage{fancyhdr}
+
+% Plain Page Numbering
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyfoot[LE,RO]{\thepage}
+}
+
+% Header style for numbered chapters
+\newcommand{\defaulthead}{
+    \fancyhead[LE]{\nouppercase{\scshape\leftmark}}
+    \fancyhead[RO]{\nouppercase{\scshape\rightmark}}
+}
+
+% Custom heading for unnumbered chapters
+\newcommand{\simplehead}[1]{
+    \fancyhead[LE]{\nouppercase{\itshape #1}}
+    \fancyhead[RO]{\nouppercase{\itshape #1}}
+}
+
+\pagestyle{fancy}
+
+% Page Header
+\renewcommand{\chaptermark}[1]{\markboth{\chaptername\ \thechapter: #1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}{}}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancyhf{}
+\defaulthead
+\headheight 15pt
+\fancyfoot[LE,RO]{\thepage}
+
+% Main Document
+\begin{document}
+
+\frontmatter
+\pagenumbering{roman}
+
+\pdfbookmark{Title Page}{TitlePage}
+\input{incTitlePage}
+\cleardoublepage
+
+\pdfbookmark{Acknowledgements}{Acknowledgements}
+\input{incAcknowledgement}
+\cleardoublepage
+
+\pdfbookmark{Contents}{Contents}
+\tableofcontents
+\cleardoublepage
+\pagenumbering{arabic}
+
+% Chapters
+\mainmatter
+\input{chIntroduction}
+\cleardoublepage
+\input{chDetailedGuide}
+\cleardoublepage
+\input{modindex}
+\cleardoublepage
+%\input{chGeneralUse}
+%\cleardoublepage
+
+%\appendix
+%\pdfbookmark{Appendix}{Appendix}
+%\phantomsection
+%\part*{Appendix}
+%
+%\renewcommand{\chaptername}{Appendix}
+% \input{apxKeywords}
+% \cleardoublepage
+%\input{apxDefaults}
+%\cleardoublepage
+%\input{apxInputOutput}
+%\cleardoublepage
+%\input{apxDataStructure}
+%\cleardoublepage
+% \input{apxExamples}
+% \cleardoublepage
+
+\backmatter
+\input{theBibliography}
+\cleardoublepage
+
+\pdfbookmark{Keyword Index}{Index}
+\printindex
+\cleardoublepage
+
+%\pdfbookmark{List of Tables}{List of Tables}
+%\listoftables
+%\cleardoublepage
+
+\end{document}
