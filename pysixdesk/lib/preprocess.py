@@ -41,16 +41,15 @@ class PreprocessJob:
         db_type = cf['db_info']['db_type']
         self.db_type = db_type.lower()
 
-        mask_keys = list(cf['mask'].keys())
+        mask_keys = json.loads(cf['mask']['keys'])
         outputs = self.db.select('preprocess_wu', mask_keys,
                                  where=f'task_id={self.task_id}')
-
         if not outputs[0]:
-            content = "Data not found for preprocess task %s!" % task_id
+            content = "Data not found for preprocess task %s!" % self.task_id
             raise FileNotFoundError(content)
+        self.mask_cfg = dict(zip(mask_keys, outputs[0]))
 
         self.madx_cfg = cf['madx']
-        self.mask_cfg = dict(zip(mask_keys, outputs[0]))
         self._decomp_templates()
 
         output_files = self.madx_cfg["output_files"]
@@ -100,7 +99,8 @@ class PreprocessJob:
         Args:
             folder (str, optional): name of temp folder.
             symlink_parent (bool, optional): controls whether to symlink input
-            files and extra files from the parent dir to the temporary folder.
+                files and extra files from the parent dir to the temporary
+                folder.
             extra (list, optional): list of extra files to symlink.
 
         Raises:
@@ -138,7 +138,7 @@ class PreprocessJob:
             **kwargs: are added to the config.
 
         Returns:
-            dict: fort.3 placeholder dictionnary with the added keys/values.
+            dict: fort.3 placeholder dictionary with the added keys/values.
         """
         # make a dict copy of fort_cfg
         fort_dic = dict(self.fort_cfg.items())
@@ -160,8 +160,8 @@ class PreprocessJob:
         Args:
             fort_cfg (dict): dict containing the placeholder/value pairs.
             source_prefix (str/path, optional): if provided, will use the
-            provided folder prefix when looking for the fort_file and fc.3
-            files.
+                provided folder prefix when looking for the fort_file and fc.3
+                files.
             output_file (str, optional): name of the prepared fort.3 file.
 
         """
@@ -236,8 +236,8 @@ class PreprocessJob:
 
         try:
             utils.download_output(dl_list, self._dest_path)
-            content = f"All requested results have been stored in {self._dest_path}"
-            self._logger.info(content)
+            msg = f"All requested results have been stored in {self._dest_path}"
+            self._logger.info(msg)
         except Exception:
             self._logger.warning("Job failed!", exc_info=True)
 
@@ -324,8 +324,6 @@ class PreprocessJob:
         mask_name = self.madx_cfg["mask_file"]
         source_path = Path(self.madx_cfg['source_path'])
         shutil.copy2(source_path / mask_name, mask_name)
-        # make destination folder
-        Path(self.madx_cfg['dest_path']).mkdir(parents=True, exist_ok=True)
 
     def madx_prep(self, output_file='madx_in'):
         '''Replaces the placeholders in the mask_file.
@@ -338,7 +336,8 @@ class PreprocessJob:
         utils.replace(patterns, values, self.madx_cfg["mask_file"],
                       output_file)
         # show diff
-        # utils.diff(self.madx_cfg["mask_file"], output_file, logger=self._logger)
+        # utils.diff(self.madx_cfg["mask_file"], output_file,
+        #            logger=self._logger)
 
     def madx_run(self, mask):
         """Runs madx.
@@ -402,14 +401,16 @@ class PreprocessJob:
         # check for fort.10
         # output_name = Path.cwd().parent / (job_name + '.output')
         if not Path('fort.10').is_file:
-            self._logger.error("The %s sixtrack job FAILED!" % job_name)
-            self._logger.error("Check the file %s which contains the SixTrack fort.6 output." % job_name)
+            self._logger.error(f"The {job_name} sixtrack job FAILED!")
+            self._logger.error(f"Check the file {job_name} which contains the "
+                               "SixTrack fort.6 output.")
             raise FileNotFoundError('"fort.10" not found.')
         else:
             # move fort.10 out of temp folder
             result_name = Path.cwd().parent / ('fort.10' + '_' + job_name)
             shutil.move('fort.10', result_name)
-            self._logger.info('Sixtrack job %s has completed normally!' % job_name)
+            self._logger.info(f'Sixtrack job {job_name} has completed '
+                              'normally!')
 
     def _sixtrack_job(self, job_name, **kwargs):
         '''One turn sixtrack job.
@@ -431,7 +432,6 @@ class PreprocessJob:
     def sixtrack_job(self):
         ''''Controls sixtrack job execution.
         '''
-
         try:
             self._sixtrack_job('first_oneturn', dp1='.0', dp2='.0', ition='0')
         except Exception as e:

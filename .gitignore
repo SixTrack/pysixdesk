@@ -1,2 +1,6 @@
 *.pyc
-
+reports/
+.coverage
+.DS_STORE/
+*.egg*
+__pycache__

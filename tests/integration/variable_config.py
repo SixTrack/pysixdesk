@@ -20,17 +20,17 @@ class MyStudyCustomizable(MyStudy):
         pass
 
 
-class SqlSettings(MyStudyCustomizable):
+class SQLiteSettings(MyStudyCustomizable):
     def apply_settings(self):
         super().apply_settings()
-        print("Using SqlLite")
+        print("Using SQLite")
         self.db_info['db_type'] = 'sql'
 
 
-class MySqlSettings(MyStudyCustomizable):
+class MySQLSettings(MyStudyCustomizable):
     def apply_settings(self):
         super().apply_settings()
-        print('Using MySql')
+        print('Using MySQL')
         self.db_info['db_type'] = 'mysql'
 
 
@@ -52,40 +52,38 @@ class CollSettings(MyStudyCustomizable):
                                   'survey': 'SurveyWithCrossing_XP_lowb.dat'}
         self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
         self.preprocess_output = dict(self.madx_output)
-        self.sixtrack_input['temp'] = 'fort.3'
+        self.sixtrack_input['fort_file'] = 'fort.3'
         self.sixtrack_input['input'] = self.preprocess_output
         self.sixtrack_input['additional_input'] = ['CollDB.data']
         self.sixtrack_output = ['aperture_losses.dat',
                                 'coll_summary.dat',
                                 'Coll_Scatter.dat']
-        self.sixtrack_params = dict(self.oneturn_sixtrack_params)
-        self.sixtrack_params['COLL'] = '/'
-        self.oneturn_sixtrack_params['COLL'] = ''
-        self.sixtrack_params['turnss'] = 100
-        self.sixtrack_params['nss'] = 5000
-        self.sixtrack_params['ax0s'] = 0
-        self.sixtrack_params['ax1s'] = 17
-        self.sixtrack_params['e0'] = 6500000
-        self.oneturn_sixtrack_params['e0'] = 6500000
-        self.sixtrack_params['POST'] = '/'
-        self.sixtrack_params['POS1'] = '/'
-        self.oneturn_sixtrack_params['POST'] = 'POST'
-        self.oneturn_sixtrack_params['POS1'] = ''
-        self.sixtrack_params['dp2'] = 0.00
-        self.sixtrack_params['ition'] = 1
-        self.sixtrack_params['ibtype'] = 1
-        self.oneturn_sixtrack_params['ibtype'] = 1
-        # self.sixtrack_params['length'] = 26658.864
+        # self.sixtrack_params = dict(self.oneturn_sixtrack_params)
+        self.params['toggle_coll/'] = ''
+        # self.params.oneturn['toggle_coll/'] = ''
+        self.params['turnss'] = 100
+        self.params['nss'] = 60
+        self.params['ax0s'] = 0
+        self.params['ax1s'] = 17
+        self.params['e_0'] = 6500000
+        self.params['toggle_post/'] = '/'
+        # self.params.oneturn['toggle_post/'] = ''
+        self.params['dp2'] = 0.00
+        self.params['ition'] = 1
+        self.params['ibtype'] = 1
+        # self.params['length'] = 26658.864
         # eigen-emittances to be chosen to determine the coupling angle
-        self.sixtrack_params['EI'] = 3.5
-        self.oneturn_sixtrack_params['EI'] = 3.5
+        self.params['EI'] = 3.5
         # logical switch to calculate 4D(ilin=1) or DA approach 6D (ilin=2)
-        self.sixtrack_params['ilin'] = 1
-        self.oneturn_sixtrack_params['ilin'] = 1
+        self.params['ilin'] = 1
 
-    # Disable pre_calc
-    def pre_calc(self, *args, **kwargs):
-        return True
+        # disable calc queue
+        self.params.calc_queue = []
+        print(self.params.oneturn)
+
+    # # Disable pre_calc
+    # def pre_calc(self, *args, **kwargs):
+    #     return True
 
 
 class CheckpointSettings(MyStudyCustomizable):
@@ -100,42 +98,42 @@ class CheckpointSettings(MyStudyCustomizable):
 
 
 # complete configs:
-class MySqlConfig(MySqlSettings):
+class MySQLConfig(MySQLSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class MySqlCollConfig(CollSettings, MySqlSettings):
+class MySQLCollConfig(CollSettings, MySQLSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class MySqlCheckpointConfig(CheckpointSettings, MySqlSettings):
+class MySQLCheckpointConfig(CheckpointSettings, MySQLSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class SqliteConfig(SqlSettings):
+class SQLiteConfig(SQLiteSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class SqliteCollConfig(CollSettings, SqlSettings):
+class SQLiteCollConfig(CollSettings, SQLiteSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()
         self.customize(fake=False)
 
 
-class SqliteCheckpointConfig(CheckpointSettings, SqlSettings):
+class SQLiteCheckpointConfig(CheckpointSettings, SQLiteSettings):
     def __init__(self, name, location):
         super().__init__(name, location)
         self.apply_settings()

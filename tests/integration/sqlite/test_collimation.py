@@ -13,10 +13,10 @@ else:
     os.environ['PYTHONPATH'] = f"{pysixdesk_path}"
 import pysixdesk
 
-from .test_sqlite import SqliteStudy
+from .test_sqlite import SQLiteStudy
 
 
-class MySqlDBColl(SqliteStudy, unittest.TestCase):
+class SQLiteDBColl(SQLiteStudy, unittest.TestCase):
     def setUp(self):
         self.test_folder = Path('integration_test/sqlite_coll')
         self.test_folder.mkdir(parents=True, exist_ok=True)
@@ -26,7 +26,7 @@ class MySqlDBColl(SqliteStudy, unittest.TestCase):
         self.st = None
 
     def test_sqlite_study(self):
-        self.sqlite_study(config='SqliteCollConfig')
+        self.sqlite_study(config='SQLiteCollConfig')
         # add additional checks
 
     def tearDown(self):

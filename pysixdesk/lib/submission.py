@@ -6,7 +6,8 @@ import getpass
 from abc import ABC, abstractmethod
 from subprocess import Popen, PIPE
 
-from . import utils
+from .utils import PYSIXDESK_ABSPATH
+from .utils import ProgressBar
 
 
 class Cluster(ABC):
@@ -55,7 +56,7 @@ class HTCondor(Cluster):
             trans (list): The python modules needed by the executables
             exe (str): The executable
             exe_args (str): The additional arguments for executable except for
-            wu_id.
+                wu_id.
             input_path (str): The folder with input files
             output_path (str): The output folder
             flavour (str): The queue types of HTCondor
@@ -64,7 +65,7 @@ class HTCondor(Cluster):
         if os.path.exists(job_list):
             os.remove(job_list)
         self._logger.info(f'Creating jobid.list file and output folder....')
-        bar = utils.ProgressBar(len(task_ids))
+        bar = ProgressBar(len(task_ids))
         with open(job_list, 'w') as f_out:
             val_task_ids = []
             for i in task_ids:
@@ -78,10 +79,10 @@ class HTCondor(Cluster):
                 os.makedirs(out_f)
             cont = '\n'.join(map(str, val_task_ids))
             f_out.write(cont)
-        #os.chmod(job_list, 0o444)  # change the permission to readonly
-        trans.append(os.path.join(utils.PYSIXDESK_ABSPATH, 'pysixdesk'))
+        # os.chmod(job_list, 0o444)  # change the permission to readonly
+        trans.append(os.path.join(PYSIXDESK_ABSPATH, 'pysixdesk'))
         rep = {}
-        rep['%func'] = ','.join(map(str, trans))
+        rep['%func'] = ', '.join(map(str, trans))
         rep['%exe'] = exe
         rep['%dirname'] = output_path
         rep['%joblist'] = job_list
@@ -93,7 +94,7 @@ class HTCondor(Cluster):
         sub_file = os.path.join(input_path, self.sub_name)
         if os.path.exists(sub_file):
             os.remove(sub_file)  # remove the old one
-        self._logger.info(f'Creating actual htcondor description file....')
+        self._logger.info(f'Creating htcondor description file....')
         with open(sub_temp, 'r') as f_in:
             with open(sub_file, 'w') as f_out:
                 conts = f_in.read()
@@ -105,10 +106,12 @@ class HTCondor(Cluster):
 
     def submit(self, input_path, job_name, limit, trials=5, *args, **kwargs):
         '''Submit the job to the cluster
+
         Args:
             input_path (string): The input path to hold the input files
-            job_name (string): The job name (also is the batch_name for HTCondor)
-            limit (int): The maximum job number per submittion
+            job_name (string): The job name (also is the batch_name for
+                HTCondor).
+            limit (int): The maximum job number per submission
             trials (int): The maximum number of resubmission when submit failed
         '''
 
@@ -251,7 +254,7 @@ class HTCondor(Cluster):
             self._logger.error(stderr)
         return not process.returncode
 
-    def remove(self,study_path, status, *args, **kwargs):
+    def remove(self, study_path, status, *args, **kwargs):
         '''Cancel the submitted jobs
         Args:
             studypath (string): The absolute path of the study

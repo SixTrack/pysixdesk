@@ -95,7 +95,7 @@ def diff(file1, file2, logger=None, **kwargs):
         file1 (str/path): path to first file for the diff.
         file2 (str/path): path to second file for the diff.
         logger (logging.logger, optional): logger with which to display the
-        diff, if None, will use print.
+            diff, if None, will use print.
         kwargs: additional arguments for `difflib.unified_diff`.
     '''
 
@@ -189,8 +189,8 @@ def exc_catch(fun, exc_action=None, *args, **kwargs):
     Args:
         fun (callable): The wrapped function.
         exc_action (callable, optionnal): callable which will run if "fun"
-        raises an Exception. If None will not do anything, the Exception will
-        be supressed.
+            raises an Exception. If None will not do anything, the Exception
+            will be supressed.
         args kwargs (optionnal): passed on to the wrapped function call.
 
     Returns:
@@ -237,13 +237,25 @@ def condor_logger(name):
     logger.setLevel(logging.DEBUG)
     return logger
 
+
+def merge_dicts(x, y):
+    """Merges two dicts.
+
+    Returns:
+        dict: Merged dict
+    """
+    z = x.copy()
+    z.update(y)
+    return z
+
+
 class ProgressBar(object):
     '''
     A very lightweight progress bar to monitor the submit progress
     '''
 
     def __init__(self, total, width=50):
-        self.width = 50
+        self.width = width
         self.total = total
         self.num = 0
 

@@ -13,10 +13,10 @@ else:
     os.environ['PYTHONPATH'] = f"{pysixdesk_path}"
 import pysixdesk
 
-from .test_mysql import MySqlStudy
+from .test_mysql import MySQLStudy
 
 
-class MySqlDBColl(MySqlStudy, unittest.TestCase):
+class MySqlDBColl(MySQLStudy, unittest.TestCase):
     def setUp(self):
         self.test_folder = Path('integration_test/mysql_coll')
         self.test_folder.mkdir(parents=True, exist_ok=True)
@@ -26,7 +26,7 @@ class MySqlDBColl(MySqlStudy, unittest.TestCase):
         self.st = None
 
     def test_mysql_study(self):
-        self.mysql_study(config='MySqlCollConfig')
+        self.mysql_study(config='MySQLCollConfig')
         # add additional checks
 
     def tearDown(self):

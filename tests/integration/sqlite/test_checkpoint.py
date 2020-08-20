@@ -14,10 +14,10 @@ else:
     os.environ['PYTHONPATH'] = f"{pysixdesk_path}"
 import pysixdesk
 
-from .test_sqlite import SqliteStudy
+from .test_sqlite import SQLiteStudy
 
 
-class MySqlDBCheckpoint(SqliteStudy, unittest.TestCase):
+class SQLiteDBCheckpoint(SQLiteStudy, unittest.TestCase):
     def setUp(self):
         self.test_folder = Path('integration_test/sqlite_checkpoint')
         self.test_folder.mkdir(parents=True, exist_ok=True)
@@ -28,12 +28,12 @@ class MySqlDBCheckpoint(SqliteStudy, unittest.TestCase):
 
     def test_sqlite_study_restart(self):
         # run a normal sqlite study. with the correct executable.
-        self.sqlite_study(config='SqliteCheckpointConfig')
+        self.sqlite_study(config='SQLiteCheckpointConfig')
         # continue previous study
         self.st = self.ws.load_study(self.st_name,
                                      module_path=str(Path(__file__).parents[1] /
                                                      'variable_config.py'),
-                                     class_name='SqliteCheckpointConfig')
+                                     class_name='SQLiteCheckpointConfig')
         self.assertTrue(self.st.checkpoint_restart)
 
         self.st.prepare_sixtrack_input()

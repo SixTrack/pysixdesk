@@ -30,6 +30,7 @@ class WorkSpace(object):
         self.name = workspace_name
         self.paths = {}
         self.studies = []
+        self._template_ignore = ['__pycache__', '.DS_STORE']
         self.templates = templates
         self._update_list_existing_studies()
 
@@ -98,10 +99,13 @@ class WorkSpace(object):
             self.paths['templates'])
         self._logger.info(content)
         if self.templates:
-            tem_path = self.templates # custom templates
+            tem_path = self.templates  # custom templates
         else:
             tem_path = os.path.join(utils.PYSIXDESK_ABSPATH, 'templates')
         for item in os.listdir(tem_path):
+            # skip ignored files and folders
+            if item in self._template_ignore:
+                continue
             sour = os.path.join(tem_path, item)
             dest = os.path.join(self.paths['templates'], item)
             if os.path.isfile(sour) and not os.path.isfile(dest):
@@ -173,7 +177,7 @@ class WorkSpace(object):
 
         # template files
         if templates and os.path.isdir(templates):
-            tem_path = templates # custom templates
+            tem_path = templates  # custom templates
         else:
             tem_path = self.paths['templates']
         for item in os.listdir(tem_path):

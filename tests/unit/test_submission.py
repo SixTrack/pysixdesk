@@ -44,7 +44,7 @@ class SubmissionTest(unittest.TestCase):
                 if '=' in line:
                     line = line.split('=')
                     contents[line[0].strip()] = line[1].strip()
-        self.assertEqual(contents['transfer_input_files'], ','.join(self.trans))
+        self.assertEqual(contents['transfer_input_files'], ', '.join(self.trans))
         self.assertEqual(contents['executable'], self.exe)
         self.assertEqual(contents['arguments'], f'$(wu_id) {exe_args}')
         self.assertEqual(contents['initialdir'], f'{output_path}/$(wu_id)/')
@@ -52,7 +52,9 @@ class SubmissionTest(unittest.TestCase):
         self.assertEqual(contents['error'], f'{output_path}/$(wu_id)/htcondor.$(ClusterId).$(ProcId).err')
         self.assertEqual(contents['log'], f'{output_path}/$(wu_id)/htcondor.$(ClusterId).$(ProcId).log')
 
-        _, out = self.cluster.submit(self.sub_folder_in, 'unit_test_submission')
+        _, out = self.cluster.submit(self.sub_folder_in,
+                                     'unit_test_submission',
+                                     limit=None)
         self.jobs = out
         self.assertEqual(list(out.keys()), [str(i) for i in self.wu_ids])
 

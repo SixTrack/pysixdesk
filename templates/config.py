@@ -2,13 +2,16 @@
 This is a template file of preparing parameters for madx and sixtracking jobs.
 '''
 import os
-import ast
 import logging
 
 from pysixdesk.lib import submission
 from pysixdesk import Study
-from math import sqrt, pi, sin, cos
-from pysixdesk.lib.machineparams import MachineConfig
+from pysixdesk.lib.study_params import StudyParams
+from pysixdesk.lib.study_params import set_input_keys
+from pysixdesk.lib.study_params import set_requirements
+from pysixdesk.lib.study_params import set_output_keys
+from math import sqrt, pi, sin, cos, tan
+from pysixdesk.lib import machineparams
 
 # logger configuration
 logger = logging.getLogger('pysixdesk')
@@ -40,36 +43,63 @@ class MyStudy(Study):
         self.db_info['db_type'] = 'sql'
         # self.db_info['db_type'] = 'mysql'
 
-        # Get the default values for specified machine with specified runtype
-        machine_params = MachineConfig('LHC').parameters('inj')
-        # machine_params = MachineConfig('LHC').parameters('col')
         self.oneturn = True  # Switch for oneturn sixtrack job
         # self.collimation = True
 
         # All parameters are case-sensitive
         # the name of mask file
-        self.madx_input["mask_file"] = 'hl10.mask'
-        self.madx_params["SEEDRAN"] = [1, 2]  # all seeds in the study
-        # all chromaticity in the study
-        self.madx_params["QP"] = list(range(1, 1 + 1))
-        # all octupole currents in the study
-        self.madx_params["IOCT"] = list(range(100, 200 + 1, 100))
+        mask_file = 'hl10.mask'
+        self.madx_input["mask_file"] = mask_file
+        # All parameters are case-sensitive
+        self.params = StudyParams(mask_path=os.path.join(self.study_path, mask_file),
+                                  fort_path=os.path.join(self.study_path, 'fort.3'),
+                                  machine_defaults=machineparams.HLLHC['col'])
+        self.params['Runnam'] = name
+        amp = [8, 10, 12]
+        self.params['turnss'] = int(1e2)  # number of turns to track (must be int)
+        self.params['nss'] = 30
+        self.params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
+        self.params['kang'] = list(range(1, 1 + 2))  # The angle
+        self.params['kmax'] = 5
+        # self.params['toggle_coll/'] = '/'
+        self.params['seed_ran'] = [1, 2]
+        self.params['i_mo'] = list(range(100, 200 + 1, 100))
+
+        @set_input_keys(['kang', 'kmax'])
+        @set_output_keys(['angle'])
+        def calc_angle(kang, kmax):
+            return kang / (kmax + 1)  # 1-->pi/2, 0.5-->pi/4, ...
+        self.params.calc_queue.append(calc_angle)
+
+        @set_input_keys(['angle'])
+        @set_output_keys(['ratio'])
+        def calc_ratio(angle):
+            ratio = abs(tan((pi / 2) * angle))
+            if ratio < 1e-15:
+                ratio = 0.
+            else:
+                ratio = ratio ** 2
+            return ratio
+        self.params.calc_queue.append(calc_ratio)
+
+        # should it not be betax and betax2 ?
+        @set_requirements({'oneturn_sixtrack_results': ['betax', 'betax2']})
+        @set_input_keys(['angle', 'ratio', 'emit_norm_x', 'e_0', 'pmass', 'amp'])
+        @set_output_keys(['ax0s', 'ax1s'])
+        def calc_amp(angle, ratio, emit, e_0, pmass, amp, betax=None, betax2=None):
+            gamma = e_0 / pmass
+            factor = sqrt(emit / gamma)
+            ax0t = factor * (sqrt(betax) + sqrt(betax2 * ratio) * cos((pi / 2) * angle))
+            return amp[0] * ax0t, amp[1] * ax0t
+        self.params.calc_queue.append(calc_amp)
+
         self.oneturn_sixtrack_input['fort_file'] = 'fort.3'
-        self.oneturn_sixtrack_params.update(machine_params)
-        self.sixtrack_params = dict(self.oneturn_sixtrack_params)
-        self.sixtrack_params['turnss'] = int(1e2)  # number of turns to track (must be int)
-        amp = [8, 10, 12]  # The amplitude
-        self.sixtrack_params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
-        self.sixtrack_params['kang'] = list(range(1, 1 + 1))  # The angle
+        self.oneturn_sixtrack_output = ['oneturnresult']
         self.sixtrack_input['fort_file'] = 'fort.3'
         self.preprocess_output = dict(self.madx_output)
         self.sixtrack_input['input'] = dict(self.preprocess_output)
-        # For CR
-        self.checkpoint_restart = False
-        self.first_turn = 1
-        self.last_turn = 100
 
-        # The parameters for collimation job
+        # # The parameters for collimation job
         # self.madx_output = {
         #     'fc.2': 'fort.2',
         #     'fc.3': 'fort.3.mad',
@@ -79,101 +109,25 @@ class MyStudy(Study):
         #         'survey':'SurveyWithCrossing_XP_lowb.dat'}
         # self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
         # self.preprocess_output = dict(self.madx_output)
-        # self.sixtrack_input['temp'] = 'fort.3'
+        # self.sixtrack_input['fort_file'] = 'fort.3'
         # self.sixtrack_input['input'] = self.preprocess_output
         # self.sixtrack_input['additional_input'] = ['CollDB.data']
-        # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat',
-        #         'Coll_Scatter.dat']
-        # self.sixtrack_params = dict(self.oneturn_sixtrack_params)
-        # self.sixtrack_params['COLL'] = '/'
-        # self.sixtrack_params['turnss'] = 200
-        # self.sixtrack_params['nss'] = 5000
-        # self.sixtrack_params['ax0s'] = 0
-        # self.sixtrack_params['ax1s'] = 17
-        # self.sixtrack_params['e0'] = 6500000
-        # self.sixtrack_params['POST'] = '/'
-        # self.sixtrack_params['POS1'] = '/'
-        # self.sixtrack_params['dp2'] = 0.00
-        # self.sixtrack_params['ition'] = 1
-        # self.sixtrack_params['ibtype'] = 1
-        # self.sixtrack_params['length'] = 26658.864
+        # self.sixtrack_output = ['aperture_losses.dat', 'coll_summary.dat']
+        # self.params['toggle_coll'] = '/'
+        # self.params['turnss'] = 200
+        # self.params['nss'] = 5000
+        # self.params['ax0s'] = 0
+        # self.params['ax1s'] = 17
+        # self.params['e_0'] = 6500000
+        # self.params['toggle_post'] = '/'
+        # self.params['dp2'] = 0.00
+        # self.params['ition'] = 1
+        # self.params['ibtype'] = 1
+        # self.params['length'] = 26658.864
         # # eigen-emittances to be chosen to determine the coupling angle
-        # self.sixtrack_params['EI'] = 3.5
+        # self.params['EI'] = 3.5
         # # logical switch to calculate 4D(ilin=1) or DA approach 6D (ilin=2)
-        # self.sixtrack_params['ilin'] = 1
-
-        self.env['emit'] = 3.75
-        self.env['gamma'] = 7460.5
-        self.env['kmax'] = 5
+        # self.params['ilin'] = 1
 
         # Update the user-define parameters and objects
         self.customize()  # This call is mandatory
-
-    def pre_calc(self, paramdict, pre_id):
-        '''Further calculations for the specified parameters'''
-        # The angle should be calculated before amplitude
-        keys = list(paramdict.keys())
-        status = []
-        status.append(self.formulas('kang', 'angle', paramdict, pre_id))
-        status.append(self.formulas('amp', ['ax0s', 'ax1s'], paramdict, pre_id))
-        param_keys = list(paramdict.keys())
-        [paramdict.pop(key) for key in param_keys if key not in keys]
-        return all(status)
-
-    def formulas(self, source, dest, paramdict, pre_id):
-        '''The formulas for the further calculations,
-        this function should be customized by the user!
-        @source The source parameter name
-        @dest  The destination parameter name
-        @paramdict The parameter dictionary, the source parameter in the dict
-        will be replaced by destination parameter after calculation
-        @pre_id The identified preprocess job id
-        @return The status'''
-        if source not in paramdict.keys():
-            self._logger.info("Invalid parameter name %s!" % source)
-            return 0
-        value = paramdict[source]
-        try:
-            if isinstance(value, str):
-                value = ast.literal_eval(value)
-        except ValueError:
-            self._logger.error("Invalid source value for job %s!" % pre_id)
-            return 0
-        except:
-            self._logger.error("Unexpected error!", exc_info=True)
-            return 0
-        if source == 'amp':
-            if 'angle' not in paramdict.keys():
-                self._logger.error("The angle should be calculated before amplitude!")
-                return 0
-            try:
-                values = self.getval(pre_id, ['betax'])
-                beta_x = values[0]
-                kang = paramdict['angle']
-                kang = float(kang)
-                tt = abs(sin(pi / 2 * kang) / cos(pi / 2 * kang))
-                ratio = 0.0 if tt < 1.0E-15 else tt**2
-                emit = self.env['emit']
-                gamma = self.env['gamma']
-                factor = sqrt(emit / gamma)
-                ax0t = factor * (sqrt(beta_x) + sqrt(beta_x * ratio) * cos(pi / 2 * kang))
-                value0 = ax0t * value[0]
-                value1 = ax0t * value[1]
-                paramdict[dest[0]] = str(value0)
-                paramdict[dest[1]] = str(value1)
-                return 1
-            except:
-                self._logger.error("Unexpected error!", exc_info=True)
-                return 0
-        elif source == 'kang':
-            try:
-                kmax = self.env['kmax']
-                value1 = value / (kmax + 1)
-                paramdict[dest] = str(value1)
-                return 1
-            except Exception:
-                self._logger.error("Unexpected error!", exc_info=True)
-                return 0
-        else:
-            self._logger.error("There isn't a formula for parameter %s!" % dest)
-            return 0

@@ -15,13 +15,13 @@ else:
 import pysixdesk
 
 
-class MySqlStudy:
+class MySQLStudy:
     '''Runs a typical MySql test.
     Note, this method is not supposed to run on it's own, it must be subclassed
     and combined with the unittest.TestCase class for the self.assertEqual,
     self.assertTrue, and other attributes/methods to be defined.
     '''
-    def mysql_study(self, config='MySqlConfig'):
+    def mysql_study(self, config='MySQLConfig'):
         self.ws.init_study(self.st_name)
         self.assertTrue(self.st_name in self.ws.studies)
 
@@ -79,7 +79,7 @@ class MySqlStudy:
         # TODO: add a check on the output of the sixtrack job
 
 
-class MySqlDB(MySqlStudy, unittest.TestCase):
+class MySqlDB(MySQLStudy, unittest.TestCase):
     def setUp(self):
         self.test_folder = Path('integration_test/mysql')
         self.test_folder.mkdir(parents=True, exist_ok=True)
@@ -89,7 +89,7 @@ class MySqlDB(MySqlStudy, unittest.TestCase):
         self.st = None
 
     def test_mysql_tudy(self):
-        self.mysql_study(config='MySqlConfig')
+        self.mysql_study(config='MySQLConfig')
 
     def tearDown(self):
         # need to remove database
