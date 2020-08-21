@@ -248,6 +248,7 @@ class Study(object):
         madx_keys = self.params.madx.keys()
         six_keys = (list(self.params.sixtrack.keys()) +
                     list(self.params.phasespace.keys()))
+
         # preprocess_wu already in the table
         prep_entries = self.db.select('preprocess_wu', madx_keys)
         prep_wu_done = set(prep_entries)
@@ -549,11 +550,12 @@ class Study(object):
                 print(query_list)
                 for i in wus:
                     print(i)
+            return results
 
         if job == 0 or job == 2:
-            query(0)
+            return query(0)
         if job == 1 or job == 2:
-            query(1)
+            return query(1)
 
     def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
