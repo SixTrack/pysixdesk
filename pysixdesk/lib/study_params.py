@@ -89,14 +89,14 @@ class StudyParams:
         self.defaults = {**self.f3_defaults, **self.machine_defaults}
         # phasespace params
         # TODO: find sensible defaults for the phasespace parameters.
-        amp = [8, 10, 12]  # The amplitude
-        self.phasespace = {"amp": list(zip(amp, amp[1:])),
-                           "angle": self.da_angles(),
+        self.phasespace = {"phase_space_var1": [],
+                           "phase_space_var2": [],
                            }
 
         self.madx = self.find_patterns(self.mask_path)
         self.sixtrack = self.find_patterns(self.fort_path,
                                            mandatory=['chrom_eps', 'CHROM'])
+        self.sixtrack['dist_type'] = 'None'
 
     @property
     def _sixtrack_only(self):
