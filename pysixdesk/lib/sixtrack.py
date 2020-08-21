@@ -292,14 +292,26 @@ class TrackingJob:
         #     lines = fp.readlines()
         #     print(''.join(lines))
 
-        # UGLY HACK TO GENERATE THE distribution.
-        try:
-            amps = json.loads(fort_cfg['amp'])
-            print(f'python init_dist.py {amps[0]} {amps[1]} {fort_cfg["angle"]} {fort_cfg["nss"]}')
-            os.system(f'python init_dist.py {amps[0]} {amps[1]} {fort_cfg["angle"]} {fort_cfg["nss"]}')
-        except Exception as e:
-            print('failed to run init_dist.py')
-            print(e)
+
+        # Ugly hack to generate the particle distribution for use with DIST block
+        if self.fort_cfg['dist_type'] == 'None':
+            # Old-style without DIST block
+            pass
+        elif self.fort_cfg['dist_type'] == 'polar':
+            amps = json.loads(fort_cfg['phase_space_var1'])
+            angle = fort_cfg['phase_space_var2']
+            num_particle_pairs = int(fort_cfg['nss'] / 2.)
+            os.system(f'python init_polar_dist.py {amps[0]} {amps[1]} ' +
+                      f'{angle} {num_particle_pairs}')
+        elif self.fort_cfg['dist_type'] == 'cartesian':
+            amps_x = json.loads(fort_cfg['phase_space_var1'])
+            amps_y = json.loads(fort_cfg['phase_space_var2'])
+            num_particle_pairs = int(fort_cfg["nss"] / 2.)
+            os.system(
+                f'python init_cartesian_dist.py {amps_x[0]} {amps_x[1]} ' +
+                f'{amps_y[0]} {amps_y[1]} {num_particle_pairs}')
+        else:
+            raise ValueError('Unknown dist_type')
 
         # concatenate
         # utils.concatenate_files([dest, madx_fc3], output_file)
@@ -455,7 +467,8 @@ class TrackingJob:
         """
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'
-        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16'] + self.cr_inputs
+        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16', 'fort.34'] + self.cr_inputs
+        inputs += ['input_dist.txt', 'fort.3.aper']
         with zipfile.ZipFile(input_zip, 'w', zipfile.ZIP_DEFLATED) as ziph:
             for infile in inputs:
                 if infile in os.listdir('.'):
