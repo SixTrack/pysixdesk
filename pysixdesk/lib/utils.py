@@ -96,7 +96,10 @@ def sandwich(in_file, out_file, path_prefix='', logger=None):
     for m in re.finditer(reg, in_lines):
         m_str = m.group()
         try:
-            with open(os.path.join(path_prefix, m_str.split(':')[1].lstrip()), 'r') as f:
+            if path_prefix is None:
+                path_prefix = ''
+            fname = os.path.join(path_prefix, m_str.split(':')[1].lstrip())
+            with open(fname, 'r') as f:
                 file_lines = f.read()
             in_lines = re.sub(f'{m_str}', file_lines, in_lines)
         except FileNotFoundError as e:
