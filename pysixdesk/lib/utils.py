@@ -59,6 +59,58 @@ def download_output(filenames, dest, zp=True):
                 shutil.copy(filename, dest)
 
 
+def sandwich(in_file, out_file, path_prefix='', logger=None):
+    '''
+    Looks for any patterns matching '^%FILE:.*' in in_file, then replaces the
+    match with the content of the file following the match.
+    A path prefix can be specified to look for matched file in another
+    directory. If the matched file is not found, comment out the pattern.
+    Example:
+        contents of in_file:
+            aaaaaaaaa
+            %FILE:insert.txt
+            aaaaaaaaa
+        contents of insert.txt:
+            bbbbbbbbb
+            bbbbbbbbb
+        writes to out_file:
+            aaaaaaaaa
+            bbbbbbbbb
+            bbbbbbbbb
+            aaaaaaaaa
+    TODO: maybe it's best to return the the sandwiched lines and not write the
+    file, so that more parsing can happen in memory without reopening and
+    writing files. Also might be best to take as input the contents itself for
+    the same reason.
+    '''
+
+    if logger is not None:
+        display = logger.warning
+    else:
+        display = print
+
+    with open(in_file, 'r') as f:
+        in_lines = f.read()
+
+    reg = re.compile(r'^%FILE:.*', re.MULTILINE)
+    for m in re.finditer(reg, in_lines):
+        m_str = m.group()
+        try:
+            if path_prefix is None:
+                path_prefix = ''
+            fname = os.path.join(path_prefix, m_str.split(':')[1].lstrip())
+            with open(fname, 'r') as f:
+                file_lines = f.read()
+            in_lines = re.sub(f'{m_str}', file_lines, in_lines)
+        except FileNotFoundError as e:
+            display(e)
+            display(f'Commenting out {m_str} for {out_file}')
+            in_lines = re.sub(f'{m_str}', f'/{m_str}', in_lines)
+
+    with open(out_file, 'w') as out:
+        out.write(in_lines)
+
+
 def check_fort3_block(fort3, block):
     '''Check the existence of the given block in fort.3'''
 
@@ -238,15 +290,13 @@ def condor_logger(name):
     return logger
 
 
-def merge_dicts(x, y):
-    """Merges two dicts.
-
-    Returns:
-        dict: Merged dict
-    """
-    z = x.copy()
-    z.update(y)
-    return z
+def linspace(a, b, n):
+    '''Numpyless linear spacing function.
+    '''
+    if n < 2:
+        return a
+    diff = (float(b) - a)/(n - 1)
+    return [diff * i + a for i in range(n)]
 
 
 class ProgressBar(object):

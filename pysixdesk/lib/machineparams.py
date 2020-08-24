@@ -1,5 +1,3 @@
-from .utils import merge_dicts
-
 # LHC settings
 LHC = {}
 # TODO: fill these in.
@@ -36,8 +34,8 @@ _LHC_COL = dict(rf_vol=16.0,  # [MV]
                 tune_x=62.31,
                 tune_y=60.32,
                 )
-LHC['inj'] = merge_dicts(_LHC_DEF, _LHC_INJ)
-LHC['col'] = merge_dicts(_LHC_DEF, _LHC_COL)
+LHC['inj'] = {**_LHC_DEF, **_LHC_INJ}
+LHC['col'] = {**_LHC_DEF, **_LHC_COL}
 
 # HLLHC settings
 HLLHC = {}
@@ -74,5 +72,5 @@ _HLLHC_COL = dict(rf_vol=16.0,  # [MV]
                   tune_x=62.31,
                   tune_y=60.32,
                   )
-HLLHC['inj'] = merge_dicts(_HLLHC_DEF, _HLLHC_INJ)
-HLLHC['col'] = merge_dicts(_HLLHC_DEF, _HLLHC_COL)
+HLLHC['inj'] = {**_HLLHC_DEF, **_HLLHC_INJ}
+HLLHC['col'] = {**_HLLHC_DEF, **_HLLHC_COL}
