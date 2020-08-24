@@ -1,41 +1,55 @@
 GEOME-STRENG TITLE:%Runnam
 PRINTOUT OF INPUT PARAMETERS--------------------------------------------
 NEXT
+
 SETTING----------------------------------------------------------------
 INITIALSTATE text
 FINALSTATE text
 NEXT
-TRACKING PARAMETERS-----------------------------------------------------
-%turnss 0 %nss %ax0s %ax1s 0 %imc
-1 1 %idfor 1 %iclo6
-0 0 1 1 %writebins 50000 2
+
+SIMU
+  PARTICLES %nss
+  TURNS %turnss
+  REF_ENERGY %e_0
+  REF_PARTICLE proton 1 1 1
+
+  LATTICE thin 6D
+  6D_CLORB on
+
+  WRITE_TRACKS 1000
 NEXT
-INITIAL COORDINATES-----------------------------------------------------
-        2 0. 0. %ratio 0
-        0.
-        0.
-        0. 
-        0.
-        0.
-        %dp1
-        .000001 
-        0.
-        0. 
-        0.
-        0.
-        %dp2
-        %e_0
-        %e_0
-        %e_0
+
+RANDOM NUMBERS
+   SEED %sixtrack_seed
 NEXT
+
+DIST
+   FORMAT ID XN YN
+   READ input_dist.txt
+   FILL ZN FLOAT 0.0
+
+   FILL PXN FLOAT 0.0
+   FILL PYN FLOAT 0.0
+   FILL PZN FLOAT 1.666666
+
+   FILL ION_A INT 1
+   FILL ION_Z INT 1
+   FILL CHARGE INT 1
+   FILL MASS FLOAT %pmass
+   EMITTANCE %emit_norm %emit_norm
+   LONGEMIT 1.0 eVs
+NEXT
+
 SYNCHROTRON OSCILLATIONS--------'PLACE AFTER TRACKING PARAMETERS'-------
       35640 .000347 %rf_vol 0. %length %pmass %ition
       1.       1.
 NEXT
-BEAM
-%bunch_charge   %emit_norm_x  %emit_norm_y  %sig_z  %sig_e  1  %ibtype 1 0
 
-NEXT
+/ Beam block is actually already in the fort.3.mad file
+/ BEAM
+/ %bunch_charge   %emit_norm_x  %emit_norm_y  %sig_z  %sig_e  1  %ibtype 1 0
+/ NEXT
+
 ITERATION-ACCURACY------------------------------------------------------
        50 1D-12 1D-15
        10 1D-10 1D-10
@@ -46,6 +60,15 @@ NEXT
 FLUCTUATION
 100000 1 7 3
 NEXT
+
+%FILE: fort.3.mad
+
+/ LIMI
+/ DEBUG
+/ LOAD fort.3.aper
+/ PRIN sixtrack_aper
+/ BACKTRKOFF
+/ NEXT
 
 %toggle_post/POSTPROCESSING----------------------------------------------------------
 %toggle_post/LHC Dynamic Aperture at Injection Version 5 (1998)
@@ -62,6 +85,7 @@ NEXT
 %toggle_coll/LINE
 %toggle_coll/ELEMENT 0 %ilin 1 %EI %EI
 %toggle_coll/NEXT
+
 %toggle_coll/COLLIMATION
 %toggle_coll/.TRUE. 
 %toggle_coll/1 6500000
@@ -80,12 +104,6 @@ NEXT
 %toggle_coll/28 0.1 0.05 0.05 3
 %toggle_coll/"CollDB.data" 1
 %toggle_coll/.FALSE. .FALSE. WAbsVertLowbcoll 101 1 1.
-%toggle_coll/NEXT
-%toggle_coll/LIMI
-%toggle_coll// DEBUG
-%toggle_coll// PREC 0.001
-%toggle_coll// PRIN ape_dump.dat
-%toggle_coll/LOAD fort3.limi
 %toggle_coll/NEXT
 
 ENDE
