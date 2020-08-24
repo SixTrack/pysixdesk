@@ -21,13 +21,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     num_part_div = int(math.sqrt(args.number))
-    amp_x = linspace(args.ampx0, args.ampx1, num_part_div+1)[:-1]
-    amp_y = linspace(args.ampy0, args.ampy1, num_part_div+1)[:-1]
-    # offset = (args.ampx1 - args.ampx0) / (2.*float(num_part_div))
-    # amp_x = [x + offset for x in amp_x[:-1]]
-    # amp_y = [y + offset for y in amp_y[:-1]]
-    # amp_x = amp_x[:-1]
-    # amp_y = amp_y[:-1]
+    amp_x = linspace(args.ampx0, args.ampx1, num_part_div+1)
+    amp_y = linspace(args.ampy0, args.ampy1, num_part_div+1)
+    offset = (args.ampx1 - args.ampx0) / (2.*float(num_part_div))
+    amp_x = [x + offset for x in amp_x[:-1]]
+    amp_y = [y + offset for y in amp_y[:-1]]
     with open('input_dist.txt', 'w') as fp:
         for i, ampx in enumerate(amp_x):
             for j, ampy in enumerate(amp_y):

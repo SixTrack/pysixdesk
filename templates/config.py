@@ -14,6 +14,7 @@ from pysixdesk.lib.study_params import set_requirements
 from pysixdesk.lib.study_params import set_output_keys
 from math import sqrt, pi, sin, cos, tan
 from pysixdesk.lib import machineparams
+from pysixdesk.lib import utils
 
 # logger configuration
 logger = logging.getLogger('pysixdesk')
@@ -40,9 +41,10 @@ class MyStudy(Study):
         self.cluster_class = submission.HTCondor
         self.paths['boinc_spool'] = '/afs/cern.ch/work/b/boinc/boinctest'
         self.boinc_vars['appName'] = 'sixtracktest'
-        # apt exe paths
-        self.paths['madx_exe'] = '/afs/cern.ch/work/l/lcoyle/public/pysixdesk_testing/pysixdesk_params/madx-apt'
-        self.paths['sixtrack_exe'] = '/afs/cern.ch/work/l/lcoyle/public/pysixdesk_testing/pysixdesk_params/sixtrack-apt'
+
+        # Need to use more recent release of Sixtrack than what is defined in PySixDesk by default.
+        self.paths['sixtrack_exe'] = ('/afs/cern.ch/project/sixtrack/build/latest/' + 
+            'SixTrack_50403-9e43f07_zlib_crlibm_rn_Linux_gfortran_static_avx2_x86_64_64bit_double')
 
         # Database type
         self.db_info['db_type'] = 'sql'
@@ -53,71 +55,107 @@ class MyStudy(Study):
 
         # All parameters are case-sensitive
         # the name of mask file
-        mask_file = 'job_aper_michael.madx'
-        fort_file = 'fort.3_michael'
+        mask_file = 'example.mask'
         self.madx_input["mask_file"] = mask_file
-        self.madx_output = {
-            'fc.2': 'fort.2',
-            'fc.3': 'fort.3.mad',
-            'fc.3.aper': 'fort.3.aper',
-            'fc.3.aux': 'fort.3.aux',
-            'fc.8': 'fort.8',
-            'fc.16': 'fort.16',
-            'fc.34': 'fort.34'}
+        self.madx_output = {'fc.2': 'fort.2',
+                            'fc.3': 'fort.3.mad',
+                            'fc.3.aux': 'fort.3.aux',
+                            'fc.8': 'fort.8',
+                            'fc.16': 'fort.16',
+                            'fc.34': 'fort.34'}
+
         # All parameters are case-sensitive
         self.params = StudyParams(mask_path=os.path.join(self.study_path, mask_file),
-                                  fort_path=os.path.join(self.study_path, fort_file),
-                                  machine_defaults=machineparams.HLLHC['inj'])
+                                  fort_path=os.path.join(self.study_path, 'fort.3'),
+                                  machine_defaults=machineparams.LHC['inj'])
         self.params['Runnam'] = name
-        amp = [8, 10, 12]
-        self.params['turnss'] = int(1)  # number of turns to track (must be int)
-        self.params['nss'] = 30
-        self.params['amp'] = list(zip(amp, amp[1:]))  # Take pairs
-        self.params['angle'] = self.params.da_angles(start=0, end=pi/2, n=3)
+        self.params['turnss'] = int(500)  # number of turns to track (must be int)
 
-        self.params['seed_ran'] = 1
-        self.params['i_mo'] = [-6.5, -13]  # list(range(100, 200 + 1, 100))
+
+        # Particle initialization
+        self.params['dist_type'] = 'cartesian'  # type of particle distribution (cartesian or polar)
+        amp = [float(i) for i in range(5, 16, 1)]
+
+        if self.params['dist_type'] == 'polar':
+            self.params['phase_space_var1'] = list(zip(amp, amp[1:]))  # Take pairs # amp_x
+            self.params['phase_space_var2'] = utils.linspace(0, pi/2., 12)[1:-1] # angles
+            n_particles_per_amplitude_angle_pair = 10
+            self.params['nss'] = 2 * n_particles_per_amplitude_angle_pair  # account for twin particles
+        elif self.params['dist_type'] == 'cartesian':
+            self.params['phase_space_var1'] = list(zip(amp, amp[1:]))  # Take pairs # amp_x
+            self.params['phase_space_var2'] = list(zip(amp, amp[1:]))  # Take pairs # amp_y
+            n_particles_per_amp_pair = 10
+            self.params['nss'] = 2 * n_particles_per_amp_pair**2  # account for twin particles
+        else:
+            raise ValueError('Unknown dist_type')
+
+        self.params['seed_ran'] = 10
         self.params['sixtrack_seed'] = 42
+
+        self.params['i_mo'] = -10.
         self.params['tune_x'] = 62.28
         self.params['tune_y'] = 60.31
-        self.params['int_tune_x'] = int(self.params['tune_x'])
-        self.params['int_tune_y'] = int(self.params['tune_y'])
-        self.params['emit_norm_x'] = 3.5
-        self.params['emit_norm_y'] = 3.5
-        self.params['rf_vol'] = 8
+        self.params['int_tune_x'] = 62
+        self.params['int_tune_y'] = 60
 
-        # TODO: UGLY HACK TO ADD JUST THE apertue_losses file...
-        self.tables['aperture_losses'] = OrderedDict([
-            ('task_id', 'int'),
-            ('row_num', 'int'),
-            ('turn', 'int'),
-            ('block', 'int'),
-            ('bezid', 'int'),
-            ('bez', 'text'),
-            ('slos', 'float'),
-            ('part_id', 'int'),
-            ('x', 'float'),
-            ('xp', 'float'),
-            ('y', 'float'),
-            ('yp', 'float'),
-            ('etot', 'float'),
-            ('dE', 'float'),
-            ('dT', 'float'),
-            ('A_atom', 'int'),
-            ('Z_atom', 'int'),
-            ('mtime', 'bigint')])
-        self.table_keys['aperture_losses'] = {
-            'primary': ['task_id', 'row_num'],
-            'foreign': {'sixtrack_task': [['task_id'], ['task_id']]},
-        }
+        q_prime = 20.
+        self.params['q_prime'] = q_prime
+        self.params['q_prime_x'] = q_prime
+        self.params['q_prime_y'] = q_prime
 
-        self.oneturn_sixtrack_input['fort_file'] = fort_file
+        self.params['sig_e'] = 4.5e-4
+        self.params['sig_z'] = 0.11
+        self.params['bunch_charge'] = 1e11
+        self.params['emit_norm'] = 3.5
+        self.params['b_t_dist'] = 25.
+        self.params['e_0'] = 450000.
+        self.params['rf_vol'] = 8.
+
+        # @set_input_keys(['angle', 'amp'])
+        # @set_output_keys(['x0', 'x1', 'y0', 'y1'])
+        # def calc_dist_coords(angle, amp):
+        #     x0, x1 = cos(angle)*amp[0], cos(angle)*amp[1]
+        #     y0, y1 = sin(angle)*amp[0], sin(angle)*amp[1]
+        #     return x0, x1, y0, y1
+        # self.params.calc_queue.append(calc_dist_coords)
+
+        #     return angles
+        # self.params.calc_queue.append(set_angles)
+
+        # @set_input_keys(['kang', 'kmax'])
+        # @set_output_keys(['angle'])
+        # def calc_angle(kang, kmax):
+        #     return kang / (kmax + 1)  # 1-->pi/2, 0.5-->pi/4, ...
+        # self.params.calc_queue.append(calc_angle)
+
+        # @set_input_keys(['angle'])
+        # @set_output_keys(['ratio'])
+        # def calc_ratio(angle):
+        #     ratio = abs(tan((pi / 2) * angle))
+        #     if ratio < 1e-15:
+        #         ratio = 0.
+        #     else:
+        #         ratio = ratio ** 2
+        #     return ratio
+        # self.params.calc_queue.append(calc_ratio)
+
+        # # should it not be betax and betax2 ?
+        # @set_requirements({'oneturn_sixtrack_results': ['betax', 'betax2']})
+        # @set_input_keys(['angle', 'ratio', 'emit_norm_x', 'e_0', 'pmass', 'amp'])
+        # @set_output_keys(['ax0s', 'ax1s'])
+        # def calc_amp(angle, ratio, emit, e_0, pmass, amp, betax=None, betax2=None):
+        #     gamma = e_0 / pmass
+        #     factor = sqrt(emit / gamma)
+        #     ax0t = factor * (sqrt(betax) + sqrt(betax2 * ratio) * cos((pi / 2) * angle))
+        #     return amp[0] * ax0t, amp[1] * ax0t
+        # self.params.calc_queue.append(calc_amp)
+
+        self.oneturn_sixtrack_input['fort_file'] = 'fort.3'
         self.oneturn_sixtrack_output = ['oneturnresult']
-        self.sixtrack_input['fort_file'] = fort_file
+        self.sixtrack_input['fort_file'] = 'fort.3'
         self.preprocess_output = dict(self.madx_output)
         self.sixtrack_input['input'] = dict(self.preprocess_output)
-        self.sixtrack_input['additional_input'] = ['init_dist.py']
-        self.sixtrack_output = ['fort.10', 'sixtrack_aper', 'aperture_losses.dat']
+        self.sixtrack_input['additional_input'] = ['init_cartesian_dist.py', 'init_polar_dist.py']
 
         # # The parameters for collimation job
         # self.madx_output = {
