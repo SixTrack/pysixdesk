@@ -294,10 +294,7 @@ class TrackingJob:
 
 
         # Ugly hack to generate the particle distribution for use with DIST block
-        if self.fort_cfg['dist_type'] == 'None':
-            # Old-style without DIST block
-            pass
-        elif self.fort_cfg['dist_type'] == 'polar':
+        if self.fort_cfg['dist_type'] == 'polar':
             amps = json.loads(fort_cfg['phase_space_var1'])
             angle = fort_cfg['phase_space_var2']
             num_particle_pairs = int(fort_cfg['nss'] / 2.)
