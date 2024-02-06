@@ -284,8 +284,34 @@ class TrackingJob:
         if source_prefix is not None:
             madx_fc3 = source_prefix / madx_fc3
 
+        utils.sandwich(dest,
+                       output_file,
+                       path_prefix=source_prefix,
+                       logger=self._logger)
+        # with open(output_file, 'r') as fp:
+        #     lines = fp.readlines()
+        #     print(''.join(lines))
+
+
+        # Ugly hack to generate the particle distribution for use with DIST block
+        if self.fort_cfg['dist_type'] == 'polar':
+            amps = json.loads(fort_cfg['phase_space_var1'])
+            angle = fort_cfg['phase_space_var2']
+            num_particle_pairs = int(fort_cfg['nss'] / 2.)
+            os.system(f'python init_polar_dist.py {amps[0]} {amps[1]} ' +
+                      f'{angle} {num_particle_pairs}')
+        elif self.fort_cfg['dist_type'] == 'cartesian':
+            amps_x = json.loads(fort_cfg['phase_space_var1'])
+            amps_y = json.loads(fort_cfg['phase_space_var2'])
+            num_particle_pairs = int(fort_cfg["nss"] / 2.)
+            os.system(
+                f'python init_cartesian_dist.py {amps_x[0]} {amps_x[1]} ' +
+                f'{amps_y[0]} {amps_y[1]} {num_particle_pairs}')
+        else:
+            raise ValueError('Unknown dist_type')
+
         # concatenate
-        utils.concatenate_files([dest, madx_fc3], output_file)
+        # utils.concatenate_files([dest, madx_fc3], output_file)
 
     def sixtrack_run(self, output_file):
         """Runs sixtrack.
@@ -438,7 +464,8 @@ class TrackingJob:
         """
         # zip all the input files, e.g. fort.3 fort.2 fort.8 fort.16
         input_zip = job_name + '.zip'
-        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16'] + self.cr_inputs
+        inputs = ['fort.2', 'fort.3', 'fort.8', 'fort.16', 'fort.34'] + self.cr_inputs
+        inputs += ['input_dist.txt', 'fort.3.aper']
         with zipfile.ZipFile(input_zip, 'w', zipfile.ZIP_DEFLATED) as ziph:
             for infile in inputs:
                 if infile in os.listdir('.'):

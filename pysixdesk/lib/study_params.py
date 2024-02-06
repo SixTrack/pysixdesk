@@ -1,6 +1,7 @@
 import re
 import logging
 
+from math import pi
 from pathlib import Path
 from collections import OrderedDict
 from itertools import product
@@ -9,7 +10,7 @@ from collections.abc import Iterable
 
 from . import machineparams
 from .constants import PROTON_MASS
-from .utils import PYSIXDESK_ABSPATH, merge_dicts
+from .utils import PYSIXDESK_ABSPATH, linspace
 
 
 class StudyParams:
@@ -46,7 +47,7 @@ class StudyParams:
         # comment regexp
         self._reg_comment = re.compile(r'^(\s?!|\s?/).*', re.MULTILINE)
         # placeholder pattern regexp
-        self._reg = re.compile(r'%([a-zA-Z0-9_]+/?)')
+        self._reg = re.compile(r'%(?!FILE|%)([a-zA-Z0-9_]+/?)')
         self.fort_path = fort_path
         self.mask_path = mask_path
         # initialize empty calculation queue
@@ -85,18 +86,17 @@ class StudyParams:
                             "writebins": 1,
                             }
         self.machine_defaults = machine_defaults
-        self.defaults = merge_dicts(self.f3_defaults, self.machine_defaults)
+        self.defaults = {**self.f3_defaults, **self.machine_defaults}
         # phasespace params
         # TODO: find sensible defaults for the phasespace parameters.
-        amp = [8, 10, 12]  # The amplitude
-        self.phasespace = {"amp": list(zip(amp, amp[1:])),
-                           "kang": list(range(1, 1 + 1)),
-                           "kmax": 5,
+        self.phasespace = {"phase_space_var1": [],
+                           "phase_space_var2": [],
                            }
 
         self.madx = self.find_patterns(self.mask_path)
         self.sixtrack = self.find_patterns(self.fort_path,
                                            mandatory=['chrom_eps', 'CHROM'])
+        self.sixtrack['dist_type'] = 'None'
 
     @property
     def _sixtrack_only(self):
@@ -116,6 +116,10 @@ class StudyParams:
         # oneturn job cannot do collimation
         sixtrack['toggle_coll/'] = '/'
         return sixtrack
+
+    @staticmethod
+    def da_angles(start=0, end=pi/2, n=7):
+            return linspace(start, end, n + 2)[1: -1]  # exclusive
 
     def keys(self):
         """Gets the keys of 'self.madx', 'self.sixtrack' and 'self.phasespace'.
@@ -180,7 +184,7 @@ class StudyParams:
 
     @staticmethod
     def _combinations_prep(**kwargs):
-        '''Sanitizes the paramter values.
+        '''Sanitizes the parameter values.
 
         Args:
             **kwargs: Parameter name = parameter value.

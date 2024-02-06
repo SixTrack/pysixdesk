@@ -83,7 +83,7 @@ class Study(object):
             'fc.34': 'fort.34'}
 
         self.oneturn_sixtrack_input['input'] = dict(self.madx_output)
-        self.sixtrack_input['temp'] = 'fort.3'
+        self.sixtrack_input['fort_file'] = 'fort.3'
         self.sixtrack_output = ['fort.10']
 
         self.db_info['db_type'] = 'sql'
@@ -248,6 +248,7 @@ class Study(object):
         madx_keys = self.params.madx.keys()
         six_keys = (list(self.params.sixtrack.keys()) +
                     list(self.params.phasespace.keys()))
+
         # preprocess_wu already in the table
         prep_entries = self.db.select('preprocess_wu', madx_keys)
         prep_wu_done = set(prep_entries)
@@ -394,6 +395,9 @@ class Study(object):
         self.sixtrack_config['sixtrack']['output_files'] = json.dumps(self.sixtrack_output)
         self.sixtrack_config['sixtrack']['test_turn'] = json.dumps(self.env['test_turn'])
         self.sixtrack_config['six_results'] = self.tables['six_results']
+        # TODO: UGLY HACK TO ADD THE aperture_losses FILE...
+        # self.sixtrack_config['aperture_losses'] = self.tables['aperture_losses']
+
         if self.collimation:
             self.sixtrack_config['aperture_losses'] = self.tables['aperture_losses']
             self.sixtrack_config['collimation_losses'] = self.tables['collimation_losses']
@@ -445,17 +449,18 @@ class Study(object):
                 self._logger.info('Queued update of sixtack_wu/wu_id:'
                                   f'{row["wu_id"]} with {update_cols}.')
 
-        # update everything at once
-        self._logger.info(f'Updating {len(calc_out_to_be_updated)} rows of '
-                          'sixtrack_wu.')
-        # turn list of dicts into dict of lists
-        calc_out_to_be_updated = {k: [dic[k] for dic in calc_out_to_be_updated]
-                                  for k in calc_out_to_be_updated[0]}
-        where_to_be_updated = {k: [dic[k] for dic in where_to_be_updated]
-                               for k in where_to_be_updated[0]}
-        self.db.updatem('sixtrack_wu',
-                        calc_out_to_be_updated,
-                        where=where_to_be_updated)
+        if calc_out_to_be_updated:
+            # update everything at once
+            self._logger.info(f'Updating {len(calc_out_to_be_updated)} rows of '
+                              'sixtrack_wu.')
+            # turn list of dicts into dict of lists
+            calc_out_to_be_updated = {k: [dic[k] for dic in calc_out_to_be_updated]
+                                      for k in calc_out_to_be_updated[0]}
+            where_to_be_updated = {k: [dic[k] for dic in where_to_be_updated]
+                                   for k in where_to_be_updated[0]}
+            self.db.updatem('sixtrack_wu',
+                            calc_out_to_be_updated,
+                            where=where_to_be_updated)
 
     def update_db(self, db_check=False):
         '''Update the database whith the user-defined parameters'''
@@ -545,11 +550,12 @@ class Study(object):
                 print(query_list)
                 for i in wus:
                     print(i)
+            return results
 
         if job == 0 or job == 2:
-            query(0)
+            return query(0)
         if job == 1 or job == 2:
-            query(1)
+            return query(1)
 
     def submit(self, typ, trials=5, *args, **kwargs):
         '''Sumbit the preporcess or sixtrack jobs to htctondor.
@@ -627,6 +633,8 @@ class Study(object):
             info_sec['boinc_results'] = self.env['boinc_results']
             info_sec['boinc'] = boinc
             info_sec['st_pre'] = self.st_pre
+            # TODO: UGLY HACK TO PARSE THE APERTURE_LOSSES FILE...
+            # config['aperture_losses'] = self.tables['aperture_losses']
 
             info_sec['outs'] = Table.result_table(self.sixtrack_output)
             if self.collimation:
@@ -670,7 +678,9 @@ class Study(object):
             action = 'resubmit'
         else:
             constraints = "status='incomplete' and preprocess_id in %s" % str(
-                preprocess_outs[0])
+                preprocess_outs[0]).replace(',)', ')')  # if there is a single
+            # job, the comma of the tuple (1,) breaks the sql query because
+            # there is no proper sql sanitization...
             action = 'submit'
         names = self.tables['sixtrack_wu'].keys()
         outputs = self.db.select('sixtrack_wu',

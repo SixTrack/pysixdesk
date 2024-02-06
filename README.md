@@ -86,8 +86,8 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
       ```python
       myWS.init_study('myStudy')
       ```
-   
-   1. edit the `config.py` file to define the study (e.g. define `.mask` file, add scan parameters, etc...);
+
+   1. edit the `config.py` file to define the parameters you want to scan for your study as well as their range. This also includes adapting the `.mask` file and parametrizing the variables that are to be scanned (use `%` sign to declare these parameters followed by the parameter name defined in `config.py`, e.g. `%SEEDRAN`). Note that PySixDesk will set up a scan making all the possible combinations between defined parameter values (Cartesian product);
    
    1. load definition of study in `config.py` and create/update database:
    
@@ -96,12 +96,14 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
       myStudy.update_db() # only needed for a new study or when parameters are changed
       ```
 
-   1. prepare and submit pre-processing jobs (e.g. MADX job and sixtrack one turn jobs), and collect results:
+   This initializes a database file. Depending on the type of database you choose in the `config.py` file, it is either an SQLite database stored locally, or, alternatively, a MySQL database hosted by the CERN DBonDemand Service.
+
+   1. prepare and submit pre-processing jobs (i.e. MADX job and sixtrack one turn jobs), and collect results:
    
       ```python
       myStudy.prepare_preprocess_input()
       myStudy.submit(0, 5) # 0 stands for preprocess job, 5 is trial number 
-      myStudy.collect_result(0) # collect results locally
+      myStudy.collect_result(0) # collect results locally once jobs are finished
       ```
 
    1. prepare and submit actual sixtrack jobs, and collect results:
@@ -110,8 +112,10 @@ By default the jobs will be submitted to HTCondor. If you want to use a differen
       myStudy.prepare_sixtrack_input()
       or
       myStudy.prepare_sixtrack_input(True) #True: submit jobs to Boinc
+
       myStudy.submit(1, 5) # 1 stands for sixtrack job, 5 is trial number 
-      myStudy.collect_result(1) # 1 stands for sixtrack job 
+
+      myStudy.collect_result(1) # 1 stands for sixtrack job; collect results once finished
       or
       myStudy.collect_result(1, True) # True: collect results from boinc spool directory
       ```
